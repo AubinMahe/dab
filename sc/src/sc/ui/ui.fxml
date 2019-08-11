@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.*?> 
+
+<?import sc.ui.*?> 
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="sc.ui.Controller">
+   <stylesheets>
+      <java.net.URL value="@ui.css"/> 
+   </stylesheets>
+   <center>
+      <SplitPane orientation="HORIZONTAL" dividerPositions="0.6">
+         <TableView fx:id="_cartes" editable="true" prefHeight="180">
+            <columns>
+               <TableColumn text="%carte-column-title" prefWidth="60.0"> 
+                  <cellValueFactory><PropertyValueFactory property="id"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%code-column-title" prefWidth="60.0"> 
+                  <cellValueFactory><PropertyValueFactory property="code"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%compte-column-title" prefWidth="70.0"> 
+                  <cellValueFactory><PropertyValueFactory property="compte"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%expiration-month-column-title" prefWidth="50.0"> 
+                  <cellValueFactory><PropertyValueFactory property="expirationMonth"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%expiration-year-column-title" prefWidth="60.0"> 
+                  <cellValueFactory><PropertyValueFactory property="expirationYear"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%nb-essais-column-title" prefWidth="80.0"
+                  style="-fx-alignment: CENTER-RIGHT;"> 
+                  <cellValueFactory><PropertyValueFactory property="nbEssais"/></cellValueFactory>
+               </TableColumn>
+            </columns>
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <Carte id="A123" code="1230" compte="#123" />
+                  <Carte id="B456" code="4560" compte="#456" />
+                  <Carte id="C789" code="7890" compte="#789" />
+                  <Carte id="D123" code="1230" compte="#123" />
+                  <Carte id="E456" code="4560" compte="#456" />
+               </FXCollections>
+            </items>
+         </TableView>
+         <TableView fx:id="_comptes" editable="true" prefHeight="180">
+            <columns>
+               <TableColumn text="%compte-column-title"   prefWidth="70.0"> 
+                  <cellValueFactory><PropertyValueFactory property="id"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%solde-column-title"    prefWidth="100.0"
+                  style="-fx-alignment: CENTER-RIGHT;"> 
+                  <cellValueFactory><PropertyValueFactory property="solde"/></cellValueFactory>
+               </TableColumn>
+               <TableColumn text="%autorise-column-title" prefWidth="80.0"> 
+                  <cellValueFactory><PropertyValueFactory property="autorise"/></cellValueFactory>
+               </TableColumn>
+            </columns>
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <Compte id="#123" solde="5000.0" autorise="true" />
+                  <Compte id="#456" solde="1000.0" autorise="true" />
+                  <Compte id="#789" solde= "400.0" autorise="true" />
+               </FXCollections>
+            </items>
+         </TableView>
+      </SplitPane>
+   </center>
+</BorderPane>

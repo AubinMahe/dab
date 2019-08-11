@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified">
+
+   <xs:simpleType name="enumType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="boolean" />
+         <xs:enumeration value="byte" />
+         <xs:enumeration value="short" />
+         <xs:enumeration value="ushort" />
+         <xs:enumeration value="int" />
+         <xs:enumeration value="uint" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="literalType">
+      <xs:attribute type="xs:string" name="name" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="enumerationType" mixed="true">
+      <xs:sequence>
+         <xs:element type="literalType" name="literal" maxOccurs="unbounded" minOccurs="1" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="enumType"  name="type" use="optional" default="byte"/>
+   </xs:complexType>
+   
+   <xs:simpleType name="scalarType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="boolean" />
+         <xs:enumeration value="byte" />
+         <xs:enumeration value="short" />
+         <xs:enumeration value="ushort" />
+         <xs:enumeration value="int" />
+         <xs:enumeration value="uint" />
+         <xs:enumeration value="long" />
+         <xs:enumeration value="ulong" />
+         <xs:enumeration value="float" />
+         <xs:enumeration value="double" />
+         <xs:enumeration value="string" />
+         <xs:enumeration value="enum" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="fieldType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute type="xs:string"  name="name"        use="required" />
+            <xs:attribute type="scalarType" name="type"        use="required" />
+            <xs:attribute type="xs:string"  name="enum"        use="optional" />
+            <xs:attribute type="xs:string"  name="length"      use="optional" />
+            <xs:attribute type="xs:string"  name="description" use="required" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+
+   <xs:complexType name="eventType" mixed="true">
+      <xs:sequence>
+         <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="0" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required" />
+   </xs:complexType>
+   <xs:complexType name="interfaceType">
+      <xs:sequence>
+         <xs:element type="eventType" name="event" maxOccurs="unbounded" minOccurs="0" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required" />
+   </xs:complexType>
+   <xs:complexType name="offersType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute type="xs:string" name="interface" use="required" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   <xs:complexType name="requiresType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute type="xs:string" name="interface" use="required" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   
+   <xs:complexType name="javaType">
+      <xs:attribute type="xs:string" name="src-dir" use="required" />
+      <xs:attribute type="xs:string" name="package" use="required" />
+   </xs:complexType>
+   
+   <xs:complexType name="cppType">
+      <xs:attribute type="xs:string" name="src-dir"   use="required" />
+      <xs:attribute type="xs:string" name="namespace" use="required" />
+   </xs:complexType>
+   
+   <xs:complexType name="componentType">
+      <xs:sequence>
+         <xs:element type="offersType"   name="offers"   maxOccurs="unbounded" minOccurs="0" />
+         <xs:element type="requiresType" name="requires" maxOccurs="unbounded" minOccurs="0" />
+         <xs:choice>
+            <xs:element type="javaType" name="java" maxOccurs="1" minOccurs="1" />
+            <xs:element type="cppType"  name="cpp"  maxOccurs="1" minOccurs="1" />
+         </xs:choice>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required" />
+   </xs:complexType>
+   
+   <xs:complexType name="disappType">
+      <xs:sequence>
+         <xs:element type="enumerationType" name="enumeration" maxOccurs="unbounded" minOccurs="0" />
+         <xs:element type="interfaceType"   name="interface"   maxOccurs="unbounded" minOccurs="1" />
+         <xs:element type="componentType"   name="component"   maxOccurs="unbounded" minOccurs="1" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" />
+   </xs:complexType>
+
+   <xs:element name="distributed-application" type="disappType">
+      <xs:key name="interface-name">
+         <xs:selector xpath=".//interface"/>
+         <xs:field xpath="./@name"/>
+      </xs:key>
+      <xs:keyref name="offers" refer="interface-name">
+         <xs:selector xpath=".//component/offers"/>
+         <xs:field xpath="./@interface"/>
+      </xs:keyref>
+      <xs:keyref name="requires" refer="interface-name">
+         <xs:selector xpath=".//component/requires"/>
+         <xs:field xpath="./@interface"/>
+      </xs:keyref>
+
+      <xs:key name="enum-name">
+         <xs:selector xpath=".//enumeration"/>
+         <xs:field xpath="./@name"/>
+      </xs:key>
+      <xs:keyref name="field" refer="enum-name">
+         <xs:selector xpath=".//interface/event/field"/>
+         <xs:field xpath="./@enum"/>
+      </xs:keyref>
+   </xs:element>
+
+</xs:schema>

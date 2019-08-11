@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:noNamespaceSchemaLocation="distributed-application.xsd"
+   name="DAB">
+
+   <enumeration name="Etat">
+      <literal name="AUCUN" />
+      <literal name="MAINTENANCE" />
+      <literal name="HORS_SERVICE" />
+      <literal name="EN_SERVICE" />
+      <literal name="LECTURE_CARTE" />
+      <literal name="SAISIE_CODE_1" />
+      <literal name="SAISIE_CODE_2" />
+      <literal name="SAISIE_CODE_3" />
+      <literal name="SAISIE_MONTANT" />
+      <literal name="RETRAIT_CARTE" />
+      <literal name="RETRAIT_BILLETS" />
+      <literal name="RETRAIT_CARTE_ILLISIBLE" />
+   </enumeration>
+   
+   <interface name="IHM">
+      <event name="setStatus">
+         <field name="etat" type="enum" enum="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+      </event>
+      <event name="setSoldeCaisse">
+         <field name="solde" type="double"  description="Montant de la caisse en €" />
+      </event>
+      <event name="confisquerLaCarte" />
+      <event name="shutdown" />
+   </interface>
+
+   <interface name="UniteDeTraitement">
+      <event name="maintenance">
+         <field name="maintenance" type="boolean" description="Maintenance active (true) ou inactive (false)" />
+      </event>
+      <event name="rechargerLaCaisse">
+         <field name="montant"     type="double"  description="Montant à rajouter dans la caisse" />
+      </event>
+      <event name="anomalie">
+         <field name="anomalie"    type="boolean" description="Anomalie active (true) ou inactive (false)" />
+      </event>
+      <event name="lireLaCarte">
+         <field name="carteID"     type="string"  description="Identifiant de la carte" length="4" />
+      </event>
+      <event name="codeSaisi">
+         <field name="code"        type="string"  description="Code de la carte"         length="4" />
+      </event>
+      <event name="montantSaisi">
+         <field name="montant"     type="double"  description="Montant du retrait en €" />
+      </event>
+      <event name="carteRetiree" />
+      <event name="billetsRetires" />
+      <event name="shutdown" />
+   </interface>
+
+   <interface name="LecteurDeCarte">
+      <event name="carteLue">
+         <field name="carteID"     type="string"  description="Identifiant de la carte" length="4" />
+         <field name="code"        type="string"  description="Identifiant de la carte" length="4" />
+         <field name="month"       type="byte"    description="Jour de péremption de la carte" />
+         <field name="year"        type="ushort"  description="Année de péremption de la carte" />
+         <field name="nbEssais"    type="byte"    description="Nombre d'essais en échec de la carte" />
+         <field name="compteID"    type="string"  description="Identifiant du compte"   length="4" />
+         <field name="solde"       type="double"  description="Solde du compte" />
+         <field name="autorise"    type="boolean" description="Le compte est-il autorisé ?" />
+      </event>
+   </interface>
+
+   <interface name="SiteCentral">
+      <event name="getInformations">
+         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
+      </event>
+      <event name="incrNbEssais">
+         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
+      </event>
+      <event name="retrait">
+         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
+         <field name="montant" type="double"  description="Montant du retrait en €" />
+      </event>
+      <event name="shutdown" />
+   </interface>
+   
+   <component name="IHM">
+      <offers   interface="IHM" />
+      <requires interface="UniteDeTraitement" />
+      <java src-dir="dab/src-gen" package="dab" />
+   </component>
+
+   <component name="UniteDeTraitement">
+      <offers   interface="UniteDeTraitement" />
+      <offers   interface="LecteurDeCarte" />
+      <requires interface="IHM" />
+      <requires interface="SiteCentral" />
+      <cpp src-dir="udt/src-gen" namespace="dab" />
+   </component>
+
+   <component name="SiteCentral">
+      <offers   interface="SiteCentral" />
+      <requires interface="LecteurDeCarte" />
+      <java src-dir="sc/src-gen" package="sc" />
+   </component>
+
+</distributed-application>

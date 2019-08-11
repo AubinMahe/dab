@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.*?> 
+
+<?import dab.ui.*?> 
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="dab.ui.Controller">
+   <stylesheets>
+      <java.net.URL value="@ui.css"/> 
+   </stylesheets>
+   <top>
+      <Label fx:id="_status" text="DAB en maintenance" prefWidth="800" styleClass="bordered" />
+   </top>
+   <left>
+      <VBox fx:id="_left" disable="true">
+         <TextArea fx:id="_screen" prefWidth="460" prefHeight="200"
+            editable="false" focusTraversable="false"
+            styleClass="bordered" />
+         <VBox styleClass="bordered">
+            <HBox>
+               <Button text=" 7 " onAction="#key" />
+               <Button text=" 8 " onAction="#key" />
+               <Button text=" 9 " onAction="#key" />
+               <Button text=" Annuler " prefWidth="80" onAction="#key" />
+            </HBox>
+            <HBox>
+               <Button text=" 4 " onAction="#key" />
+               <Button text=" 5 " onAction="#key" />
+               <Button text=" 6 " onAction="#key" />
+               <Button text=" Effacer " prefWidth="80" onAction="#key" />
+            </HBox>
+            <HBox>
+               <Button text=" 1 " onAction="#key" />
+               <Button text=" 2 " onAction="#key" />
+               <Button text=" 3 " onAction="#key" />
+               <Button text=" Entrer " prefWidth="80" onAction="#key" />
+            </HBox>
+            <HBox>
+               <Button text=" 0 " onAction="#key" />
+            </HBox>
+         </VBox>
+      </VBox>
+   </left>
+   <right>
+      <VBox fx:id="_right" disable="true">
+         <HBox prefWidth="340" styleClass="bordered">
+            <TextField fx:id="_carteID" promptText="Identifiant de carte" text="A123" />
+            <Button fx:id="_insererCarte"      text="Insérer une carte"   visible="true"
+               onAction="#carteInseree" />
+         </HBox>
+         <VBox prefWidth="340" styleClass="bordered">
+            <Label text="Distributeur de billets"/>
+            <Label fx:id="_etatDuDistributeur" text="Fermé" />
+            <Button fx:id="_prendreLaCarte"    text="Prendre la carte"    visible="false"
+               onAction="#prendreLaCarte" />
+            <Button fx:id="_prendreLesBillets" text="Prendre les billets" visible="false"
+               onAction="#prendreLesBillets" />
+            <CheckBox fx:id="_anomalie"        text="Anomalie"            selected="false"
+               onAction="#anomalie" />
+         </VBox>
+         <Label text="Corbeille"        prefWidth="340" styleClass="bordered" />
+         <Label text="Magasin à cartes" prefWidth="340" styleClass="bordered" />
+         <Label text="Caisse : 0 €"     prefWidth="340" styleClass="bordered"
+            fx:id="_caisse"  />
+      </VBox>
+   </right>
+   <bottom>
+      <HBox prefWidth="800" styleClass="bordered" spacing="8.0">
+         <CheckBox fx:id="_maintenance" text="Maintenance" onAction="#maintenance" selected="true" />
+         <HBox fx:id="_maintenanceIHM" visible="true" spacing="2.0">
+            <TextField fx:id="_ajouterALaCaisse" promptText="Montant" text="10000" />
+            <Button text="Recharger la caisse" onAction="#rechargerLaCaisse"/>
+         </HBox>
+      </HBox>
+   </bottom>
+</BorderPane>

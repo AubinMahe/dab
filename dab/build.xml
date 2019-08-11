@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DAB-UI" default="jar">
+
+   <property name="jfx13" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
+   <property name="jutil" value=".." />
+   <property name="jar"   value="../${ant.project.name}.jar" />
+
+   <target name="clean">
+      <delete dir="build" />
+      <delete dir="src-gen" />
+      <delete file="${jar}" />
+   </target>
+
+   <target name="gen">
+      <java
+         dir       =".."
+         fork      ="true"
+         modulepath="../dis-app-gen.jar"
+         module    ="disappgen/disappgen.Main">
+         <arg value="dab.xml" />
+      </java>
+   </target>
+
+   <target name="javac" depends="gen">
+      <ant dir="../disappgen" target="run" inheritall="false" />
+      <mkdir dir="build" />
+      <javac
+         destdir          ="build"
+         modulepath       ="${jfx13}:${jutil}"
+         includeantruntime="false">
+         <src path="src" />
+         <src path="src-gen" />
+      </javac>
+   </target>
+
+   <target name="jar" depends="javac">
+      <copy todir="build">
+         <fileset
+            dir     ="src"
+            includes="**/*.fxml,**/*.png,**/*.css,**/*.properties" />
+      </copy>
+      <jar destfile="${jar}" basedir="build" />
+   </target>
+
+   <target name="run" depends="jar">
+      <java
+         fork      ="true"
+         modulepath="${jfx13}:${jutil}:${jar}"
+         module    ="dab/dab.ui.Main">
+         <arg value="--id=#1" />
+         <arg value="--udt-address=localhost" />
+         <arg value="--udt-port=2417" />
+         <arg value="--ui-port=2418" />
+      </java>
+   </target>
+
+</project>

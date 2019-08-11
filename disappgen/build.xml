@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dis-app-gen" default="jar">
+
+   <property name="jar"   value="../${ant.project.name}.jar" />
+
+   <target name="clean">
+      <delete dir="build" />
+      <delete file="${jar}" />
+   </target>
+   
+   <target name="javac">
+      <mkdir dir="build" />
+      <javac
+         srcdir           ="src"
+         destdir          ="build"
+         includeantruntime="false" />
+   </target>
+
+   <target name="jar" depends="javac">
+      <jar destfile="${jar}" basedir="build" />
+   </target>
+
+   <target name="run" depends="jar">
+      <java dir=".." fork="yes"
+         modulepath="${jar}"
+         module    ="disappgen/disappgen.Main">
+         <arg value="dab.xml" />
+      </java>
+   </target>
+
+</project>

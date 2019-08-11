@@ -1,0 +1,9 @@
+BUILD/ByteBuffer.o: src/io/ByteBuffer.cpp inc/io/ByteBuffer.hpp inc/types.hpp \
+ inc/os/StdApiException.hpp
+BUILD/DatagramSocket.o: src/io/DatagramSocket.cpp inc/io/DatagramSocket.hpp \
+ inc/os/StdApiException.hpp inc/io/ByteBuffer.hpp inc/types.hpp
+BUILD/Selector.o: src/io/Selector.cpp inc/io/Selector.hpp inc/io/sockets.hpp \
+ inc/os/StdApiException.hpp
+BUILD/Event.o: src/os/Event.cpp inc/os/Event.hpp
+BUILD/StdApiException.o: src/os/StdApiException.cpp inc/os/StdApiException.hpp
+BUILD/Args.o: src/util/Args.cpp inc/util/Args.hpp
