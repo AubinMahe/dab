@@ -3,6 +3,7 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <winsock2.h>
+#  include <iostream>
 #elif __linux__
 #  include <errno.h>
 #  include <string.h>
@@ -17,7 +18,9 @@ static const char * getSystemErrorMessage( const char * classMethod, const char 
    if( err == 0 ) {
       err = (DWORD)WSAGetLastError();
    }
-   ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, systMsg, sizeof( systMsg ), NULL );
+   if( 0 == ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, 0, err, 0, systMsg, sizeof( systMsg ), 0 )) {
+      std::cerr << "Impossible de formatter l'erreur n°" << err << std::endl;
+   }
 #elif __linux__
    strncpy( systMsg, ::strerror( errno ), sizeof( systMsg ));
 #endif

@@ -1,9 +1,13 @@
 BUILD/
+BUILD-mingw32/
 build/
 bin/
+Debug/
+Release/
 src-gen/
 *.jar
 *.a
 deps
 UniteDeTraitement
+UniteDeTraitement-mingw32
 

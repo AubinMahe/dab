@@ -34,9 +34,9 @@ namespace io {
 
       DatagramSocket & connect( const char * hostnameOrIp, unsigned short port );
 
-      bool receive( ByteBuffer & buffer, bool dontWait = false );
+      bool receive( ByteBuffer & buffer );
 
-      bool receive( ByteBuffer & buffer, sockaddr_in & from, bool dontWait = false );
+      bool receive( ByteBuffer & buffer, sockaddr_in & from );
 
       DatagramSocket & send( ByteBuffer & buffer );
 

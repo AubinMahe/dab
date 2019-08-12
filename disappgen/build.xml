@@ -5,9 +5,10 @@
 
    <target name="clean">
       <delete dir="build" />
+      <delete dir="bin" />
       <delete file="${jar}" />
    </target>
-   
+
    <target name="javac">
       <mkdir dir="build" />
       <javac

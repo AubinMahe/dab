@@ -7,7 +7,12 @@
 
 using namespace io;
 
-#include <arpa/inet.h>
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <winsock2.h>
+#else
+#  include <arpa/inet.h>
+#endif
 
 #ifdef _MSC_VER
 #  define ssize_t int
