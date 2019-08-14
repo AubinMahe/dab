@@ -154,15 +154,7 @@ namespace dab::udt {
       virtual void rechargerLaCaisse( const double & montant );
       virtual void anomalie( bool anomalie );
       virtual void lireLaCarte( const std::string & id );
-      virtual void carteLue(
-         const std::string & carteID,
-         const std::string & code,
-         byte                month,
-         ushort              year,
-         byte                nbEssais,
-         const std::string & compteID,
-         const double &      solde,
-         bool                autorise );
+      virtual void carteLue( const dab::Carte & carte, const dab::Compte & compte );
       virtual void codeSaisi( const std::string & code );
       virtual void montantSaisi( const double & code );
       virtual void carteRetiree( void );
@@ -347,18 +339,9 @@ void UniteDeTraitement::lireLaCarte( const std::string & id ) {
    _automaton.process( Event::CARTE_INSEREE );
 }
 
-void UniteDeTraitement::carteLue(
-   const std::string & carteID,
-   const std::string & code,
-   byte                month,
-   ushort              year,
-   byte                nbEssais,
-   const std::string & compteID,
-   const double &      solde,
-   bool                autorise )
-{
-   _carte .set( carteID, code, month, year, nbEssais );
-   _compte.set( compteID, solde, autorise );
+void UniteDeTraitement::carteLue( const dab::Carte & carte, const dab::Compte & compte ) {
+   _carte .set( carte.id, carte.code, carte.month, carte.year, carte.nbEssais );
+   _compte.set( compte.id, compte.solde, compte.autorise );
    if( _carte.isValid() && _compte.isValid()) {
       if( _carte.getNbEssais() == 0 ) {
          _automaton.process( Event::CARTE_LUE_0 );

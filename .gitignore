@@ -1,9 +1,13 @@
 BUILD/
+BUILD-heap/
 BUILD-mingw32/
+BUILD-mingw32-heap/
 build/
 bin/
 Debug/
+Debug-heap/
 Release/
+Release-heap/
 src-gen/
 *.jar
 *.a

@@ -18,9 +18,23 @@
       <literal name="RETRAIT_CARTE_ILLISIBLE" />
    </enumeration>
    
+   <struct name="Carte">
+      <field name="id"       type="string"  description="Identifiant de la carte" length="4" />
+      <field name="code"     type="string"  description="Identifiant de la carte" length="4" />
+      <field name="month"    type="byte"    description="Jour de péremption de la carte" />
+      <field name="year"     type="ushort"  description="Année de péremption de la carte" />
+      <field name="nbEssais" type="byte"    description="Nombre d'essais en échec de la carte" />
+   </struct>
+
+   <struct name="Compte">
+      <field name="id"       type="string"  description="Identifiant du compte"   length="4" />
+      <field name="solde"    type="double"  description="Solde du compte" />
+      <field name="autorise" type="boolean" description="Le compte est-il autorisé ?" />
+   </struct>
+
    <interface name="IHM">
       <event name="setStatus">
-         <field name="etat" type="enum" enum="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+         <field name="etat" type="user" user="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
       </event>
       <event name="setSoldeCaisse">
          <field name="solde" type="double"  description="Montant de la caisse en €" />
@@ -55,14 +69,8 @@
 
    <interface name="LecteurDeCarte">
       <event name="carteLue">
-         <field name="carteID"     type="string"  description="Identifiant de la carte" length="4" />
-         <field name="code"        type="string"  description="Identifiant de la carte" length="4" />
-         <field name="month"       type="byte"    description="Jour de péremption de la carte" />
-         <field name="year"        type="ushort"  description="Année de péremption de la carte" />
-         <field name="nbEssais"    type="byte"    description="Nombre d'essais en échec de la carte" />
-         <field name="compteID"    type="string"  description="Identifiant du compte"   length="4" />
-         <field name="solde"       type="double"  description="Solde du compte" />
-         <field name="autorise"    type="boolean" description="Le compte est-il autorisé ?" />
+         <field name="carte"  type="user" user="Carte"  description="Données de carte retournées par le Site central" />
+         <field name="compte" type="user" user="Compte" description="Données de compte retournées par le Site central" />
       </event>
    </interface>
 

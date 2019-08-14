@@ -39,15 +39,11 @@ public final class Server extends Thread implements ISiteCentral {
          try { Thread.sleep( 3000 ); } catch( final InterruptedException x ) {/**/}
          final ICompte compte = _repository.getCompte( carte.getId());
          if( compte != null ) {
-            _lecteurDeCarte.carteLue( from,
-               carte.getId(),
-               carte.getCode(),
-               carte.getExpirationMonth(),
-               carte.getExpirationYear(),
-               carte.getNbEssais(),
-               compte.getId(),
-               compte.getSolde(),
-               compte.getAutorise());
+            final sc.Carte  netCarte  = new sc.Carte();
+            final sc.Compte netCompte = new sc.Compte();
+            carte .copyTo( netCarte );
+            compte.copyTo( netCompte );
+            _lecteurDeCarte.carteLue( from, netCarte, netCompte );
          }
       }
    }

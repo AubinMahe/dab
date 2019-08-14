@@ -103,4 +103,13 @@ public class Carte implements ICarte {
    public byte getNbEssais() {
       return (byte)_nbEssais.get();
    }
+
+   @Override
+   public void copyTo( sc.Carte out ) {
+      out.id       = getId();
+      out.code     = getCode();
+      out.month    = getExpirationMonth();
+      out.year     = getExpirationYear();
+      out.nbEssais = getNbEssais();
+   }
 }

@@ -6,4 +6,5 @@ public interface ICompte {
    double  getSolde();
    void    retrait( double montant );
    boolean getAutorise();
+   void    copyTo( Compte out );
 }

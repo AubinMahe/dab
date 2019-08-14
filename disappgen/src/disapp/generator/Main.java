@@ -1,4 +1,4 @@
-package disappgen;
+package disapp.generator;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +21,10 @@ import org.w3c.dom.NodeList;
 public class Main {
 
    private static final Map<String, List<String>>          _enums      = new LinkedHashMap<>();
+   private static final Map<String, Map<String, Element>>  _structs    = new LinkedHashMap<>();
    private static final Map<String, String>                _enumsType  = new HashMap<>();
    private static final Map<String, Map<String, NodeList>> _interfaces = new LinkedHashMap<>();
-   private static final Map<String, SortedSet<String>>     _enumsUsage = new HashMap<>();
+   private static final Map<String, SortedSet<String>>     _typesUsage = new HashMap<>();
 
    private static long _modelLastModified = 0L;
 
@@ -41,6 +42,23 @@ public class Main {
             final Element xLiteral     = (Element)xLiterals.item( j );
             final String  xLiteralName = xLiteral.getAttribute( "name" );
             literals.add( xLiteralName );
+         }
+      }
+   }
+
+   private static void readStructs( Document doc ) {
+      final NodeList xStructs = doc.getElementsByTagName( "struct" );
+      for( int i = 0, iCount = xStructs.getLength(); i < iCount; ++i ) {
+         final Element  xStruct     = (Element)xStructs.item( i );
+         final String   xStructName = xStruct.getAttribute( "name" );
+         final NodeList xFields     = xStruct.getElementsByTagName( "field" );
+         final Map<String,
+            Element>    fields      = new LinkedHashMap<>();
+         _structs.put( xStructName, fields );
+         for( int j = 0, jCount = xFields.getLength(); j < jCount; ++j ) {
+            final Element xField     = (Element)xFields.item( j );
+            final String  xFieldName = xField.getAttribute( "name" );
+            fields.put( xFieldName, xField );
          }
       }
    }
@@ -85,6 +103,134 @@ public class Main {
          for( final String literal : literals ) {
             ps.printf( "   %s,\n", literal );
          }
+         ps.printf( "}\n" );
+      }
+      System.out.printf( "%s written\n", target.getPath());
+   }
+
+   private static void generateJavaStruct(
+      String  structName,
+      String  genDir,
+      String  pckg    ) throws IOException
+   {
+      final File target =
+         new File( genDir, pckg.replaceAll( "\\.", "/" ) + '/' + structName + ".java" );
+      if( isUpToDate( target )) {
+         return;
+      }
+      target.getParentFile().mkdirs();
+      try( final PrintStream ps = new PrintStream( target )) {
+         ps.printf( "package %s;\n", pckg );
+         ps.printf( "\n" );
+         ps.printf( "import java.nio.ByteBuffer;\n" );
+         ps.printf( "\n" );
+         ps.printf( "import io.ByteBufferHelper;\n" );
+         ps.printf( "\n" );
+         ps.printf( "public class %s {\n", structName );
+         ps.printf( "\n" );
+         final Map<String, Element> xFields = _structs.get( structName );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "boolean": ps.printf( "   public boolean %s;\n", xName ); break;
+            case "byte"   : ps.printf( "   public byte    %s;\n", xName ); break;
+            case "short"  : ps.printf( "   public short   %s;\n", xName ); break;
+            case "ushort" : ps.printf( "   public short   %s;\n", xName ); break;
+            case "int"    : ps.printf( "   public int     %s;\n", xName ); break;
+            case "uint"   : ps.printf( "   public int     %s;\n", xName ); break;
+            case "long"   : ps.printf( "   public long    %s;\n", xName ); break;
+            case "ulong"  : ps.printf( "   public long    %s;\n", xName ); break;
+            case "float"  : ps.printf( "   public float   %s;\n", xName ); break;
+            case "double" : ps.printf( "   public double  %s;\n", xName ); break;
+            case "string" : ps.printf( "   public String  %s;\n", xName ); break;
+            case "user"   :
+               if( _enums.containsKey( xUser )) {
+                  ps.printf( "   %s _%s;\n", xUser, xName );
+               }
+               else if( _structs.containsKey( xUser )) {
+                  ps.printf( "   %s _%s = new %s();\n", xUser, xName, xUser );
+               }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+               break;
+            }
+         }
+         ps.printf( "\n" );
+         ps.printf( "   public void put( ByteBuffer target ) {\n" );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "boolean":
+               ps.printf( "      ByteBufferHelper.putBoolean( target, %s );\n", xName );
+               break;
+            case "byte"   : ps.printf( "      target.put( %s );\n"      , xName ); break;
+            case "short"  : ps.printf( "      target.putShort( %s );\n" , xName ); break;
+            case "ushort" : ps.printf( "      target.putShort( %s );\n" , xName ); break;
+            case "int"    : ps.printf( "      target.putInt( %s );\n"   , xName ); break;
+            case "uint"   : ps.printf( "      target.putInt( %s );\n"   , xName ); break;
+            case "long"   : ps.printf( "      target.putLong( %s );\n"  , xName ); break;
+            case "ulong"  : ps.printf( "      target.putLong( %s );\n"  , xName ); break;
+            case "float"  : ps.printf( "      target.putFloat( %s );\n" , xName ); break;
+            case "double" : ps.printf( "      target.putDouble( %s );\n", xName ); break;
+            case "string" :
+               ps.printf( "      ByteBufferHelper.putString( target, %s );\n" , xName );
+               break;
+            case "user"   :
+               if( _enums.containsKey( xUser )) {
+                  ps.printf( "      target.put((byte)%s.ordinal());\n", xName );
+               }
+               else if( _structs.containsKey( xUser )) {
+                  ps.printf( "      %s.put( target );\n", xName );
+               }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+               break;
+            }
+         }
+         ps.printf( "   }\n" );
+         ps.printf( "\n" );
+         ps.printf( "   public void get( ByteBuffer source ) {\n" );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "boolean":
+               ps.printf( "      %s = ByteBufferHelper.getBoolean( source );\n", xName );
+               break;
+            case "byte"   : ps.printf( "      %s = source.get();\n"      , xName ); break;
+            case "short"  : ps.printf( "      %s = source.getShort();\n" , xName ); break;
+            case "ushort" : ps.printf( "      %s = source.getShort();\n" , xName ); break;
+            case "int"    : ps.printf( "      %s = source.getInt();\n"   , xName ); break;
+            case "uint"   : ps.printf( "      %s = source.getInt();\n"   , xName ); break;
+            case "long"   : ps.printf( "      %s = source.getLong();\n"  , xName ); break;
+            case "ulong"  : ps.printf( "      %s = source.getLong();\n"  , xName ); break;
+            case "float"  : ps.printf( "      %s = source.getFloat();\n" , xName ); break;
+            case "double" : ps.printf( "      %s = source.getDouble();\n", xName ); break;
+            case "string" :
+               ps.printf( "      %s = ByteBufferHelper.getString( source );\n", xName );
+               break;
+            case "user"   :
+               if( _enums.containsKey( xUser )) {
+                  ps.printf( "      %s = %s.values()[source.get()];\n", xUser, xName, xUser );
+               }
+               else if( _structs.containsKey( xUser )) {
+                  ps.printf( "      %s.get( source );\n", xName );
+               }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+            break;
+            }
+         }
+         ps.printf( "   }\n" );
+         ps.printf( "\n" );
          ps.printf( "}\n" );
       }
       System.out.printf( "%s written\n", target.getPath());
@@ -175,7 +321,132 @@ public class Main {
       System.out.printf( "%s written\n", target.getPath());
    }
 
-   private static void generateEnumsUsedBy(
+   private static void generateCppStructHeader(
+      String  structName,
+      String  genDir,
+      String  namespace ) throws IOException
+   {
+      final File target =
+         new File( genDir, namespace.replaceAll( "::", "/" ) + '/' + structName + ".hpp" );
+      if( isUpToDate( target )) {
+         return;
+      }
+      target.getParentFile().mkdirs();
+      try( final PrintStream ps = new PrintStream( target )) {
+         ps.printf( "#pragma once\n" );
+         ps.printf( "\n" );
+         ps.printf( "#include <io/ByteBuffer.hpp>\n" );
+         ps.printf( "\n" );
+         ps.printf( "namespace %s {\n", namespace );
+         ps.printf( "\n" );
+         ps.printf( "   struct %s {\n", structName );
+         ps.printf( "\n" );
+         final Map<String, Element> xFields = _structs.get( structName );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "user"   : ps.printf( "      %s %s;\n"     , xUser, xName ); break;
+            case "string" : ps.printf( "      std::%s %s;\n", xType, xName ); break;
+            case "boolean": ps.printf( "      bool %s;\n"   , xName );        break;
+            default       : ps.printf( "      %s %s;\n"     , xType, xName ); break;
+            }
+         }
+         ps.printf( "\n" );
+         ps.printf( "      void put( io::ByteBuffer & target ) const;\n" );
+         ps.printf( "      void get( io::ByteBuffer & source );\n" );
+         ps.printf( "   };\n" );
+         ps.printf( "}\n" );
+      }
+      System.out.printf( "%s written\n", target.getPath());
+   }
+
+   private static void generateCppStructBody(
+      String  structName,
+      String  genDir,
+      String  namespace ) throws IOException
+   {
+      final File target =
+         new File( genDir, namespace.replaceAll( "::", "/" ) + '/' + structName + ".cpp" );
+      if( isUpToDate( target )) {
+         return;
+      }
+      target.getParentFile().mkdirs();
+      try( final PrintStream ps = new PrintStream( target )) {
+         ps.printf( "#include <%s/%s.hpp>\n", namespace, structName );
+         ps.printf( "\n" );
+         ps.printf( "using namespace %s;\n", namespace );
+         ps.printf( "\n" );
+         ps.printf( "void %s::put( io::ByteBuffer & target ) const {\n", structName );
+         final Map<String, Element> xFields = _structs.get( structName );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "boolean": ps.printf( "   target.putBoolean( %s );\n", xName ); break;
+            case "byte"   : ps.printf( "   target.putByte( %s );\n"   , xName ); break;
+            case "short"  : ps.printf( "   target.putShort( %s );\n"  , xName ); break;
+            case "ushort" : ps.printf( "   target.putShort( %s );\n"  , xName ); break;
+            case "int"    : ps.printf( "   target.putInt( %s );\n"    , xName ); break;
+            case "uint"   : ps.printf( "   target.putInt( %s );\n"    , xName ); break;
+            case "long"   : ps.printf( "   target.putLong( %s );\n"   , xName ); break;
+            case "ulong"  : ps.printf( "   target.putLong( %s );\n"   , xName ); break;
+            case "float"  : ps.printf( "   target.putFloat( %s );\n"  , xName ); break;
+            case "double" : ps.printf( "   target.putDouble( %s );\n" , xName ); break;
+            case "string" : ps.printf( "   target.putString( %s );\n" , xName ); break;
+            case "user"   :
+               if( _enums.containsKey( xUser )) {
+                  ps.printf( "   target.putByte((byte)%s );\n", xName );
+               }
+               else if( _structs.containsKey( xUser )) {
+                  ps.printf( "   %s.put( target );\n", xName );
+               }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+               break;
+            }
+         }
+         ps.printf( "}\n" );
+         ps.printf( "\n" );
+         ps.printf( "void %s::get( io::ByteBuffer & source ) {\n", structName );
+         for( final Element xField : xFields.values()) {
+            final String xName = xField.getAttribute( "name" );
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            switch( xType ) {
+            case "boolean": ps.printf( "   %s = source.getBoolean();\n", xName ); break;
+            case "byte"   : ps.printf( "   %s = source.getByte();\n"   , xName ); break;
+            case "short"  : ps.printf( "   %s = source.getShort();\n"  , xName ); break;
+            case "ushort" : ps.printf( "   %s = source.getShort();\n"  , xName ); break;
+            case "int"    : ps.printf( "   %s = source.getInt();\n"    , xName ); break;
+            case "uint"   : ps.printf( "   %s = source.getInt();\n"    , xName ); break;
+            case "long"   : ps.printf( "   %s = source.getLong();\n"   , xName ); break;
+            case "ulong"  : ps.printf( "   %s = source.getLong();\n"   , xName ); break;
+            case "float"  : ps.printf( "   %s = source.getFloat();\n"  , xName ); break;
+            case "double" : ps.printf( "   %s = source.getDouble();\n" , xName ); break;
+            case "string" : ps.printf( "   %s = source.getString();\n" , xName ); break;
+            case "user"   :
+               if( _enums.containsKey( xUser )) {
+                  ps.printf( "   %s = (%s)source.getByte();\n", xName, xUser );
+               }
+               else if( _structs.containsKey( xUser )) {
+                  ps.printf( "   %s.get( source );\n", xName );
+               }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+            break;
+            }
+         }
+         ps.printf( "}\n" );
+      }
+      System.out.printf( "%s written\n", target.getPath());
+   }
+
+   private static void generateTypesUsedBy(
       NodeList     facets,
       List<String> generated,
       String       genDir,
@@ -190,22 +461,36 @@ public class Main {
             for( int j = 0, jCount = xFields.getLength(); j < jCount; ++j ) {
                final Element xField = (Element)xFields.item( j );
                final String  xType  = xField.getAttribute( "type" );
-               if( xType.equals( "enum" )) {
-                  final String xEnum = xField.getAttribute( "enum" );
-                  if( ! generated.contains( xEnum )) {
-                     SortedSet<String> enums = _enumsUsage.get( interfaceName );
-                     if( enums == null ) {
-                        _enumsUsage.put( interfaceName, enums = new TreeSet<>());
+               if( xType.equals( "user" )) {
+                  final String xUser = xField.getAttribute( "user" );
+                  if(( xUser != null )&&( ! generated.contains( xUser ))) {
+                     SortedSet<String> types = _typesUsage.get( interfaceName );
+                     if( types == null ) {
+                        _typesUsage.put( interfaceName, types = new TreeSet<>());
                      }
-                     enums.add( xEnum );
-                     if( javaLanguage ) {
-                        generateJavaEnum( xEnum, genDir, packageOrNamespace );
+                     types.add( xUser );
+                     if( _enums.containsKey( xUser )) {
+                        if( javaLanguage ) {
+                           generateJavaEnum( xUser, genDir, packageOrNamespace );
+                        }
+                        else {
+                           generateCppEnumHeader( xUser, genDir, packageOrNamespace );
+                           generateCppEnumBody  ( xUser, genDir, packageOrNamespace );
+                        }
+                     }
+                     else if( _structs.containsKey( xUser )) {
+                        if( javaLanguage ) {
+                           generateJavaStruct( xUser, genDir, packageOrNamespace );
+                        }
+                        else {
+                           generateCppStructHeader( xUser, genDir, packageOrNamespace );
+                           generateCppStructBody  ( xUser, genDir, packageOrNamespace );
+                        }
                      }
                      else {
-                        generateCppEnumHeader( xEnum, genDir, packageOrNamespace );
-                        generateCppEnumBody  ( xEnum, genDir, packageOrNamespace );
+                        throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
                      }
-                     generated.add( xEnum );
+                     generated.add( xUser );
                   }
                }
             }
@@ -226,14 +511,14 @@ public class Main {
             switch( xType ) {
             case "ushort" : signature += "int";  break;
             case "uint"   : signature += "long"; break;
-            case "enum"   : signature += xField.getAttribute( "enum" ); break;
+            case "user"   : signature += xField.getAttribute( "user" ); break;
             case "string" : signature += "String"; break;
             default       : signature += xType; break;
             }
          }
          else {
             switch( xType ) {
-            case "enum"   : signature += xField.getAttribute( "enum" ); break;
+            case "user"   : signature += "const " + xField.getAttribute( "user" ) + " &"; break;
             case "string" : signature += "const std::string &"; break;
             case "double" : signature += "const double &"; break;
             case "boolean": signature += "bool"; break;
@@ -263,10 +548,10 @@ public class Main {
                ps.printf( "\n" );
                ps.printf( "#include <io/DatagramSocket.hpp>\n" );
                ps.printf( "\n" );
-               final SortedSet<String> enums = _enumsUsage.get( interfaceName );
-               if( enums != null ) {
-                  for( final String enm : enums ) {
-                     ps.printf( "#include <%s/%s.hpp>\n", namespace, enm );
+               final SortedSet<String> types = _typesUsage.get( interfaceName );
+               if( types != null ) {
+                  for( final String type : types ) {
+                     ps.printf( "#include <%s/%s.hpp>\n", namespace, type );
                      ps.printf( "\n" );
                   }
                }
@@ -320,7 +605,7 @@ public class Main {
    }
 
    private static int getEnumSize( Element xField ) {
-      final String scalar = _enumsType.get( xField.getAttribute( "enum" ));
+      final String scalar = _enumsType.get( xField.getAttribute( "user" ));
       switch( scalar ) {
       case "boolean": return 1;
       case "byte"   : return 1;
@@ -339,6 +624,41 @@ public class Main {
             xField.getAttribute( "name" ) +
             "': 'enum' type can't be based on '" + scalar + "'" );
       }
+   }
+
+   private static int getStructSize( Collection<Element> fields ) {
+      int msgSize = 0;
+      for( final Element xField : fields ) {
+         final String xType = xField.getAttribute( "type" );
+         switch( xType ) {
+         case "boolean": msgSize += 1; break;
+         case "byte"   : msgSize += 1; break;
+         case "short"  : msgSize += 2; break;
+         case "ushort" : msgSize += 2; break;
+         case "int"    : msgSize += 4; break;
+         case "uint"   : msgSize += 4; break;
+         case "long"   : msgSize += 8; break;
+         case "ulong"  : msgSize += 8; break;
+         case "float"  : msgSize += 4; break;
+         case "double" : msgSize += 8; break;
+         case "string" : msgSize += 4 + getStringSize( xField ); break;
+         case "user"   : msgSize += getUserTypeSize( xField ); break;
+         }
+      }
+      return msgSize;
+   }
+
+   private static int getUserTypeSize( Element xField ) {
+      final String       name  = xField.getAttribute( "user" );
+      final List<String> xEnum = _enums.get( name );
+      if( xEnum != null ) {
+         return getEnumSize( xField );
+      }
+      final Map<String, Element> xStruct = _structs.get( name );
+      if( xStruct != null ) {
+         return getStructSize( xStruct.values());
+      }
+      return 0;
    }
 
    private static int getStringSize( Element xField ) {
@@ -375,7 +695,7 @@ public class Main {
             case "float"  : msgSize += 4; break;
             case "double" : msgSize += 8; break;
             case "string" : msgSize += 4 + getStringSize( xField ); break;
-            case "enum"   : msgSize += getEnumSize( xField ); break;
+            case "user"   : msgSize += getUserTypeSize( xField ); break;
             }
          }
          capacity = Math.max( capacity, msgSize );
@@ -455,20 +775,30 @@ public class Main {
                      final Element xField = (Element)xFields.item( j );
                      final String xName = xField.getAttribute( "name" );
                      final String xType = xField.getAttribute( "type" );
-                     ps.printf( "         _out.put" );
+                     final String xUser = xField.getAttribute( "user" );
                      switch( xType ) {
-                     case "boolean": ps.printf( "Boolean( %s );\n", xName ); break;
-                     case "byte"   : ps.printf( "Byte( %s );\n"   , xName ); break;
-                     case "short"  : ps.printf( "Short( %s );\n"  , xName ); break;
-                     case "ushort" : ps.printf( "UShort( %s );\n" , xName ); break;
-                     case "int"    : ps.printf( "Int( %s );\n"    , xName ); break;
-                     case "uint"   : ps.printf( "UInt( %s );\n"   , xName ); break;
-                     case "long"   : ps.printf( "Long( %s );\n"   , xName ); break;
-                     case "ulong"  : ps.printf( "ULong( %s );\n"  , xName ); break;
-                     case "float"  : ps.printf( "Float( %s );\n"  , xName ); break;
-                     case "double" : ps.printf( "Double( %s );\n" , xName ); break;
-                     case "string" : ps.printf( "String( %s );\n" , xName ); break;
-                     case "enum"   : ps.printf( "Byte( static_cast<byte>( %s ));\n", xName ); break;
+                     case "boolean": ps.printf( "         _out.putBoolean( %s );\n", xName ); break;
+                     case "byte"   : ps.printf( "         _out.putByte( %s );\n"   , xName ); break;
+                     case "short"  : ps.printf( "         _out.putShort( %s );\n"  , xName ); break;
+                     case "ushort" : ps.printf( "         _out.putUShort( %s );\n" , xName ); break;
+                     case "int"    : ps.printf( "         _out.putInt( %s );\n"    , xName ); break;
+                     case "uint"   : ps.printf( "         _out.putUInt( %s );\n"   , xName ); break;
+                     case "long"   : ps.printf( "         _out.putLong( %s );\n"   , xName ); break;
+                     case "ulong"  : ps.printf( "         _out.putULong( %s );\n"  , xName ); break;
+                     case "float"  : ps.printf( "         _out.putFloat( %s );\n"  , xName ); break;
+                     case "double" : ps.printf( "         _out.putDouble( %s );\n" , xName ); break;
+                     case "string" : ps.printf( "         _out.putString( %s );\n" , xName ); break;
+                     case "user"   :
+                        if( _enums.containsKey( xUser )) {
+                           ps.printf( "         _out.putByte( static_cast<byte>( %s ));\n", xName );
+                        }
+                        else if( _structs.containsKey( xUser )) {
+                           ps.printf( "         %s.put( _out );\n", xName );
+                        }
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                        }
+                        break;
                      }
                   }
                   ps.printf( "         _out.flip();\n" );
@@ -534,6 +864,17 @@ public class Main {
             ps.printf( "#include <string>\n" );
             ps.printf( "#include <types.hpp>\n" );
             ps.printf( "\n" );
+            for( int i = 0, iCount = xOffers.getLength(); i < iCount; ++i ) {
+               final Element           xOffer      = (Element)xOffers.item( i );
+               final String            xIntrfcName = xOffer.getAttribute( "interface" );
+               final SortedSet<String> types       = _typesUsage.get( xIntrfcName );
+               if( types != null ) {
+                  for( final String type : types ) {
+                     ps.printf( "#include <%s/%s.hpp>\n", namespace, type );
+                     ps.printf( "\n" );
+                  }
+               }
+            }
             ps.printf( "namespace %s {\n", namespace );
             ps.printf( "\n" );
             ps.printf( "   class I%s {\n", name );
@@ -687,25 +1028,32 @@ public class Main {
                      final Element xField = (Element)xFields.item( j );
                      final String  xName  = xField.getAttribute( "name" );
                      final String  xType  = xField.getAttribute( "type" );
-                     final String  xEnum  = xField.getAttribute( "enum" );
-                     ps.printf( "            " );
+                     final String  xUser  = xField.getAttribute( "user" );
                      switch( xType ) {
-                     case "boolean": ps.printf( "bool %s = _in.getBoolean("      , xName ); break;
-                     case "byte"   : ps.printf( "byte %s = _in.getByte("         , xName ); break;
-                     case "short"  : ps.printf( "short %s = _in.getShort("       , xName ); break;
-                     case "ushort" : ps.printf( "ushort %s = _in.getUShort("     , xName ); break;
-                     case "int"    : ps.printf( "int %s = _in.getInt("           , xName ); break;
-                     case "uint"   : ps.printf( "uint %s = _in.getUInt("         , xName ); break;
-                     case "long"   : ps.printf( "int64_t %s = _in.getLong("      , xName ); break;
-                     case "ulong"  : ps.printf( "uint64_t %s = _in.getULong("    , xName ); break;
-                     case "float"  : ps.printf( "float %s = _in.getFloat("       , xName ); break;
-                     case "double" : ps.printf( "double %s = _in.getDouble("     , xName ); break;
-                     case "string" : ps.printf( "std::string %s = _in.getString(", xName ); break;
-                     case "enum"   : ps.printf( "%s %s = static_cast<%s>( _in.getByte()",
-                        xEnum, xName, xEnum );
+                     case "boolean": ps.printf( "            bool %s = _in.getBoolean();\n"      , xName ); break;
+                     case "byte"   : ps.printf( "            byte %s = _in.getByte();\n"         , xName ); break;
+                     case "short"  : ps.printf( "            short %s = _in.getShort();\n"       , xName ); break;
+                     case "ushort" : ps.printf( "            ushort %s = _in.getUShort();\n"     , xName ); break;
+                     case "int"    : ps.printf( "            int %s = _in.getInt();\n"           , xName ); break;
+                     case "uint"   : ps.printf( "            uint %s = _in.getUInt();\n"         , xName ); break;
+                     case "long"   : ps.printf( "            int64_t %s = _in.getLong();\n"      , xName ); break;
+                     case "ulong"  : ps.printf( "            uint64_t %s = _in.getULong();\n"    , xName ); break;
+                     case "float"  : ps.printf( "            float %s = _in.getFloat();\n"       , xName ); break;
+                     case "double" : ps.printf( "            double %s = _in.getDouble();\n"     , xName ); break;
+                     case "string" : ps.printf( "            std::string %s = _in.getString();\n", xName ); break;
+                     case "user"   :
+                        if( _enums.containsKey( xUser )) {
+                           ps.printf( "            %s %s = static_cast<%s>( _in.getByte());\n", xUser, xName, xUser );
+                        }
+                        else if( _structs.containsKey( xUser )) {
+                           ps.printf( "            %s %s;\n", xUser, xName );
+                           ps.printf( "            %s.get( _in );\n", xName );
+                        }
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                        }
                      break;
                      }
-                     ps.printf( ");\n" );
                      if( ! signature.isBlank()) {
                         signature += ", ";
                      }
@@ -813,8 +1161,8 @@ public class Main {
       String   namespace ) throws IOException
    {
       final List<String> generated = new LinkedList<>();
-      generateEnumsUsedBy( xOffers  , generated, genDir, namespace, false );
-      generateEnumsUsedBy( xRequires, generated, genDir, namespace, false );
+      generateTypesUsedBy( xOffers  , generated, genDir, namespace, false );
+      generateTypesUsedBy( xRequires, generated, genDir, namespace, false );
       generated.clear();
 
       generateCppRequiredHeaders( xRequires, genDir, namespace );
@@ -844,7 +1192,7 @@ public class Main {
                ps.printf( "import java.io.IOException;\n" );
                ps.printf( "import java.net.SocketAddress;\n" );
                ps.printf( "\n" );
-               final SortedSet<String> enums = _enumsUsage.get( interfaceName );
+               final SortedSet<String> enums = _typesUsage.get( interfaceName );
                if( enums != null ) {
                   for( final String enm : enums ) {
                      ps.printf( "import %s.%s;\n", pckg, enm );
@@ -903,7 +1251,7 @@ public class Main {
                ps.printf( "import io.ByteBufferHelper;\n" );
                ps.printf( "import %s.I%s;\n", pckg, interfaceName );
                ps.printf( "\n" );
-               final SortedSet<String> enums = _enumsUsage.get( interfaceName );
+               final SortedSet<String> enums = _typesUsage.get( interfaceName );
                if( enums != null ) {
                   for( final String enm : enums ) {
                      ps.printf( "import %s.%s;\n", pckg, enm );
@@ -955,7 +1303,7 @@ public class Main {
                      final Element xField = (Element)xFields.item( j );
                      final String xName = xField.getAttribute( "name" );
                      final String xType = xField.getAttribute( "type" );
-                     ps.printf( "" );
+                     final String xUser = xField.getAttribute( "user" );
                      switch( xType ) {
                      case "boolean": ps.printf( "      ByteBufferHelper.putBoolean( _out, %s );\n", xName ); break;
                      case "byte"   : ps.printf( "      _out.put( %s );\n"       , xName ); break;
@@ -968,7 +1316,17 @@ public class Main {
                      case "float"  : ps.printf( "      _out.putFloat( %s );\n"  , xName ); break;
                      case "double" : ps.printf( "      _out.putDouble( %s );\n" , xName ); break;
                      case "string" : ps.printf( "      ByteBufferHelper.putString( _out, %s );\n" , xName ); break;
-                     case "enum"   : ps.printf( "      _out.put((byte)%s.ordinal());\n", xName ); break;
+                     case "user"   :
+                        if( _enums.containsKey( xUser )) {
+                           ps.printf( "      _out.put((byte)%s.ordinal());\n", xName );
+                        }
+                        else if( _structs.containsKey( xUser )) {
+                           ps.printf( "      %s.put( _out );\n", xName );
+                        }
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                        }
+                        break;
                      }
                   }
                   ps.printf( "      _out.flip();\n" );
@@ -1004,7 +1362,7 @@ public class Main {
             ps.printf( "import io.ByteBufferHelper;\n" );
             ps.printf( "import %s.I%s;\n", pckg, name );
             ps.printf( "\n" );
-            final SortedSet<String> enums = _enumsUsage.get( name );
+            final SortedSet<String> enums = _typesUsage.get( name );
             if( enums != null ) {
                for( final String enm : enums ) {
                   ps.printf( "import %s.%s;\n", pckg, enm );
@@ -1061,7 +1419,7 @@ public class Main {
                      final Element xField = (Element)xFields.item( j );
                      final String  xName  = xField.getAttribute( "name" );
                      final String  xType  = xField.getAttribute( "type" );
-                     final String  xEnum  = xField.getAttribute( "enum" );
+                     final String  xUser  = xField.getAttribute( "user" );
                      ps.printf( "         " );
                      switch( xType ) {
                      case "boolean":
@@ -1079,8 +1437,16 @@ public class Main {
                      case "string" :
                         ps.printf( "final String %s = ByteBufferHelper.getString( _in );\n", xName );
                         break;
-                     case "enum"   : ps.printf( "final %s %s = %s.values()[_in.get()];\n",
-                        xEnum, xName, xEnum );
+                     case "user"   :
+                        if( _enums.containsKey( xUser )) {
+                           ps.printf( "final %s %s = %s.values()[_in.get()];\n", xUser, xName, xUser );
+                        }
+                        else if( _structs.containsKey( xUser )) {
+                           ps.printf( "final %s %s = new %s( _in );\n", xUser, xName, xUser );
+                        }
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                        }
                      break;
                      }
                      if( ! signature.isBlank()) {
@@ -1147,8 +1513,8 @@ public class Main {
       String   pckg     ) throws IOException
    {
       final List<String> generated = new LinkedList<>();
-      generateEnumsUsedBy( xOffers  , generated, genDir, pckg, true );
-      generateEnumsUsedBy( xRequires, generated, genDir, pckg, true );
+      generateTypesUsedBy( xOffers  , generated, genDir, pckg, true );
+      generateTypesUsedBy( xRequires, generated, genDir, pckg, true );
       generated.clear();
 
       generateJavaInterface( xRequires, genDir, pckg );
@@ -1187,13 +1553,14 @@ public class Main {
 
    public static void main( String[] args ) throws Throwable {
       if( args.length != 1 ) {
-         System.err.println( "usage: disappgen.Main <xml system file>" );
+         System.err.println( "usage: disapp.generator.Main <xml system file>" );
          System.exit(1);
       }
       final File model = new File( args[0] );
       final Document doc =
          DocumentBuilderFactory.newInstance().newDocumentBuilder().parse( model );
       readEnums( doc );
+      readStructs( doc );
       readInterfaces( doc );
       _modelLastModified = model.lastModified();
       generateComponents( doc );

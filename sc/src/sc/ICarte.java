@@ -9,4 +9,5 @@ public interface ICarte {
    short  getExpirationYear();
    byte   getNbEssais();
    void   incrNbEssais();
+   void   copyTo( Carte out );
 }

@@ -24,7 +24,7 @@
       <xs:attribute type="enumType"  name="type" use="optional" default="byte"/>
    </xs:complexType>
    
-   <xs:simpleType name="scalarType">
+   <xs:simpleType name="fieldtypeType">
       <xs:restriction base="xs:string">
          <xs:enumeration value="boolean" />
          <xs:enumeration value="byte" />
@@ -37,22 +37,29 @@
          <xs:enumeration value="float" />
          <xs:enumeration value="double" />
          <xs:enumeration value="string" />
-         <xs:enumeration value="enum" />
+         <xs:enumeration value="user" />
       </xs:restriction>
    </xs:simpleType>
 
    <xs:complexType name="fieldType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:string"  name="name"        use="required" />
-            <xs:attribute type="scalarType" name="type"        use="required" />
-            <xs:attribute type="xs:string"  name="enum"        use="optional" />
-            <xs:attribute type="xs:string"  name="length"      use="optional" />
-            <xs:attribute type="xs:string"  name="description" use="required" />
+            <xs:attribute type="xs:string"     name="name"        use="required" />
+            <xs:attribute type="fieldtypeType" name="type"        use="required" />
+            <xs:attribute type="xs:string"     name="user"        use="optional" />
+            <xs:attribute type="xs:string"     name="length"      use="optional" />
+            <xs:attribute type="xs:string"     name="description" use="required" />
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
 
+   <xs:complexType name="structType" mixed="true">
+      <xs:sequence>
+         <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="1" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required" />
+   </xs:complexType>
+   
    <xs:complexType name="eventType" mixed="true">
       <xs:sequence>
          <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="0" />
@@ -105,6 +112,7 @@
    <xs:complexType name="disappType">
       <xs:sequence>
          <xs:element type="enumerationType" name="enumeration" maxOccurs="unbounded" minOccurs="0" />
+         <xs:element type="structType"      name="struct"      maxOccurs="unbounded" minOccurs="0" />
          <xs:element type="interfaceType"   name="interface"   maxOccurs="unbounded" minOccurs="1" />
          <xs:element type="componentType"   name="component"   maxOccurs="unbounded" minOccurs="1" />
       </xs:sequence>
@@ -112,27 +120,36 @@
    </xs:complexType>
 
    <xs:element name="distributed-application" type="disappType">
-      <xs:key name="interface-name">
+      <xs:unique name="user-name">
+         <xs:selector xpath="enumeration|struct"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:unique name="component-name">
+         <xs:selector xpath=".//component"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:unique name="interface-name">
          <xs:selector xpath=".//interface"/>
          <xs:field xpath="./@name"/>
-      </xs:key>
+      </xs:unique>
+
       <xs:keyref name="offers" refer="interface-name">
          <xs:selector xpath=".//component/offers"/>
          <xs:field xpath="./@interface"/>
       </xs:keyref>
+
       <xs:keyref name="requires" refer="interface-name">
          <xs:selector xpath=".//component/requires"/>
          <xs:field xpath="./@interface"/>
       </xs:keyref>
 
-      <xs:key name="enum-name">
-         <xs:selector xpath=".//enumeration"/>
-         <xs:field xpath="./@name"/>
-      </xs:key>
-      <xs:keyref name="field" refer="enum-name">
+      <xs:keyref name="field" refer="user-name">
          <xs:selector xpath=".//interface/event/field"/>
-         <xs:field xpath="./@enum"/>
+         <xs:field xpath="./@user"/>
       </xs:keyref>
+
    </xs:element>
 
 </xs:schema>

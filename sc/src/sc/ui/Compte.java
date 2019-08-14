@@ -57,4 +57,11 @@ public class Compte implements ICompte {
    public boolean getAutorise() {
       return _autorise.get();
    }
+
+   @Override
+   public void copyTo( sc.Compte out ) {
+      out.id       = getId();
+      out.solde    = getSolde();
+      out.autorise = getAutorise();
+   }
 }

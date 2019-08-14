@@ -24,7 +24,7 @@
    <target name="run" depends="jar">
       <java dir=".." fork="yes"
          modulepath="${jar}"
-         module    ="disappgen/disappgen.Main">
+         module    ="disapp/disapp.generator.Main">
          <arg value="dab.xml" />
       </java>
    </target>

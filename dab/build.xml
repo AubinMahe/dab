@@ -17,7 +17,7 @@
          dir       =".."
          fork      ="true"
          modulepath="../dis-app-gen.jar"
-         module    ="disappgen/disappgen.Main">
+         module    ="disapp/disapp.generator.Main">
          <arg value="dab.xml" />
       </java>
    </target>
