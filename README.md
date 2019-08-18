@@ -10,3 +10,4 @@
   * types échangés (limités aux énumérés et aux types scalaires)
   * interfaces
   * composants qui offrent et requièrent des interfaces et qui sont implémentés dans un seul langage
+- Librairie simplissime de modules C, en allocation statique (aucun malloc), reprenant le découpage des classes C++.
