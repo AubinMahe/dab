@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../types.h"
 #include <util/error_codes.h>
 #ifdef _WIN32
@@ -9,7 +13,7 @@
 #include <pthread.h>
 #endif
 
-typedef struct os_mutex_tag {
+typedef struct os_mutex_s {
 
 #ifdef _WIN32
    HANDLE          mutex;
@@ -17,4 +21,8 @@ typedef struct os_mutex_tag {
    pthread_mutex_t mutex;
 #endif
 
-} os_mutex_t;
+} os_mutex;
+
+#ifdef __cplusplus
+}
+#endif

@@ -2,6 +2,7 @@ SRCS =\
  src/io/ByteBuffer.cpp\
  src/io/DatagramSocket.cpp\
  src/io/Selector.cpp\
+ src/io/sockets.cpp\
  src/os/Event.cpp\
  src/os/StdApiException.cpp\
  src/util/Args.cpp

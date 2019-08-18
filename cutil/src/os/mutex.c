@@ -1,6 +1,6 @@
 #include <os/mutex.h>
 
-util_error os_mutex_new( os_mutex_t * This ) {
+util_error os_mutex_new( os_mutex * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -14,7 +14,7 @@ util_error os_mutex_new( os_mutex_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_mutex_delete( os_mutex_t * This ) {
+util_error os_mutex_delete( os_mutex * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -26,7 +26,7 @@ util_error os_mutex_delete( os_mutex_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_mutex_take( os_mutex_t * This ) {
+util_error os_mutex_take( os_mutex * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -41,7 +41,7 @@ util_error os_mutex_take( os_mutex_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_mutex_release( os_mutex_t * This ) {
+util_error os_mutex_release( os_mutex * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }

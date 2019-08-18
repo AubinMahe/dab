@@ -8,7 +8,11 @@
 #  define SHUT_RD       SD_RECEIVE
 #  define SHUT_WR       SD_SEND
 #  define SHUT_RDWR     SD_BOTH
-   extern "C" int inet_pton( int af, const char * src, void * dst );
+
+   int inet_pton( int af, const char * src, void * dst );
+
+   int io_winsock_init( void );
+
 #else
 #  include <sys/socket.h>
 #  include <netinet/in.h>
@@ -16,7 +20,10 @@
 #  include <arpa/inet.h>
 #  include <netdb.h>
 #  include <unistd.h>
+#  include <sys/select.h>
+
    typedef int SOCKET;
 #  define INVALID_SOCKET (-1)
 #  define closesocket close
+
 #endif

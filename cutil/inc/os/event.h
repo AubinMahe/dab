@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../types.h"
 #include <util/error_codes.h>
 #ifdef _WIN32
@@ -9,7 +13,7 @@
 #  include <pthread.h>
 #endif
 
-typedef struct os_event_tag {
+typedef struct os_event_s {
 #ifdef _WIN32
    HANDLE          event;
 #else
@@ -17,9 +21,13 @@ typedef struct os_event_tag {
    pthread_mutex_t condLock;
    pthread_cond_t  condition;
 #endif
-} os_event_t;
+} os_event;
 
-util_error os_event_new   ( os_event_t * This );
-util_error os_event_delete( os_event_t * This );
-util_error os_event_wait  ( os_event_t * This );
-util_error os_event_signal( os_event_t * This );
+util_error os_event_new   ( os_event * This );
+util_error os_event_delete( os_event * This );
+util_error os_event_wait  ( os_event * This );
+util_error os_event_signal( os_event * This );
+
+#ifdef __cplusplus
+}
+#endif

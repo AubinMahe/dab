@@ -1,6 +1,6 @@
 #include <os/event.h>
 
-util_error os_event_new( os_event_t * This ) {
+util_error os_event_new( os_event * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -14,7 +14,7 @@ util_error os_event_new( os_event_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_event_delete( os_event_t * This ) {
+util_error os_event_delete( os_event * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -29,7 +29,7 @@ util_error os_event_delete( os_event_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_event_wait( os_event_t * This ) {
+util_error os_event_wait( os_event * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
@@ -50,7 +50,7 @@ util_error os_event_wait( os_event_t * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error os_event_signal( os_event_t * This ) {
+util_error os_event_signal( os_event * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;
    }
