@@ -3,5 +3,5 @@ Ce module contient le générateur de code :
 * C++
 * C
 
-Il prend en entrée un fichier XML conforme [à ce schéma](../distributed-application.xsd)
+Il prend en entrée un [fichier XML](../dab.xml) conforme [à ce schéma](../distributed-application.xsd)
 
