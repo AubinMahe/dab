@@ -36,7 +36,7 @@ public class Main {
             }
             javaGen.generateComponent( name, xOffers, xRequires, xSrcDir, xPackage );
          }
-         else if( xCpps.getLength() == 1 ) {
+         if( xCpps.getLength() == 1 ) {
             final Element xCpp       = (Element)xCpps.item( 0 );
             final String  xSrcDir    = xCpp.getAttribute( "src-dir" );
             final String  xNamespace = xCpp.getAttribute( "namespace" );
@@ -45,7 +45,7 @@ public class Main {
             }
             cppGen.generateComponent( name, xOffers, xRequires, xSrcDir, xNamespace );
          }
-         else if( xCs.getLength() == 1 ) {
+         if( xCs.getLength() == 1 ) {
             final Element xC         = (Element)xCs.item( 0 );
             final String  xSrcDir    = xC.getAttribute( "src-dir" );
             final String  xNamespace = xC.getAttribute( "prefix" );
@@ -54,9 +54,9 @@ public class Main {
             }
             cGen.generateComponent( name, xOffers, xRequires, xSrcDir, xNamespace );
          }
-         else {
+         if(( xJavas.getLength() == 0 )&&( xCpps.getLength() == 0 )&&( xCs.getLength() == 0 )) {
             throw new IllegalStateException(
-               "XML non valide : l'implémentation n'est ni java, ni c++, ni C !" );
+               "XML non valide : l'implémentation n'est ni Java, ni C++, ni C !" );
          }
       }
    }

@@ -1,8 +1,8 @@
 all:
 	cd dab          && ant
 	cd sc           && ant
-#	cd udt-c        && make             # pour activer cette ligne changer le type d'implémentation dans dab.xml
-	cd udt-cpp      && make             # pour activer cette ligne changer le type d'implémentation dans dab.xml
+	cd udt-c        && make
+	cd udt-cpp      && make
 	cd util-c       && make
 	cd util-cpp     && make
 	cd disappgen    && ant
@@ -18,8 +18,8 @@ run-cpp:
 clean:
 	cd dab          && ant  clean
 	cd sc           && ant  clean
-#	cd udt-c        && make clean       # pour activer cette ligne changer le type d'implémentation dans dab.xml
-	cd udt-cpp      && make clean       # pour activer cette ligne changer le type d'implémentation dans dab.xml
+	cd udt-c        && make clean
+	cd udt-cpp      && make clean
 	cd util-c       && make clean
 	cd util-cpp     && make clean
 	cd disappgen    && ant  clean

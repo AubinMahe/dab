@@ -106,11 +106,9 @@
       <xs:sequence>
          <xs:element type="offersType"   name="offers"   maxOccurs="unbounded" minOccurs="0" />
          <xs:element type="requiresType" name="requires" maxOccurs="unbounded" minOccurs="0" />
-         <xs:choice>
-            <xs:element type="javaType" name="java" maxOccurs="1" minOccurs="1" />
-            <xs:element type="cppType"  name="cpp"  maxOccurs="1" minOccurs="1" />
-            <xs:element type="cType"    name="c"    maxOccurs="1" minOccurs="1" />
-         </xs:choice>
+         <xs:element type="javaType" name="java" minOccurs="0" maxOccurs="1" />
+         <xs:element type="cppType"  name="cpp"  minOccurs="0" maxOccurs="1" />
+         <xs:element type="cType"    name="c"    minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>

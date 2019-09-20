@@ -99,8 +99,8 @@
       <offers   interface="LecteurDeCarte" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
-      <!-- <c src-dir="udt-c/src-gen" prefix="dab" /> -->
       <cpp src-dir="udt-cpp/src-gen" namespace="dab" />
+      <c   src-dir="udt-c/src-gen"   prefix   ="dab" />
    </component>
 
    <component name="SiteCentral">
