@@ -16,7 +16,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/jutil">
+	<classpathentry combineaccessrules="false" kind="src" path="/util-java">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>

@@ -18,7 +18,7 @@
          fork      ="true"
          modulepath="../dis-app-gen.jar"
          module    ="disapp/disapp.generator.Main">
-         <arg value="dab.xml" />
+         <arg value="--model=dab.xml" />
       </java>
    </target>
 
