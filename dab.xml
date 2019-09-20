@@ -17,7 +17,7 @@
       <literal name="RETRAIT_BILLETS" />
       <literal name="RETRAIT_CARTE_ILLISIBLE" />
    </enumeration>
-   
+
    <struct name="Carte">
       <field name="id"       type="string"  description="Identifiant de la carte" length="4" />
       <field name="code"     type="string"  description="Identifiant de la carte" length="4" />
@@ -87,7 +87,7 @@
       </event>
       <event name="shutdown" />
    </interface>
-   
+
    <component name="IHM">
       <offers   interface="IHM" />
       <requires interface="UniteDeTraitement" />
@@ -99,8 +99,8 @@
       <offers   interface="LecteurDeCarte" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
-      <c src-dir="udtc/src-gen" prefix="dab" />
-      <!-- <cpp src-dir="udt/src-gen" namespace="dab" /> -->
+      <!-- <c src-dir="udt-c/src-gen" prefix="dab" /> -->
+      <cpp src-dir="udt-cpp/src-gen" namespace="dab" />
    </component>
 
    <component name="SiteCentral">

@@ -13,22 +13,23 @@ LIBW32   = $(LIB)-mingw32
 OBJS     = $(SRCS:src/%cpp=BUILD/%o)
 OBJSW32  = $(SRCS:src/%cpp=BUILD-mingw32/%o)
 
-all: lib$(LIB).a lib$(LIB)-mingw32.a
+all: lib/lib$(LIB).a lib/lib$(LIB)-mingw32.a
 
 clean:
-	rm -f  lib$(LIB).a
-	rm -f  lib$(LIBW32).a
 	rm -f  deps
+	rm -fr lib
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 	rm -fr bin
 	rm -fr Debug
 	rm -fr Release
 
-lib$(LIB).a: $(OBJS)
+lib/lib$(LIB).a: $(OBJS)
+	@mkdir -p $$(dirname $@)
 	ar crv $@ $(OBJS)
 
-lib$(LIBW32).a: $(OBJSW32)
+lib/lib$(LIBW32).a: $(OBJSW32)
+	@mkdir -p $$(dirname $@)
 	ar crv $@ $(OBJSW32)
 
 BUILD/%.o: src/%.cpp

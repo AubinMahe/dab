@@ -62,7 +62,7 @@ public class Main {
    }
 
    private static void usage() {
-      System.err.println( "usage: disapp.generator.Main <xml system file> [--force=true]" );
+      System.err.println( "usage: disapp.generator.Main --model=<xml system file> [--force=<true|false>]" );
       System.exit(1);
    }
 
@@ -75,12 +75,22 @@ public class Main {
             if( sep > -1 ) {
                final String name  = arg.substring( 2, sep );
                final String value = arg.substring( sep + 1 );
+               if( value.isBlank()) {
+                  System.err.printf( "Argument expected after '%s'\n", name );
+                  usage();
+               }
                switch( name ) {
                case "model": modelPath = new File( value ); break;
                case "force": force = Boolean.parseBoolean( value ); break;
                default: usage();
                }
             }
+            else {
+               usage();
+            }
+         }
+         else {
+            usage();
          }
       }
       if( modelPath == null ) {

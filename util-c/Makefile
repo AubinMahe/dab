@@ -20,14 +20,13 @@ OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o)
 all: lib/lib$(LIB).a lib/lib$(LIBW32).a
 
 clean:
-	rm -f  lib/lib$(LIB).a
-	rm -f  lib/lib$(LIBW32).a
 	rm -f  deps
+	rm -fr lib
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
-#	rm -fr bin
-#	rm -fr Debug
-#	rm -fr Release
+	rm -fr bin
+	rm -fr Debug
+	rm -fr Release
 
 lib/lib$(LIB).a: $(OBJS)
 	@mkdir -p $$(dirname $@)

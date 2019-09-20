@@ -24,7 +24,7 @@ OBJSW32 = $(SRCS:src/%cpp=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%cpp=BUILD-mingw32
 
 all: ../UniteDeTraitement ../UniteDeTraitement-mingw32 ../Site-Central.jar ../DAB-UI.jar
 
-clean:
+clean-all:
 	cd ../disappgen && ant  clean
 	cd ../util-java && ant  clean
 	cd ../sc        && ant  clean
@@ -40,22 +40,31 @@ clean:
 	rm -fr Release
 	rm -fr src-gen
 
+clean:
+	rm -f  deps
+	rm -fr BUILD
+	rm -fr BUILD-mingw32
+	rm -fr bin
+	rm -fr Debug
+	rm -fr Release
+	rm -fr src-gen
+
 $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../dis-app-gen.jar
-	cd .. && java --module-path=dis-app-gen.jar --module=disapp/disapp.generator.Main --model=dab.xml
+	cd .. && java --module-path=. --module=disappgen/disapp.generator.Main --model=dab.xml
 
-../util-cpp/libutil-cpp.a:
+../util-cpp/lib/libutil-cpp.a:
 	cd ../util-cpp && make
 
-../util-cpp/libutil-cpp-mingw32.a:
+../util-cpp/lib/libutil-cpp-mingw32.a:
 	cd ../util-cpp && make
 
-../UniteDeTraitement: ../util-cpp/libutil-cpp.a $(OBJS)
+../UniteDeTraitement: ../util-cpp/lib/libutil-cpp.a $(OBJS)
 	cd ../util-cpp && make
-	g++ $(OBJS) -L../util-cpp -lutil-cpp -o $@
+	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -o $@
 
-../UniteDeTraitement-mingw32: ../util-cpp/libutil-cpp-mingw32.a $(OBJSW32)
+../UniteDeTraitement-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a $(OBJSW32)
 	cd ../util-cpp && make
-	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp -lutil-cpp-mingw32 -lws2_32 -o $@
+	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)

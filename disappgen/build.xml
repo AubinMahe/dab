@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="distributed-application-generator" default="jar">
+<project name="disappgen" default="jar">
 
    <property name="jar"   value="../${ant.project.name}.jar" />
 
@@ -19,14 +19,6 @@
 
    <target name="jar" depends="javac">
       <jar destfile="${jar}" basedir="build" />
-   </target>
-
-   <target name="run" depends="jar">
-      <java dir=".." fork="yes"
-         modulepath="${jar}"
-         module    ="disapp/disapp.generator.Main">
-         <arg value="--model=dab.xml" />
-      </java>
    </target>
 
 </project>

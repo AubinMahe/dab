@@ -23,7 +23,7 @@ OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
 
 all: ../unite_de_traitement ../unite_de_traitement-mingw32
 
-clean:
+clean-all:
 	cd ../disappgen && ant  clean
 	cd ../util-java && ant  clean
 	cd ../util-c    && make clean
@@ -37,13 +37,22 @@ clean:
 	rm -fr Release
 	rm -fr src-gen
 
-$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../dis-app-gen.jar
-	cd .. && java --module-path=dis-app-gen.jar --module=disapp/disapp.generator.Main --model=dab.xml
+clean:
+	rm -f  deps
+	rm -fr BUILD
+	rm -fr BUILD-mingw32
+	rm -fr bin
+	rm -fr Debug
+	rm -fr Release
+	rm -fr src-gen
 
-../util-c/libutil-c.a:
+$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../dis-app-gen.jar
+	cd .. && java --module-path=. --module=disappgen/disapp.generator.Main --model=dab.xml
+
+../util-c/lib/libutil-c.a:
 	cd ../util-c && make
 
-../util-c/libutil-c-mingw32.a:
+../util-c/lib/libutil-c-mingw32.a:
 	cd ../util-c && make
 
 ../unite_de_traitement: ../util-c/lib/libutil-c.a $(OBJS)
@@ -75,11 +84,11 @@ BUILD-mingw32/%.o: src-gen/%.c
 
 ../Site-Central.jar:
 	cd ../util-java && ant
-	cd ../sc    && ant
+	cd ../sc        && ant
 
 ../DAB-UI.jar:
 	cd ../util-java && ant
-	cd ../dab   && ant
+	cd ../dab       && ant
 
 run:
 	cd ../util-java && ant
@@ -115,3 +124,4 @@ deps: $(SRCS) $(SRCSGEN) $(HEADERSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
 
 -include deps
+

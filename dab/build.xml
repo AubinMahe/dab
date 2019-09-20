@@ -13,17 +13,18 @@
    </target>
 
    <target name="gen">
+      <ant dir="../disappgen" target="jar" inheritall="false" />
       <java
          dir       =".."
          fork      ="true"
-         modulepath="../dis-app-gen.jar"
-         module    ="disapp/disapp.generator.Main">
+         modulepath=".."
+         module    ="disappgen/disapp.generator.Main">
          <arg value="--model=dab.xml" />
       </java>
    </target>
 
    <target name="javac" depends="gen">
-      <ant dir="../disappgen" target="run" inheritall="false" />
+      <ant dir="../util-java" target="jar" inheritall="false" />
       <mkdir dir="build" />
       <javac
          destdir          ="build"

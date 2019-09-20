@@ -6,7 +6,10 @@ LIBFLAGS = -L $(UTILC)/lib -l $(LIB) -lefence
 all: tests run
 
 clean:
-	rm -f tests
+	rm -f  tests
+	rm -fr bin
+	rm -fr Debug
+	rm -fr Release
 
 run:
 	valgrind --leak-check=full ./tests

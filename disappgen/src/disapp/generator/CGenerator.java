@@ -102,18 +102,17 @@ public class CGenerator extends BaseGenerator {
                ps.printf( "   io_byte_buffer out;\n" );
                ps.printf( "} %s;\n", required );
                ps.printf( "\n" );
-               ps.printf( "void %s_init( %s * This, SOCKET socket );\n", required, required );
-               ps.printf( "\n" );
+               ps.printf( "util_error %s_init( %s * This, SOCKET socket );\n", required, required );
                for( final var e : iface.entrySet()) {
                   final String   event   = cname( e.getKey());
                   final NodeList xFields = e.getValue();
                   final String   sign    = getSignature( xFields, prefix );
                   if( sign.equals( "void" )) {
-                     ps.printf( "void %s_%s( %s * This, struct sockaddr_in * target );\n",
+                     ps.printf( "util_error %s_%s( %s * This, struct sockaddr_in * target );\n",
                         required, event, required );
                   }
                   else {
-                     ps.printf( "void %s_%s( %s * This, struct sockaddr_in * target, %s );\n",
+                     ps.printf( "util_error %s_%s( %s * This, struct sockaddr_in * target, %s );\n",
                         required, event, required, sign );
                   }
                }
@@ -141,6 +140,7 @@ public class CGenerator extends BaseGenerator {
                final Map<String, NodeList> iface   = _model.getInterface( ifaceName );
                final String                adt     = prefix + '_' + cname( ifaceName );
                ps.printf( "#include <%s/%s.h>\n", prefix, cname( ifaceName ));
+               ps.printf( "#include <stdio.h>\n" );
                ps.printf( "\n" );
                ps.printf( "enum %s_event_id {\n", prefix );
                boolean first = true;
@@ -160,9 +160,9 @@ public class CGenerator extends BaseGenerator {
                ps.printf( "   %s = %d,\n", ifaceID, 1 + _model.getInterfaceRank( ifaceName ));
                ps.printf( "};\n" );
                ps.printf( "\n" );
-               ps.printf( "void %s_init( %s * This, SOCKET socket ) {\n", adt, adt );
+               ps.printf( "util_error %s_init( %s * This, SOCKET socket ) {\n", adt, adt );
                ps.printf( "   This->socket = socket;\n" );
-               ps.printf( "   io_byte_buffer_wrap( &This->out, %d, This->raw );\n", rawSize );
+               ps.printf( "   return io_byte_buffer_wrap( &This->out, %d, This->raw );\n", rawSize );
                ps.printf( "}\n" );
                for( final var e : iface.entrySet()) {
                   final String   event   = cname( e.getKey());
@@ -170,37 +170,49 @@ public class CGenerator extends BaseGenerator {
                   final String sign = getSignature( xFields, prefix );
                   ps.printf( "\n" );
                   if( sign.equals( "void" )) {
-                     ps.printf( "void %s_%s( %s * This, struct sockaddr_in * target ) {\n", adt, event, adt );
+                     ps.printf( "util_error %s_%s( %s * This, struct sockaddr_in * target ) {\n", adt, event, adt );
                   }
                   else {
-                     ps.printf( "void %s_%s( %s * This, struct sockaddr_in * target, %s ) {\n", adt, event, adt, sign );
+                     ps.printf( "util_error %s_%s( %s * This, struct sockaddr_in * target, %s ) {\n", adt, event, adt, sign );
                   }
-                  ps.printf( "   io_byte_buffer_clear   ( &This->out );\n" );
-                  ps.printf( "   io_byte_buffer_put_byte( &This->out, %s );\n", ifaceID );
-                  ps.printf( "   io_byte_buffer_put_byte( &This->out, %s );\n", toID( event ));
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ), __FILE__, __LINE__ );\n" );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, %s ), __FILE__, __LINE__ );\n", ifaceID );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, %s ), __FILE__, __LINE__ );\n", toID( event ));
+                  int maxLength = 0;
+                  int maxStrLength = 0;
+                  for( int j = 0, jCount = xFields.getLength(); j < jCount; ++j ) {
+                     final Element xField = (Element)xFields.item( j );
+                     final String  xName  = cname( xField.getAttribute( "name" ));
+                     final String  xType  = xField.getAttribute( "type" );
+                     maxLength = Math.max( maxLength, xName.length());
+                     if( xType.equals( "string" )) {
+                        maxStrLength = Math.max( maxStrLength, xName.length());
+                     }
+                  }
                   for( int j = 0, jCount = xFields.getLength(); j < jCount; ++j ) {
                      final Element xField = (Element)xFields.item( j );
                      final String xName = xField.getAttribute( "name" );
                      final String xType = xField.getAttribute( "type" );
                      final String xUser = xField.getAttribute( "user" );
+                     final String end   = "( &This->out, %-" + maxLength + "s ), __FILE__, __LINE__ );\n";
                      switch( xType ) {
-                     case "boolean": ps.printf( "   io_byte_buffer_put_bool"  +"( &This->out, %s );\n", xName ); break;
-                     case "byte"   : ps.printf( "   io_byte_buffer_put_byte"  +"( &This->out, %s );\n", xName ); break;
-                     case "short"  : ps.printf( "   io_byte_buffer_put_short" +"( &This->out, %s );\n", xName ); break;
-                     case "ushort" : ps.printf( "   io_byte_buffer_put_ushort"+"( &This->out, %s );\n", xName ); break;
-                     case "int"    : ps.printf( "   io_byte_buffer_put_int"   +"( &This->out, %s );\n", xName ); break;
-                     case "uint"   : ps.printf( "   io_byte_buffer_put_uint"  +"( &This->out, %s );\n", xName ); break;
-                     case "long"   : ps.printf( "   io_byte_buffer_put_long"  +"( &This->out, %s );\n", xName ); break;
-                     case "ulong"  : ps.printf( "   io_byte_buffer_put_ulong" +"( &This->out, %s );\n", xName ); break;
-                     case "float"  : ps.printf( "   io_byte_buffer_put_float" +"( &This->out, %s );\n", xName ); break;
-                     case "double" : ps.printf( "   io_byte_buffer_put_double"+"( &This->out, %s );\n", xName ); break;
-                     case "string" : ps.printf( "   io_byte_buffer_put_string"+"( &This->out, %s );\n", xName ); break;
+                     case "boolean": ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_bool  " + end, xName ); break;
+                     case "byte"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte  " + end, xName ); break;
+                     case "short"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_short " + end, xName ); break;
+                     case "ushort" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_ushort" + end, xName ); break;
+                     case "int"    : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_int   " + end, xName ); break;
+                     case "uint"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_uint  " + end, xName ); break;
+                     case "long"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_long  " + end, xName ); break;
+                     case "ulong"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_ulong " + end, xName ); break;
+                     case "float"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_float " + end, xName ); break;
+                     case "double" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_double" + end, xName ); break;
+                     case "string" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_string" + end, xName ); break;
                      case "user"   :
                         if( _model.enumIsDefined( xUser )) {
-                           ps.printf( "   io_byte_buffer_put_byte( &This->out, %s );\n", xName );
+                           ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte" + end, xName );
                         }
                         else if( _model.structIsDefined( xUser )) {
-                           ps.printf( "   %s_put( %s, &This->out );\n", xUser, xName );
+                           ps.printf( "   %s_%s_put( %s, &This->out );\n", prefix, xUser, xName );
                         }
                         else {
                            throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
@@ -208,8 +220,10 @@ public class CGenerator extends BaseGenerator {
                         break;
                      }
                   }
-                  ps.printf( "   io_byte_buffer_flip( &This->out );\n" );
-                  ps.printf( "   io_datagram_socket_sendTo( This->socket, &This->out, target );\n" );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ), __FILE__, __LINE__ );\n" );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, target ),"
+                     + " __FILE__, __LINE__ );\n" );
+                  ps.printf( "   return UTIL_NO_ERROR;\n" );
                   ps.printf( "}\n" );
                }
             }
@@ -285,15 +299,15 @@ public class CGenerator extends BaseGenerator {
             final String xLength = xField.getAttribute( "length" );
             switch( xType ) {
             case "user"   : ps.printf( "   %s %s;\n", xUser, xName ); break;
-            case "string" : ps.printf( "   char %s[%s];\n", xName, xLength ); break;
+            case "string" : ps.printf( "   char %s[%d];\n", xName, Integer.parseInt( xLength ) + 1 ); break;
             case "boolean": ps.printf( "   bool %s;\n", xName ); break;
             default       : ps.printf( "   %s %s;\n", xType, xName ); break;
             }
          }
          ps.printf( "} %s;\n", adt );
          ps.printf( "\n" );
-         ps.printf( "void %s_put( %s * This, io_byte_buffer * target );\n", adt, adt );
-         ps.printf( "void %s_get( %s * This, io_byte_buffer * source );\n", adt, adt );
+         ps.printf( "util_error %s_put( %s * This, io_byte_buffer * target );\n", adt, adt );
+         ps.printf( "util_error %s_get( %s * This, io_byte_buffer * source );\n", adt, adt );
       }
       System.out.printf( "%s written\n", target.getPath());
    }
@@ -311,31 +325,44 @@ public class CGenerator extends BaseGenerator {
       target.getParentFile().mkdirs();
       try( final PrintStream ps = new PrintStream( target )) {
          ps.printf( "#include <%s/%s.h>\n", prefix, cname( structName ));
+         ps.printf( "#include <stdio.h>\n" );
          ps.printf( "\n" );
-         ps.printf( "void %s_put( %s * This, io_byte_buffer * target ) {\n", adt, adt );
+         ps.printf( "util_error %s_put( %s * This, io_byte_buffer * target ) {\n", adt, adt );
          final Map<String, Element> xFields = _model.getStruct( structName );
+         int maxLength = 0;
+         int maxStrLength = 0;
+         for( final Element xField : xFields.values()) {
+            final String xName = cname( xField.getAttribute( "name" ));
+            final String xType = xField.getAttribute( "type" );
+            maxLength = Math.max( maxLength, xName.length());
+            if( xType.equals( "string" )) {
+               maxStrLength = Math.max( maxStrLength, xName.length());
+            }
+         }
          for( final Element xField : xFields.values()) {
             final String xName = cname( xField.getAttribute( "name" ));
             final String xType = xField.getAttribute( "type" );
             final String xUser = xField.getAttribute( "user" );
+            final String end = "( target, This->%-" + maxLength + "s ), __FILE__, __LINE__ );\n";
             switch( xType ) {
-            case "boolean": ps.printf( "   io_byte_buffer_put_bool"  +"( target, This->%s );\n", xName ); break;
-            case "byte"   : ps.printf( "   io_byte_buffer_put_byte"  +"( target, This->%s );\n", xName ); break;
-            case "short"  : ps.printf( "   io_byte_buffer_put_short" +"( target, This->%s );\n", xName ); break;
-            case "ushort" : ps.printf( "   io_byte_buffer_put_ushort"+"( target, This->%s );\n", xName ); break;
-            case "int"    : ps.printf( "   io_byte_buffer_put_int"   +"( target, This->%s );\n", xName ); break;
-            case "uint"   : ps.printf( "   io_byte_buffer_put_uint"  +"( target, This->%s );\n", xName ); break;
-            case "long"   : ps.printf( "   io_byte_buffer_put_long"  +"( target, This->%s );\n", xName ); break;
-            case "ulong"  : ps.printf( "   io_byte_buffer_put_ulong" +"( target, This->%s );\n", xName ); break;
-            case "float"  : ps.printf( "   io_byte_buffer_put_float" +"( target, This->%s );\n", xName ); break;
-            case "double" : ps.printf( "   io_byte_buffer_put_double"+"( target, This->%s );\n", xName ); break;
-            case "string" : ps.printf( "   io_byte_buffer_put_string"+"( target, This->%s );\n", xName ); break;
+            case "boolean": ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_bool  " + end, xName ); break;
+            case "byte"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte  " + end, xName ); break;
+            case "short"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_short " + end, xName ); break;
+            case "ushort" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_ushort" + end, xName ); break;
+            case "int"    : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_int   " + end, xName ); break;
+            case "uint"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_uint  " + end, xName ); break;
+            case "long"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_long  " + end, xName ); break;
+            case "ulong"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_ulong " + end, xName ); break;
+            case "float"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_float " + end, xName ); break;
+            case "double" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_double" + end, xName ); break;
+            case "string" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_string" + end, xName ); break;
             case "user"   :
                if( _model.enumIsDefined( xUser )) {
-                  ps.printf( "   putByte( target, (byte)%s );\n", xName );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_put_byte  " + end, xName );
                }
                if( _model.structIsDefined( xUser )) {
-                  ps.printf( "   %s_%s_put( target );\n", prefix, xName );
+                  ps.printf( "   UTIL_ERROR_CHECK( %s_%s_put( This->%s, target ), __FILE__, __LINE__ );\n",
+                     prefix, xUser, xName );
                }
                else {
                   throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
@@ -343,34 +370,38 @@ public class CGenerator extends BaseGenerator {
                break;
             }
          }
+         ps.printf( "   return UTIL_NO_ERROR;\n" );
          ps.printf( "}\n" );
          ps.printf( "\n" );
-         ps.printf( "void %s_get( %s * This, io_byte_buffer * source ) {\n", adt, adt );
+         ps.printf( "util_error %s_get( %s * This, io_byte_buffer * source ) {\n", adt, adt );
          for( final Element xField : xFields.values()) {
-            final String xName   = cname( xField.getAttribute( "name" ));
-            final String xType   = xField.getAttribute( "type" );
-            final String xUser   = xField.getAttribute( "user" );
-            final String xLength = xField.getAttribute( "length" );
+            final String xName = cname( xField.getAttribute( "name" ));
+            final String xType = xField.getAttribute( "type" );
+            final String xUser = xField.getAttribute( "user" );
+            final String end   = "( source, &This->%-" + maxLength + "s ), __FILE__, __LINE__ );\n";
             switch( xType ) {
-            case "boolean": ps.printf( "   io_byte_buffer_get_bool"  +"( source, &This->%s );\n", xName ); break;
-            case "byte"   : ps.printf( "   io_byte_buffer_get_byte"  +"( source, &This->%s );\n", xName ); break;
-            case "short"  : ps.printf( "   io_byte_buffer_get_short" +"( source, &This->%s );\n", xName ); break;
-            case "ushort" : ps.printf( "   io_byte_buffer_get_ushort"+"( source, &This->%s );\n", xName ); break;
-            case "int"    : ps.printf( "   io_byte_buffer_get_int"   +"( source, &This->%s );\n", xName ); break;
-            case "uint"   : ps.printf( "   io_byte_buffer_get_uint"  +"( source, &This->%s );\n", xName ); break;
-            case "long"   : ps.printf( "   io_byte_buffer_get_long"  +"( source, &This->%s );\n", xName ); break;
-            case "ulong"  : ps.printf( "   io_byte_buffer_get_ulong" +"( source, &This->%s );\n", xName ); break;
-            case "float"  : ps.printf( "   io_byte_buffer_get_float" +"( source, &This->%s );\n", xName ); break;
-            case "double" : ps.printf( "   io_byte_buffer_get_double"+"( source, &This->%s );\n", xName ); break;
-            case "string" : ps.printf( "   io_byte_buffer_get_string"+"( source, This->%s, %s );\n",
-               xName, xLength );
+            case "boolean": ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_bool  " + end, xName ); break;
+            case "byte"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_byte  " + end, xName ); break;
+            case "short"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_short " + end, xName ); break;
+            case "ushort" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_ushort" + end, xName ); break;
+            case "int"    : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_int   " + end, xName ); break;
+            case "uint"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_uint  " + end, xName ); break;
+            case "long"   : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_long  " + end, xName ); break;
+            case "ulong"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_ulong " + end, xName ); break;
+            case "float"  : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_float " + end, xName ); break;
+            case "double" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_double" + end, xName ); break;
+            case "string" : ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_string( "
+               + "source, This->%-" + maxStrLength + "s, sizeof( This->%-" + maxStrLength +
+               "s )), __FILE__, __LINE__ );\n",
+               xName, xName );
             break;
             case "user"   :
                if( _model.enumIsDefined( xUser )) {
-                  ps.printf( "   %s = (%s)io_byte_buffer_get_byte( source );\n", xName, xUser );
+                  ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_byte  " + end, xName );
                }
                else if( _model.structIsDefined( xUser )) {
-                  ps.printf( "   %s.get( source );\n", xName );
+                  ps.printf( "   UTIL_ERROR_CHECK( %s_%s_get( This->%s, source ), __FILE__, __LINE__ );\n",
+                     prefix, xUser, xName );
                }
                else {
                   throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
@@ -378,6 +409,7 @@ public class CGenerator extends BaseGenerator {
             break;
             }
          }
+         ps.printf( "   return UTIL_NO_ERROR;\n" );
          ps.printf( "}\n" );
       }
       System.out.printf( "%s written\n", target.getPath());
@@ -428,10 +460,10 @@ public class CGenerator extends BaseGenerator {
                   final NodeList xFields  = e.getValue();
                   final String sign = getSignature( xFields, prefix ).strip();
                   if( sign.equals( "void" )) {
-                     ps.printf( "void %s_%s( struct %s_s * This );\n", adt, srvcName, adt );
+                     ps.printf( "util_error %s_%s( struct %s_s * This );\n", adt, srvcName, adt );
                   }
                   else {
-                     ps.printf( "void %s_%s( struct %s_s * This, %s );\n", adt, srvcName, adt, sign );
+                     ps.printf( "util_error %s_%s( struct %s_s * This, %s );\n", adt, srvcName, adt, sign );
                   }
                }
             }
@@ -473,9 +505,13 @@ public class CGenerator extends BaseGenerator {
             ps.printf( "   io_byte_buffer in;\n" );
             ps.printf( "} %s;\n", adt );
             ps.printf( "\n" );
-            ps.printf( "void %s_init( %s * This, SOCKET socket, %s_%s * listener );\n",
-               adt, adt, prefix, cname( name ) );
-            ps.printf( "bool %s_has_dispatched( %s * This );\n", adt, adt );
+            final String listener = prefix + '_' + cname( name ) + " *";
+            final int    maxWidth = Math.max( adt.length() + 2, Math.max( "SOCKET".length(), listener.length()));
+            ps.printf( "util_error %s_init(\n", adt );
+            ps.printf( "   %-" + maxWidth + "s This,\n"     , adt + " *" );
+            ps.printf( "   %-" + maxWidth + "s socket,\n"   , "SOCKET" );
+            ps.printf( "   %-" + maxWidth + "s listener );\n", listener );
+            ps.printf( "util_error %s_dispatch( %s * This, bool * has_dispatched );\n", adt, adt );
          }
          System.out.printf( "%s written\n", target.getPath());
       }
@@ -518,7 +554,7 @@ public class CGenerator extends BaseGenerator {
                final String                xIntrfcName = xOffer.getAttribute( "interface" );
                final Map<String, NodeList> iface       = _model.getInterface( xIntrfcName );
                allEvents.addAll( iface.values());
-               final String eventEnum = adt + '_' + cname( xIntrfcName ) + "_event";
+               final String eventEnum = cname( xIntrfcName ) + "_event";
                ps.printf( "typedef enum %s_e {\n", eventEnum );
                boolean first = true;
                final String eprfx = cname( xIntrfcName ).toUpperCase();
@@ -533,10 +569,11 @@ public class CGenerator extends BaseGenerator {
                }
                ps.printf( "} %s;\n", eventEnum );
                ps.printf( "\n" );
-               ps.printf( "static bool %s_%s_dispatch(\n", prefix, cname( xIntrfcName ) );
-               ps.printf( "   %s_%s_dispatcher * This,\n", prefix, cname( name ));
-               ps.printf( "   %s event )\n", eventEnum );
-               ps.printf( "{\n" );
+               ps.printf( "static util_error %s_%s_dispatch(", prefix, cname( xIntrfcName ) );
+               ps.printf( " %s_%s_dispatcher * This,", prefix, cname( name ));
+               ps.printf( " %s event,", eventEnum );
+               ps.printf( " bool * has_dispatched ) {\n", eventEnum );
+               ps.printf( "   *has_dispatched = false;\n" );
                ps.printf( "   switch( event ) {\n" );
                for( final var e : iface.entrySet()) {
                   final String   event   = e.getKey();
@@ -548,26 +585,29 @@ public class CGenerator extends BaseGenerator {
                      final String  xName   = xField.getAttribute( "name" );
                      final String  xType   = xField.getAttribute( "type" );
                      final String  xUser   = xField.getAttribute( "user" );
-                     final String  xLength = xField.getAttribute( "length" );
                      if( ! xType.equals( "user" )) {
+                        final String  xLength = xField.getAttribute( "length" );
                         switch( xType ) {
                         case "boolean": ps.printf( "      bool %s;\n", xName ); break;
-                        case "string" : ps.printf( "      char %s[%s];\n", xName, xLength ); break;
+                        case "string" : ps.printf( "      char %s[%s];\n", xName, Integer.parseInt( xLength ) + 1 ); break;
                         default       : ps.printf( "      %s %s;\n", xType, xName ); break;
                         }
                      }
+                     final String end = "( &This->in, &%s ), __FILE__, __LINE__ );\n";
                      switch( xType ) {
-                     case "boolean": ps.printf( "      io_byte_buffer_get_bool"  +"( &This->in, &%s );\n", xName ); break;
-                     case "byte"   : ps.printf( "      io_byte_buffer_get_byte"  +"( &This->in, &%s );\n", xName ); break;
-                     case "short"  : ps.printf( "      io_byte_buffer_get_short" +"( &This->in, &%s );\n", xName ); break;
-                     case "ushort" : ps.printf( "      io_byte_buffer_get_ushort"+"( &This->in, &%s );\n", xName ); break;
-                     case "int"    : ps.printf( "      io_byte_buffer_get_int"   +"( &This->in, &%s );\n", xName ); break;
-                     case "uint"   : ps.printf( "      io_byte_buffer_get_uint"  +"( &This->in, &%s );\n", xName ); break;
-                     case "long"   : ps.printf( "      io_byte_buffer_get_long"  +"( &This->in, &%s );\n", xName ); break;
-                     case "ulong"  : ps.printf( "      io_byte_buffer_get_ulong" +"( &This->in, &%s );\n", xName ); break;
-                     case "float"  : ps.printf( "      io_byte_buffer_get_float" +"( &This->in, &%s );\n", xName ); break;
-                     case "double" : ps.printf( "      io_byte_buffer_get_double"+"( &This->in, &%s );\n", xName ); break;
-                     case "string" : ps.printf( "      io_byte_buffer_get_string"+"( &This->in, %s, %s );\n", xName, xLength ); break;
+                     case "boolean": ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_bool"   + end, xName ); break;
+                     case "byte"   : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_byte"   + end, xName ); break;
+                     case "short"  : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_short"  + end, xName ); break;
+                     case "ushort" : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_ushort" + end, xName ); break;
+                     case "int"    : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_int"    + end, xName ); break;
+                     case "uint"   : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_uint"   + end, xName ); break;
+                     case "long"   : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_long"   + end, xName ); break;
+                     case "ulong"  : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_ulong"  + end, xName ); break;
+                     case "float"  : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_float"  + end, xName ); break;
+                     case "double" : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_double" + end, xName ); break;
+                     case "string" : ps.printf( "      UTIL_ERROR_CHECK( io_byte_buffer_get_string" +
+                        "( &This->in, %s, sizeof( %s )), __FILE__, __LINE__ );\n",
+                        xName, xName ); break;
                      case "user"   :
                         if( _model.enumIsDefined( xUser )) {
                            ps.printf( "      %s_%s %s;\n", prefix, cname( xUser ), xName );
@@ -594,51 +634,62 @@ public class CGenerator extends BaseGenerator {
                   }
                   final String function = prefix + '_' + cname( name +'_' + event );
                   if( signature.isBlank()) {
-                     ps.printf( "      %s( This->listener );\n", function );
+                     ps.printf( "      UTIL_ERROR_CHECK( %s( This->listener ), __FILE__, __LINE__ );\n", function );
                   }
                   else {
-                     ps.printf( "      %s( This->listener, %s );\n", function, signature );
+                     ps.printf( "      UTIL_ERROR_CHECK( %s( This->listener, %s ), __FILE__, __LINE__ );\n", function, signature );
                   }
-                  ps.printf( "   break;\n" );
+                  ps.printf( "      *has_dispatched = true;\n" );
+                  ps.printf( "      break;\n" );
                   ps.printf( "   }\n" );
                }
                ps.printf( "   default:\n" );
                ps.printf( "      fprintf( stderr, \"%s|Message reçu ignoré\\n\" );\n", adt );
                ps.printf( "      fprintf( stderr, \"\\tinterface = %s\\n\" );\n", xIntrfcName );
                ps.printf( "      fprintf( stderr, \"\\tevent     = %%d\\n\", event );\n" );
-               ps.printf( "      return false;\n" );
+               ps.printf( "      break;\n" );
                ps.printf( "   }\n" );
-               ps.printf( "   return true;\n" );
+               ps.printf( "   return UTIL_NO_ERROR;\n" );
                ps.printf( "}\n" );
                ps.printf( "\n" );
             }
-            ps.printf( "void %s_init( %s * This, SOCKET socket, %s_%s * listener ) {\n",
-               adt, adt, prefix, cname( name ) );
+            final String listener = prefix + '_' + cname( name ) + " *";
+            final int    maxWidth = Math.max( adt.length() + 2, Math.max( "SOCKET".length(), listener.length()));
+            ps.printf( "util_error %s_init(\n", adt );
+            ps.printf( "   %-" + maxWidth + "s This,\n"     , adt + " *" );
+            ps.printf( "   %-" + maxWidth + "s socket,\n"   , "SOCKET" );
+            ps.printf( "   %-" + maxWidth + "s listener )\n", listener );
+            ps.printf( "{\n" );
+            ps.printf( "   if( socket <= 0 || NULL == listener ) {\n" );
+            ps.printf( "      return UTIL_NULL_ARG;\n" );
+            ps.printf( "   }\n" );
             ps.printf( "   This->socket   = socket;\n" );
             ps.printf( "   This->listener = listener;\n" );
-            ps.printf( "   io_byte_buffer_wrap( &This->in, %d, This->raw );\n", rawSize );
+            ps.printf( "   return io_byte_buffer_wrap( &This->in, %d, This->raw );\n", rawSize );
             ps.printf( "}\n" );
             ps.printf( "\n" );
-            ps.printf( "bool %s_has_dispatched( %s * This ) {\n", adt, adt );
+            ps.printf( "util_error %s_dispatch( %s * This, bool * has_dispatched ) {\n", adt, adt );
             ps.printf( "   struct sockaddr_in from;\n" );
-            ps.printf( "   io_byte_buffer_clear( &This->in );\n" );
-            ps.printf( "   util_error status = io_datagram_socket_receive( This->socket, &This->in, &from );\n" );
-            ps.printf( "   if( UTIL_NO_ERROR == status ) {\n" );
-            ps.printf( "      io_byte_buffer_flip( &This->in );\n" );
-            ps.printf( "      byte interface, event;\n" );
-            ps.printf( "      io_byte_buffer_get_byte( &This->in, &interface );\n" );
-            ps.printf( "      io_byte_buffer_get_byte( &This->in, &event );\n" );
-            ps.printf( "      switch( interface ) {\n" );
+            ps.printf( "   byte interface, event;\n" );
+            ps.printf( "\n" );
+            ps.printf( "   *has_dispatched = false;\n" );
+            ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->in ), __FILE__, __LINE__ );\n" );
+            ps.printf( "   UTIL_ERROR_CHECK( io_datagram_socket_receive( This->socket, &This->in, &from ), __FILE__, __LINE__ );\n" );
+            ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ), __FILE__, __LINE__ );\n" );
+            ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ), __FILE__, __LINE__ );\n" );
+            ps.printf( "   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ), __FILE__, __LINE__ );\n" );
+            ps.printf( "   switch( interface ) {\n" );
             for( int i = 0, iCount = xOffers.getLength(); i < iCount; ++i ) {
                final Element xOffer      = (Element)xOffers.item( i );
                final String  xIntrfcName = xOffer.getAttribute( "interface" );
                final String  id          = toID( xIntrfcName );
-               ps.printf( "      case %-" + intrfcMaxWidth +
-                  "s: return %s_%s_dispatch( This, event );\n", id, prefix, cname( xIntrfcName ));
+               ps.printf( "   case %-" + intrfcMaxWidth +
+                  "s: UTIL_ERROR_CHECK( %s_%-" + (intrfcMaxWidth+"_dispatch".length()) + "s( This, event, has_dispatched ),"
+                     + " __FILE__, __LINE__ ); break;\n",
+                  id, prefix, cname( xIntrfcName ) + "_dispatch" );
             }
-            ps.printf( "      }\n" );
             ps.printf( "   }\n" );
-            ps.printf( "   return false;\n" );
+            ps.printf( "   return UTIL_NO_ERROR;\n" );
             ps.printf( "}\n" );
          }
          System.out.printf( "%s written\n", target.getPath());
