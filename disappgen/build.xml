@@ -6,10 +6,12 @@
    <target name="clean">
       <delete dir="build" />
       <delete dir="bin" />
+      <delete dir="src-gen" />
       <delete file="${jar}" />
    </target>
 
    <target name="jaxb-gen">
+      <mkdir dir="src-gen" />
       <exec executable="/opt/java/jdk1.8.0_201/bin/xjc">
          <arg value="-d" /><arg value="src-gen" />
          <arg value="-p" /><arg value="disapp.generator.model" />

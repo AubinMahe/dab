@@ -1,5 +1,0 @@
-#!/bin/bash
-
-cd udtc && make all run
-exit 0
-

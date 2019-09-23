@@ -9,8 +9,11 @@ Debug-heap/
 Release/
 Release-heap/
 src-gen/
-*.jar
 *.a
+disappgen.jar
+DAB-UI.jar
+Site-Central.jar
+util.jar
 deps
 UniteDeTraitement
 UniteDeTraitement-mingw32

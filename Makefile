@@ -1,5 +1,6 @@
 all:
 	cd disappgen    && ant
+	ant
 	cd util-c       && make
 	cd util-c/tests && make
 	cd udt-c        && make
