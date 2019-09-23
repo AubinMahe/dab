@@ -19,6 +19,16 @@ HEADERSGEN=\
 
 CPPFLAGS = -I ../util-cpp/inc -I inc -I src-gen -O3 -g0 -W -Wall -pedantic -c -std=c++17
 
+DISAPPGEN_CLASSPATH=\
+ lib/antlr-runtime-3.3.jar:\
+ lib/javax.activation-1.2.0.jar:\
+ lib/javax.activation-api-1.2.0.jar:\
+ lib/jaxb-api-2.3.1.jar:\
+ lib/jaxb-core-2.3.0.jar:\
+ lib/jaxb-impl-2.3.2.jar:\
+ lib/ST4-4.0.4.jar:\
+ dis-app-gen.jar
+
 OBJS    = $(SRCS:src/%cpp=BUILD/%o) $(SRCSGEN:src-gen/%cpp=BUILD/%o)
 OBJSW32 = $(SRCS:src/%cpp=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%cpp=BUILD-mingw32/%o)
 
@@ -48,9 +58,6 @@ clean:
 	rm -fr Debug
 	rm -fr Release
 	rm -fr src-gen
-
-$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../dis-app-gen.jar
-	cd .. && java --module-path=. --module=disappgen/disapp.generator.Main --model=dab.xml
 
 ../util-cpp/lib/libutil-cpp.a:
 	cd ../util-cpp && make

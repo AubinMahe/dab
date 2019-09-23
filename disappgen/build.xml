@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="disappgen" default="jar">
 
-   <property name="jar"   value="../${ant.project.name}.jar" />
+   <property name="jar" value="../${ant.project.name}.jar" />
 
    <target name="clean">
       <delete dir="build" />
@@ -9,15 +9,38 @@
       <delete file="${jar}" />
    </target>
 
-   <target name="javac">
+   <target name="jaxb-gen">
+      <exec executable="/opt/java/jdk1.8.0_201/bin/xjc">
+         <arg value="-d" /><arg value="src-gen" />
+         <arg value="-p" /><arg value="disapp.generator.model" />
+         <arg value="../distributed-application.xsd" />
+      </exec>
+   </target>
+
+   <target name="javac" depends="jaxb-gen">
       <mkdir dir="build" />
       <javac
-         srcdir           ="src"
          destdir          ="build"
-         includeantruntime="false" />
+         includeantruntime="false"
+         debug            ="true"
+         debuglevel       ="lines,vars,source"
+         source           ="11">
+         <src path="src" />
+         <src path="src-gen" />
+         <classpath location="../lib/antlr-runtime-3.3.jar" />
+         <classpath location="../lib/javax.activation-1.2.0.jar" />
+         <classpath location="../lib/javax.activation-api-1.2.0.jar" />
+         <classpath location="../lib/jaxb-api-2.3.1.jar" />
+         <classpath location="../lib/jaxb-core-2.3.0.jar" />
+         <classpath location="../lib/jaxb-impl-2.3.2.jar" />
+         <classpath location="../lib/ST4-4.0.4.jar" />
+      </javac>
    </target>
 
    <target name="jar" depends="javac">
+      <copy todir="build">
+         <fileset dir="src" includes="resources/*.stg" />
+      </copy>
       <jar destfile="${jar}" basedir="build" />
    </target>
 

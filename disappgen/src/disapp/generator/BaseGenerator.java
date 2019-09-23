@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-abstract class BaseGenerator {
+public abstract class BaseGenerator {
 
    protected final Model                          _model;
    protected final Map<String, SortedSet<String>> _typesUsage = new HashMap<>();
@@ -47,8 +47,8 @@ abstract class BaseGenerator {
             for( int j = 0, jCount = xFields.getLength(); j < jCount; ++j ) {
                final Element xField = (Element)xFields.item( j );
                final String  xType  = xField.getAttribute( "type" );
-               if( xType.equals( "user" )) {
-                  final String xUser = xField.getAttribute( "user" );
+               if( xType.equals( "enum" )|| xType.equals( "struct" )) {
+                  final String xUser = xField.getAttribute( "userTypeName" );
                   if(( xUser != null )&&( ! generated.contains( xUser ))) {
                      SortedSet<String> types = _typesUsage.get( interfaceName );
                      if( types == null ) {

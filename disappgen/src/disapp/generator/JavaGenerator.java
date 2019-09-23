@@ -30,7 +30,8 @@ public class JavaGenerator extends BaseGenerator {
          switch( xType ) {
          case "ushort" : signature += "int";  break;
          case "uint"   : signature += "long"; break;
-         case "user"   : signature += xField.getAttribute( "user" ); break;
+         case "struct" :
+         case "enum"   : signature += xField.getAttribute( "userTypeName" ); break;
          case "string" : signature += "String"; break;
          default       : signature += xType; break;
          }
@@ -81,7 +82,7 @@ public class JavaGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
             case "boolean": ps.printf( "   public boolean %s;\n", xName ); break;
             case "byte"   : ps.printf( "   public byte    %s;\n", xName ); break;
@@ -94,15 +95,20 @@ public class JavaGenerator extends BaseGenerator {
             case "float"  : ps.printf( "   public float   %s;\n", xName ); break;
             case "double" : ps.printf( "   public double  %s;\n", xName ); break;
             case "string" : ps.printf( "   public String  %s;\n", xName ); break;
-            case "user"   :
+            case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "   %s _%s;\n", xUser, xName );
                }
-               else if( _model.structIsDefined( xUser )) {
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum" );
+               }
+               break;
+            case "struct":
+               if( _model.structIsDefined( xUser )) {
                   ps.printf( "   %s _%s = new %s();\n", xUser, xName, xUser );
                }
                else {
-                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                  throw new IllegalStateException( xType + " is not a Struct" );
                }
                break;
             }
@@ -112,7 +118,7 @@ public class JavaGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
             case "boolean":
                ps.printf( "      ByteBufferHelper.putBoolean( target, %s );\n", xName );
@@ -129,15 +135,20 @@ public class JavaGenerator extends BaseGenerator {
             case "string" :
                ps.printf( "      ByteBufferHelper.putString( target, %s );\n" , xName );
                break;
-            case "user"   :
+            case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "      target.put((byte)%s.ordinal());\n", xName );
                }
-               else if( _model.structIsDefined( xUser )) {
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum" );
+               }
+               break;
+            case "struct"   :
+               if( _model.structIsDefined( xUser )) {
                   ps.printf( "      %s.put( target );\n", xName );
                }
                else {
-                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                  throw new IllegalStateException( xType + " is not a Struct" );
                }
                break;
             }
@@ -148,7 +159,7 @@ public class JavaGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
             case "boolean":
                ps.printf( "      %s = ByteBufferHelper.getBoolean( source );\n", xName );
@@ -165,15 +176,20 @@ public class JavaGenerator extends BaseGenerator {
             case "string" :
                ps.printf( "      %s = ByteBufferHelper.getString( source );\n", xName );
                break;
-            case "user"   :
+            case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "      %s = %s.values()[source.get()];\n", xUser, xName, xUser );
                }
-               else if( _model.structIsDefined( xUser )) {
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum" );
+               }
+            break;
+            case "struct":
+               if( _model.structIsDefined( xUser )) {
                   ps.printf( "      %s.get( source );\n", xName );
                }
                else {
-                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                  throw new IllegalStateException( xType + " is not a Struct" );
                }
             break;
             }
@@ -307,7 +323,7 @@ public class JavaGenerator extends BaseGenerator {
                      final Element xField = (Element)xFields.item( j );
                      final String xName = xField.getAttribute( "name" );
                      final String xType = xField.getAttribute( "type" );
-                     final String xUser = xField.getAttribute( "user" );
+                     final String xUser = xField.getAttribute( "userTypeName" );
                      switch( xType ) {
                      case "boolean": ps.printf( "      ByteBufferHelper.putBoolean( _out, %s );\n", xName ); break;
                      case "byte"   : ps.printf( "      _out.put( %s );\n"       , xName ); break;
@@ -320,15 +336,20 @@ public class JavaGenerator extends BaseGenerator {
                      case "float"  : ps.printf( "      _out.putFloat( %s );\n"  , xName ); break;
                      case "double" : ps.printf( "      _out.putDouble( %s );\n" , xName ); break;
                      case "string" : ps.printf( "      ByteBufferHelper.putString( _out, %s );\n" , xName ); break;
-                     case "user"   :
+                     case "enum"   :
                         if( _model.enumIsDefined( xUser )) {
                            ps.printf( "      _out.put((byte)%s.ordinal());\n", xName );
                         }
-                        else if( _model.structIsDefined( xUser )) {
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum" );
+                        }
+                        break;
+                     case "struct":
+                        if( _model.structIsDefined( xUser )) {
                            ps.printf( "      %s.put( _out );\n", xName );
                         }
                         else {
-                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                           throw new IllegalStateException( xType + " is not a Struct" );
                         }
                         break;
                      }
@@ -418,7 +439,7 @@ public class JavaGenerator extends BaseGenerator {
                      final Element xField = (Element)xFields.item( j );
                      final String  xName  = xField.getAttribute( "name" );
                      final String  xType  = xField.getAttribute( "type" );
-                     final String  xUser  = xField.getAttribute( "user" );
+                     final String  xUser  = xField.getAttribute( "userTypeName" );
                      ps.printf( "         " );
                      switch( xType ) {
                      case "boolean":
@@ -436,15 +457,20 @@ public class JavaGenerator extends BaseGenerator {
                      case "string" :
                         ps.printf( "final String %s = ByteBufferHelper.getString( _in );\n", xName );
                         break;
-                     case "user"   :
+                     case "enum"   :
                         if( _model.enumIsDefined( xUser )) {
                            ps.printf( "final %s %s = %s.values()[_in.get()];\n", xUser, xName, xUser );
                         }
-                        else if( _model.structIsDefined( xUser )) {
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum" );
+                        }
+                     break;
+                     case "struct"   :
+                        if( _model.structIsDefined( xUser )) {
                            ps.printf( "final %s %s = new %s( _in );\n", xUser, xName, xUser );
                         }
                         else {
-                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                           throw new IllegalStateException( xType + " is not a Struct" );
                         }
                      break;
                      }

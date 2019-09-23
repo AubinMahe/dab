@@ -14,17 +14,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-final class Model {
+public final class Model {
 
    private final Document                           _doc;
    private final Map<String, List<String>>          _enums      = new LinkedHashMap<>();
    private final Map<String, Map<String, Element>>  _structs    = new LinkedHashMap<>();
    private final Map<String, String>                _enumsType  = new HashMap<>();
    private final Map<String, Map<String, NodeList>> _interfaces = new LinkedHashMap<>();
+   private final boolean                            _force;
    private /* */ long                               _lastModified = 0L;
-   private final /* */ boolean                            _force;
 
-   Model( File src, boolean force ) throws Exception {
+   public Model( File src, boolean force ) throws Exception {
       _doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse( src );
       _lastModified = src.lastModified();
       _force = force;
@@ -33,7 +33,7 @@ final class Model {
       readInterfaces();
    }
 
-   void readEnums() {
+   public void readEnums() {
       final NodeList xEnums = _doc.getElementsByTagName( "enumeration" );
       for( int i = 0, iCount = xEnums.getLength(); i < iCount; ++i ) {
          final Element      xEnum     = (Element)xEnums.item( i );
@@ -51,7 +51,7 @@ final class Model {
       }
    }
 
-   void readStructs() {
+   public void readStructs() {
       final NodeList xStructs = _doc.getElementsByTagName( "struct" );
       for( int i = 0, iCount = xStructs.getLength(); i < iCount; ++i ) {
          final Element  xStruct     = (Element)xStructs.item( i );
@@ -68,7 +68,7 @@ final class Model {
       }
    }
 
-   void readInterfaces() {
+   public void readInterfaces() {
       final NodeList xInterfaces = _doc.getElementsByTagName( "interface" );
       for( int i = 0, iCount = xInterfaces.getLength(); i < iCount; ++i ) {
          final Element      xInterface  = (Element)xInterfaces.item( i );
@@ -84,7 +84,7 @@ final class Model {
       }
    }
 
-   int getInterfaceRank( String ifaceName ) {
+   public int getInterfaceRank( String ifaceName ) {
       final var it = _interfaces.keySet().iterator();
       for( int i = 0; i < _interfaces.size(); ++i ) {
          final String ifc = it.next();
@@ -95,7 +95,7 @@ final class Model {
       throw new IllegalStateException( "Unknown interface '" + ifaceName + "'" );
    }
 
-   static String getPathOfField( Element xField ) {
+   public static String getPathOfField( Element xField ) {
       final Element xEvent     = (Element)xField.getParentNode();
       final Element xInterface = (Element)xEvent.getParentNode();
       final String  field      = xField    .getAttribute( "name" );
@@ -106,8 +106,8 @@ final class Model {
          + "/field[@name=" + field + "]";
    }
 
-   int getEnumSize( Element xField ) {
-      final String scalar = _enumsType.get( xField.getAttribute( "user" ));
+   public int getEnumSize( Element xField ) {
+      final String scalar = _enumsType.get( xField.getAttribute( "userTypeName" ));
       switch( scalar ) {
       case "boolean": return 1;
       case "byte"   : return 1;
@@ -128,7 +128,7 @@ final class Model {
       }
    }
 
-   int getStructSize( Collection<Element> fields ) {
+   public int getStructSize( Collection<Element> fields ) {
       int msgSize = 0;
       for( final Element xField : fields ) {
          final String xType = xField.getAttribute( "type" );
@@ -144,14 +144,15 @@ final class Model {
          case "float"  : msgSize += 4; break;
          case "double" : msgSize += 8; break;
          case "string" : msgSize += 4 + getStringSize( xField ); break;
-         case "user"   : msgSize += getUserTypeSize( xField ); break;
+         case "enum"   : msgSize += getUserTypeSize( xField ); break;
+         case "struct" : msgSize += getUserTypeSize( xField ); break;
          }
       }
       return msgSize;
    }
 
-   int getUserTypeSize( Element xField ) {
-      final String       name  = xField.getAttribute( "user" );
+   public int getUserTypeSize( Element xField ) {
+      final String       name  = xField.getAttribute( "userTypeName" );
       final List<String> xEnum = _enums.get( name );
       if( xEnum != null ) {
          return getEnumSize( xField );
@@ -160,10 +161,10 @@ final class Model {
       if( xStruct != null ) {
          return getStructSize( xStruct.values());
       }
-      return 0;
+      throw new IllegalStateException();
    }
 
-   static int getStringSize( Element xField ) {
+   public static int getStringSize( Element xField ) {
       final String length = xField.getAttribute( "length" );
       if( length.isBlank()) {
          throw new IllegalStateException(
@@ -178,7 +179,7 @@ final class Model {
       }
    }
 
-   int getBufferCapacity( Collection<NodeList> xFieldsList ) {
+   public int getBufferCapacity( Collection<NodeList> xFieldsList ) {
       int capacity = 0;
       for( final NodeList xFields : xFieldsList ) {
          int msgSize = 1 + 1; // INTERFACE + EVENT
@@ -197,7 +198,8 @@ final class Model {
             case "float"  : msgSize += 4; break;
             case "double" : msgSize += 8; break;
             case "string" : msgSize += 4 + getStringSize( xField ); break;
-            case "user"   : msgSize += getUserTypeSize( xField ); break;
+            case "enum"   : msgSize += getUserTypeSize( xField ); break;
+            case "struct" : msgSize += getUserTypeSize( xField ); break;
             }
          }
          capacity = Math.max( capacity, msgSize );
@@ -205,31 +207,31 @@ final class Model {
       return capacity;
    }
 
-   NodeList getComponents() {
+   public NodeList getComponents() {
       return _doc.getElementsByTagName( "component" );
    }
 
-   Map<String, NodeList> getInterface( String interfaceName ) {
+   public Map<String, NodeList> getInterface( String interfaceName ) {
       return _interfaces.get( interfaceName );
    }
 
-   Map<String, Element> getStruct( String name ) {
+   public Map<String, Element> getStruct( String name ) {
       return _structs.get( name );
    }
 
-   List<String> getEnum( String name ) {
+   public List<String> getEnum( String name ) {
       return _enums.get( name );
    }
 
-   boolean enumIsDefined( String name ) {
+   public boolean enumIsDefined( String name ) {
       return _enums.containsKey( name );
    }
 
-   boolean structIsDefined( String name ) {
+   public boolean structIsDefined( String name ) {
       return _structs.containsKey( name );
    }
 
-   protected boolean isUpToDate( File target ) {
+   public boolean isUpToDate( File target ) {
       return ( ! _force )&&( target.lastModified() > _lastModified );
    }
 }

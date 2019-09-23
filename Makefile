@@ -1,13 +1,13 @@
 all:
+	cd disappgen    && ant
+	cd util-c       && make
+	cd util-c/tests && make
+	cd udt-c        && make
+	cd util-cpp     && make
+	cd udt-cpp      && make
+	cd util-java    && ant
 	cd dab          && ant
 	cd sc           && ant
-	cd udt-c        && make
-	cd udt-cpp      && make
-	cd util-c       && make
-	cd util-cpp     && make
-	cd disappgen    && ant
-	cd util-java    && ant
-	cd util-c/tests && make
 
 run-c:
 	cd udt-c        && make run

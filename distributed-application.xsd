@@ -16,7 +16,7 @@
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>
 
-   <xs:complexType name="enumerationType" mixed="true">
+   <xs:complexType name="enumerationType">
       <xs:sequence>
          <xs:element type="literalType" name="literal" maxOccurs="unbounded" minOccurs="1" />
       </xs:sequence>
@@ -37,30 +37,31 @@
          <xs:enumeration value="float" />
          <xs:enumeration value="double" />
          <xs:enumeration value="string" />
-         <xs:enumeration value="user" />
+         <xs:enumeration value="enum" />
+         <xs:enumeration value="struct" />
       </xs:restriction>
    </xs:simpleType>
 
    <xs:complexType name="fieldType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:string"     name="name"        use="required" />
-            <xs:attribute type="fieldtypeType" name="type"        use="required" />
-            <xs:attribute type="xs:string"     name="user"        use="optional" />
-            <xs:attribute type="xs:string"     name="length"      use="optional" />
-            <xs:attribute type="xs:string"     name="description" use="required" />
+            <xs:attribute type="xs:string"          name="name"         use="required" />
+            <xs:attribute type="fieldtypeType"      name="type"         use="required" />
+            <xs:attribute type="xs:string"          name="userTypeName" use="optional" />
+            <xs:attribute type="xs:positiveInteger" name="length"       use="optional" />
+            <xs:attribute type="xs:string"          name="description"  use="required" />
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
 
-   <xs:complexType name="structType" mixed="true">
+   <xs:complexType name="structType">
       <xs:sequence>
          <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="1" />
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>
    
-   <xs:complexType name="eventType" mixed="true">
+   <xs:complexType name="eventType">
       <xs:sequence>
          <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="0" />
       </xs:sequence>
@@ -72,14 +73,7 @@
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>
-   <xs:complexType name="offersType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="xs:string" name="interface" use="required" />
-         </xs:extension>
-      </xs:simpleContent>
-   </xs:complexType>
-   <xs:complexType name="requiresType">
+   <xs:complexType name="interfaceUsageType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
             <xs:attribute type="xs:string" name="interface" use="required" />
@@ -104,11 +98,11 @@
    
    <xs:complexType name="componentType">
       <xs:sequence>
-         <xs:element type="offersType"   name="offers"   maxOccurs="unbounded" minOccurs="0" />
-         <xs:element type="requiresType" name="requires" maxOccurs="unbounded" minOccurs="0" />
-         <xs:element type="javaType" name="java" minOccurs="0" maxOccurs="1" />
-         <xs:element type="cppType"  name="cpp"  minOccurs="0" maxOccurs="1" />
-         <xs:element type="cType"    name="c"    minOccurs="0" maxOccurs="1" />
+         <xs:element type="interfaceUsageType" name="offers"   minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="interfaceUsageType" name="requires" minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="javaType"           name="java"     minOccurs="0" maxOccurs="1" />
+         <xs:element type="cppType"            name="cpp"      minOccurs="0" maxOccurs="1" />
+         <xs:element type="cType"              name="c"        minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>
@@ -124,13 +118,19 @@
    </xs:complexType>
 
    <xs:element name="distributed-application" type="disappType">
-      <xs:unique name="user-name">
-         <xs:selector xpath="enumeration|struct"/>
-         <xs:field xpath="./@name"/>
-      </xs:unique>
 
       <xs:unique name="component-name">
          <xs:selector xpath=".//component"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:unique name="enum-name">
+         <xs:selector xpath=".//enumeration"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:unique name="struct-name">
+         <xs:selector xpath=".//struct"/>
          <xs:field xpath="./@name"/>
       </xs:unique>
 
@@ -148,12 +148,12 @@
          <xs:selector xpath=".//component/requires"/>
          <xs:field xpath="./@interface"/>
       </xs:keyref>
-
-      <xs:keyref name="field" refer="user-name">
-         <xs:selector xpath=".//interface/event/field"/>
-         <xs:field xpath="./@user"/>
+<!--
+      <xs:keyref name="enum" refer="enum-name">
+         <xs:selector xpath=".//interface/event/field[type='enum']"/>
+         <xs:field xpath="./@userTypeName"/>
       </xs:keyref>
-
+-->
    </xs:element>
 
 </xs:schema>

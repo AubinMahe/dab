@@ -34,7 +34,7 @@
 
    <interface name="IHM">
       <event name="setStatus">
-         <field name="etat" type="user" user="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+         <field name="etat" type="enum" userTypeName="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
       </event>
       <event name="setSoldeCaisse">
          <field name="solde" type="double"  description="Montant de la caisse en €" />
@@ -69,8 +69,8 @@
 
    <interface name="LecteurDeCarte">
       <event name="carteLue">
-         <field name="carte"  type="user" user="Carte"  description="Données de carte retournées par le Site central" />
-         <field name="compte" type="user" user="Compte" description="Données de compte retournées par le Site central" />
+         <field name="carte"  type="struct" userTypeName="Carte"  description="Données de carte retournées par le Site central" />
+         <field name="compte" type="struct" userTypeName="Compte" description="Données de compte retournées par le Site central" />
       </event>
    </interface>
 

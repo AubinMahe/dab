@@ -115,7 +115,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="tests|src-gen-sav" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src-gen/dab_ST|tests|src-gen-sav" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				
@@ -239,7 +239,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="tests|src-gen-sav" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src-gen/dab_ST|tests|src-gen-sav" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				

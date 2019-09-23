@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Gen-sources" default="generate-all-sources">
+
+   <target name="generate-all-sources">
+      <java fork="true" classname="disapp.generator.Main">
+         <classpath location="lib/antlr-runtime-3.3.jar" />
+         <classpath location="lib/javax.activation-1.2.0.jar" />
+         <classpath location="lib/javax.activation-api-1.2.0.jar" />
+         <classpath location="lib/jaxb-api-2.3.1.jar" />
+         <classpath location="lib/jaxb-core-2.3.0.jar" />
+         <classpath location="lib/jaxb-impl-2.3.2.jar" />
+         <classpath location="lib/ST4-4.0.4.jar" />
+         <classpath location="disappgen.jar" />
+         <arg value="--model=dab.xml" />
+      </java>
+   </target>
+
+</project>
+

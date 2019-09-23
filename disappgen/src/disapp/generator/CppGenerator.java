@@ -28,7 +28,8 @@ public class CppGenerator extends BaseGenerator {
             signature += ", ";
          }
          switch( xType ) {
-         case "user"   : signature += "const " + xField.getAttribute( "user" ) + " &"; break;
+         case "struct" :
+         case "enum"   : signature += "const " + xField.getAttribute( "userTypeName" ) + " &"; break;
          case "string" : signature += "const std::string &"; break;
          case "double" : signature += "const double &"; break;
          case "boolean": signature += "bool"; break;
@@ -217,9 +218,10 @@ public class CppGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
-            case "user"   : ps.printf( "      %s %s;\n"     , xUser, xName ); break;
+            case "struct" :
+            case "enum"   : ps.printf( "      %s %s;\n"     , xUser, xName ); break;
             case "string" : ps.printf( "      std::%s %s;\n", xType, xName ); break;
             case "boolean": ps.printf( "      bool %s;\n"   , xName );        break;
             default       : ps.printf( "      %s %s;\n"     , xType, xName ); break;
@@ -255,7 +257,7 @@ public class CppGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
             case "boolean": ps.printf( "   target.putBoolean( %s );\n", xName ); break;
             case "byte"   : ps.printf( "   target.putByte( %s );\n"   , xName ); break;
@@ -268,15 +270,20 @@ public class CppGenerator extends BaseGenerator {
             case "float"  : ps.printf( "   target.putFloat( %s );\n"  , xName ); break;
             case "double" : ps.printf( "   target.putDouble( %s );\n" , xName ); break;
             case "string" : ps.printf( "   target.putString( %s );\n" , xName ); break;
-            case "user"   :
+            case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "   target.putByte((byte)%s );\n", xName );
                }
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum" );
+               }
+               break;
+            case "struct" :
                if( _model.structIsDefined( xUser )) {
                   ps.printf( "   %s.put( target );\n", xName );
                }
                else {
-                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                  throw new IllegalStateException( xType + " is not a Struct" );
                }
                break;
             }
@@ -287,7 +294,7 @@ public class CppGenerator extends BaseGenerator {
          for( final Element xField : xFields.values()) {
             final String xName = xField.getAttribute( "name" );
             final String xType = xField.getAttribute( "type" );
-            final String xUser = xField.getAttribute( "user" );
+            final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
             case "boolean": ps.printf( "   %s = source.getBoolean();\n", xName ); break;
             case "byte"   : ps.printf( "   %s = source.getByte();\n"   , xName ); break;
@@ -300,11 +307,16 @@ public class CppGenerator extends BaseGenerator {
             case "float"  : ps.printf( "   %s = source.getFloat();\n"  , xName ); break;
             case "double" : ps.printf( "   %s = source.getDouble();\n" , xName ); break;
             case "string" : ps.printf( "   %s = source.getString();\n" , xName ); break;
-            case "user"   :
+            case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "   %s = (%s)source.getByte();\n", xName, xUser );
                }
-               else if( _model.structIsDefined( xUser )) {
+               else {
+                  throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+               }
+            break;
+            case "struct":
+               if( _model.structIsDefined( xUser )) {
                   ps.printf( "   %s.get( source );\n", xName );
                }
                else {
@@ -371,7 +383,7 @@ public class CppGenerator extends BaseGenerator {
                      final Element xField = (Element)xFields.item( j );
                      final String xName = xField.getAttribute( "name" );
                      final String xType = xField.getAttribute( "type" );
-                     final String xUser = xField.getAttribute( "user" );
+                     final String xUser = xField.getAttribute( "userTypeName" );
                      switch( xType ) {
                      case "boolean": ps.printf( "         _out.putBoolean( %s );\n", xName ); break;
                      case "byte"   : ps.printf( "         _out.putByte( %s );\n"   , xName ); break;
@@ -384,15 +396,20 @@ public class CppGenerator extends BaseGenerator {
                      case "float"  : ps.printf( "         _out.putFloat( %s );\n"  , xName ); break;
                      case "double" : ps.printf( "         _out.putDouble( %s );\n" , xName ); break;
                      case "string" : ps.printf( "         _out.putString( %s );\n" , xName ); break;
-                     case "user"   :
+                     case "enum"   :
                         if( _model.enumIsDefined( xUser )) {
                            ps.printf( "         _out.putByte( static_cast<byte>( %s ));\n", xName );
                         }
-                        else if( _model.structIsDefined( xUser )) {
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum" );
+                        }
+                        break;
+                     case "struct"   :
+                        if( _model.structIsDefined( xUser )) {
                            ps.printf( "         %s.put( _out );\n", xName );
                         }
                         else {
-                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                           throw new IllegalStateException( xType + " is not a Struct" );
                         }
                         break;
                      }
@@ -624,7 +641,7 @@ public class CppGenerator extends BaseGenerator {
                      final Element xField = (Element)xFields.item( j );
                      final String  xName  = xField.getAttribute( "name" );
                      final String  xType  = xField.getAttribute( "type" );
-                     final String  xUser  = xField.getAttribute( "user" );
+                     final String  xUser  = xField.getAttribute( "userTypeName" );
                      switch( xType ) {
                      case "boolean": ps.printf( "            bool %s = _in.getBoolean();\n"      , xName ); break;
                      case "byte"   : ps.printf( "            byte %s = _in.getByte();\n"         , xName ); break;
@@ -637,16 +654,21 @@ public class CppGenerator extends BaseGenerator {
                      case "float"  : ps.printf( "            float %s = _in.getFloat();\n"       , xName ); break;
                      case "double" : ps.printf( "            double %s = _in.getDouble();\n"     , xName ); break;
                      case "string" : ps.printf( "            std::string %s = _in.getString();\n", xName ); break;
-                     case "user"   :
+                     case "enum"   :
                         if( _model.enumIsDefined( xUser )) {
                            ps.printf( "            %s %s = static_cast<%s>( _in.getByte());\n", xUser, xName, xUser );
                         }
-                        else if( _model.structIsDefined( xUser )) {
+                        else {
+                           throw new IllegalStateException( xType + " is not an Enum" );
+                        }
+                     break;
+                     case "struct":
+                        if( _model.structIsDefined( xUser )) {
                            ps.printf( "            %s %s;\n", xUser, xName );
                            ps.printf( "            %s.get( _in );\n", xName );
                         }
                         else {
-                           throw new IllegalStateException( xType + " is not an Enum nor a Struct" );
+                           throw new IllegalStateException( xType + " is not a Struct" );
                         }
                      break;
                      }

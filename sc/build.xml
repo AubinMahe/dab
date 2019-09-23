@@ -12,18 +12,7 @@
       <delete file="${jar}" />
    </target>
 
-   <target name="gen">
-      <ant dir="../disappgen" target="jar" inheritall="false" />
-      <java
-         dir       =".."
-         fork      ="true"
-         modulepath=".."
-         module    ="disappgen/disapp.generator.Main">
-         <arg value="--model=dab.xml" />
-      </java>
-   </target>
-
-   <target name="javac" depends="gen">
+   <target name="javac">
       <ant dir="../util-java" target="jar" inheritall="false" />
       <mkdir dir="build" />
       <javac

@@ -8,10 +8,12 @@ import org.w3c.dom.NodeList;
 
 public class Main {
 
-   private final Model _model;
+   private final Model                      _model;
+   private final disapp.generator.st4.Model _stModel;
 
    public Main( File model, boolean force ) throws Exception {
-      _model = new Model( model, force );
+      _model   = new Model( model, force );
+      _stModel = new disapp.generator.st4.Model( model, force );
    }
 
    private void generateComponents() throws IOException {
@@ -59,6 +61,7 @@ public class Main {
                "XML non valide : l'implémentation n'est ni Java, ni C++, ni C !" );
          }
       }
+      new disapp.generator.st4.CGenerator( _stModel ).generateComponents();
    }
 
    private static void usage() {
