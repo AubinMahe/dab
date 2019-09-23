@@ -22,21 +22,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>build@root.xml</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/build.xml</locationURI>
-		</link>
-		<link>
-			<name>dab.xml</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/dab.xml</locationURI>
-		</link>
-		<link>
-			<name>distributed-application.xsd</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PARENT_LOC/distributed-application.xsd</locationURI>
-		</link>
-		<link>
 			<name>lib</name>
 			<type>2</type>
 			<locationURI>PARENT-1-PROJECT_LOC/lib</locationURI>

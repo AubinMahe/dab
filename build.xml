@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Gen-sources" default="generate-all-sources">
+<project name="Root" default="boot">
 
+   <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
    <target name="generate-all-sources">
       <java fork="true" classname="disapp.generator.Main">
          <classpath location="lib/antlr-runtime-3.3.jar" />
@@ -14,6 +15,39 @@
          <arg value="--model=dab.xml" />
       </java>
    </target>
+   <target name="boot" depends="disappgen,generate-all-sources" />
+
+   <target name="util-c"      ><exec executable="make" dir="util-c"       /></target>
+   <target name="util-c-tests"><exec executable="make" dir="util-c/tests" /></target>
+   <target name="udt-c"       ><exec executable="make" dir="udt-c"        /></target>
+
+   <target name="util-cpp"    ><exec executable="make" dir="util-cpp"     /></target>
+   <target name="udt-cpp"     ><exec executable="make" dir="udt-cpp"      /></target>
+
+   <target name="util-java"   ><ant  target="jar"      dir="util-java"    /></target>
+   <target name="dab"         ><ant  target="jar"      dir="dab"          /></target>
+   <target name="sc"          ><ant  target="jar"      dir="sc"           /></target>
+   
+   <target name="build-all" depends="util-c,util-c-tests,udt-c,util-cpp,udt-cpp,util-java,dab,sc" />
+
+   <target name="run-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
+   <target name="run-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>
+
+   <target name="clean">
+      <ant  dir="dab"                                 target="clean" />
+      <ant  dir="sc"                                  target="clean" />
+      <exec dir="udt-c"        executable="make" ><arg value="clean" /></exec>
+      <exec dir="udt-cpp"      executable="make" ><arg value="clean" /></exec>
+      <exec dir="util-c/tests" executable="make" ><arg value="clean" /></exec>
+      <exec dir="util-c"       executable="make" ><arg value="clean" /></exec>
+      <exec dir="util-cpp"     executable="make" ><arg value="clean" /></exec>
+      <ant  dir="disappgen"                           target="clean" />
+      <ant  dir="util-java"                           target="clean" />
+      <delete file="disappgen.jar" />
+      <delete file="unite_de_traitement" />
+      <delete file="unite_de_traitement-mingw32" />
+      <delete file="UniteDeTraitement" />
+      <delete file="UniteDeTraitement-mingw32" />
+   </target>
 
 </project>
-
