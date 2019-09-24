@@ -118,38 +118,21 @@ public class <struct.name> {
 
 
 enum( package, enum ) ::= <<
-#pragma once
+package <package>;
 
-#include \<iostream\>
+import java.nio.ByteBuffer;
 
-package <package> {
+import io.ByteBufferHelper;
 
-   enum class <enum.name> : <enumtype( enum )> {
-      FIRST,
+public enum <enum.name> {
 
-< first(enum.literal):{literal|
-      <literal.name; format="upper"> = FIRST,}>
-< rest(enum.literal) :{literal|
-      <literal.name; format="upper">,
-}>
-      LAST
-   };
-   
-   @Override
-   public String toString() {
-      switch( <enum.name; format="lower"> ) {
-<enum.literal:{literal|
-      case <enum.name>::<literal.name; format="upper">: return stream \<\< "<literal.name; format="upper">"; break;
-}>   case <enum.name>::LAST: return stream \<\< "LAST (inutilisé)"; break;
-      }
-      return stream \<\< "inconnu (" \<\< <enum.name; format="lower"> \<\< ")";
-   }
-}
+   <enum.literal:{literal|<literal.name; format="ID">,
+}>}
 >>
 
 
 
-requiredInterface( package, usedTypes, func, rawSize, iface ) ::= <<
+requiredInterface( package, usedTypes, ifaceName, rawSize, iface ) ::= <<
 package <package>;
 
 import java.io.IOException;
@@ -157,15 +140,15 @@ import java.net.SocketAddress;
 
 <usedTypes:{type|import <package>.<type>;
 }>
-public interface I<func> {
+public interface I<ifaceName> {
 
-   <iface.event:{event|void <event.name>( SocketAddress from<signature( true, event.field)> ) throws IOException;}>
-}
+   <iface.event:{event|void <event.name>( SocketAddress from<signature( true, event.field)> ) throws IOException;
+}>}
 >>
 
 
 
-requiredImplementation( package, usedTypes, func, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( package, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 package <package>.net;
 
 import java.io.IOException;
@@ -175,24 +158,25 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-import sc.ILecteurDeCarte;
+import <package>.I<ifaceName>;
+
 <usedTypes:{type|import <package>.<type>;
 }>
-public class <func> implements I<func> {
+public class <ifaceName> implements I<ifaceName> {
 
    private static final byte <iface.name; format="ID"> = <ifaceID>;
-   < first(iface.event):{event|private static final byte <event.name; format="ID"> = <i>;}>
-   < rest(iface.event) :{event|private static final byte <event.name; format="ID"> = <i>;}>
-
+   <iface.event:{event|private static final byte <event.name; format="ID"> = <i>;
+}>
    private final DatagramChannel _channel;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
 
-   public <func>( DatagramChannel channel ) {
+   public <ifaceName>( DatagramChannel channel ) {
       _channel = channel;
    }
+<iface.event:{event|
+
 
    @Override
-<iface.event:{event|
    public void <event.name>( SocketAddress target<signature( true, event.field )> ) throws IOException {
       _out.clear();
       _out.put( <iface.name; format="ID"> );
@@ -214,7 +198,7 @@ public class <func> implements I<func> {
 < endif>
 }>      _out.flip();
       _channel.send( _out, target );
-      System.err.printf( "<func>.<event.name>|informations sent to %s\n", target );
+      System.err.printf( "<ifaceName>.<event.name>|informations sent to %s\n", target );
    \}
 }>}
 >>
@@ -229,12 +213,10 @@ import java.net.SocketAddress;
 
 <usedTypes:{used|import <package>.<used>;
 }>
-
 public interface I<name> {
 
    <events:{event|void <event.name>( SocketAddress from<signature( true, event.field )> ) throws IOException;
-}>
-}
+}>}
 >>
 
 
@@ -247,12 +229,12 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
 
       private final int _value;
 
-      SiteCentralEvent( int value ) {
+      <name>Event( int value ) {
          _value = value;
       }
 
-      static SiteCentralEvent valueOf( int value ) {
-         for( final SiteCentralEvent e : values()) {
+      static <name>Event valueOf( int value ) {
+         for( final <name>Event e : values()) {
             if( e._value == value ) {
                return e;
             }
@@ -267,7 +249,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
       case <event.name; format="ID">:{
          <event.field:{field|
 < if(     field.isBoolean )>final bool <field.name> = ByteBufferHelper.getBoolean( _in );
-< elseif( field.isByte    )>final byte <field.name> = _in.getByte();
+< elseif( field.isByte    )>final byte <field.name> = _in.get();
 < elseif( field.isShort   )>final short <field.name> = _in.getShort();
 < elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
 < elseif( field.isInt     )>final int <field.name> = _in.getInt();
@@ -277,7 +259,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
 < elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
 < elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
 < elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
-< elseif( field.isEnum    )>final <field.userTypeName> <field.name> = _in.getByte();
+< elseif( field.isEnum    )>final <field.userTypeName> <field.name> = <field.userTypeName>.values()[_in.get()];
 < elseif( field.isStruct  )>final <field.userTypeName> <field.name>;
 <field.name>.get( _in );< endif>
 }>         _listener.<event.name>( from<args( true, event.field )> );
@@ -289,7 +271,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
    }
 >>
 
-dispatcherImplementation( package, name, ifaces, events, rawSize ) ::= <<
+dispatcherImplementation( package, name, ifaces, events, usedTypes, rawSize ) ::= <<
 package <package>.net;
 
 import java.io.IOException;
@@ -298,8 +280,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
-import sc.ISiteCentral;
 
+import <package>.I<name>;
+<usedTypes:{used|import <package>.<used>;
+}>
 public class <name>Dispatcher {
 
    <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;}>

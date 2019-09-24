@@ -120,29 +120,29 @@ typedef enum <prefix>_<enum.name; format="cname">_e {
 
 
 
-requiredHeader( prefix, usedTypes, func, rawSize, iface ) ::= <<
+requiredHeader( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 
 #include \<io/datagram_socket.h\>
 
 <usedTypes:{type|#include \<<prefix>/<type; format="cname">.h\>
 }>
-typedef struct <prefix>_<func; format="cname">_s {
+typedef struct <prefix>_<ifaceName; format="cname">_s {
    SOCKET         socket;
    byte           raw[<rawSize>];
    io_byte_buffer out;
-} <prefix>_<func; format="cname">;
+} <prefix>_<ifaceName; format="cname">;
 
-util_error <prefix>_<func; format="cname">_init( <prefix>_<func; format="cname"> * This, SOCKET socket );
+util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"> * This, SOCKET socket );
 <iface.event:{event|
-util_error <prefix>_<func; format="cname">_<event.name; format="cname">( <prefix>_<func; format="cname"
+util_error <prefix>_<ifaceName; format="cname">_<event.name; format="cname">( <prefix>_<ifaceName; format="cname"
     > * This, struct sockaddr_in * target<signature( prefix, event.field )> );
 }>
 >>
 
 
 
-requiredBody( prefix, usedTypes, func, rawSize, iface, ifaceID ) ::= <<
+requiredBody( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #include \<<prefix>/<iface.name; format="cname">.h\>
 #include \<stdio.h\>
 
@@ -294,7 +294,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 
 >>
 
-dispatcherBody( prefix, name, ifaces, events, rawSize ) ::= <<
+dispatcherBody( prefix, name, ifaces, events, usedTypes, rawSize ) ::= <<
 #include \<<prefix>/<name; format="cname">_dispatcher.h\>
 #include \<stdio.h\>
 
@@ -330,7 +330,7 @@ util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <prefix>_<name; 
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ), __FILE__, __LINE__ );
    switch( interface ) {
 <ifaces.keys:{ifaceName|
-   case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname,width">_dispatch( This, event, has_dispatched ), __FILE__, __LINE__ ); break;
+   case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched ), __FILE__, __LINE__ ); break;
 }>
    }
    return UTIL_NO_ERROR;

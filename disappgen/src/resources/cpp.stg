@@ -173,7 +173,7 @@ std::ostream & operator \<\< ( std::ostream & stream, const <enum.name> & <enum.
 
 
 
-requiredHeader( namespace, usedTypes, func, rawSize, iface ) ::= <<
+requiredHeader( namespace, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 
 #include \<io/DatagramSocket.hpp\>
@@ -182,11 +182,11 @@ requiredHeader( namespace, usedTypes, func, rawSize, iface ) ::= <<
 }>
 namespace <namespace> {
 
-   class I<func> {
+   class I<ifaceName> {
    public:
 
-      I<func>( void ) = default;
-      virtual ~ I<func>( void ) = default;
+      I<ifaceName>( void ) = default;
+      virtual ~ I<ifaceName>( void ) = default;
 
    public:
 
@@ -194,17 +194,17 @@ namespace <namespace> {
       virtual void <event.name>( sockaddr_in & target<signature( true, event.field )> ) = 0;
 }>
    private:
-      I<func>( const I<func> & ) = delete;
-      I<func> & operator = ( const I<func> & ) = delete;
+      I<ifaceName>( const I<ifaceName> & ) = delete;
+      I<ifaceName> & operator = ( const I<ifaceName> & ) = delete;
    };
 
-   I<func> * new<func>( io::DatagramSocket & socket );
+   I<ifaceName> * new<ifaceName>( io::DatagramSocket & socket );
 }
 >>
 
 
 
-requiredBody( namespace, usedTypes, func, rawSize, iface, ifaceID ) ::= <<
+requiredBody( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #include \<<namespace>/I<iface.name>.hpp\>
 
 namespace <namespace>::net {
@@ -391,7 +391,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
       }
 >>
 
-dispatcherBody( namespace, name, ifaces, events, rawSize ) ::= <<
+dispatcherBody( namespace, name, ifaces, events, usedTypes, rawSize ) ::= <<
 #include \<<namespace>/I<name>Dispatcher.hpp\>
 
 #include \<iostream\>

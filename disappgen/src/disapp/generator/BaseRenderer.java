@@ -1,4 +1,4 @@
-package disapp.generator.st4;
+package disapp.generator;
 
 import java.net.URLEncoder;
 import java.nio.charset.Charset;

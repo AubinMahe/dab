@@ -1,4 +1,4 @@
-package disapp.generator.st4;
+package disapp.generator;
 
 import java.io.IOException;
 import java.util.LinkedList;

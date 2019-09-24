@@ -3,11 +3,6 @@ package disapp.generator;
 import java.io.File;
 import java.io.IOException;
 
-import disapp.generator.st4.CGenerator;
-import disapp.generator.st4.CppGenerator;
-import disapp.generator.st4.JavaGenerator;
-import disapp.generator.st4.Model;
-
 public class Main {
 
    private final Model _model;

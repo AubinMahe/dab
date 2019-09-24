@@ -1,4 +1,4 @@
-package disapp.generator.st4;
+package disapp.generator;
 
 import java.io.File;
 import java.util.Collection;
@@ -254,7 +254,7 @@ public final class Model {
 
    protected void fillRequiredHeaderTemplate( String ifaceName, InterfaceUsageType required, ST tmpl ) {
       tmpl.add( "usedTypes", _usages.get( required.getInterface()));
-      tmpl.add( "func"     , ifaceName );
+      tmpl.add( "ifaceName", ifaceName );
       tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
       tmpl.add( "iface"    , _interfaces.get( required.getInterface()));
    }
@@ -271,7 +271,7 @@ public final class Model {
       final InterfaceType     iface         = _interfaces.get( interfaceName );
       final SortedSet<String> usedTypes     = _usages    .get( interfaceName );
       tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "func"     , ifaceName );
+      tmpl.add( "ifaceName", ifaceName );
       tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
       tmpl.add( "iface"    , iface);
       tmpl.add( "ifaceID"  , ifaceID );
@@ -335,14 +335,19 @@ public final class Model {
          intrfcMaxWidth = Math.max( BaseRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
       }
       byte rank = 0;
-      final Map<String, Byte>            ifaces = new LinkedHashMap<>();
-      final Map<String, List<EventType>> events = new LinkedHashMap<>();
+      final Map<String, Byte>            ifaces    = new LinkedHashMap<>();
+      final Map<String, List<EventType>> events    = new LinkedHashMap<>();
+      final SortedSet<String>            usedTypes = new TreeSet<>();
       for( final var iface : _application.getInterface()) {
          ++rank;
          final String ifaceName = iface.getName();
          if( contains( usedInterfaces, ifaceName )) {
             ifaces.put( ifaceName, rank );
             events.put( ifaceName, _interfaces.get( ifaceName ).getEvent());
+            final SortedSet<String> used = _usages.get( ifaceName );
+            if( used != null ) {
+               usedTypes.addAll( used );
+            }
          }
       }
       final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
@@ -353,6 +358,7 @@ public final class Model {
       tmpl.add( "name"   , name );
       tmpl.add( "ifaces" , ifaces );
       tmpl.add( "events" , events );
+      tmpl.add( "usedTypes", usedTypes );
       tmpl.add( "rawSize", rawSize );
    }
 }

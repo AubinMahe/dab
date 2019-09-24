@@ -9,6 +9,7 @@ SRCSGEN =\
  src-gen/dab/net/site_central.c\
  src-gen/dab/net/unite_de_traitement_dispatcher.c
 
+
 HEADERSGEN=\
  src-gen/dab/etat.h\
  src-gen/dab/ihm.h\
@@ -18,34 +19,10 @@ HEADERSGEN=\
 
 CFLAGS = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -W -Wall -pedantic -c -std=c11
 
-DISAPPGEN_CLASSPATH=\
- lib/antlr-runtime-3.3.jar:\
- lib/javax.activation-1.2.0.jar:\
- lib/javax.activation-api-1.2.0.jar:\
- lib/jaxb-api-2.3.1.jar:\
- lib/jaxb-core-2.3.0.jar:\
- lib/jaxb-impl-2.3.2.jar:\
- lib/ST4-4.0.4.jar:\
- dis-app-gen.jar
-
 OBJS    = $(SRCS:src/%c=BUILD/%o) $(SRCSGEN:src-gen/%c=BUILD/%o)
 OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
 
 all: ../unite_de_traitement ../unite_de_traitement-mingw32
-
-clean-all:
-	cd ../disappgen && ant  clean
-	cd ../util-java && ant  clean
-	cd ../util-c    && make clean
-	rm -f  ../unite_de_traitement
-	rm -f  ../unite_de_traitement-mingw32
-	rm -f  deps
-	rm -fr BUILD
-	rm -fr BUILD-mingw32
-	rm -fr bin
-	rm -fr Debug
-	rm -fr Release
-	rm -fr src-gen
 
 clean:
 	rm -f  deps
@@ -86,41 +63,18 @@ BUILD-mingw32/%.o: src-gen/%.c
 	@mkdir -p $$(dirname $@)
 	i686-w64-mingw32-gcc $(CFLAGS) -o $@ $<
 
-../dis-app-gen.jar:
-	cd ../disappgen && ant
-
-../Site-Central.jar:
-	cd ../util-java && ant
-	cd ../sc        && ant
-
-../DAB-UI.jar:
-	cd ../util-java && ant
-	cd ../dab       && ant
-
 run:
-	cd ../util-java && ant
-	cd ../sc        && ant
-	cd ../dab       && ant
-	cd ../util-c    && make
 	make ../unite_de_traitement
 	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
 	../unite_de_traitement --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
 
 run-debug:
-	cd ../util-java && ant
-	cd ../sc        && ant
-	cd ../dab       && ant
-	cd ../util-c    && make
 	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
 	@echo "Allez, c'est parti pour le debug du bordel en C sous Eclipse..."
 
 run-mingw32:
-	cd ../util-java && ant
-	cd ../sc        && ant
-	cd ../dab       && ant
-	cd ../util-c    && make
 	make ../unite_de_traitement-mingw32
 	cd ../sc        && xterm -geometry 132x30-650-0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &

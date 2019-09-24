@@ -1,4 +1,4 @@
-package disapp.generator.st4;
+package disapp.generator;
 
 import org.stringtemplate.v4.Interpreter;
 import org.stringtemplate.v4.ST;
