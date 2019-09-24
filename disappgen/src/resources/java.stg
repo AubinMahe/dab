@@ -1,0 +1,333 @@
+group Java;
+
+
+
+type( field ) ::= <<
+< if(     field.isBoolean )>boolean<
+  elseif( field.isByte    )>byte   <
+  elseif( field.isShort   )>short  <
+  elseif( field.isUshort  )>short  <
+  elseif( field.isInt     )>int    <
+  elseif( field.isUint    )>int    <
+  elseif( field.isLong    )>long   <
+  elseif( field.isUlong   )>long   <
+  elseif( field.isFloat   )>float  <
+  elseif( field.isDouble  )>double <
+  elseif( field.isString  )>String <
+  elseif( field.isEnum    )><field.userTypeName><
+  elseif( field.isStruct  )><field.userTypeName><
+  endif>
+>>
+
+
+
+enumtype( field ) ::= <<
+< if(     field.isBoolean )>boolean<
+  elseif( field.isByte    )>byte<
+  elseif( field.isShort   )>short<
+  elseif( field.isUshort  )>short<
+  elseif( field.isInt     )>int<
+  elseif( field.isUint    )>int<
+  elseif( field.isLong    )>long<
+  elseif( field.isUlong   )>long<
+  endif>
+>>
+
+
+
+signature( comma, fields ) ::= <<
+< if( comma && fields )>, < endif><
+  first(fields):{field|<type(field)> <field.name>}><
+  rest (fields):{field|, <type(field)> <field.name>}>
+>>
+
+
+
+args( comma, fields ) ::= <<
+< if( comma && fields )>, < endif><
+  first( fields ):{field|<field.name>}><
+  rest ( fields ):{field|, <field.name>}>
+>>
+
+
+
+struct( package, struct, maxLength, maxStrLength ) ::= <<
+package <package>;
+
+import java.nio.ByteBuffer;
+
+import io.ByteBufferHelper;
+
+public class <struct.name> {
+
+<struct.field:{field|
+   public < if( field.isBoolean )>boolean <field.name>;
+< elseif(       field.isByte    )>byte    <field.name>;
+< elseif(       field.isShort   )>short   <field.name>;
+< elseif(       field.isUshort  )>short   <field.name>;
+< elseif(       field.isInt     )>int     <field.name>;
+< elseif(       field.isUint    )>int     <field.name>;
+< elseif(       field.isLong    )>long    <field.name>;
+< elseif(       field.isUlong   )>long    <field.name>;
+< elseif(       field.isFloat   )>float   <field.name>;
+< elseif(       field.isDouble  )>double  <field.name>;
+< elseif(       field.isString  )>String  <field.name>;
+< elseif(       field.isEnum    )><field.userTypeName> <field.name>;
+< elseif(       field.isStruct  )><field.userTypeName> <field.name>;
+< endif>
+}>
+
+   public void put( ByteBuffer target ) {
+      <struct.field:{field|
+< if(     field.isBoolean )>ByteBufferHelper.putBoolean( target, <field.name> );
+< elseif( field.isByte    )>target.put       ( <field.name> );
+< elseif( field.isShort   )>target.putShort  ( <field.name> );
+< elseif( field.isUshort  )>target.putShort  ( <field.name> );
+< elseif( field.isInt     )>target.putInt    ( <field.name> );
+< elseif( field.isUint    )>target.putInt    ( <field.name> );
+< elseif( field.isLong    )>target.putLong   ( <field.name> );
+< elseif( field.isUlong   )>target.putLong   ( <field.name> );
+< elseif( field.isFloat   )>target.putFloat  ( <field.name> );
+< elseif( field.isDouble  )>target.putDouble ( <field.name> );
+< elseif( field.isEnum    )>target.put       ( <field.name> );
+< elseif( field.isString  )>ByteBufferHelper.putString( target, <field.name> );
+< elseif( field.isStruct  )><field.name>.put( target );
+< endif>
+}>   }
+
+   public void get( ByteBuffer source ) {
+      <struct.field:{field|
+< if(     field.isBoolean )><field.name; format="width"> = ByteBufferHelper.getBoolean( source );
+< elseif( field.isByte    )><field.name; format="width"> = source.get();
+< elseif( field.isShort   )><field.name; format="width"> = source.getShort();
+< elseif( field.isUshort  )><field.name; format="width"> = source.getShort();
+< elseif( field.isInt     )><field.name; format="width"> = source.getInt();
+< elseif( field.isUint    )><field.name; format="width"> = source.getInt();
+< elseif( field.isLong    )><field.name; format="width"> = source.getLong();
+< elseif( field.isUlong   )><field.name; format="width"> = source.getLong();
+< elseif( field.isFloat   )><field.name; format="width"> = source.getFloat();
+< elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
+< elseif( field.isEnum    )><field.name; format="width"> = source.get();
+< elseif( field.isString  )><field.name; format="width"> = ByteBufferHelper.getString( source );
+< elseif( field.isStruct  )><field.name; format="width">.put( source );
+< endif>
+}>   }
+}
+>>
+
+
+
+enum( package, enum ) ::= <<
+#pragma once
+
+#include \<iostream\>
+
+package <package> {
+
+   enum class <enum.name> : <enumtype( enum )> {
+      FIRST,
+
+< first(enum.literal):{literal|
+      <literal.name; format="upper"> = FIRST,}>
+< rest(enum.literal) :{literal|
+      <literal.name; format="upper">,
+}>
+      LAST
+   };
+   
+   @Override
+   public String toString() {
+      switch( <enum.name; format="lower"> ) {
+<enum.literal:{literal|
+      case <enum.name>::<literal.name; format="upper">: return stream \<\< "<literal.name; format="upper">"; break;
+}>   case <enum.name>::LAST: return stream \<\< "LAST (inutilisé)"; break;
+      }
+      return stream \<\< "inconnu (" \<\< <enum.name; format="lower"> \<\< ")";
+   }
+}
+>>
+
+
+
+requiredInterface( package, usedTypes, func, rawSize, iface ) ::= <<
+package <package>;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+
+<usedTypes:{type|import <package>.<type>;
+}>
+public interface I<func> {
+
+   <iface.event:{event|void <event.name>( SocketAddress from<signature( true, event.field)> ) throws IOException;}>
+}
+>>
+
+
+
+requiredImplementation( package, usedTypes, func, rawSize, iface, ifaceID ) ::= <<
+package <package>.net;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+
+import io.ByteBufferHelper;
+
+import sc.ILecteurDeCarte;
+<usedTypes:{type|import <package>.<type>;
+}>
+public class <func> implements I<func> {
+
+   private static final byte <iface.name; format="ID"> = <ifaceID>;
+   < first(iface.event):{event|private static final byte <event.name; format="ID"> = <i>;}>
+   < rest(iface.event) :{event|private static final byte <event.name; format="ID"> = <i>;}>
+
+   private final DatagramChannel _channel;
+   private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
+
+   public <func>( DatagramChannel channel ) {
+      _channel = channel;
+   }
+
+   @Override
+<iface.event:{event|
+   public void <event.name>( SocketAddress target<signature( true, event.field )> ) throws IOException {
+      _out.clear();
+      _out.put( <iface.name; format="ID"> );
+      _out.put( <event.name; format="ID"> );
+      <event.field:{field|
+< if(     field.isBoolean )>ByteBufferHelper.putBoolean( _out, <field.name> );
+< elseif( field.isByte    )>_out.put( <field.name> );
+< elseif( field.isShort   )>_out.putShort( <field.name> );
+< elseif( field.isUshort  )>_out.putShort( <field.name> );
+< elseif( field.isInt     )>_out.putInt( <field.name> );
+< elseif( field.isUint    )>_out.putInt( <field.name> );
+< elseif( field.isLong    )>_out.putLong( <field.name> );
+< elseif( field.isUlong   )>_out.putLong( <field.name> );
+< elseif( field.isFloat   )>_out.putFloat( <field.name> );
+< elseif( field.isDouble  )>_out.putDouble( <field.name> );
+< elseif( field.isEnum    )>_out.put( <field.name> );
+< elseif( field.isString  )>ByteBufferHelper.putString( _out, <field.name> );
+< elseif( field.isStruct  )><field.name>.put( _out );
+< endif>
+}>      _out.flip();
+      _channel.send( _out, target );
+      System.err.printf( "<func>.<event.name>|informations sent to %s\n", target );
+   \}
+}>}
+>>
+
+
+
+offeredInterface( package, name, usedTypes, events ) ::= <<
+package <package>;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+
+<usedTypes:{used|import <package>.<used>;
+}>
+
+public interface I<name> {
+
+   <events:{event|void <event.name>( SocketAddress from<signature( true, event.field )> ) throws IOException;
+}>
+}
+>>
+
+
+
+dispatcherBodyOneInterface( name, ifaceName ) ::= <<
+
+   private static enum <name>Event {
+      <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
+}>      ;
+
+      private final int _value;
+
+      SiteCentralEvent( int value ) {
+         _value = value;
+      }
+
+      static SiteCentralEvent valueOf( int value ) {
+         for( final SiteCentralEvent e : values()) {
+            if( e._value == value ) {
+               return e;
+            }
+         }
+         return null;
+      }
+   }
+
+   private boolean dispatch( <name>Event event, SocketAddress from ) throws IOException {
+      switch( event ) {
+<events.(ifaceName):{event|
+      case <event.name; format="ID">:{
+         <event.field:{field|
+< if(     field.isBoolean )>final bool <field.name> = ByteBufferHelper.getBoolean( _in );
+< elseif( field.isByte    )>final byte <field.name> = _in.getByte();
+< elseif( field.isShort   )>final short <field.name> = _in.getShort();
+< elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
+< elseif( field.isInt     )>final int <field.name> = _in.getInt();
+< elseif( field.isUint    )>final uint <field.name> = _in.getUInt();
+< elseif( field.isLong    )>final long <field.name> = _in.getLong();
+< elseif( field.isUlong   )>final ulong <field.name> = _in.getULong();
+< elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
+< elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
+< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
+< elseif( field.isEnum    )>final <field.userTypeName> <field.name> = _in.getByte();
+< elseif( field.isStruct  )>final <field.userTypeName> <field.name>;
+<field.name>.get( _in );< endif>
+}>         _listener.<event.name>( from<args( true, event.field )> );
+         return true;\}
+}>      default:
+         System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
+         return false;
+      }
+   }
+>>
+
+dispatcherImplementation( package, name, ifaces, events, rawSize ) ::= <<
+package <package>.net;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+
+import io.ByteBufferHelper;
+import sc.ISiteCentral;
+
+public class <name>Dispatcher {
+
+   <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;}>
+
+<ifaces.keys:{ifaceName|
+<dispatcherBodyOneInterface( name, ifaceName )>
+}>
+   private final ByteBuffer      _in = ByteBuffer.allocate( <rawSize> );
+   private final DatagramChannel _channel;
+   private final I<name> _listener;
+
+   public <name>Dispatcher( DatagramChannel channel, I<name> listener ) {
+      _channel  = channel;
+      _listener = listener;
+   }
+
+   public boolean hasDispatched() throws IOException {
+      _in.clear();
+      final SocketAddress from = _channel.receive( _in );
+      _in.flip();
+      final byte intrfc = _in.get();
+      final byte event  = _in.get();
+      System.err.printf( "%s.run|intrfc = %d, event = %d\n", getClass().getName(), intrfc, event );
+      switch( intrfc ) {
+<ifaces.keys:{ifaceName|
+      case INTRFC_<ifaceName; format="ID">: return dispatch( <ifaceName>Event.valueOf( event ), from );
+}>      }
+      return false;
+   }
+}
+>>
