@@ -54,7 +54,7 @@ public class CGenerator extends BaseGenerator {
       return signature;
    }
 
-   private int generateRequiredHeaders(
+   private void generateRequiredHeaders(
       NodeList xRequires,
       String   genDir,
       String   prefix ) throws IOException
@@ -66,7 +66,6 @@ public class CGenerator extends BaseGenerator {
          final Map<String, NodeList> iface       = _model.getInterface( xIntrfcName );
          allEvents.addAll( iface.values());
       }
-      final int rawSize = _model.getBufferCapacity( allEvents );
       for( int i = 0, iCount = xRequires.getLength(); i < iCount; ++i ) {
          final Element xRequired     = (Element)xRequires.item( i );
          final String  interfaceName = xRequired.getAttribute( "interface" );
@@ -90,7 +89,7 @@ public class CGenerator extends BaseGenerator {
                }
                ps.printf( "typedef struct %s_s {\n", required );
                ps.printf( "   SOCKET         socket;\n" );
-               ps.printf( "   byte           raw[%d];\n", rawSize );
+               ps.printf( "   byte           raw[%d];\n", _model.getBufferCapacity( iface.values()));
                ps.printf( "   io_byte_buffer out;\n" );
                ps.printf( "} %s;\n", required );
                ps.printf( "\n" );
@@ -105,15 +104,9 @@ public class CGenerator extends BaseGenerator {
             System.out.printf( "%s written\n", target.getPath());
          }
       }
-      return rawSize;
    }
 
-   private void generateRequiredBodies(
-      NodeList xRequires,
-      String   genDir,
-      String   prefix,
-      int      rawSize ) throws IOException
-   {
+   private void generateRequiredBodies( NodeList xRequires, String genDir, String prefix ) throws IOException {
       for( int i = 0, iCount = xRequires.getLength(); i < iCount; ++i ) {
          final Element xRequired = (Element)xRequires.item( i );
          final String  ifaceName = xRequired.getAttribute( "interface" );
@@ -145,7 +138,8 @@ public class CGenerator extends BaseGenerator {
                ps.printf( "\n" );
                ps.printf( "util_error %s_init( %s * This, SOCKET socket ) {\n", adt, adt );
                ps.printf( "   This->socket = socket;\n" );
-               ps.printf( "   return io_byte_buffer_wrap( &This->out, %d, This->raw );\n", rawSize );
+               ps.printf( "   return io_byte_buffer_wrap( &This->out, %d, This->raw );\n",
+                  _model.getBufferCapacity( iface.values()));
                ps.printf( "}\n" );
                for( final var e : iface.entrySet()) {
                   final String   event   = cname( e.getKey());
@@ -672,15 +666,12 @@ public class CGenerator extends BaseGenerator {
       String   prefix ) throws IOException
    {
       final List<String> generated = new LinkedList<>();
-      generateTypesUsedBy( xOffers  , generated, genDir, prefix );
-      generateTypesUsedBy( xRequires, generated, genDir, prefix );
-      generated.clear();
-
-      int rawSize = generateRequiredHeaders( xRequires, genDir, prefix );
-      generateRequiredBodies( xRequires, genDir, prefix, rawSize );
-
-      generateOfferedHeader( name, xOffers, genDir, prefix );
-      rawSize = generateDispatcherHeader( name, xOffers, genDir, prefix );
-      generateDispatcherBody( name, xOffers, genDir, prefix, rawSize );
+      /*          */generateTypesUsedBy     ( xOffers  , generated, genDir, prefix );
+      /*          */generateTypesUsedBy     ( xRequires, generated, genDir, prefix );
+      /*          */generateRequiredHeaders ( xRequires, genDir, prefix );
+      /*          */generateRequiredBodies  ( xRequires, genDir, prefix );
+      /*          */generateOfferedHeader   ( name, xOffers, genDir, prefix );
+      final int rawSize = generateDispatcherHeader( name, xOffers, genDir, prefix );
+      /*          */generateDispatcherBody  ( name, xOffers, genDir, prefix, rawSize );
    }
 }

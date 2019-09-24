@@ -6,7 +6,10 @@ import java.io.PrintStream;
 import java.util.List;
 
 import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
 
+import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
@@ -15,12 +18,17 @@ import disapp.generator.model.InterfaceUsageType;
 
 abstract class BaseGenerator {
 
-   protected final Model  _model;
-   protected /* */ String _genDir;
-   protected /* */ String _package;
+   protected final Model   _model;
+   protected final STGroup _group;
+   protected /* */ String  _genDir;
+   protected /* */ String  _package;
 
-   protected BaseGenerator( Model model ) {
+   protected BaseGenerator( Model model, String templateName ) {
       _model = model;
+      _group = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+      final TypeAdaptor ta = new TypeAdaptor();
+      _group.registerModelAdaptor( FieldType      .class, ta );
+      _group.registerModelAdaptor( EnumerationType.class, ta );
    }
 
    abstract protected void generateEnum  ( String xUser ) throws IOException;
@@ -54,7 +62,7 @@ abstract class BaseGenerator {
    }
 
    protected void write( String subDir, String filename, ST source ) throws IOException {
-      final File target = new File( _genDir, _package + "_ST" + '/' + subDir + '/' + filename );
+      final File target = new File( _genDir, _package + '/' + subDir + '/' + filename );
       if( _model.isUpToDate( target )) {
          return;
       }

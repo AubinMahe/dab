@@ -165,18 +165,18 @@ byte ByteBuffer::getByte( void ) {
    return b;
 }
 
-ByteBuffer & ByteBuffer::putBoolean( bool value ) {
+ByteBuffer & ByteBuffer::putBool( bool value ) {
    if( _position + 1 > _limit ) {
-      throw std::out_of_range( buildWhat( __FILE__, __LINE__, "ByteBuffer.putBoolean", "OVERFLOW" ));
+      throw std::out_of_range( buildWhat( __FILE__, __LINE__, "ByteBuffer.putBool", "OVERFLOW" ));
    }
    _bytes[_position] = value ? 1 : 0;
    _position += 1;
    return *this;
 }
 
-bool ByteBuffer::getBoolean( void ) {
+bool ByteBuffer::getBool( void ) {
    if( _position + 1 > _limit ) {
-      throw std::out_of_range( buildWhat( __FILE__, __LINE__, "ByteBuffer.getBoolean", "UNDERFLOW" ));
+      throw std::out_of_range( buildWhat( __FILE__, __LINE__, "ByteBuffer.getBool", "UNDERFLOW" ));
    }
    byte b = _bytes[_position];
    _position += 1;

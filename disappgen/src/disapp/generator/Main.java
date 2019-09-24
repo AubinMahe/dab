@@ -61,7 +61,8 @@ public class Main {
                "XML non valide : l'implémentation n'est ni Java, ni C++, ni C !" );
          }
       }
-      new disapp.generator.st4.CGenerator( _stModel ).generateComponents();
+      new disapp.generator.st4.CGenerator  ( _stModel ).generateComponents();
+      new disapp.generator.st4.CppGenerator( _stModel ).generateComponents();
    }
 
    private static void usage() {

@@ -50,9 +50,9 @@ namespace io {
 
       byte getByte( void );
 
-      ByteBuffer & putBoolean( bool value );
+      ByteBuffer & putBool( bool value );
 
-      bool getBoolean( void );
+      bool getBool( void );
 
       ByteBuffer & putShort( short value );
 

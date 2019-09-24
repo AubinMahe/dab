@@ -1,0 +1,465 @@
+group CPP;
+
+
+
+type( field ) ::= <<
+< if(     field.isBoolean )>bool       <
+  elseif( field.isByte    )>byte       <
+  elseif( field.isShort   )>short      <
+  elseif( field.isUshort  )>ushort     <
+  elseif( field.isInt     )>int        <
+  elseif( field.isUint    )>uint       <
+  elseif( field.isLong    )>long       <
+  elseif( field.isUlong   )>ulong      <
+  elseif( field.isFloat   )>float      <
+  elseif( field.isDouble  )>double     <
+  elseif( field.isString  )>std::string<
+  elseif( field.isEnum    )><field.userTypeName><
+  elseif( field.isStruct  )><field.userTypeName><
+  endif>
+>>
+
+
+
+enumtype( field ) ::= <<
+< if(     field.isBoolean )>bool<
+  elseif( field.isByte    )>unsigned char<
+  elseif( field.isShort   )>short<
+  elseif( field.isUshort  )>ushort<
+  elseif( field.isInt     )>int<
+  elseif( field.isUint    )>unsigned<
+  elseif( field.isLong    )>long<
+  elseif( field.isUlong   )>unsigned long<
+  endif>
+>>
+
+
+
+pair( field ) ::= <<
+< if( field.isBoolean )>bool<
+  elseif( field.isString  )>const std::string &<
+  elseif( field.isEnum    )><field.userTypeName><
+  elseif( field.isDouble  )>const double &<
+  elseif( field.isStruct  )>const <field.userTypeName> &<
+  else                     ><type(field)><
+  endif> <field.name>
+>>
+
+
+
+signature( comma, fields ) ::= <<
+< if( ! fields && !comma )
+     >void<
+  else><
+     if( comma && fields )>, < endif><
+     first(fields):{field|<pair(field)>}><
+     rest (fields):{field|, <pair(field)>}><
+  endif>
+>>
+
+
+
+args( fields ) ::= <<
+< first( fields ):{field|<field.name>}><
+   rest( fields ):{field|, <field.name>}>
+>>
+
+
+
+structHeader( namespace, struct ) ::= <<
+#pragma once
+
+#include \<io/ByteBuffer.hpp\>
+
+namespace <namespace> {
+
+   struct <struct.name> {
+
+<struct.field:{field|
+      < if( field.isString )>std::string <field.name>;
+      < else                ><type(field)> <field.name>;
+      < endif>
+}>
+      void put( io::ByteBuffer & target ) const;
+      void get( io::ByteBuffer & source );
+   };
+}
+>>
+
+
+
+structBody( namespace, struct, maxLength, maxStrLength ) ::= <<
+#include \<<namespace>/<struct.name>.hpp\>
+
+using namespace <namespace>;
+
+void <struct.name>::put( io::ByteBuffer & target ) const {
+<struct.field:{field|
+   < if(     field.isBoolean )>target.putBool  ( <field.name; format="width"> );
+   < elseif( field.isByte    )>target.putByte  ( <field.name; format="width"> );
+   < elseif( field.isShort   )>target.putShort ( <field.name; format="width"> );
+   < elseif( field.isUshort  )>target.putUShort( <field.name; format="width"> );
+   < elseif( field.isInt     )>target.putInt   ( <field.name; format="width"> );
+   < elseif( field.isUint    )>target.putUInt  ( <field.name; format="width"> );
+   < elseif( field.isLong    )>target.putLong  ( <field.name; format="width"> );
+   < elseif( field.isUlong   )>target.putULong ( <field.name; format="width"> );
+   < elseif( field.isFloat   )>target.putFloat ( <field.name; format="width"> );
+   < elseif( field.isDouble  )>target.putDouble( <field.name; format="width"> );
+   < elseif( field.isString  )>target.putString( <field.name; format="width"> );
+   < elseif( field.isEnum    )>target.putByte  ( <field.name; format="width"> );
+   < elseif( field.isStruct  )><field.name>.put( target );
+   < endif>
+}>}
+
+void <struct.name>::get( io::ByteBuffer & source ) {
+<struct.field:{field|
+   < if(     field.isBoolean )><field.name; format="width"> = source.getBool  ();
+   < elseif( field.isByte    )><field.name; format="width"> = source.getByte  ();
+   < elseif( field.isShort   )><field.name; format="width"> = source.getShort ();
+   < elseif( field.isUshort  )><field.name; format="width"> = source.getUShort();
+   < elseif( field.isInt     )><field.name; format="width"> = source.getInt   ();
+   < elseif( field.isUint    )><field.name; format="width"> = source.getUInt  ();
+   < elseif( field.isLong    )><field.name; format="width"> = source.getLong  ();
+   < elseif( field.isUlong   )><field.name; format="width"> = source.getULong ();
+   < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
+   < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
+   < elseif( field.isString  )><field.name; format="width"> = source.getString();
+   < elseif( field.isEnum    )><field.name; format="width"> = source.getByte  ();
+   < elseif( field.isStruct  )><field.name>.get( source );
+   < endif>
+}>}
+>>
+
+
+
+enumHeader( namespace, enum ) ::= <<
+#pragma once
+
+#include \<iostream\>
+
+namespace <namespace> {
+
+   enum class <enum.name> : <enumtype( enum )> {
+      FIRST,
+
+< first(enum.literal):{literal|
+      <literal.name; format="upper"> = FIRST,}>
+< rest(enum.literal) :{literal|
+      <literal.name; format="upper">,
+}>
+      LAST
+   };
+}
+
+std::ostream & operator \<\< ( std::ostream & stream, const <namespace>::<enum.name> & <enum.name; format="lower"> );
+>>
+
+
+
+enumBody( namespace, enum ) ::= <<
+#include \<<namespace>/<enum.name>.hpp\>
+
+using namespace <namespace>;
+
+std::ostream & operator \<\< ( std::ostream & stream, const <enum.name> & <enum.name; format="lower"> ) {
+   switch( <enum.name; format="lower"> ) {
+<enum.literal:{literal|
+   case <enum.name>::<literal.name; format="upper">: return stream \<\< "<literal.name; format="upper">"; break;
+}>   case <enum.name>::LAST: return stream \<\< "LAST (inutilisé)"; break;
+   }
+   return stream \<\< "inconnu (" \<\< <enum.name; format="lower"> \<\< ")";
+}
+>>
+
+
+
+requiredHeader( namespace, usedTypes, func, rawSize, iface ) ::= <<
+#pragma once
+
+#include \<io/DatagramSocket.hpp\>
+
+<usedTypes:{type|#include \<<namespace>/<type>.hpp\>
+}>
+namespace <namespace> {
+
+   class I<func> {
+   public:
+
+      I<func>( void ) = default;
+      virtual ~ I<func>( void ) = default;
+
+   public:
+
+<iface.event:{event|
+      virtual void <event.name>( sockaddr_in & target<signature( true, event.field )> ) = 0;
+}>
+   private:
+      I<func>( const I<func> & ) = delete;
+      I<func> & operator = ( const I<func> & ) = delete;
+   };
+
+   I<func> * new<func>( io::DatagramSocket & socket );
+}
+>>
+
+
+
+requiredBody( namespace, usedTypes, func, rawSize, iface, ifaceID ) ::= <<
+#include \<<namespace>/I<iface.name>.hpp\>
+
+namespace <namespace>::net {
+
+   class <iface.name> : public ::<namespace>::I<iface.name> {
+   public:
+
+      <iface.name>( io::DatagramSocket & socket ) :
+         _socket( socket ),
+         _out   ( <rawSize> )
+      {}
+
+   public:
+
+<iface.event:{event|
+
+      virtual void <event.name>( sockaddr_in & target<signature( true, event.field )> ) {
+         _out.clear();
+         _out.putByte( <iface.name; format="ID">_ID );
+         _out.putByte( <event.name; format="ID"> );
+<event.field:{field|
+         < if(     field.isBoolean )>_out.putBool( <field.name> );
+         < elseif( field.isByte    )>_out.putByte( <field.name> );
+         < elseif( field.isShort   )>_out.putShort( <field.name> );
+         < elseif( field.isUshort  )>_out.putUShort( <field.name> );
+         < elseif( field.isInt     )>_out.putInt( <field.name> );
+         < elseif( field.isUint    )>_out.putUInt( <field.name> );
+         < elseif( field.isLong    )>_out.putLong( <field.name> );
+         < elseif( field.isUlong   )>_out.putULong( <field.name> );
+         < elseif( field.isFloat   )>_out.putFloat( <field.name> );
+         < elseif( field.isDouble  )>_out.putDouble( <field.name> );
+         < elseif( field.isString  )>_out.putString( <field.name> );
+         < elseif( field.isEnum    )>_out.putByte( static_cast\<byte\>( <field.name> ));
+         < elseif( field.isStruct  )><field.name>.put( _out );
+         < endif>
+}>         _out.flip();
+         _socket.sendTo( _out, target );
+      \}
+
+}>   private:
+
+      enum EventID {
+< first(iface.event):{event|
+         <event.name; format="ID"> = 1,}>
+< rest(iface.event) :{event|
+         <event.name; format="ID">,
+}>      };
+
+      enum Interface {
+         <iface.name; format="ID">_ID = <ifaceID>,
+      };
+
+   private:
+
+      io::DatagramSocket & _socket;
+      sockaddr_in          _target;
+      io::ByteBuffer       _out;
+   };
+}
+
+namespace <namespace> {
+
+   I<iface.name> * new<iface.name>( io::DatagramSocket & socket ) {
+      return new ::<namespace>::net::<iface.name>( socket );
+   }
+}
+>>
+
+
+
+offeredHeader( namespace, name, usedTypes, events ) ::= <<
+#pragma once
+
+#include \<string\>
+
+#include \<types.hpp\>
+
+<usedTypes:{used|
+#include \<<namespace>/<used>.hpp\>
+}>
+namespace <namespace> {
+
+   class I<name> {
+   public:
+
+      I<name>( void ) = default;
+      virtual ~ I<name>( void ) = default;
+
+   public:
+
+<events:{event|
+      virtual void <event.name>( <signature( false, event.field )> ) = 0;
+}>
+   public:
+
+      virtual void run( void ) = 0;
+
+   private:
+      I<name>( const I<name> & ) = delete;
+      I<name> & operator = ( const I<name> & ) = delete;
+   };
+}
+>>
+
+
+
+dispatcherHeader( namespace, name, rawSize ) ::= <<
+#pragma once
+
+#include \<<namespace>/I<name>.hpp\>
+
+#include \<io/ByteBuffer.hpp\>
+#include \<io/DatagramSocket.hpp\>
+
+namespace <namespace> {
+
+   class I<name>Dispatcher {
+   public:
+
+      I<name>Dispatcher( void ) = default;
+      virtual ~ I<name>Dispatcher( void ) = default;
+
+   public:
+
+      virtual bool hasDispatched( void ) = 0;
+   };
+
+   I<name>Dispatcher * new<name>Dispatcher( io::DatagramSocket & socket, I<name> & listener );
+}
+>>
+
+
+
+dispatcherBodyOneInterface( name, ifaceName ) ::= <<
+
+      enum class <ifaceName>Event : byte {
+< first( events.(ifaceName)):{event|
+         <event.name; format="ID"> = 1,
+}><
+ rest( events.(ifaceName)):{event|
+         <event.name; format="ID">,
+}>      \};
+
+      bool dispatch( <ifaceName>Event event ) {
+         switch( event ) {
+<events.(ifaceName):{event|
+            case <ifaceName>Event::<event.name; format="ID">:{
+<event.field:{field|
+            < if(     field.isBoolean )>bool <field.name> = _in.getBool();
+            < elseif( field.isByte    )>byte <field.name> = _in.getByte();
+            < elseif( field.isShort   )>short <field.name> = _in.getShort();
+            < elseif( field.isUshort  )>ushort <field.name> = _in.getUShort();
+            < elseif( field.isInt     )>int <field.name> = _in.getInt();
+            < elseif( field.isUint    )>uint <field.name> = _in.getUInt();
+            < elseif( field.isLong    )>long <field.name> = _in.getLong();
+            < elseif( field.isUlong   )>ulong <field.name> = _in.getULong();
+            < elseif( field.isFloat   )>float <field.name> = _in.getFloat();
+            < elseif( field.isDouble  )>double <field.name> = _in.getDouble();
+            < elseif( field.isString  )>std::string <field.name> = _in.getString();                            
+            < elseif( field.isEnum    )><field.userTypeName> <field.name> = _in.getByte();
+            < elseif( field.isStruct  )><field.userTypeName> <field.name>;
+<field.name>.get( _in );
+            < endif>
+}>            _listener.<event.name>( <args( event.field )> );
+            break;
+         \}
+}>         default:
+            std::cerr
+               \<\< "<name>Dispatcher.dispatch|Message reçu ignoré"
+               \<\< ", interface = <ifaceName>"
+               \<\< ", event = " \<\< event
+               \<\< std::endl;
+            return false;
+         \}
+         return true;
+      }
+
+      friend std::ostream & operator \<\< ( std::ostream & stream, <ifaceName>Event e ) {
+         switch( e ) {
+<events.(ifaceName):{event|
+         case <ifaceName>Event::<event.name; format="ID,width">: return stream \<\< "<event.name; format="ID">";
+}>         }
+         return stream \<\< "???";
+      }
+>>
+
+dispatcherBody( namespace, name, ifaces, events, rawSize ) ::= <<
+#include \<<namespace>/I<name>Dispatcher.hpp\>
+
+#include \<iostream\>
+
+namespace dab::net {
+
+   class <name>Dispatcher : public ::dab::I<name>Dispatcher {
+   private:
+
+      enum class Interface : byte {
+<ifaces.keys:{ifaceName|
+         <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
+}>      };
+
+      friend std::ostream & operator \<\< ( std::ostream & stream, Interface e ) {
+         switch( e ) {
+<ifaces.keys:{ifaceName|
+         case Interface::<ifaceName; format="ID,width">: return stream \<\< "<ifaceName; format="ID,width">";
+}>         }
+         return stream \<\< "???";
+      }
+
+<ifaces.keys:{ifaceName|
+<dispatcherBodyOneInterface( name, ifaceName )>
+}>
+   public:
+
+      <name>Dispatcher( io::DatagramSocket & socket, I<name> & listener ) :
+         _socket  ( socket ),
+         _listener( listener ),
+         _in      ( <rawSize> )
+      {}
+
+   public:
+
+      bool hasDispatched( void ) {
+         _in.clear();
+         if( _socket.receive( _in )) {
+            _in.flip();
+            Interface interface = static_cast\<Interface\>( _in.getByte());
+            byte      event     = _in.getByte();
+            std::cerr
+               \<\< "<name>Dispatcher.hasDispatched|"
+               \<\< "interface = " \<\< interface
+               \<\< " (" \<\< (int)interface \<\< ')'
+               \<\< ", event: " \<\< (int)event
+               \<\< std::endl;
+            switch( interface ) {
+<ifaces.keys:{ifaceName|
+            case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event\>( event ));
+}>
+            }
+         }
+         return false;
+      }
+
+   private:
+
+      io::DatagramSocket & _socket;
+      IUniteDeTraitement & _listener;
+      io::ByteBuffer _in;
+   };
+}
+
+namespace dab {
+
+   IUniteDeTraitementDispatcher * newUniteDeTraitementDispatcher( io::DatagramSocket & socket, IUniteDeTraitement & listener ) {
+      return new ::dab::net::UniteDeTraitementDispatcher( socket, listener );
+   }
+}
+>>

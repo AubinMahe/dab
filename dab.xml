@@ -3,7 +3,7 @@
    xsi:noNamespaceSchemaLocation="distributed-application.xsd"
    name="DAB">
 
-   <enumeration name="Etat">
+   <enumeration name="Etat" type="byte">
       <literal name="AUCUN" />
       <literal name="MAINTENANCE" />
       <literal name="HORS_SERVICE" />

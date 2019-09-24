@@ -1,16 +1,10 @@
 package disapp.generator.st4;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
-import org.stringtemplate.v4.StringRenderer;
+public final class CRenderer extends BaseRenderer {
 
-public final class CRenderer extends StringRenderer {
-
-   public Map<String, Object> _properties = new HashMap<>();
-
-   public static StringBuilder cname( String name ) {
+   public static String cname( String name ) {
       final int len = name.length();
       final StringBuilder sb = new StringBuilder( 2*len );
       sb.append( Character.toLowerCase( name.charAt( 0 )));
@@ -24,62 +18,19 @@ public final class CRenderer extends StringRenderer {
          sb.append( Character.toLowerCase( name.charAt( i )));
          previousIsUppercase = Character.isUpperCase( name.charAt( i ));
       }
-      return sb;
-   }
-
-   public static StringBuilder toID( String name ) {
-      final StringBuilder sb = new StringBuilder( 2*name.length());
-      for( int i = 0, count = name.length(); i < count; ++i ) {
-         final char    c          = name.charAt( i );
-         final boolean nextExists = (( i + 1 ) < count );
-         final char    next       = nextExists ? name.charAt( i + 1 ) : 0;
-         sb.append( Character.toUpperCase( c ));
-         if( Character.isLowerCase( c ) && nextExists && Character.isUpperCase( next )) {
-            sb.append( '_' );
-         }
-      }
-      return sb;
-   }
-
-   private String applyProperties( StringBuilder sb, String formatString, Locale locale, String[] args ) {
-      String retVal = sb.toString().replaceAll( "__", "_" );
-      if( args.length > 1 ) {
-         final String prop = args[1];
-         final Object property = _properties.get( prop );
-         if( property == null ) {
-            return super.toString( retVal, formatString.replaceAll( "cname,", "" ), locale );
-         }
-         if( prop.equals( "width" )|| prop.equals( "strWidth" )) {
-            final int width = (int)property;
-            if( retVal.length() < width ) {
-               for( int i = 0, count = ((int)property) - retVal.length(); i < count; ++i ) {
-                  sb.append( ' ' );
-               }
-               retVal = sb.toString();
-            }
-         }
-      }
-      return retVal;
+      return sb.toString().replaceAll( "__", "_" );
    }
 
    @Override
-   public String toString( Object o, String formatString, Locale locale ) {
-      final String name = (String)o;
-      if( formatString != null ) {
-         final String[] args = formatString.split(",");
-         switch( args[0] ) {
-         case "cname": return applyProperties( cname( name ), formatString, locale, args );
-         case "ID"   : return applyProperties(  toID( name ), formatString, locale, args );
-         }
+   protected String apply( String command, Locale locale, String str ) {
+      if( command.equals( "cname" )) {
+         return cname( str );
       }
-      return super.toString( o, formatString, locale );
+      return super.apply( command, locale, str );
    }
 
-   public void set( String propertyName, Object propertyValue ) {
-      _properties.put( propertyName, propertyValue );
-   }
-
-   public Object get( String propertyName ) {
-      return _properties.get( propertyName );
+   @Override
+   public String name( String name ) {
+      return cname( name );
    }
 }

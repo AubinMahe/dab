@@ -194,20 +194,20 @@ public final class Model {
       return capacity;
    }
 
-   public int getBufferCapacity( List<InterfaceUsageType> requireds ) {
+   public int getBufferCapacity( List<InterfaceUsageType> offers ) {
       final List<EventType> allEvents = new LinkedList<>();
-      for( final InterfaceUsageType required : requireds ) {
+      for( final InterfaceUsageType required : offers ) {
          final InterfaceType iface = _interfaces.get( required.getInterface());
          allEvents.addAll( iface.getEvent());
       }
       return getBufferCapacity( allEvents );
    }
 
-   private static void configureRendererWidths( CRenderer cr, List<FieldType> fields ) {
-      int maxLength    = (Integer)cr.get( "width"    );
+   private static void configureRendererWidths( BaseRenderer cr, List<FieldType> fields ) {
+      int maxLength    = (Integer)cr.get(    "width" );
       int maxStrLength = (Integer)cr.get( "strWidth" );
       for( final FieldType field : fields ) {
-         final String cname = CRenderer.cname( field.getName()).toString();
+         final String cname = cr.name( field.getName());
          maxLength = Math.max( maxLength, cname.length());
          if( field.getType() == FieldtypeType.STRING ) {
             maxStrLength = Math.max( maxStrLength, cname.length());
@@ -217,36 +217,34 @@ public final class Model {
       cr.set( "strWidth", maxStrLength );
    }
 
-   private static void configureRendererWidths( CRenderer cr, InterfaceType iface ) {
+   private static void configureRendererWidths( BaseRenderer cr, InterfaceType iface ) {
       final List<EventType> events = iface.getEvent();
       for( final EventType event : events ) {
          configureRendererWidths( cr, event.getField());
       }
    }
 
-   protected void fillEnumTemplate( String prefix, String name, ST tmpl ) {
+   protected void fillEnumTemplate( String name, ST tmpl ) {
       final EnumerationType enm = getEnum( name );
       if( enm == null ) {
          throw new IllegalStateException( "'" + name + "' is not an enumeration." );
       }
-      tmpl.add( "prefix", prefix );
-      tmpl.add( "enum"  , enm );
+      tmpl.add( "enum", enm );
    }
 
-   protected void fillStructHeaderTemplate( String prefix, String name, ST tmpl ) {
+   protected void fillStructHeaderTemplate( String name, ST tmpl ) {
       final StructType struct = _structs.get( name );
       if( struct == null ) {
          throw new IllegalStateException( "'" + name + "' is not a struct." );
       }
-      tmpl.add( "prefix", prefix );
       tmpl.add( "struct", struct );
    }
 
-   protected void fillStructBodyTemplate( String prefix, String name, ST tmpl ) {
-      fillStructHeaderTemplate( prefix, name, tmpl );
+   protected void fillStructBodyTemplate( String name, ST tmpl ) {
+      fillStructHeaderTemplate( name, tmpl );
       final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof CRenderer ) {
-         final CRenderer  cr     = (CRenderer)renderer;
+      if( renderer instanceof BaseRenderer ) {
+         final BaseRenderer  cr     = (BaseRenderer)renderer;
          final StructType struct = _structs.get( name );
          cr.set( "width"   , 0 );
          cr.set( "strWidth", 0 );
@@ -254,27 +252,14 @@ public final class Model {
       }
    }
 
-   protected void fillRequiredHeaderTemplate(
-      String             prefix,
-      String             func,
-      int                rawSize,
-      InterfaceUsageType required,
-      ST                 tmpl )
-   {
-      tmpl.add( "prefix"   , prefix );
+   protected void fillRequiredHeaderTemplate( String ifaceName, InterfaceUsageType required, ST tmpl ) {
       tmpl.add( "usedTypes", _usages.get( required.getInterface()));
-      tmpl.add( "func"     , func );
-      tmpl.add( "rawSize"  , rawSize );
+      tmpl.add( "func"     , ifaceName );
+      tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
       tmpl.add( "iface"    , _interfaces.get( required.getInterface()));
    }
 
-   protected void fillRequiredBodyTemplate(
-      String             prefix,
-      String             func,
-      int                rawSize,
-      InterfaceUsageType required,
-      ST                 tmpl )
-   {
+   protected void fillRequiredBodyTemplate( String ifaceName, InterfaceUsageType required, ST tmpl ) {
       int ifaceID = 1;
       for( final String name : _interfaces.keySet()) {
          if( name.equals( required.getInterface())) {
@@ -285,15 +270,14 @@ public final class Model {
       final String            interfaceName = required.getInterface();
       final InterfaceType     iface         = _interfaces.get( interfaceName );
       final SortedSet<String> usedTypes     = _usages    .get( interfaceName );
-      tmpl.add( "prefix"   , prefix );
       tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "func"     , func );
-      tmpl.add( "rawSize"  , rawSize );
+      tmpl.add( "func"     , ifaceName );
+      tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
       tmpl.add( "iface"    , iface);
       tmpl.add( "ifaceID"  , ifaceID );
       final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof CRenderer ) {
-         final CRenderer cr = (CRenderer)renderer;
+      if( renderer instanceof BaseRenderer ) {
+         final BaseRenderer cr = (BaseRenderer)renderer;
          cr.set( "width"   , 0 );
          cr.set( "strWidth", 0 );
          configureRendererWidths( cr, iface );
@@ -301,7 +285,6 @@ public final class Model {
    }
 
    public void fillOfferedHeader(
-      String                   prefix,
       String                   name,
       List<InterfaceUsageType> allOffered,
       ST                       tmpl )
@@ -317,7 +300,6 @@ public final class Model {
          }
          events.addAll( iface.getEvent());
       }
-      tmpl.add( "prefix"   , prefix );
       tmpl.add( "name"     , name );
       tmpl.add( "usedTypes", usedTypes );
       tmpl.add( "events"   , events );
@@ -325,12 +307,10 @@ public final class Model {
 
    @SuppressWarnings("static-method")
    public void fillDispatcherHeader(
-      String                   prefix,
       String                   name,
       int                      rawSize,
       ST                       tmpl )
    {
-      tmpl.add( "prefix" , prefix );
       tmpl.add( "name"   , name );
       tmpl.add( "rawSize", rawSize );
    }
@@ -345,7 +325,6 @@ public final class Model {
    }
 
    public void fillDispatcherBody(
-      String                   prefix,
       String                   name,
       List<InterfaceUsageType> usedInterfaces,
       int                      rawSize,
@@ -353,7 +332,7 @@ public final class Model {
    {
       int intrfcMaxWidth = 0;
       for( final var iface : usedInterfaces ) {
-         intrfcMaxWidth = Math.max( CRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
+         intrfcMaxWidth = Math.max( BaseRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
       }
       byte rank = 0;
       final Map<String, Byte>            ifaces = new LinkedHashMap<>();
@@ -367,11 +346,10 @@ public final class Model {
          }
       }
       final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof CRenderer ) {
-         final CRenderer cr = (CRenderer)renderer;
+      if( renderer instanceof BaseRenderer ) {
+         final BaseRenderer cr = (BaseRenderer)renderer;
          cr.set( "width", intrfcMaxWidth );
       }
-      tmpl.add( "prefix" , prefix );
       tmpl.add( "name"   , name );
       tmpl.add( "ifaces" , ifaces );
       tmpl.add( "events" , events );

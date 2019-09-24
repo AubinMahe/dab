@@ -24,16 +24,17 @@ public class CppGenerator extends BaseGenerator {
          final Element xField = (Element)xFields.item( j );
          final String  xName  = xField.getAttribute( "name" );
          final String  xType  = xField.getAttribute( "type" );
+         final String  xUser  = xField.getAttribute( "userTypeName" );
          if( ! signature.isBlank()) {
             signature += ", ";
          }
          switch( xType ) {
-         case "struct" :
-         case "enum"   : signature += "const " + xField.getAttribute( "userTypeName" ) + " &"; break;
-         case "string" : signature += "const std::string &"; break;
-         case "double" : signature += "const double &"; break;
-         case "boolean": signature += "bool"; break;
-         default       : signature += xType; break;
+         case "struct" : signature += "const " + xUser + " &"; break;
+         case "enum"   : signature += xUser;                   break;
+         case "string" : signature += "const std::string &";   break;
+         case "double" : signature += "const double &";        break;
+         case "boolean": signature += "bool";                  break;
+         default       : signature += xType;                   break;
          }
          signature += ' ' + xName;
       }
@@ -236,13 +237,8 @@ public class CppGenerator extends BaseGenerator {
       System.out.printf( "%s written\n", target.getPath());
    }
 
-   private void generateStructBody(
-      String  structName,
-      String  genDir,
-      String  namespace ) throws IOException
-   {
-      final File target =
-         new File( genDir, namespace.replaceAll( "::", "/" ) + '/' + structName + ".cpp" );
+   private void generateStructBody( String structName, String genDir, String namespace ) throws IOException {
+      final File target = new File( genDir, namespace.replaceAll( "::", "/" ) + '/' + structName + ".cpp" );
       if( _model.isUpToDate( target )) {
          return;
       }
@@ -259,17 +255,17 @@ public class CppGenerator extends BaseGenerator {
             final String xType = xField.getAttribute( "type" );
             final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
-            case "boolean": ps.printf( "   target.putBoolean( %s );\n", xName ); break;
-            case "byte"   : ps.printf( "   target.putByte( %s );\n"   , xName ); break;
-            case "short"  : ps.printf( "   target.putShort( %s );\n"  , xName ); break;
-            case "ushort" : ps.printf( "   target.putShort( %s );\n"  , xName ); break;
-            case "int"    : ps.printf( "   target.putInt( %s );\n"    , xName ); break;
-            case "uint"   : ps.printf( "   target.putInt( %s );\n"    , xName ); break;
-            case "long"   : ps.printf( "   target.putLong( %s );\n"   , xName ); break;
-            case "ulong"  : ps.printf( "   target.putLong( %s );\n"   , xName ); break;
-            case "float"  : ps.printf( "   target.putFloat( %s );\n"  , xName ); break;
-            case "double" : ps.printf( "   target.putDouble( %s );\n" , xName ); break;
-            case "string" : ps.printf( "   target.putString( %s );\n" , xName ); break;
+            case "boolean": ps.printf( "   target.putBool  ( %s );\n", xName ); break;
+            case "byte"   : ps.printf( "   target.putByte  ( %s );\n", xName ); break;
+            case "short"  : ps.printf( "   target.putShort ( %s );\n", xName ); break;
+            case "ushort" : ps.printf( "   target.putUShort( %s );\n", xName ); break;
+            case "int"    : ps.printf( "   target.putInt   ( %s );\n", xName ); break;
+            case "uint"   : ps.printf( "   target.putUInt  ( %s );\n", xName ); break;
+            case "long"   : ps.printf( "   target.putLong  ( %s );\n", xName ); break;
+            case "ulong"  : ps.printf( "   target.putULong ( %s );\n", xName ); break;
+            case "float"  : ps.printf( "   target.putFloat ( %s );\n", xName ); break;
+            case "double" : ps.printf( "   target.putDouble( %s );\n", xName ); break;
+            case "string" : ps.printf( "   target.putString( %s );\n", xName ); break;
             case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "   target.putByte((byte)%s );\n", xName );
@@ -296,17 +292,17 @@ public class CppGenerator extends BaseGenerator {
             final String xType = xField.getAttribute( "type" );
             final String xUser = xField.getAttribute( "userTypeName" );
             switch( xType ) {
-            case "boolean": ps.printf( "   %s = source.getBoolean();\n", xName ); break;
-            case "byte"   : ps.printf( "   %s = source.getByte();\n"   , xName ); break;
-            case "short"  : ps.printf( "   %s = source.getShort();\n"  , xName ); break;
-            case "ushort" : ps.printf( "   %s = source.getShort();\n"  , xName ); break;
-            case "int"    : ps.printf( "   %s = source.getInt();\n"    , xName ); break;
-            case "uint"   : ps.printf( "   %s = source.getInt();\n"    , xName ); break;
-            case "long"   : ps.printf( "   %s = source.getLong();\n"   , xName ); break;
-            case "ulong"  : ps.printf( "   %s = source.getLong();\n"   , xName ); break;
-            case "float"  : ps.printf( "   %s = source.getFloat();\n"  , xName ); break;
-            case "double" : ps.printf( "   %s = source.getDouble();\n" , xName ); break;
-            case "string" : ps.printf( "   %s = source.getString();\n" , xName ); break;
+            case "boolean": ps.printf( "   %s = source.getBool  ();\n", xName ); break;
+            case "byte"   : ps.printf( "   %s = source.getByte  ();\n", xName ); break;
+            case "short"  : ps.printf( "   %s = source.getShort ();\n", xName ); break;
+            case "ushort" : ps.printf( "   %s = source.getUShort();\n", xName ); break;
+            case "int"    : ps.printf( "   %s = source.getInt   ();\n", xName ); break;
+            case "uint"   : ps.printf( "   %s = source.getUInt  ();\n", xName ); break;
+            case "long"   : ps.printf( "   %s = source.getLong  ();\n", xName ); break;
+            case "ulong"  : ps.printf( "   %s = source.getULong ();\n", xName ); break;
+            case "float"  : ps.printf( "   %s = source.getFloat ();\n", xName ); break;
+            case "double" : ps.printf( "   %s = source.getDouble();\n", xName ); break;
+            case "string" : ps.printf( "   %s = source.getString();\n", xName ); break;
             case "enum"   :
                if( _model.enumIsDefined( xUser )) {
                   ps.printf( "   %s = (%s)source.getByte();\n", xName, xUser );
@@ -360,7 +356,7 @@ public class CppGenerator extends BaseGenerator {
                ps.printf( "\n" );
                ps.printf( "      %s( io::DatagramSocket & socket ) :\n", ifaceName );
                ps.printf( "         _socket( socket ),\n" );
-               ps.printf( "         _out( %d )\n", _model.getBufferCapacity( iface.values()));
+               ps.printf( "         _out   ( %d )\n", _model.getBufferCapacity( iface.values()));
                ps.printf( "      {}\n" );
                ps.printf( "\n" );
                ps.printf( "   public:\n" );
@@ -385,7 +381,7 @@ public class CppGenerator extends BaseGenerator {
                      final String xType = xField.getAttribute( "type" );
                      final String xUser = xField.getAttribute( "userTypeName" );
                      switch( xType ) {
-                     case "boolean": ps.printf( "         _out.putBoolean( %s );\n", xName ); break;
+                     case "boolean": ps.printf( "         _out.putBool( %s );\n", xName ); break;
                      case "byte"   : ps.printf( "         _out.putByte( %s );\n"   , xName ); break;
                      case "short"  : ps.printf( "         _out.putShort( %s );\n"  , xName ); break;
                      case "ushort" : ps.printf( "         _out.putUShort( %s );\n" , xName ); break;
@@ -449,10 +445,8 @@ public class CppGenerator extends BaseGenerator {
                ps.printf( "\n" );
                ps.printf( "namespace %s {\n", namespace );
                ps.printf( "\n" );
-               ps.printf( "   ::%s::I%s * new%s( io::DatagramSocket & socket ) {\n",
-                  namespace, ifaceName, ifaceName );
-               ps.printf( "      return new ::%s::net::%s( socket );\n",
-                  namespace, ifaceName );
+               ps.printf( "   I%s * new%s( io::DatagramSocket & socket ) {\n", ifaceName, ifaceName );
+               ps.printf( "      return new ::%s::net::%s( socket );\n", namespace, ifaceName );
                ps.printf( "   }\n" );
                ps.printf( "}\n" );
             }
@@ -475,6 +469,7 @@ public class CppGenerator extends BaseGenerator {
             ps.printf( "#pragma once\n" );
             ps.printf( "\n" );
             ps.printf( "#include <string>\n" );
+            ps.printf( "\n" );
             ps.printf( "#include <types.hpp>\n" );
             ps.printf( "\n" );
             for( int i = 0, iCount = xOffers.getLength(); i < iCount; ++i ) {
@@ -484,10 +479,10 @@ public class CppGenerator extends BaseGenerator {
                if( types != null ) {
                   for( final String type : types ) {
                      ps.printf( "#include <%s/%s.hpp>\n", namespace, type );
-                     ps.printf( "\n" );
                   }
                }
             }
+            ps.printf( "\n" );
             ps.printf( "namespace %s {\n", namespace );
             ps.printf( "\n" );
             ps.printf( "   class I%s {\n", name );
@@ -643,7 +638,7 @@ public class CppGenerator extends BaseGenerator {
                      final String  xType  = xField.getAttribute( "type" );
                      final String  xUser  = xField.getAttribute( "userTypeName" );
                      switch( xType ) {
-                     case "boolean": ps.printf( "            bool %s = _in.getBoolean();\n"      , xName ); break;
+                     case "boolean": ps.printf( "            bool %s = _in.getBool();\n"         , xName ); break;
                      case "byte"   : ps.printf( "            byte %s = _in.getByte();\n"         , xName ); break;
                      case "short"  : ps.printf( "            short %s = _in.getShort();\n"       , xName ); break;
                      case "ushort" : ps.printf( "            ushort %s = _in.getUShort();\n"     , xName ); break;
