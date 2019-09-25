@@ -3,31 +3,39 @@ package disapp.generator;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.CType;
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.EnumerationType;
+import disapp.generator.model.EventType;
+import disapp.generator.model.FieldType;
+import disapp.generator.model.InterfaceType;
 import disapp.generator.model.InterfaceUsageType;
+import disapp.generator.model.StructType;
 
 public class CGenerator extends BaseGenerator {
 
    public CGenerator( Model model ) {
-      super( model, "c.stg" );
-      _group.registerRenderer( String.class, new CRenderer());
+      super( model, "c.stg", new CRenderer());
    }
 
    private void generateEnumHeader( String name ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/enumHeader" );
+      final EnumerationType enm  = _model.getEnum( name );
+      final ST              tmpl = _group.getInstanceOf( "/enumHeader" );
       tmpl.add( "prefix", _package );
-      _model.fillEnumTemplate( name, tmpl );
+      tmpl.add( "enum"  , enm      );
       write( "", CRenderer.cname( name ) + ".h", tmpl );
    }
 
    private void generateEnumBody( String name ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/enumBody" );
+      final EnumerationType enm  = _model.getEnum( name );
+      final ST              tmpl = _group.getInstanceOf( "/enumBody" );
       tmpl.add( "prefix", _package );
-      _model.fillEnumTemplate( name, tmpl );
+      tmpl.add( "enum"  , enm      );
       write( "", CRenderer.cname( name ) + ".c", tmpl );
    }
 
@@ -38,16 +46,20 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateStructHeader( String name ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/structHeader" );
+      final StructType struct = _model.getStruct( name );
+      final ST         tmpl   = _group.getInstanceOf( "/structHeader" );
       tmpl.add( "prefix", _package );
-      _model.fillStructHeaderTemplate( name, tmpl );
+      tmpl.add( "struct", struct   );
       write( "", CRenderer.cname( name ) + ".h", tmpl );
    }
 
    private void generateStructBody( String name ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/structBody" );
+      final StructType      struct = _model.getStruct( name );
+      final List<FieldType> fields = struct.getField();
+      final ST              tmpl   = _group.getInstanceOf( "/structBody" );
       tmpl.add( "prefix", _package );
-      _model.fillStructBodyTemplate( name, tmpl );
+      tmpl.add( "struct", struct   );
+      setRendererFieldsMaxWidth( fields );
       write( "", CRenderer.cname( name ) + ".c", tmpl );
    }
 
@@ -57,57 +69,92 @@ public class CGenerator extends BaseGenerator {
       generateStructBody  ( name );
    }
 
-   private void generateRequiredHeaders( ComponentType component ) throws IOException {
+   private void generateRequiredInterfaces( ComponentType component ) throws IOException {
       for( final InterfaceUsageType required : component.getRequires()) {
-         final String ifaceName = CRenderer.cname( required.getInterface());
-         final ST     tmpl      = _group.getInstanceOf( "/requiredHeader" );
-         tmpl.add( "prefix", _package );
-         _model.fillRequiredHeaderTemplate( ifaceName, required, tmpl );
-         write( "", ifaceName + ".h", tmpl );
+         final String            ifaceName  = required.getInterface();
+         final InterfaceType     iface      = _model.getInterface( ifaceName );
+         final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
+         final int               rawSize    = _model.getBufferCapacity( iface );
+         final String            ifaceCName = CRenderer.cname( ifaceName );
+         final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
+         tmpl.add( "prefix"   , _package   );
+         tmpl.add( "usedTypes", usedTypes  );
+         tmpl.add( "ifaceName", ifaceCName );
+         tmpl.add( "rawSize"  , rawSize    );
+         tmpl.add( "iface"    , iface      );
+         write( "", ifaceCName + ".h", tmpl );
       }
    }
 
-   private void generateRequiredBodies( ComponentType component ) throws IOException {
+   private void generateRequiredImplementations( ComponentType component ) throws IOException {
       for( final InterfaceUsageType required : component.getRequires()) {
-         final ST     tmpl      = _group.getInstanceOf( "/requiredBody" );
-         final String ifaceName = CRenderer.cname( required.getInterface());
-         tmpl.add( "prefix", _package );
-         _model.fillRequiredBodyTemplate( ifaceName, required, tmpl );
-         write( "net", ifaceName + ".c", tmpl );
+         final String            ifaceName  = required.getInterface();
+         final InterfaceType     iface      = _model.getInterface( ifaceName );
+         final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
+         final int               rawSize    = _model.getBufferCapacity( iface );
+         final String            ifaceCName = CRenderer.cname( required.getInterface());
+         final int               ifaceID    = _model.getInterfaceID( ifaceName );
+         final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
+         tmpl.add( "prefix"   , _package   );
+         tmpl.add( "usedTypes", usedTypes  );
+         tmpl.add( "ifaceName", ifaceCName );
+         tmpl.add( "rawSize"  , rawSize    );
+         tmpl.add( "iface"    , iface      );
+         tmpl.add( "ifaceID"  , ifaceID    );
+         setRendererFieldsMaxWidth( iface );
+         write( "net", ifaceCName + ".c", tmpl );
       }
    }
 
-   private void generateOfferedHeader( ComponentType component ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/offeredHeader" );
-      tmpl.add( "prefix", _package );
-      _model.fillOfferedHeader( component.getName(), component.getOffers(), tmpl );
+   private void generateOfferedInterface( ComponentType component ) throws IOException {
+      final String                   compName   = component.getName();
+      final List<InterfaceUsageType> allOffered = component.getOffers();
+      final SortedSet<String>        usedTypes  = _model.getUsedTypesBy( allOffered );
+      final List<EventType>          events     = _model.getEventsOf( allOffered );
+      final ST tmpl = _group.getInstanceOf( "/offeredInterface" );
+      tmpl.add( "prefix"   , _package  );
+      tmpl.add( "name"     , compName  );
+      tmpl.add( "usedTypes", usedTypes );
+      tmpl.add( "events"   , events    );
       write( "", CRenderer.cname( component.getName()) + ".h", tmpl );
    }
 
-   private void generateDispatcherHeader( ComponentType component, int rawSize ) throws IOException {
-      final ST  tmpl = _group.getInstanceOf( "/dispatcherHeader" );
+   private void generateDispatcherInterface( ComponentType component, int rawSize ) throws IOException {
+      final String compName = component.getName();
+      final ST     tmpl     = _group.getInstanceOf( "/dispatcherInterface" );
       tmpl.add( "prefix", _package );
-      _model.fillDispatcherHeader( component.getName(), rawSize, tmpl );
+      tmpl.add( "name"   , compName );
+      tmpl.add( "rawSize", rawSize );
       write( "", CRenderer.cname( component.getName()) + "_dispatcher.h", tmpl );
    }
 
-   private void generateDispatcherBody( ComponentType component, int rawSize ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/dispatcherBody" );
-      tmpl.add( "prefix", _package );
-      _model.fillDispatcherBody( component.getName(), component.getOffers(), rawSize, tmpl );
-      write( "net", CRenderer.cname( component.getName()) + "_dispatcher.c", tmpl );
+   private void generateDispatcherImplementation( ComponentType component, int rawSize ) throws IOException {
+      final String                       compName     = component.getName();
+      final List<InterfaceUsageType>     ifaces       = component.getOffers();
+      final Map<String, Integer>         interfaceIDs = _model.getInterfaceIDs( ifaces );
+      final Map<String, List<EventType>> events       = _model.getEventsMapOf ( ifaces );
+      final SortedSet<String>            usedTypes    = _model.getUsedTypesBy ( ifaces );
+      final ST                           tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
+      tmpl.add( "prefix"   , _package     );
+      tmpl.add( "compName" , compName     );
+      tmpl.add( "ifaces"   , interfaceIDs );
+      tmpl.add( "events"   , events       );
+      tmpl.add( "usedTypes", usedTypes    );
+      tmpl.add( "rawSize"  , rawSize      );
+      setRendererInterfaceMaxWidth( "width", ifaces );
+      write( "net", CRenderer.cname( compName ) + "_dispatcher.c", tmpl );
    }
 
    private void generateComponent( ComponentType component ) throws IOException {
       final int offersRawSize   = _model.getBufferCapacity( component.getOffers());
       final List<String> generated = new LinkedList<>();
-      generateTypesUsedBy( component.getOffers()  , generated );
-      generateTypesUsedBy( component.getRequires(), generated );
-      generateRequiredHeaders ( component );
-      generateRequiredBodies  ( component );
-      generateOfferedHeader   ( component );
-      generateDispatcherHeader( component, offersRawSize );
-      generateDispatcherBody  ( component, offersRawSize );
+      generateTypesUsedBy             ( component.getOffers()  , generated );
+      generateTypesUsedBy             ( component.getRequires(), generated );
+      generateRequiredInterfaces      ( component );
+      generateRequiredImplementations ( component );
+      generateOfferedInterface        ( component );
+      generateDispatcherInterface     ( component, offersRawSize );
+      generateDispatcherImplementation( component, offersRawSize );
    }
 
    public void generateComponents() throws IOException {

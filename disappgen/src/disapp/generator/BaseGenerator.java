@@ -18,14 +18,17 @@ import disapp.generator.model.InterfaceUsageType;
 
 abstract class BaseGenerator {
 
-   protected final Model   _model;
-   protected final STGroup _group;
-   protected /* */ String  _genDir;
-   protected /* */ String  _package;
+   protected final Model        _model;
+   protected final STGroup      _group;
+   protected final BaseRenderer _renderer;
+   protected /* */ String       _genDir;
+   protected /* */ String       _package;
 
-   protected BaseGenerator( Model model, String templateName ) {
-      _model = model;
-      _group = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+   protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
+      _model    = model;
+      _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+      _renderer = renderer;
+      _group.registerRenderer( String.class, _renderer );
       final TypeAdaptor ta = new TypeAdaptor();
       _group.registerModelAdaptor( FieldType      .class, ta );
       _group.registerModelAdaptor( EnumerationType.class, ta );
@@ -59,6 +62,43 @@ abstract class BaseGenerator {
             }
          }
       }
+   }
+
+   private void configureRendererWidthsCumulative( List<FieldType> fields ) {
+      int maxLength    = (Integer)_renderer.get(    "width" );
+      int maxStrLength = (Integer)_renderer.get( "strWidth" );
+      for( final FieldType field : fields ) {
+         final String cname = _renderer.name( field.getName());
+         maxLength = Math.max( maxLength, cname.length());
+         if( field.getType() == FieldtypeType.STRING ) {
+            maxStrLength = Math.max( maxStrLength, cname.length());
+         }
+      }
+      _renderer.set( "width"   , maxLength    );
+      _renderer.set( "strWidth", maxStrLength );
+   }
+
+   protected void setRendererFieldsMaxWidth( List<FieldType> fields ) {
+      _renderer.set( "width"   , 0 );
+      _renderer.set( "strWidth", 0 );
+      configureRendererWidthsCumulative( fields );
+   }
+
+   protected void setRendererFieldsMaxWidth( InterfaceType iface ) {
+      _renderer.set( "width"   , 0 );
+      _renderer.set( "strWidth", 0 );
+      final List<EventType> events = iface.getEvent();
+      for( final EventType event : events ) {
+         configureRendererWidthsCumulative( event.getField() );
+      }
+   }
+
+   void setRendererInterfaceMaxWidth( String property, List<InterfaceUsageType> ifaces ) {
+      int intrfcMaxWidth = 0;
+      for( final InterfaceUsageType iface : ifaces ) {
+         intrfcMaxWidth = Math.max( BaseRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
+      }
+      _renderer.set( property, intrfcMaxWidth );
    }
 
    protected void write( String subDir, String filename, ST source ) throws IOException {

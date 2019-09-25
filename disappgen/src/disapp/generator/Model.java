@@ -7,16 +7,15 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-
-import org.stringtemplate.v4.AttributeRenderer;
-import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DisappType;
@@ -28,19 +27,19 @@ import disapp.generator.model.InterfaceType;
 import disapp.generator.model.InterfaceUsageType;
 import disapp.generator.model.StructType;
 
-public final class Model {
+final class Model {
 
    private final Map<String, InterfaceType>     _interfaces     = new LinkedHashMap<>();
    private final Map<String, EnumerationType>   _enums          = new HashMap<>();
    private final Map<String, StructType>        _structs        = new HashMap<>();
-   private final Map<String, SortedSet<String>> _usages         = new HashMap<>();
+   private final Map<String, SortedSet<String>> _usedTypes         = new HashMap<>();
    private final Map<String, List<EventType>>   _eventsPerIface = new HashMap<>();
    private final File                           _source;
    private final boolean                        _force;
    private final DisappType                     _application;
    private final long                           _lastModified;
 
-   public Model( File source, boolean force ) throws JAXBException {
+   Model( File source, boolean force ) throws JAXBException {
       final JAXBContext             jaxbContext  = JAXBContext.newInstance( "disapp.generator.model" );
       final Unmarshaller            unmarshaller = jaxbContext.createUnmarshaller();
       @SuppressWarnings("unchecked")
@@ -83,15 +82,19 @@ public final class Model {
                final FieldtypeType type  = field.getType();
                if(( type == FieldtypeType.ENUM )||( type == FieldtypeType.STRUCT )) {
                   final String typeName = field.getUserTypeName();
-                  SortedSet<String> types = _usages.get( interfaceName );
+                  SortedSet<String> types = _usedTypes.get( interfaceName );
                   if( types == null ) {
-                     _usages.put( interfaceName, types = new TreeSet<>());
+                     _usedTypes.put( interfaceName, types = new TreeSet<>());
                   }
                   types.add( typeName );
                }
             }
          }
       }
+   }
+
+   boolean isUpToDate( File target ) {
+      return ( ! _force )&&( target.lastModified() > _lastModified );
    }
 
    DisappType getApplication() {
@@ -102,24 +105,84 @@ public final class Model {
       return _interfaces.get( name );
    }
 
-   EnumerationType getEnum( String name ) {
-      return _enums.get( name );
+   int getInterfaceID( String ifaceName ) {
+      int ifaceID = 1;
+      for( final String name : _interfaces.keySet()) {
+         if( name.equals( ifaceName )) {
+            return ifaceID;
+         }
+         ++ifaceID;
+      }
+      throw new IllegalStateException( ifaceName + " isn't an interface" );
    }
 
-   StructType getStruct( String name ) {
-      return _structs.get( name );
+   public Map<String, Integer> getInterfaceIDs( List<InterfaceUsageType> usedInterfaces ) {
+      final Map<String, Integer> ifaces = new LinkedHashMap<>();
+      for( final InterfaceUsageType iface : usedInterfaces ) {
+         final String ifaceName = iface.getInterface();
+         ifaces.put( ifaceName, getInterfaceID( ifaceName ));
+      }
+      return ifaces;
+   }
+
+   EnumerationType getEnum( String name ) {
+      final EnumerationType enm = _enums.get( name );
+      if( enm == null ) {
+         throw new IllegalStateException( "'" + name + "' is not an enumeration." );
+      }
+      return enm;
    }
 
    boolean enumIsDefined( String name ) {
       return _enums.containsKey( name );
    }
 
+   StructType getStruct( String name ) {
+      final StructType struct = _structs.get( name );
+      if( struct == null ) {
+         throw new IllegalStateException( "'" + name + "' is not a struct." );
+      }
+      return struct;
+   }
+
    boolean structIsDefined( String name ) {
       return _structs.containsKey( name );
    }
 
-   boolean isUpToDate( File target ) {
-      return ( ! _force )&&( target.lastModified() > _lastModified );
+   SortedSet<String> getUsedTypesBy( String ifaceName ) {
+      return _usedTypes.get( ifaceName );
+   }
+
+   public SortedSet<String> getUsedTypesBy( List<InterfaceUsageType> allOffered ) {
+      final SortedSet<String> usedTypes = new TreeSet<>();
+      for( final InterfaceUsageType offered : allOffered ) {
+         final String            ifaceName = offered.getInterface();
+         final SortedSet<String> used      = _usedTypes.get( ifaceName );
+         if( used != null ) {
+            usedTypes.addAll( used );
+         }
+      }
+      return usedTypes;
+   }
+
+   public List<EventType> getEventsOf( List<InterfaceUsageType> allOffered ) {
+      final List<EventType> events = new LinkedList<>();
+      for( final InterfaceUsageType offered : allOffered ) {
+         final String        ifaceName = offered.getInterface();
+         final InterfaceType iface         = _interfaces.get( ifaceName );
+         events.addAll( iface.getEvent());
+      }
+      return events;
+   }
+
+   public SortedMap<String, List<EventType>> getEventsMapOf( List<InterfaceUsageType> allOffered ) {
+      final SortedMap<String, List<EventType>> events = new TreeMap<>();
+      for( final InterfaceUsageType offered : allOffered ) {
+         final String        ifaceName = offered.getInterface();
+         final InterfaceType iface         = _interfaces.get( ifaceName );
+         events.put( ifaceName, iface.getEvent());
+      }
+      return events;
    }
 
    int getEnumSize( String enumName ) {
@@ -166,7 +229,7 @@ public final class Model {
       return msgSize;
    }
 
-   protected int getBufferCapacity( Collection<EventType> facets ) {
+   int getBufferCapacity( Collection<EventType> facets ) {
       int capacity = 0;
       for( final EventType facet : facets ) {
          int msgSize = 1 + 1; // INTERFACE + EVENT
@@ -194,7 +257,18 @@ public final class Model {
       return capacity;
    }
 
-   public int getBufferCapacity( List<InterfaceUsageType> offers ) {
+   int getBufferCapacity( String ifaceName ) {
+      final InterfaceType iface = _interfaces.get( ifaceName );
+      final List<EventType> events = iface.getEvent();
+      return getBufferCapacity( events );
+   }
+
+   int getBufferCapacity( InterfaceType iface ) {
+      final List<EventType> events = iface.getEvent();
+      return getBufferCapacity( events );
+   }
+
+   int getBufferCapacity( List<InterfaceUsageType> offers ) {
       final List<EventType> allEvents = new LinkedList<>();
       for( final InterfaceUsageType required : offers ) {
          final InterfaceType iface = _interfaces.get( required.getInterface());
@@ -203,162 +277,12 @@ public final class Model {
       return getBufferCapacity( allEvents );
    }
 
-   private static void configureRendererWidths( BaseRenderer cr, List<FieldType> fields ) {
-      int maxLength    = (Integer)cr.get(    "width" );
-      int maxStrLength = (Integer)cr.get( "strWidth" );
-      for( final FieldType field : fields ) {
-         final String cname = cr.name( field.getName());
-         maxLength = Math.max( maxLength, cname.length());
-         if( field.getType() == FieldtypeType.STRING ) {
-            maxStrLength = Math.max( maxStrLength, cname.length());
-         }
-      }
-      cr.set( "width"   , maxLength    );
-      cr.set( "strWidth", maxStrLength );
-   }
-
-   private static void configureRendererWidths( BaseRenderer cr, InterfaceType iface ) {
-      final List<EventType> events = iface.getEvent();
-      for( final EventType event : events ) {
-         configureRendererWidths( cr, event.getField());
-      }
-   }
-
-   protected void fillEnumTemplate( String name, ST tmpl ) {
-      final EnumerationType enm = getEnum( name );
-      if( enm == null ) {
-         throw new IllegalStateException( "'" + name + "' is not an enumeration." );
-      }
-      tmpl.add( "enum", enm );
-   }
-
-   protected void fillStructHeaderTemplate( String name, ST tmpl ) {
-      final StructType struct = _structs.get( name );
-      if( struct == null ) {
-         throw new IllegalStateException( "'" + name + "' is not a struct." );
-      }
-      tmpl.add( "struct", struct );
-   }
-
-   protected void fillStructBodyTemplate( String name, ST tmpl ) {
-      fillStructHeaderTemplate( name, tmpl );
-      final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof BaseRenderer ) {
-         final BaseRenderer  cr     = (BaseRenderer)renderer;
-         final StructType struct = _structs.get( name );
-         cr.set( "width"   , 0 );
-         cr.set( "strWidth", 0 );
-         configureRendererWidths( cr, struct.getField());
-      }
-   }
-
-   protected void fillRequiredHeaderTemplate( String ifaceName, InterfaceUsageType required, ST tmpl ) {
-      tmpl.add( "usedTypes", _usages.get( required.getInterface()));
-      tmpl.add( "ifaceName", ifaceName );
-      tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
-      tmpl.add( "iface"    , _interfaces.get( required.getInterface()));
-   }
-
-   protected void fillRequiredBodyTemplate( String ifaceName, InterfaceUsageType required, ST tmpl ) {
-      int ifaceID = 1;
-      for( final String name : _interfaces.keySet()) {
-         if( name.equals( required.getInterface())) {
-            break;
-         }
-         ++ifaceID;
-      }
-      final String            interfaceName = required.getInterface();
-      final InterfaceType     iface         = _interfaces.get( interfaceName );
-      final SortedSet<String> usedTypes     = _usages    .get( interfaceName );
-      tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "ifaceName", ifaceName );
-      tmpl.add( "rawSize"  , getBufferCapacity( _interfaces.get( required.getInterface()).getEvent()));
-      tmpl.add( "iface"    , iface);
-      tmpl.add( "ifaceID"  , ifaceID );
-      final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof BaseRenderer ) {
-         final BaseRenderer cr = (BaseRenderer)renderer;
-         cr.set( "width"   , 0 );
-         cr.set( "strWidth", 0 );
-         configureRendererWidths( cr, iface );
-      }
-   }
-
-   public void fillOfferedHeader(
-      String                   name,
-      List<InterfaceUsageType> allOffered,
-      ST                       tmpl )
-   {
-      final SortedSet<String> usedTypes = new TreeSet<>();
-      final List<EventType> events = new LinkedList<>();
-      for( final InterfaceUsageType offered : allOffered ) {
-         final String            interfaceName = offered.getInterface();
-         final InterfaceType     iface         = _interfaces.get( interfaceName );
-         final SortedSet<String> used          = _usages    .get( interfaceName );
-         if( used != null ) {
-            usedTypes.addAll( used );
-         }
-         events.addAll( iface.getEvent());
-      }
-      tmpl.add( "name"     , name );
-      tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "events"   , events );
-   }
-
-   @SuppressWarnings("static-method")
-   public void fillDispatcherHeader(
-      String                   name,
-      int                      rawSize,
-      ST                       tmpl )
-   {
-      tmpl.add( "name"   , name );
-      tmpl.add( "rawSize", rawSize );
-   }
-
-   private static boolean contains( List<InterfaceUsageType> usedInterfaces, String ifaceName ) {
+   static boolean contains( List<InterfaceUsageType> usedInterfaces, String ifaceName ) {
       for( final InterfaceUsageType facet : usedInterfaces ) {
          if( facet.getInterface().equals( ifaceName )) {
             return true;
          }
       }
       return false;
-   }
-
-   public void fillDispatcherBody(
-      String                   name,
-      List<InterfaceUsageType> usedInterfaces,
-      int                      rawSize,
-      ST                       tmpl )
-   {
-      int intrfcMaxWidth = 0;
-      for( final var iface : usedInterfaces ) {
-         intrfcMaxWidth = Math.max( BaseRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
-      }
-      byte rank = 0;
-      final Map<String, Byte>            ifaces    = new LinkedHashMap<>();
-      final Map<String, List<EventType>> events    = new LinkedHashMap<>();
-      final SortedSet<String>            usedTypes = new TreeSet<>();
-      for( final var iface : _application.getInterface()) {
-         ++rank;
-         final String ifaceName = iface.getName();
-         if( contains( usedInterfaces, ifaceName )) {
-            ifaces.put( ifaceName, rank );
-            events.put( ifaceName, _interfaces.get( ifaceName ).getEvent());
-            final SortedSet<String> used = _usages.get( ifaceName );
-            if( used != null ) {
-               usedTypes.addAll( used );
-            }
-         }
-      }
-      final AttributeRenderer renderer = tmpl.groupThatCreatedThisInstance.getAttributeRenderer( String.class );
-      if( renderer instanceof BaseRenderer ) {
-         final BaseRenderer cr = (BaseRenderer)renderer;
-         cr.set( "width", intrfcMaxWidth );
-      }
-      tmpl.add( "name"   , name );
-      tmpl.add( "ifaces" , ifaces );
-      tmpl.add( "events" , events );
-      tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "rawSize", rawSize );
    }
 }

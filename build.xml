@@ -3,7 +3,7 @@
 
    <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
    <target name="generate-all-sources" depends="disappgen">
-      <dependset verbose="true">
+      <dependset>
          <srcfilelist
             dir  ="."
             files="disappgen.jar" />

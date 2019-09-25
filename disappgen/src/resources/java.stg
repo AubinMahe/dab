@@ -21,20 +21,6 @@ type( field ) ::= <<
 
 
 
-enumtype( field ) ::= <<
-< if(     field.isBoolean )>boolean<
-  elseif( field.isByte    )>byte<
-  elseif( field.isShort   )>short<
-  elseif( field.isUshort  )>short<
-  elseif( field.isInt     )>int<
-  elseif( field.isUint    )>int<
-  elseif( field.isLong    )>long<
-  elseif( field.isUlong   )>long<
-  endif>
->>
-
-
-
 signature( comma, fields ) ::= <<
 < if( comma && fields )>, < endif><
   first(fields):{field|<type(field)> <field.name>}><
@@ -47,6 +33,21 @@ args( comma, fields ) ::= <<
 < if( comma && fields )>, < endif><
   first( fields ):{field|<field.name>}><
   rest ( fields ):{field|, <field.name>}>
+>>
+
+
+
+enum( package, enum ) ::= <<
+package <package>;
+
+import java.nio.ByteBuffer;
+
+import io.ByteBufferHelper;
+
+public enum <enum.name> {
+
+   <enum.literal:{literal|<literal.name; format="ID">,
+}>}
 >>
 
 
@@ -113,21 +114,6 @@ public class <struct.name> {
 < endif>
 }>   }
 }
->>
-
-
-
-enum( package, enum ) ::= <<
-package <package>;
-
-import java.nio.ByteBuffer;
-
-import io.ByteBufferHelper;
-
-public enum <enum.name> {
-
-   <enum.literal:{literal|<literal.name; format="ID">,
-}>}
 >>
 
 
@@ -221,7 +207,7 @@ public interface I<name> {
 
 
 
-dispatcherBodyOneInterface( name, ifaceName ) ::= <<
+dispatcherImplOneInterface( name, ifaceName ) ::= <<
 
    private static enum <name>Event {
       <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
@@ -248,7 +234,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
 <events.(ifaceName):{event|
       case <event.name; format="ID">:{
          <event.field:{field|
-< if(     field.isBoolean )>final bool <field.name> = ByteBufferHelper.getBoolean( _in );
+<     if( field.isBoolean )>final bool <field.name> = ByteBufferHelper.getBoolean( _in );
 < elseif( field.isByte    )>final byte <field.name> = _in.get();
 < elseif( field.isShort   )>final short <field.name> = _in.getShort();
 < elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
@@ -261,7 +247,8 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
 < elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
 < elseif( field.isEnum    )>final <field.userTypeName> <field.name> = <field.userTypeName>.values()[_in.get()];
 < elseif( field.isStruct  )>final <field.userTypeName> <field.name>;
-<field.name>.get( _in );< endif>
+<field.name>.get( _in );<
+  endif>
 }>         _listener.<event.name>( from<args( true, event.field )> );
          return true;\}
 }>      default:
@@ -271,7 +258,7 @@ dispatcherBodyOneInterface( name, ifaceName ) ::= <<
    }
 >>
 
-dispatcherImplementation( package, name, ifaces, events, usedTypes, rawSize ) ::= <<
+dispatcherImplementation( package, compName, ifaces, events, usedTypes, rawSize ) ::= <<
 package <package>.net;
 
 import java.io.IOException;
@@ -281,21 +268,21 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-import <package>.I<name>;
+import <package>.I<compName>;
 <usedTypes:{used|import <package>.<used>;
 }>
-public class <name>Dispatcher {
+public class <compName>Dispatcher {
 
    <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;}>
 
 <ifaces.keys:{ifaceName|
-<dispatcherBodyOneInterface( name, ifaceName )>
+<dispatcherImplOneInterface( compName, ifaceName )>
 }>
    private final ByteBuffer      _in = ByteBuffer.allocate( <rawSize> );
    private final DatagramChannel _channel;
-   private final I<name> _listener;
+   private final I<compName> _listener;
 
-   public <name>Dispatcher( DatagramChannel channel, I<name> listener ) {
+   public <compName>Dispatcher( DatagramChannel channel, I<compName> listener ) {
       _channel  = channel;
       _listener = listener;
    }

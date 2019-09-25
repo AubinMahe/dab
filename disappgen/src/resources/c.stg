@@ -15,7 +15,8 @@ type( field ) ::= <<
   elseif( field.isDouble  )>double<
   elseif( field.isString  )>char  <
   elseif( field.isEnum    )><field.userTypeName; format="cname"><
-  elseif( field.isStruct  )><field.userTypeName; format="cname">< endif>
+  elseif( field.isStruct  )><field.userTypeName; format="cname"><
+  endif>
 >>
 
 
@@ -26,13 +27,16 @@ signature( prefix, fields ) ::= <<
 elseif( field.isString  )>const char *<
 elseif( field.isEnum    )><prefix>_<field.userTypeName; format="cname"><
 elseif( field.isStruct  )>const <prefix>_<field.userTypeName; format="cname"> *<
-else                     ><type(field)><endif> <field.name; format="cname">}>
+else                     ><type(field)><
+endif                    > <field.name; format="cname">}>
 >>
 
 
 
-args( prefix, fields, sep ) ::= <<
-<fields:{field|<sep>< if( field.isStruct  )>&<field.name; format="cname">< else><field.name; format="cname">< endif>}>
+args( fields ) ::= <<
+<fields:{field|, <
+   if( field.isStruct  )>&<
+   endif                ><field.name; format="cname">}>
 >>
 
 
@@ -136,7 +140,7 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
 
 
 
-requiredHeader( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
+requiredInterface( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 
 #include \<io/datagram_socket.h\>
@@ -158,7 +162,7 @@ util_error <prefix>_<ifaceName; format="cname">_<event.name; format="cname">( <p
 
 
 
-requiredBody( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #include \<<prefix>/<iface.name; format="cname">.h\>
 #include \<stdio.h\>
 
@@ -207,7 +211,7 @@ util_error <prefix>_<iface.name; format="cname">_<event.name; format="cname">( <
 
 
 
-offeredHeader( prefix, name, usedTypes, events ) ::= <<
+offeredInterface( prefix, name, usedTypes, events ) ::= <<
 #pragma once
 
 #include \<string.h\>
@@ -228,7 +232,7 @@ signature( prefix, event.field )> );
 
 
 
-dispatcherHeader( prefix, name, rawSize ) ::= <<
+dispatcherInterface( prefix, name, rawSize ) ::= <<
 #pragma once
 
 #include \<<prefix>/<name; format="cname">.h\>
@@ -252,7 +256,7 @@ util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <prefix>_<name; 
 
 
 
-dispatcherBodyOneInterface( prefix, name, X ) ::= <<
+dispatcherImplOneInterface( prefix, name, ifaceName ) ::= <<
 
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
@@ -266,7 +270,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 <events.(ifaceName):{event|
    case <ifaceName; format="ID">_<event.name; format="ID">:{
 <event.field:{field|
-      < if(     field.isBoolean )>bool <field.name; format="cname">;
+      <     if( field.isBoolean )>bool <field.name; format="cname">;
       < elseif( field.isByte    )>byte <field.name; format="cname">;
       < elseif( field.isShort   )>short <field.name; format="cname">;
       < elseif( field.isUshort  )>ushort <field.name; format="cname">;
@@ -280,7 +284,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isEnum    )><prefix>_<field.userTypeName; format="cname"> <field.name; format="cname">;
       < elseif( field.isStruct  )><prefix>_<field.userTypeName; format="cname"> <field.name; format="cname">;
       < endif>
-      < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
+      <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
@@ -294,8 +298,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userTypeName; format="cname">_get( &<field.name; format="cname">, &This->in ), __FILE__, __LINE__ );
       < endif>
-}>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<
-         args( prefix, event.field, ", ")> ), __FILE__, __LINE__ );
+}>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ), __FILE__, __LINE__ );
       *has_dispatched = true;
       break;
    \}
@@ -310,21 +313,21 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 
 >>
 
-dispatcherBody( prefix, name, ifaces, events, usedTypes, rawSize ) ::= <<
-#include \<<prefix>/<name; format="cname">_dispatcher.h\>
+dispatcherImplementation( prefix, compName, ifaces, events, usedTypes, rawSize ) ::= <<
+#include \<<prefix>/<compName; format="cname">_dispatcher.h\>
 #include \<stdio.h\>
 
-typedef enum <prefix>_<name; format="cname">_dispatcher_interface_e {
+typedef enum <prefix>_<compName; format="cname">_dispatcher_interface_e {
 <ifaces.keys:{ifaceName|
    <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
-}>} <prefix>_<name; format="cname">_dispatcher_interface;
+}>} <prefix>_<compName; format="cname">_dispatcher_interface;
 
 <ifaces.keys:{ifaceName|
-<dispatcherBodyOneInterface( prefix, name, ifaceName)>
-}>util_error <prefix>_<name; format="cname">_dispatcher_init(
-   <prefix>_<name; format="cname">_dispatcher * This,
+<dispatcherImplOneInterface( prefix, compName, ifaceName )>
+}>util_error <prefix>_<compName; format="cname">_dispatcher_init(
+   <prefix>_<compName; format="cname">_dispatcher * This,
    SOCKET socket,
-   <prefix>_<name; format="cname"> *            listener )
+   <prefix>_<compName; format="cname"> *            listener )
 {
    if( socket \<= 0 || NULL == listener ) {
       return UTIL_NULL_ARG;
@@ -334,7 +337,7 @@ typedef enum <prefix>_<name; format="cname">_dispatcher_interface_e {
    return io_byte_buffer_wrap( &This->in, <rawSize>, This->raw );
 }
 
-util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <prefix>_<name; format="cname">_dispatcher * This, bool * has_dispatched ) {
+util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<compName; format="cname">_dispatcher * This, bool * has_dispatched ) {
    struct sockaddr_in from;
    byte interface, event;
 
