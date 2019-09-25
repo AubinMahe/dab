@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Root" default="boot">
+<project name="Root" default="build-all">
 
    <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
-   <target name="generate-all-sources">
+   <target name="generate-all-sources" depends="disappgen">
+      <dependset verbose="true">
+         <srcfilelist
+            dir  ="."
+            files="disappgen.jar" />
+         <targetfileset
+             dir     ="udt-c/src-gen"
+             includes="**/*.h, **/*.c" />
+         <targetfileset
+             dir     ="udt-cpp/src-gen"
+             includes="**/*.hpp, **/*.cpp" />
+         <targetfileset
+             dir     ="dab/src-gen"
+             includes="**/*.java" />
+         <targetfileset
+             dir     ="sc/src-gen"
+             includes="**/*.java" />
+      </dependset>
       <java fork="true" classname="disapp.generator.Main">
          <classpath location="lib/antlr-runtime-3.3.jar" />
          <classpath location="lib/javax.activation-1.2.0.jar" />
@@ -15,20 +32,20 @@
          <arg value="--model=dab.xml" />
       </java>
    </target>
-   <target name="boot" depends="disappgen,generate-all-sources" />
 
-   <target name="util-c"      ><exec executable="make" dir="util-c"       /></target>
-   <target name="util-c-tests"><exec executable="make" dir="util-c/tests" /></target>
-   <target name="udt-c"       ><exec executable="make" dir="udt-c"        /></target>
+   <target name="util-c"      ><exec dir="util-c"       executable="make" failonerror="true" /></target>
+   <target name="util-c-tests"><exec dir="util-c/tests" executable="make" failonerror="true" /></target>
+   <target name="udt-c"       ><exec dir="udt-c"        executable="make" failonerror="true" /></target>
 
-   <target name="util-cpp"    ><exec executable="make" dir="util-cpp"     /></target>
-   <target name="udt-cpp"     ><exec executable="make" dir="udt-cpp"      /></target>
+   <target name="util-cpp"    ><exec dir="util-cpp"     executable="make" failonerror="true" /></target>
+   <target name="udt-cpp"     ><exec dir="udt-cpp"      executable="make" failonerror="true" /></target>
 
-   <target name="util-java"   ><ant  target="jar"      dir="util-java"    /></target>
-   <target name="dab"         ><ant  target="jar"      dir="dab"          /></target>
-   <target name="sc"          ><ant  target="jar"      dir="sc"           /></target>
-   
+   <target name="util-java"   ><ant  dir="util-java" /></target>
+   <target name="dab"         ><ant  dir="dab"       /></target>
+   <target name="sc"          ><ant  dir="sc"        /></target>
+
    <target name="build-all">
+      <antcall target="generate-all-sources" />
       <parallel>
          <sequential>
             <antcall target="util-c" />
@@ -49,6 +66,7 @@
    </target>
 
    <target name="build-all-en-serie">
+      <antcall target="generate-all-sources" />
       <antcall target="util-c" />
       <antcall target="udt-c" />
       <antcall target="util-cpp" />
@@ -58,8 +76,8 @@
       <antcall target="sc" />
    </target>
 
-   <target name="run-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
-   <target name="run-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>
+   <target name="run-c"   depends="util-c  ,udt-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
+   <target name="run-cpp" depends="util-cpp,udt-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>
 
    <target name="clean">
       <ant  dir="dab"                                 target="clean" />

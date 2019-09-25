@@ -37,6 +37,41 @@ args( prefix, fields, sep ) ::= <<
 
 
 
+enumHeader( prefix, enum ) ::= <<
+#pragma once
+
+typedef enum <prefix>_<enum.name; format="cname">_e {
+   <prefix; format="upper">_<enum.name; format="ID">_FIRST,
+
+< first(enum.literal):{literal|
+   <prefix; format="upper">_<enum.name; format="ID">_<literal.name; format="ID"> = <
+    prefix; format="upper">_<enum.name; format="ID">_FIRST,}>
+< rest(enum.literal) :{literal|
+   <prefix; format="upper">_<enum.name; format="ID">_<literal.name; format="ID">,
+}>
+   <prefix; format="upper">_<enum.name; format="ID">_LAST
+
+} <prefix>_<enum.name; format="cname">;
+
+const char * <prefix>_<enum.name; format="cname">_to_string( <prefix>_<enum.name; format="cname"> value ); 
+>>
+
+
+
+enumBody( prefix, enum ) ::= <<
+#include \<<prefix>/<enum.name; format="cname">.h\>
+
+const char * <prefix>_<enum.name; format="cname">_to_string( <prefix>_<enum.name; format="cname"> value ) {
+   switch( value ) {
+   <enum.literal:{literal|
+   case <prefix; format="upper">_<enum.name; format="ID">_<literal.name; format="ID">: return "<literal.name; format="ID">";
+}>   default: return "Etat inconnu !";
+   }
+}
+>>
+
+
+
 structHeader( prefix, struct ) ::= <<
 #pragma once
 
@@ -101,25 +136,6 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
 
 
 
-enumHeader( prefix, enum ) ::= <<
-#pragma once
-
-typedef enum <prefix>_<enum.name; format="cname">_e {
-   <prefix; format="upper">_<enum.name; format="cname,upper">_FIRST,
-
-< first(enum.literal):{literal|
-   <prefix; format="upper">_<enum.name; format="cname,upper">_<literal.name; format="cname,upper"> = <
-    prefix; format="upper">_<enum.name; format="cname,upper">_FIRST,}>
-< rest(enum.literal) :{literal|
-   <prefix; format="upper">_<enum.name; format="cname,upper">_<literal.name; format="cname,upper">,
-}>
-   <prefix; format="upper">_<enum.name; format="cname,upper">_LAST
-
-} <prefix>_<enum.name; format="cname">;
->>
-
-
-
 requiredHeader( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 
@@ -148,9 +164,9 @@ requiredBody( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 
 enum <prefix>_event_id {
 < first(iface.event):{event|
-   <prefix; format="upper">_<event.name; format="cname,upper"> = 1,}>
+   <prefix; format="upper">_<event.name; format="ID"> = 1,}>
 < rest(iface.event) :{event|
-   <prefix; format="upper">_<event.name; format="cname,upper">,
+   <prefix; format="upper">_<event.name; format="ID">,
 }>};
 
 static const byte <iface.name; format="ID">_ID = <ifaceID>;

@@ -1,5 +1,4 @@
 #include <dab/udt/unite_de_traitement.h>
-#include <dab/unite_de_traitement.h>
 
 #include <io/sockets.h>
 #include <util/args.h>

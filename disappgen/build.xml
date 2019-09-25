@@ -10,16 +10,8 @@
       <delete file="${jar}" />
    </target>
 
-   <target name="jaxb-gen">
-      <mkdir dir="src-gen" />
-      <exec executable="xjc">
-         <arg value="-d" /><arg value="src-gen" />
-         <arg value="-p" /><arg value="disapp.generator.model" />
-         <arg value="../distributed-application.xsd" />
-      </exec>
-   </target>
-
-   <target name="javac" depends="jaxb-gen">
+   <target name="javac">
+      <exec dir="." failonerror="true" executable="make" />
       <mkdir dir="build" />
       <javac
          destdir          ="build"

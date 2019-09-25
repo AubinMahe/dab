@@ -19,4 +19,6 @@ UniteDeTraitement
 UniteDeTraitement-mingw32
 unite_de_traitement
 unite_de_traitement-mingw32
-
+generated-files.mk
+tests
+tests-heap

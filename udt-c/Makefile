@@ -3,12 +3,12 @@ SRCS =\
  src/dab/udt/unite_de_traitement.c
 
 SRCSGEN =\
+ src-gen/dab/etat.c\
  src-gen/dab/carte.c\
  src-gen/dab/compte.c\
  src-gen/dab/net/ihm.c\
  src-gen/dab/net/site_central.c\
  src-gen/dab/net/unite_de_traitement_dispatcher.c
-
 
 HEADERSGEN=\
  src-gen/dab/etat.h\
@@ -32,6 +32,9 @@ clean:
 	rm -fr Debug
 	rm -fr Release
 	rm -fr src-gen
+
+$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
+	cd .. && ant generate-all-sources
 
 ../util-c/lib/libutil-c.a:
 	cd ../util-c && make
@@ -78,9 +81,10 @@ run-mingw32:
 	make ../unite_de_traitement-mingw32
 	cd ../sc        && xterm -geometry 132x30-650-0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../unite_de_traitement-mingw32 --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine\
+ ../unite_de_traitement-mingw32 --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
 
-deps: $(SRCS) $(SRCSGEN) $(HEADERSGEN)
+deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
 

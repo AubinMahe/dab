@@ -53,11 +53,12 @@
       <event name="anomalie">
          <field name="anomalie"    type="boolean" description="Anomalie active (true) ou inactive (false)" />
       </event>
-      <event name="lireLaCarte">
-         <field name="carteID"     type="string"  description="Identifiant de la carte" length="4" />
+      <event name="carteInseree">
+         <field name="carteID"     type="string"  length="4"
+            description="Identifiant de la carte insérée par l'utilisateur final" />
       </event>
       <event name="codeSaisi">
-         <field name="code"        type="string"  description="Code de la carte"         length="4" />
+         <field name="code"        type="string"  length="4" description="Code de la carte" />
       </event>
       <event name="montantSaisi">
          <field name="montant"     type="double"  description="Montant du retrait en €" />

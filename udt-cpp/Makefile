@@ -33,6 +33,9 @@ clean:
 	rm -fr Release
 	rm -fr src-gen
 
+$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
+	cd .. && ant generate-all-sources
+
 ../util-cpp/lib/libutil-cpp.a:
 	cd ../util-cpp && make
 
@@ -78,9 +81,10 @@ run-mingw32:
 	make ../UniteDeTraitement-mingw32
 	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../UniteDeTraitement-mingw32 --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine\
+ ../UniteDeTraitement-mingw32 --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
 
-deps: $(SRCS) $(SRCSGEN) $(HEADERSGEN)
+deps: $(SRCS) $(SRCSGEN)
 	g++ $(CPPFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
 	g++ $(CPPFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
 

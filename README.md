@@ -31,8 +31,8 @@ La logique applicative dans **Unité de Traitement** est en grande partie décri
 ## Construire et exécuter les projets :
 
 **Pour les impatients :**
-- Version C : `ant boot run-c` 
-- Version C++ : `ant boot run-cpp`
+- Version C : `ant run-c` 
+- Version C++ : `ant run-cpp`
 
 Il est nécessaire de disposer de :
 - Java, dont la version doit être supérieure ou égale à 8, (OpenJDK 11.0.4 fait l'affaire)
@@ -44,16 +44,16 @@ Il est nécessaire de disposer de :
 
 En pas-à-pas, pour comprendre :
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
-2. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
-3. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
-4. Compiler dans l'ordre :
-   - util-c : `(cd util-c && make)`
-   - udt-c : `(cd udc-c && make)`
-   - util-cpp : `(cd util-cpp && make)`
-   - udt-cpp : `(cd udc-cpp && make)`
-   - util-java : `(cd util-java && ant)`
-   - sc : `(cd dc && ant)`
-   - dab : `(cd dab && ant)`
+1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
+1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
+1. Compiler dans l'ordre :
+    * util-c    : `(cd util-c && make)`
+    * udt-c     : `(cd udt-c && make)`
+    * util-cpp  : `(cd util-cpp && make)`
+    * udt-cpp   : `(cd udt-cpp && make)`
+    * util-java : `(cd util-java && ant)`
+    * sc        : `(cd sc && ant)`
+    * dab       : `(cd dab && ant)`
 
 La cible `build-all` de [build.xml](build.xml) décrit les dépendances entre binaires et donc le parallélisme optimal pour produire l'application.
 

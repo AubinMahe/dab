@@ -17,32 +17,44 @@ public class CGenerator extends BaseGenerator {
       _group.registerRenderer( String.class, new CRenderer());
    }
 
-   @Override
-   protected void generateEnum( String enumName ) throws IOException {
+   private void generateEnumHeader( String name ) throws IOException {
       final ST tmpl = _group.getInstanceOf( "/enumHeader" );
       tmpl.add( "prefix", _package );
-      _model.fillEnumTemplate( enumName, tmpl );
-      write( "", CRenderer.cname( enumName ) + ".h", tmpl );
+      _model.fillEnumTemplate( name, tmpl );
+      write( "", CRenderer.cname( name ) + ".h", tmpl );
    }
 
-   private void generateStructHeader( String structName ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/structHeader" );
+   private void generateEnumBody( String name ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/enumBody" );
       tmpl.add( "prefix", _package );
-      _model.fillStructHeaderTemplate( structName, tmpl );
-      write( "", CRenderer.cname( structName ) + ".h", tmpl );
-   }
-
-   private void generateStructBody( String structName ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/structBody" );
-      tmpl.add( "prefix", _package );
-      _model.fillStructBodyTemplate( structName, tmpl );
-      write( "", CRenderer.cname( structName ) + ".c", tmpl );
+      _model.fillEnumTemplate( name, tmpl );
+      write( "", CRenderer.cname( name ) + ".c", tmpl );
    }
 
    @Override
-   protected void generateStruct( String xUser ) throws IOException {
-      generateStructHeader( xUser );
-      generateStructBody  ( xUser );
+   protected void generateEnum( String name ) throws IOException {
+      generateEnumHeader( name );
+      generateEnumBody  ( name );
+   }
+
+   private void generateStructHeader( String name ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/structHeader" );
+      tmpl.add( "prefix", _package );
+      _model.fillStructHeaderTemplate( name, tmpl );
+      write( "", CRenderer.cname( name ) + ".h", tmpl );
+   }
+
+   private void generateStructBody( String name ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/structBody" );
+      tmpl.add( "prefix", _package );
+      _model.fillStructBodyTemplate( name, tmpl );
+      write( "", CRenderer.cname( name ) + ".c", tmpl );
+   }
+
+   @Override
+   protected void generateStruct( String name ) throws IOException {
+      generateStructHeader( name );
+      generateStructBody  ( name );
    }
 
    private void generateRequiredHeaders( ComponentType component ) throws IOException {

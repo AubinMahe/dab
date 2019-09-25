@@ -153,7 +153,7 @@ namespace dab::udt {
       virtual void maintenance( bool maintenance );
       virtual void rechargerLaCaisse( const double & montant );
       virtual void anomalie( bool anomalie );
-      virtual void lireLaCarte( const std::string & id );
+      virtual void carteInseree( const std::string & id );
       virtual void carteLue( const dab::Carte & carte, const dab::Compte & compte );
       virtual void codeSaisi( const std::string & code );
       virtual void montantSaisi( const double & code );
@@ -332,7 +332,7 @@ double UniteDeTraitement::getRetraitMax( void ) const {
    return std::min( _compte.getSolde(), RETRAIT_MAX );
 }
 
-void UniteDeTraitement::lireLaCarte( const std::string & id ) {
+void UniteDeTraitement::carteInseree( const std::string & id ) {
    _carte .invalidate();
    _compte.invalidate();
    _sc->getInformations( _scTarget, id );

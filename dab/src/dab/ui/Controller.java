@@ -241,7 +241,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void carteInseree() {
       try {
-         _udt.lireLaCarte( _udtAddress, _carteID.getText());
+         _udt.carteInseree( _udtAddress, _carteID.getText());
       }
       catch( final IOException e ) {
          e.printStackTrace();

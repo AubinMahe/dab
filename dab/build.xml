@@ -12,7 +12,11 @@
       <delete file="${jar}" />
    </target>
 
-   <target name="javac">
+   <target name="generate-all-sources">
+      <ant dir=".." target="generate-all-sources" />
+   </target>
+
+   <target name="javac" depends="generate-all-sources">
       <ant dir="../util-java" target="jar" inheritall="false" />
       <mkdir dir="build" />
       <javac

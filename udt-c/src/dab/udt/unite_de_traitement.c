@@ -1,4 +1,5 @@
 #include <dab/udt/unite_de_traitement.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -171,7 +172,7 @@ util_error dab_unite_de_traitement_anomalie( dab_unite_de_traitement * This, boo
 //   return ( This->compte.solde < DAB_RETRAIT_MAX ) ? This->compte.solde : DAB_RETRAIT_MAX;
 //}
 
-util_error dab_unite_de_traitement_lire_la_carte( dab_unite_de_traitement * This, const char * id ) {
+util_error dab_unite_de_traitement_carte_inseree( dab_unite_de_traitement * This, const char * id ) {
    This->carte.is_valid = false;
    This->compte.is_valid = false;
    UTIL_ERROR_CHECK( dab_site_central_get_informations( &This->sc, &This->sc_target, id ), __FILE__, __LINE__ );
