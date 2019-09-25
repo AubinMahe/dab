@@ -28,7 +28,25 @@
    <target name="dab"         ><ant  target="jar"      dir="dab"          /></target>
    <target name="sc"          ><ant  target="jar"      dir="sc"           /></target>
    
-   <target name="build-all" depends="util-c,util-c-tests,udt-c,util-cpp,udt-cpp,util-java,dab,sc" />
+   <target name="build-all">
+      <parallel>
+         <sequential>
+            <antcall target="util-c" />
+            <antcall target="udt-c" />
+         </sequential>
+         <sequential>
+            <antcall target="util-cpp" />
+            <antcall target="udt-cpp" />
+         </sequential>
+         <sequential>
+            <antcall target="util-java" />
+            <parallel>
+               <antcall target="dab" />
+               <antcall target="sc" />
+            </parallel>
+         </sequential>
+      </parallel>
+   </target>
 
    <target name="run-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
    <target name="run-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>

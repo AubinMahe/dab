@@ -12,7 +12,7 @@
 
    <target name="jaxb-gen">
       <mkdir dir="src-gen" />
-      <exec executable="/opt/java/jdk1.8.0_201/bin/xjc">
+      <exec executable="xjc">
          <arg value="-d" /><arg value="src-gen" />
          <arg value="-p" /><arg value="disapp.generator.model" />
          <arg value="../distributed-application.xsd" />
