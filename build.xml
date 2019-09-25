@@ -48,6 +48,16 @@
       </parallel>
    </target>
 
+   <target name="build-all-en-serie">
+      <antcall target="util-c" />
+      <antcall target="udt-c" />
+      <antcall target="util-cpp" />
+      <antcall target="udt-cpp" />
+      <antcall target="util-java" />
+      <antcall target="dab" />
+      <antcall target="sc" />
+   </target>
+
    <target name="run-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
    <target name="run-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>
 

@@ -24,6 +24,10 @@ Ainsi, la génération de code s'appuie sur un modèle commun et par trois modè
   - Une implantation en C++, assez proche de ce qu'on pourrait faire en Java
 - **dab** pour **Distributeur Automatique de Billets** : une application Java qui permet l'interaction avec l'utilisateur final
 
+## Logique applicative
+
+La logique applicative dans **Unité de Traitement** est en grande partie décrite par un [automate fini](https://fr.wikipedia.org/wiki/Automate_fini) qui ne couvre que les cas nominaux et quelques cas de panne (Cf. "reste à faire" en fin de page).
+
 ## Construire et exécuter les projets :
 
 **Pour les impatients :**
@@ -53,8 +57,41 @@ En pas-à-pas, pour comprendre :
 
 La cible `build-all` de [build.xml](build.xml) décrit les dépendances entre binaires et donc le parallélisme optimal pour produire l'application.
 
+    <target name="build-all">
+       <parallel>
+          <sequential>
+             <antcall target="util-c" />
+             <antcall target="udt-c" />
+          </sequential>
+          <sequential>
+             <antcall target="util-cpp" />
+             <antcall target="udt-cpp" />
+          </sequential>
+          <sequential>
+             <antcall target="util-java" />
+             <parallel>
+                <antcall target="dab" />
+                <antcall target="sc" />
+             </parallel>
+          </sequential>
+       </parallel>
+    </target>
+
+![8 Cores CPU](ParallelBuild.png "8 Cores CPU")
+
+Temps passé à produire :
+- real  0m12,026s
+- user  0m22,053s
+- sys   0m1,970s
+
+A comparer avec la solution en série :
+
+- real  0m15,277s
+- user  0m18,172s
+- sys   0m1,854s
+
 ## Reste à faire
 
-- La logique applicative dans **Unité de Traitement** est en grande partie gérée par un [automate fini](https://fr.wikipedia.org/wiki/Automate_fini). Il ne couvre que les cas nominaux et quelques cas de panne. Il est possible d'être grandement à découvert car il n'y a pas de limite aux retraits effectués (Youpi !).
-- Il n'existe pas de gestion des temporisations : impact sur les librairies et le framework.
-- L'IHM du **Distributeur Automatique de Billets** ne montre pas les cartes confisquées ni les billets qui n'ont pas été pris par l'utilisateur.
+1. Il n'existe pas de gestion des temporisations : impact sur les librairies et le framework.
+2. Compléter l'automate car il est possible d'être grandement à découvert : il n'y a pas de limite aux retraits effectués (Youpi !).
+3. L'IHM du **Distributeur Automatique de Billets** ne montre pas les cartes confisquées ni les billets qui n'ont pas été pris par l'utilisateur.
