@@ -33,10 +33,26 @@
    </target>
 
    <target name="run" depends="jar">
+      <exec spawn="true" dir="../sc" executable="xterm">
+         <arg value="-geometry" />
+         <arg value="132x30-650+0" />
+         <arg value="-e" />
+         <arg value="ant" />
+         <arg value="run" />
+      </exec>
+      <exec spawn="true" dir="../dab"  executable="xterm">
+         <arg value="-geometry" />
+         <arg value="132x30-800-0" />
+         <arg value="-e" />
+         <arg value="ant" />
+         <arg value="run" />
+      </exec>
       <java
          fork      ="true"
          modulepath="${jutil}:${jar}"
          module    ="udt/udt.Main">
+         <arg value="--iface=localhost" />
+         <arg value="--udt-port=${udt.port}" />
          <arg value="--dab-address=${dab.address}" />
          <arg value="--dab-port=${dab.port}" />
          <arg value="--sc-address=${sc.address}" />

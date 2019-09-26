@@ -90,7 +90,7 @@ public class Controller extends Thread implements IIHM {
          setScreenText( "Veuillez entrer le code de la carte, deuxième essai : " );
          break;
       case SAISIE_CODE_3:
-         setScreenText( "Veuillez entrer le code de la carte, troisième et dernier essai : " );
+         setScreenText( "Veuillez entrer le code de la carte, dernier essai : " );
          break;
       case SAISIE_MONTANT:
          setScreenText( "Veuillez entrer le montant du retrait : " );
@@ -100,6 +100,9 @@ public class Controller extends Thread implements IIHM {
          break;
       case RETRAIT_CARTE_ILLISIBLE:
          setScreenText( "Carte illisible, veuillez la reprendre..." );
+         break;
+      case RETRAIT_CARTE_SOLDE:
+         setScreenText( "Solde insuffisant,veuillez reprendre votre carte..." );
          break;
       case RETRAIT_BILLETS:
          setScreenText( "Veuillez prendre les billets..." );
@@ -146,7 +149,12 @@ public class Controller extends Thread implements IIHM {
 
    @Override
    public void confisquerLaCarte( ) {
-      // Faire apparaître la carte dans le magasin des cartes confisquées.
+      // TODO Faire apparaître la carte dans le magasin des cartes confisquées.
+   }
+
+   @Override
+   public void ejecterLaCarte() {
+      // TODO Afficher un message sur deux lignes
    }
 
    @Override
@@ -188,6 +196,8 @@ public class Controller extends Thread implements IIHM {
             Platform.runLater(() -> Controller.this.setSoldeCaisse( solde )); }
          @Override public void confisquerLaCarte() throws IOException {
             Platform.runLater(() -> Controller.this.confisquerLaCarte()); }
+         @Override public void ejecterLaCarte() throws IOException {
+            Platform.runLater(() -> Controller.this.ejecterLaCarte()); }
       });
       _udt = new UniteDeTraitement( _channel, new InetSocketAddress( udtAddress, udtPort ));
       setDaemon( true );

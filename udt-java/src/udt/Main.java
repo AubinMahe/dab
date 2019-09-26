@@ -18,25 +18,20 @@ public final class Main {
       System.exit( 1 );
    }
 
-   /**
-    * Point d'entrée du programme, usage typique :
-    *      UniteDeTraitement --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
-    * @throws IOException
-    */
-   static void main( String[] args ) throws IOException {
+   public static void main( String[] args ) throws IOException {
       final CommandLine arguments = new CommandLine();
       if( ! arguments.parse( args )) {
          usage();
       }
-      final String    intrfc    = arguments.getString( "iface"      );
-      final int       udtPort   = arguments.getInt   ( "udt-port"   );
-      final String    scAddress = arguments.getString( "sc-address" );
-      final int       scPort    = arguments.getInt   ( "sc-port"    );
-      final String    uiAddress = arguments.getString( "ui-address" );
-      final int       uiPort    = arguments.getInt   ( "ui-port"    );
+      final String    intrfc     = arguments.getString( "iface"      );
+      final int       udtPort    = arguments.getInt   ( "udt-port"   );
+      final String    scAddress  = arguments.getString( "sc-address" );
+      final int       scPort     = arguments.getInt   ( "sc-port"    );
+      final String    dabAddress = arguments.getString( "dab-address" );
+      final int       dabPort    = arguments.getInt   ( "dab-port"    );
       UniteDeTraitement udt = null;
       try {
-         udt = new UniteDeTraitement( intrfc, udtPort, scAddress, scPort, uiAddress, uiPort );
+         udt = new UniteDeTraitement( intrfc, udtPort, scAddress, scPort, dabAddress, dabPort );
          udt.run();
       }
       catch( final Throwable t ) {

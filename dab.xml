@@ -16,6 +16,7 @@
       <literal name="RETRAIT_CARTE" />
       <literal name="RETRAIT_BILLETS" />
       <literal name="RETRAIT_CARTE_ILLISIBLE" />
+      <literal name="RETRAIT_CARTE_SOLDE" />
    </enumeration>
 
    <struct name="Carte">
@@ -39,6 +40,7 @@
       <event name="setSoldeCaisse">
          <field name="solde" type="double"  description="Montant de la caisse en €" />
       </event>
+      <event name="ejecterLaCarte" />
       <event name="confisquerLaCarte" />
       <event name="shutdown" />
    </interface>

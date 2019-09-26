@@ -60,9 +60,9 @@
          <sequential>
             <antcall target="util-java" />
             <parallel>
+               <antcall target="udt-java" />
                <antcall target="dab" />
                <antcall target="sc" />
-               <antcall target="udt-java" />
             </parallel>
          </sequential>
       </parallel>
@@ -75,9 +75,9 @@
       <antcall target="util-cpp" />
       <antcall target="udt-cpp" />
       <antcall target="util-java" />
+      <antcall target="udt-java" />
       <antcall target="dab" />
       <antcall target="sc" />
-      <antcall target="udt-java" />
    </target>
 
    <target name="run-c" depends="util-c,udt-c">

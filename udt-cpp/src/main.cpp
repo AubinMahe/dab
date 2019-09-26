@@ -1,4 +1,4 @@
-#include <dab/udt/UniteDeTraitement.hpp>
+#include "UniteDeTraitement.hpp"
 
 #include <util/Args.hpp>
 
@@ -39,7 +39,7 @@ int main( int argc, char * argv[] ) {
    }
    dab::IUniteDeTraitement * udt = 0;
    try {
-      udt = dab::udt::newUniteDeTraitement( intrfc.c_str(), udtPort, scAddress.c_str(), scPort, dabAddress.c_str(), dabPort );
+      udt = new udt::UniteDeTraitement( intrfc.c_str(), udtPort, scAddress.c_str(), scPort, dabAddress.c_str(), dabPort );
       udt->run();
    }
    catch( const std::exception & err ) {
