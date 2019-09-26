@@ -94,14 +94,36 @@
       <xs:attribute type="xs:string"    name="src-dir"     use="required" />
       <xs:attribute type="xs:string"    name="module-name" use="required" />
    </xs:complexType>
-   
+
+   <xs:complexType name="transitionType">
+      <xs:attribute type="xs:string" name="from"  use="required" />
+      <xs:attribute type="xs:string" name="event" use="required" />
+      <xs:attribute type="xs:string" name="futur" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="shortcutType">
+      <xs:attribute type="xs:string" name="event" use="required" />
+      <xs:attribute type="xs:string" name="futur" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="automatonType">
+      <xs:sequence>
+         <xs:element type="transitionType" name="transition" minOccurs="2" maxOccurs="unbounded" />
+         <xs:element type="shortcutType"   name="shortcut"   minOccurs="2" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="state-type" use="optional" />
+      <xs:attribute type="xs:string" name="event-type" use="optional" />
+      <xs:attribute type="xs:string" name="initial"    use="required" />
+   </xs:complexType>
+
    <xs:complexType name="componentType">
       <xs:sequence>
          <xs:choice minOccurs="1" maxOccurs="unbounded">
             <xs:element type="interfaceUsageType" name="offers" />
             <xs:element type="interfaceUsageType" name="requires" />
          </xs:choice>
-         <xs:element type="implementationType"    name="implementation" minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="implementationType" name="implementation" minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="automatonType"      name="automaton"      minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>

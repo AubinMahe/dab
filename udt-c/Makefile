@@ -6,6 +6,7 @@ SRCSGEN =\
  src-gen/dab/etat.c\
  src-gen/dab/carte.c\
  src-gen/dab/compte.c\
+ src-gen/dab/automaton.c\
  src-gen/dab/net/ihm.c\
  src-gen/dab/net/site_central.c\
  src-gen/dab/net/unite_de_traitement_dispatcher.c

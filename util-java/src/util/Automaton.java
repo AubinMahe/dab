@@ -5,57 +5,31 @@ import java.util.Map;
 
 public class Automaton<S, E> {
 
-   private final Map<S, Map< E, S>> _arcs      = new HashMap<>();
-   private final Map< E, S>         _shortcuts = new HashMap<>();
+   private final Map<S, Map< E, S>> _transitions = new HashMap<>();
    private /* */ S                  _current;
 
-   public Automaton( S initial, Arc<S, E>[] arcs, Shortcut<S, E>[] shortcuts ) {
+   public Automaton( S initial ) {
       _current = initial;
-      for( final Arc<S, E> arc : arcs ) {
-         Map< E, S> transition = _arcs.get( arc.current );
-         if( transition == null ) {
-            _arcs.put( arc.current, transition = new HashMap<>());
-         }
-         transition.put( arc.event, arc.futur );
-      }
-      for( final Shortcut<S, E> s : shortcuts ) {
-         _shortcuts.put( s.event, s.futur );
-      }
    }
 
-   public static final class Arc<S, E> {
-
-      public Arc( S c, E e, S f ) {
-         current = c;
-         event   = e;
-         futur   = f;
+   protected void add( S from, E event, S futur ) {
+      Map<E, S> transition = _transitions.get( from );
+      if( transition == null ) {
+         _transitions.put( from, transition = new HashMap<>());
       }
-
-      private final S current;
-      private final E event;
-      private final S futur;
+      transition.put( event, futur );
    }
 
-   public static final class Shortcut<S, E> {
-
-      public Shortcut( E e, S f ) {
-         event = e;
-         futur = f;
+   protected void add( E event, S futur ) {
+      for( final Map<E, S> p : _transitions.values()) {
+         p.put( event, futur );
       }
-
-      private final E event;
-      private final S futur;
    }
 
    public boolean process( E event ) {
-      S futur = _shortcuts.get( event );
-      if( futur != null ) {
-         _current = futur;
-         return true;
-      }
-      final Map<E, S> transition = _arcs.get( _current );
+      final Map<E, S> transition = _transitions.get( _current );
       if( transition != null ) {
-         futur = transition.get( event );
+         final S futur = transition.get( event );
          if( futur != null ) {
             _current = futur;
             return true;

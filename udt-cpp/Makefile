@@ -1,11 +1,12 @@
 SRCS =\
- src/main.cpp\
- src/dab/udt/UniteDeTraitement.cpp
+ src/main.cpp
 
 SRCSGEN =\
- src-gen/dab/Etat.cpp\
+ src-gen/dab/Automaton.cpp\
  src-gen/dab/Carte.cpp\
  src-gen/dab/Compte.cpp\
+ src-gen/dab/Etat.cpp\
+ src-gen/dab/Evenement.cpp\
  src-gen/dab/net/IHM.cpp\
  src-gen/dab/net/SiteCentral.cpp\
  src-gen/dab/net/UniteDeTraitementDispatcher.cpp

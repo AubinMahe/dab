@@ -8,6 +8,7 @@ import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
+import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
@@ -142,6 +143,19 @@ public class CppGenerator extends BaseGenerator {
       write( "net", component.getName() + "Dispatcher.cpp", tmpl );
    }
 
+   private void generateAutomaton( AutomatonType automaton ) throws IOException {
+      if( automaton != null ) {
+         final ST header = _group.getInstanceOf( "/automatonHeader" );
+         header.add( "namespace", _package  );
+         header.add( "automaton", automaton );
+         write( "", "Automaton.hpp", header );
+         final ST body = _group.getInstanceOf( "/automatonBody" );
+         body.add( "namespace", _package  );
+         body.add( "automaton", automaton );
+         write( "", "Automaton.cpp", body );
+      }
+   }
+
    void generateComponent( ComponentType component, String srcDir, String moduleName ) throws IOException {
       _genDir  = srcDir;
       _package = moduleName;
@@ -151,10 +165,12 @@ public class CppGenerator extends BaseGenerator {
       final List<String>             generated     = new LinkedList<>();
       generateTypesUsedBy             ( offers  , generated );
       generateTypesUsedBy             ( requires, generated );
+      generateTypesUsedBy             ( component.getAutomaton(), generated );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterface        ( component );
       generateDispatcherInterface     ( component, offersRawSize );
       generateDispatcherImplementation( component, offersRawSize );
+      generateAutomaton               ( component.getAutomaton());
    }
 }

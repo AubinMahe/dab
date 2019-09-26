@@ -466,3 +466,49 @@ namespace dab {
    }
 }
 >>
+
+
+
+automatonHeader( namespace, automaton ) ::= <<
+#pragma once
+
+#include \<util/Automaton.hpp>
+
+#include \<<namespace>/<automaton.stateType>.hpp>
+#include \<<namespace>/<automaton.eventType>.hpp>
+
+namespace <namespace> {
+
+   class Automaton : public util::Automaton\<<automaton.stateType>, <automaton.eventType>\> {
+   public:
+
+      Automaton( void );
+
+   private:
+      Automaton( const Automaton & ) = delete;
+      Automaton & operator = ( const Automaton & ) = delete;
+   };
+}
+>>
+
+
+
+automatonBody( namespace, automaton ) ::= <<
+#include "Automaton.hpp"
+
+using namespace <namespace>;
+
+Automaton :: Automaton( void ) :
+   util::Automaton\<<automaton.stateType>, <automaton.eventType>\>( <automaton.stateType>::<automaton.initial> )
+{
+   <automaton.transition:{transition|add( <
+      automaton.stateType>::<transition.from>, <
+      automaton.eventType>::<transition.event>, <
+      automaton.stateType>::<transition.futur> );
+}>
+   <automaton.shortcut:{shortcut|add( <
+      automaton.eventType>::<shortcut.event>, <
+      automaton.stateType>::<shortcut.futur> );
+}>
+}
+>>

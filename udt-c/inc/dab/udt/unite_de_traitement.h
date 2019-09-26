@@ -5,7 +5,7 @@
 #include <dab/site_central.h>
 #include <dab/unite_de_traitement_dispatcher.h>
 
-#include <util/automaton.h>
+#include <dab/automaton.h>
 
 typedef struct dab_udt_date_s {
    byte   month;

@@ -304,3 +304,20 @@ public class <compName>Dispatcher {
    }
 }
 >>
+
+
+
+automaton( package, automaton ) ::= <<
+package <package>;
+
+public class Automaton extends util.Automaton\<<automaton.stateType>, <automaton.eventType>\> {
+
+   public Automaton() {
+      super( <automaton.stateType>.<automaton.initial> );
+      <automaton.transition:{transition|add( <automaton.stateType>.<transition.from>, <automaton.eventType>.<transition.event>, <automaton.stateType>.<transition.futur> );
+}>
+      <automaton.shortcut:{shortcut|add( <automaton.eventType>.<shortcut.event>, <automaton.stateType>.<shortcut.futur> );
+}>
+   }
+}
+>>

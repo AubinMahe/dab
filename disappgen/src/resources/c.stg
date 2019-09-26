@@ -363,3 +363,43 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
    return UTIL_NO_ERROR;
 }
 >>
+
+
+
+automatonHeader( prefix, automaton ) ::= <<
+#pragma once
+
+#include \<util/automaton.h>
+
+util_error <prefix>_automaton_init( util_automaton * automaton );
+>>
+
+
+
+automatonBody( prefix, automaton ) ::= <<
+#include \<<prefix>/automaton.h>
+#include \<<prefix>/<automaton.stateType; format="cname">.h>
+#include \<<prefix>/<automaton.eventType; format="cname">.h>
+
+static util_transition transitions[] = {
+   <automaton.transition:{transition|{ <
+      prefix; format="ID">_<automaton.stateType; format="ID">_<transition.from ; format="ID">, <
+      prefix; format="ID">_<automaton.eventType; format="ID">_<transition.event; format="ID">, <
+      prefix; format="ID">_<automaton.stateType; format="ID">_<transition.futur; format="ID"> \},
+}>
+};
+
+static util_shortcut shortcuts[] = {
+   <automaton.shortcut:{shortcut|{ <
+      prefix; format="ID">_<automaton.eventType; format="ID">_<shortcut.event; format="ID">, <
+      prefix; format="ID">_<automaton.stateType; format="ID">_<shortcut.futur; format="ID"> \},
+}>
+};
+
+util_error <prefix>_automaton_init( util_automaton * automaton ) {
+   return util_automaton_init(
+      automaton, <prefix; format="ID">_<automaton.stateType; format="ID">_<automaton.initial; format="ID">,
+      transitions, sizeof( transitions )/sizeof( transitions[0] ),
+      shortcuts  , sizeof( shortcuts   )/sizeof( shortcuts  [0] ));
+}
+>>

@@ -8,6 +8,7 @@ import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
+import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
@@ -107,6 +108,15 @@ public class JavaGenerator extends BaseGenerator {
       write( "net", component.getName() + "Dispatcher.java", tmpl );
    }
 
+   private void generateAutomaton( AutomatonType automaton ) throws IOException {
+      if( automaton != null ) {
+         final ST tmpl = _group.getInstanceOf( "/automaton" );
+         tmpl.add( "package"  , _package  );
+         tmpl.add( "automaton", automaton );
+         write( "", "Automaton.java", tmpl );
+      }
+   }
+
    void generateComponent( ComponentType component, String srcDir, String moduleName ) throws IOException {
       _genDir  = srcDir;
       _package = moduleName;
@@ -114,11 +124,14 @@ public class JavaGenerator extends BaseGenerator {
       final List<InterfaceUsageType> requires      = _model.getRequiresOf( component );
       final int                      offersRawSize = _model.getBufferCapacity( offers );
       final List<String>             generated     = new LinkedList<>();
+      final AutomatonType            automaton     = component.getAutomaton();
       generateTypesUsedBy             ( offers  , generated );
       generateTypesUsedBy             ( requires, generated );
+      generateTypesUsedBy             ( component.getAutomaton(), generated );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterfaces       ( component );
       generateDispatcherImplementation( component, offersRawSize );
+      generateAutomaton               ( automaton );
    }
 }

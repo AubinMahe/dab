@@ -6,42 +6,16 @@ import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
 
-import dab.Etat;
+import dab.Automaton;
+import dab.Evenement;
 import dab.IIHM;
 import dab.ISiteCentral;
 import dab.IUniteDeTraitement;
 import dab.net.IHM;
 import dab.net.SiteCentral;
 import dab.net.UniteDeTraitementDispatcher;
-import util.Automaton;
-import util.Automaton.Arc;
-import util.Automaton.Shortcut;
 
 public final class UniteDeTraitement implements IUniteDeTraitement {
-
-   private static enum Event {
-
-      MAINTENANCE_ON,
-      MAINTENANCE_OFF,
-      SOLDE_CAISSE_INSUFFISANT,
-      ANOMALIE_ON,
-      ANOMALIE_OFF,
-      CARTE_INSEREE,
-      CARTE_LUE_0,
-      CARTE_LUE_1,
-      CARTE_LUE_2,
-      CARTE_INVALIDE,
-      BON_CODE,
-      MAUVAIS_CODE_1,
-      MAUVAIS_CODE_2,
-      MAUVAIS_CODE_3,
-      CARTE_CONFISQUEE,
-      SOLDE_INSUFFISANT,
-      MONTANT_OK,
-      CARTE_RETIREE,
-      BILLETS_RETIRES,
-      TERMINATE,
-   }
 
    private static final double RETRAIT_MAX = 1000.0;
 
@@ -49,53 +23,20 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
    private final IIHM                        _ui;
    private final ISiteCentral                _sc;
    private final UniteDeTraitementDispatcher _dispatcher;
-   private final Automaton<Etat, Event>      _automaton;
-   private final Carte                       _carte  = new Carte();
-   private final Compte                      _compte = new Compte();
+   private final Automaton                   _automaton = new Automaton();
+   private final Carte                       _carte     = new Carte();
+   private final Compte                      _compte    = new Compte();
    private /* */ boolean                     _running;
    private /* */ double                      _valeurCaisse;
 
-   @SuppressWarnings({ "unchecked", "rawtypes" })
    public UniteDeTraitement( String intrfc, int udtPort, String scAddress, int scPort, String dabAddress, int dabPort ) throws IOException {
-      _channel = DatagramChannel.open( StandardProtocolFamily.INET )
+      _channel      = DatagramChannel
+         .open( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
          .bind     ( new InetSocketAddress( intrfc, udtPort ));
-      _sc         = new SiteCentral                ( _channel, new InetSocketAddress( scAddress , scPort  ));
-      _ui         = new IHM                        ( _channel, new InetSocketAddress( dabAddress, dabPort ));
-      _dispatcher = new UniteDeTraitementDispatcher( _channel, this );
-      _automaton = new Automaton<Etat, Event>(
-         Etat.AUCUN, new Automaton.Arc[] {
-            new Arc( Etat.AUCUN              , Event.MAINTENANCE_ON          , Etat.MAINTENANCE         ),
-            new Arc( Etat.MAINTENANCE        , Event.MAINTENANCE_OFF         , Etat.EN_SERVICE          ),
-            new Arc( Etat.MAINTENANCE        , Event.SOLDE_CAISSE_INSUFFISANT, Etat.MAINTENANCE         ),
-            new Arc( Etat.EN_SERVICE         , Event.MAINTENANCE_ON          , Etat.MAINTENANCE         ),
-            new Arc( Etat.MAINTENANCE        , Event.ANOMALIE_ON             , Etat.HORS_SERVICE        ),
-            new Arc( Etat.HORS_SERVICE       , Event.ANOMALIE_OFF            , Etat.MAINTENANCE         ),
-            new Arc( Etat.HORS_SERVICE       , Event.MAINTENANCE_ON          , Etat.MAINTENANCE         ),
-            new Arc( Etat.EN_SERVICE         , Event.SOLDE_CAISSE_INSUFFISANT, Etat.HORS_SERVICE        ),
-            new Arc( Etat.EN_SERVICE         , Event.CARTE_INSEREE           , Etat.LECTURE_CARTE       ),
-            new Arc( Etat.LECTURE_CARTE      , Event.CARTE_LUE_0             , Etat.SAISIE_CODE_1       ),
-            new Arc( Etat.LECTURE_CARTE      , Event.CARTE_LUE_1             , Etat.SAISIE_CODE_2       ),
-            new Arc( Etat.LECTURE_CARTE      , Event.CARTE_LUE_2             , Etat.SAISIE_CODE_3       ),
-            new Arc( Etat.LECTURE_CARTE      , Event.CARTE_INVALIDE          , Etat.EN_SERVICE          ),
-            new Arc( Etat.LECTURE_CARTE      , Event.CARTE_CONFISQUEE        , Etat.EN_SERVICE          ),
-            new Arc( Etat.SAISIE_CODE_1      , Event.BON_CODE                , Etat.SAISIE_MONTANT      ),
-            new Arc( Etat.SAISIE_CODE_1      , Event.MAUVAIS_CODE_1          , Etat.SAISIE_CODE_2       ),
-            new Arc( Etat.SAISIE_CODE_2      , Event.BON_CODE                , Etat.SAISIE_MONTANT      ),
-            new Arc( Etat.SAISIE_CODE_2      , Event.MAUVAIS_CODE_2          , Etat.SAISIE_CODE_3       ),
-            new Arc( Etat.SAISIE_CODE_3      , Event.BON_CODE                , Etat.SAISIE_MONTANT      ),
-            new Arc( Etat.SAISIE_CODE_3      , Event.MAUVAIS_CODE_3          , Etat.EN_SERVICE          ),
-            new Arc( Etat.SAISIE_MONTANT     , Event.MONTANT_OK              , Etat.RETRAIT_CARTE       ),
-            new Arc( Etat.SAISIE_MONTANT     , Event.SOLDE_INSUFFISANT       , Etat.RETRAIT_CARTE_SOLDE ),
-            new Arc( Etat.RETRAIT_CARTE_SOLDE, Event.CARTE_RETIREE           , Etat.EN_SERVICE          ),
-            new Arc( Etat.RETRAIT_CARTE      , Event.CARTE_RETIREE           , Etat.RETRAIT_BILLETS     ),
-            new Arc( Etat.RETRAIT_BILLETS    , Event.BILLETS_RETIRES         , Etat.EN_SERVICE          ),
-         },
-         new Automaton.Shortcut[] {
-            new Shortcut( Event.TERMINATE  , Etat.HORS_SERVICE ),
-            new Shortcut( Event.ANOMALIE_ON, Etat.HORS_SERVICE ),
-         }
-      );
+      _sc           = new SiteCentral                ( _channel, new InetSocketAddress( scAddress , scPort  ));
+      _ui           = new IHM                        ( _channel, new InetSocketAddress( dabAddress, dabPort ));
+      _dispatcher   = new UniteDeTraitementDispatcher( _channel, this );
       _valeurCaisse = 0.0;
    }
 
@@ -105,10 +46,10 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
    @Override
    public void maintenance( boolean maintenance ) {
       if( maintenance ) {
-         _automaton.process( Event.MAINTENANCE_ON );
+         _automaton.process( Evenement.MAINTENANCE_ON );
       }
       else {
-         _automaton.process( Event.MAINTENANCE_OFF );
+         _automaton.process( Evenement.MAINTENANCE_OFF );
       }
    }
 
@@ -123,17 +64,17 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
       _valeurCaisse += montant;
       _ui.setSoldeCaisse( _valeurCaisse );
       if( _valeurCaisse < RETRAIT_MAX ) {
-         _automaton.process( Event.SOLDE_CAISSE_INSUFFISANT );
+         _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
       }
    }
 
    @Override
    public void anomalie( boolean anomalie ) {
       if( anomalie ) {
-         _automaton.process( Event.ANOMALIE_ON );
+         _automaton.process( Evenement.ANOMALIE_ON );
       }
       else {
-         _automaton.process( Event.ANOMALIE_OFF );
+         _automaton.process( Evenement.ANOMALIE_OFF );
       }
    }
 
@@ -151,7 +92,7 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
       _carte .invalidate();
       _compte.invalidate();
       _sc.getInformations( id );
-      _automaton.process( Event.CARTE_INSEREE );
+      _automaton.process( Evenement.CARTE_INSEREE );
    }
 
    @SuppressWarnings("exports")
@@ -161,41 +102,41 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
       _compte.set( compte.id, compte.solde, compte.autorise );
       if( _carte.isValid() && _compte.isValid()) {
          if( _carte.getNbEssais() == 0 ) {
-            _automaton.process( Event.CARTE_LUE_0 );
+            _automaton.process( Evenement.CARTE_LUE_0 );
          }
          else if( _carte.getNbEssais() == 1 ) {
-            _automaton.process( Event.CARTE_LUE_1 );
+            _automaton.process( Evenement.CARTE_LUE_1 );
          }
          else if( _carte.getNbEssais() == 2 ) {
-            _automaton.process( Event.CARTE_LUE_2 );
+            _automaton.process( Evenement.CARTE_LUE_2 );
          }
          else {
-            _automaton.process( Event.CARTE_CONFISQUEE );
+            _automaton.process( Evenement.CARTE_CONFISQUEE );
             _ui.confisquerLaCarte();
          }
       }
       else {
          System.err.printf( "Carte et/ou compte invalide\n" );
-         _automaton.process( Event.CARTE_INVALIDE );
+         _automaton.process( Evenement.CARTE_INVALIDE );
       }
    }
 
    @Override
    public void codeSaisi( String code ) throws IOException {
       if( _carte.compareCode( code )) {
-         _automaton.process( Event.BON_CODE );
+         _automaton.process( Evenement.BON_CODE );
       }
       else {
          _sc.incrNbEssais( _carte.getId());
          _carte.incrementeNbEssais();
          if( _carte.getNbEssais() == 1 ) {
-            _automaton.process( Event.MAUVAIS_CODE_1 );
+            _automaton.process( Evenement.MAUVAIS_CODE_1 );
          }
          else if( _carte.getNbEssais() == 2 ) {
-            _automaton.process( Event.MAUVAIS_CODE_2 );
+            _automaton.process( Evenement.MAUVAIS_CODE_2 );
          }
          else if( _carte.getNbEssais() == 3 ) {
-            _automaton.process( Event.MAUVAIS_CODE_3 );
+            _automaton.process( Evenement.MAUVAIS_CODE_3 );
             _ui.confisquerLaCarte();
          }
       }
@@ -204,32 +145,32 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
    @Override
    public void montantSaisi( double montant ) throws IOException {
       if( montant > getRetraitMax()) {
-         _automaton.process( Event.SOLDE_INSUFFISANT );
+         _automaton.process( Evenement.SOLDE_INSUFFISANT );
          _ui.ejecterLaCarte();
       }
       else {
          _valeurCaisse -= montant;
          _ui.setSoldeCaisse( _valeurCaisse );
          _sc.retrait( _carte.getId(), montant );
-         _automaton.process( Event.MONTANT_OK );
+         _automaton.process( Evenement.MONTANT_OK );
       }
    }
 
    @Override
    public void carteRetiree() {
-      _automaton.process( Event.CARTE_RETIREE );
+      _automaton.process( Evenement.CARTE_RETIREE );
    }
 
    @Override
    public void billetsRetires() {
-      _automaton.process( Event.BILLETS_RETIRES );
+      _automaton.process( Evenement.BILLETS_RETIRES );
    }
 
    @Override
    public void shutdown() throws IOException {
       _ui.shutdown();
       _sc.shutdown();
-      _automaton.process( Event.TERMINATE );
+      _automaton.process( Evenement.TERMINATE );
       _running = false;
    }
 

@@ -19,18 +19,41 @@
       <literal name="RETRAIT_CARTE_SOLDE" />
    </enumeration>
 
+   <enumeration name="Evenement" type="byte">
+      <literal name="MAINTENANCE_ON" />
+      <literal name="MAINTENANCE_OFF" />
+      <literal name="SOLDE_CAISSE_INSUFFISANT" />
+      <literal name="ANOMALIE_ON" />
+      <literal name="ANOMALIE_OFF" />
+      <literal name="CARTE_INSEREE" />
+      <literal name="CARTE_LUE_0" />
+      <literal name="CARTE_LUE_1" />
+      <literal name="CARTE_LUE_2" />
+      <literal name="CARTE_INVALIDE" />
+      <literal name="BON_CODE" />
+      <literal name="MAUVAIS_CODE_1" />
+      <literal name="MAUVAIS_CODE_2" />
+      <literal name="MAUVAIS_CODE_3" />
+      <literal name="CARTE_CONFISQUEE" />
+      <literal name="SOLDE_INSUFFISANT" />
+      <literal name="MONTANT_OK" />
+      <literal name="CARTE_RETIREE" />
+      <literal name="BILLETS_RETIRES" />
+      <literal name="TERMINATE" />
+   </enumeration>
+
    <struct name="Carte">
-      <field name="id"       type="string"  description="Identifiant de la carte" length="4" />
-      <field name="code"     type="string"  description="Identifiant de la carte" length="4" />
-      <field name="month"    type="byte"    description="Jour de péremption de la carte" />
-      <field name="year"     type="ushort"  description="Année de péremption de la carte" />
-      <field name="nbEssais" type="byte"    description="Nombre d'essais en échec de la carte" />
+      <field name="id"       type="string" length="4" description="Identifiant de la carte" />
+      <field name="code"     type="string" length="4" description="Identifiant de la carte" />
+      <field name="month"    type="byte"              description="Jour de péremption de la carte" />
+      <field name="year"     type="ushort"            description="Année de péremption de la carte" />
+      <field name="nbEssais" type="byte"              description="Nombre d'essais en échec de la carte" />
    </struct>
 
    <struct name="Compte">
-      <field name="id"       type="string"  description="Identifiant du compte"   length="4" />
-      <field name="solde"    type="double"  description="Solde du compte" />
-      <field name="autorise" type="boolean" description="Le compte est-il autorisé ?" />
+      <field name="id"       type="string" length="4" description="Identifiant du compte" />
+      <field name="solde"    type="double"            description="Solde du compte" />
+      <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
    </struct>
 
    <interface name="IHM">
@@ -105,6 +128,34 @@
       <implementation language="Java" src-dir="udt-java/src-gen" module-name="dab" />
       <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="dab" />
       <implementation language="C"    src-dir="udt-c/src-gen"    module-name="dab" />
+      <automaton state-type="Etat" event-type="Evenement" initial="AUCUN">
+         <transition from="AUCUN"               event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+         <transition from="MAINTENANCE"         event="MAINTENANCE_OFF"          futur="EN_SERVICE" />
+         <transition from="MAINTENANCE"         event="SOLDE_CAISSE_INSUFFISANT" futur="MAINTENANCE" />
+         <transition from="EN_SERVICE "         event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+         <transition from="HORS_SERVICE"        event="ANOMALIE_OFF"             futur="MAINTENANCE" />
+         <transition from="HORS_SERVICE"        event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+         <transition from="EN_SERVICE"          event="SOLDE_CAISSE_INSUFFISANT" futur="HORS_SERVICE" />
+         <transition from="EN_SERVICE"          event="CARTE_INSEREE"            futur="LECTURE_CARTE" />
+         <transition from="LECTURE_CARTE"       event="CARTE_LUE_0"              futur="SAISIE_CODE_1" />
+         <transition from="LECTURE_CARTE"       event="CARTE_LUE_1"              futur="SAISIE_CODE_2" />
+         <transition from="LECTURE_CARTE"       event="CARTE_LUE_2"              futur="SAISIE_CODE_3" />
+         <transition from="LECTURE_CARTE"       event="CARTE_INVALIDE"           futur="EN_SERVICE" />
+         <transition from="LECTURE_CARTE"       event="CARTE_CONFISQUEE"         futur="EN_SERVICE" />
+         <transition from="SAISIE_CODE_1"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_1"       event="MAUVAIS_CODE_1"           futur="SAISIE_CODE_2" />
+         <transition from="SAISIE_CODE_2"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_2"       event="MAUVAIS_CODE_2"           futur="SAISIE_CODE_3" />
+         <transition from="SAISIE_CODE_3"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_3"       event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
+         <transition from="SAISIE_MONTANT"      event="MONTANT_OK"               futur="RETRAIT_CARTE" />
+         <transition from="SAISIE_MONTANT"      event="SOLDE_INSUFFISANT"        futur="RETRAIT_CARTE_SOLDE" />
+         <transition from="RETRAIT_CARTE_SOLDE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+         <transition from="RETRAIT_CARTE"       event="CARTE_RETIREE"            futur="RETRAIT_BILLETS" />
+         <transition from="RETRAIT_BILLETS"     event="BILLETS_RETIRES"          futur="EN_SERVICE" />
+         <shortcut event="TERMINATE"   futur="HORS_SERVICE" />
+         <shortcut event="ANOMALIE_ON" futur="HORS_SERVICE" />
+      </automaton>
    </component>
 
    <component name="SiteCentral">

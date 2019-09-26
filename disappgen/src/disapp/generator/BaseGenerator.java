@@ -9,6 +9,7 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
+import disapp.generator.model.AutomatonType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
@@ -61,6 +62,22 @@ abstract class BaseGenerator {
                }
             }
          }
+      }
+   }
+
+   protected void generateTypesUsedBy( AutomatonType automaton, List<String> generated ) throws IOException {
+      if( automaton == null ) {
+         return;
+      }
+      String enumName  = automaton.getStateType();
+      if( ! generated.contains( enumName )) {
+         generateEnum( enumName );
+         generated.add( enumName );
+      }
+      enumName  = automaton.getEventType();
+      if( ! generated.contains( enumName )) {
+         generateEnum( enumName );
+         generated.add( enumName );
       }
    }
 

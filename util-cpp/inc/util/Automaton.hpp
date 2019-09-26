@@ -12,48 +12,19 @@ namespace util {
    class Automaton {
    public:
 
-      /**
-       * Ne sert qu'à peupler l'automate.
-       */
-      struct Arc {
-
-         Arc( S c, E e, S n ) :
-            current( c ),
-            event  ( e ),
-            next   ( n )
-         {}
-
-         S current;
-         E event;
-         S next;
-      };
-
-      /**
-       * Ne sert qu'à peupler l'automate.
-       */
-      struct Shortcut {
-
-         Shortcut( E e, S n ) :
-            event( e ),
-            next ( n )
-         {}
-
-         E event;
-         S next;
-      };
-
-   public:
-
-      Automaton( S initial, std::initializer_list<Arc> arcs, std::initializer_list<Shortcut> shortcuts ) :
+      Automaton( S initial ) :
          _current( initial )
-      {
-         for( auto t : arcs ) {
-            _automaton[t.current][t.event] = t.next;
-         }
-         for( auto t : shortcuts ) {
-            for( auto p : _automaton ) {
-               _automaton[p.first][t.event] = t.next;
-            }
+      {}
+
+   protected:
+
+      void add( S from, E event, S futur ) {
+         _transitions[from][event] = futur;
+      }
+
+      void add( E event, S futur ) {
+         for( auto p : _transitions ) {
+            _transitions[p.first][event] = futur;
          }
       }
 
@@ -64,7 +35,7 @@ namespace util {
       }
 
       void process( E event ) {
-         const std::map<E, S> & tr = _automaton[_current];
+         const std::map<E, S> & tr = _transitions[_current];
          auto it = tr.find( event );
          if( it == tr.end()) {
             std::stringstream ss;
@@ -78,6 +49,6 @@ namespace util {
    private:
 
       S                           _current;
-      std::map<S, std::map<E, S>> _automaton;
+      std::map<S, std::map<E, S>> _transitions;
    };
 }
