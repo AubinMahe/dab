@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="DAB-UI" default="jar">
 
+   <property file="../application-settings.properties" />
    <property name="jfx13" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
    <property name="jutil" value=".." />
    <property name="jar"   value="../${ant.project.name}.jar" />
@@ -43,9 +44,9 @@
          modulepath="${jfx13}:${jutil}:${jar}"
          module    ="dab/dab.ui.Main">
          <arg value="--id=#1" />
-         <arg value="--udt-address=localhost" />
-         <arg value="--udt-port=2417" />
-         <arg value="--ui-port=2418" />
+         <arg value="--udt-address=${udt.address}" />
+         <arg value="--udt-port=${udt.port}" />
+         <arg value="--dab-port=${dab.port}" />
       </java>
    </target>
 

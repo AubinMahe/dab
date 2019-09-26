@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Site-Central" default="jar">
+<project name="UDT" default="jar">
 
    <property file="../application-settings.properties" />
-   <property name="jfx13" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
    <property name="jutil" value=".." />
    <property name="jar"   value="../${ant.project.name}.jar" />
 
@@ -22,7 +21,7 @@
       <mkdir dir="build" />
       <javac
          destdir          ="build"
-         modulepath       ="${jfx13}:${jutil}"
+         modulepath       ="${jutil}"
          includeantruntime="false">
          <src path="src" />
          <src path="src-gen" />
@@ -30,22 +29,18 @@
    </target>
 
    <target name="jar" depends="javac">
-      <copy todir="build">
-         <fileset
-            dir     ="src"
-            includes="**/*.fxml,**/*.png,**/*.css,**/*.properties" />
-      </copy>
       <jar destfile="${jar}" basedir="build" />
    </target>
 
    <target name="run" depends="jar">
       <java
          fork      ="true"
-         modulepath="${jfx13}:${jutil}:${jar}"
-         module    ="sc/sc.ui.Main">
+         modulepath="${jutil}:${jar}"
+         module    ="udt/udt.Main">
+         <arg value="--dab-address=${dab.address}" />
+         <arg value="--dab-port=${dab.port}" />
+         <arg value="--sc-address=${sc.address}" />
          <arg value="--sc-port=${sc.port}" />
-         <arg value="--udt-address=${udt.address}" />
-         <arg value="--udt-port=${udt.port}" />
       </java>
    </target>
 

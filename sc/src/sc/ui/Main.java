@@ -26,16 +26,14 @@ public class Main extends Application {
       if(( ! named.containsKey( "udt-address" ))|| nan ) {
          stage.setScene( new Scene( new BorderPane( new Label(
             "Arguments obligatoires :\n"
-               + "\t--sc-port=<this port>"
-               + "\t--udt-address=<address of UniteDeTraitement's host>"
-               + "\t--udt-port=<port of UniteDeTraitement>"
+               + "\t--sc-port=<this port>\n"
+               + "\t--udt-address=<address of UniteDeTraitement's host>\n"
+               + "\t--udt-port=<port of UniteDeTraitement>\n"
          )), 420, 200 ));
-         stage.setTitle( "Usage" );
+         stage.setTitle( getClass().getPackageName() + " usage" );
          stage.show();
          return;
       }
-      final int scPort  = Integer.parseInt( named.get( "sc-port" ));
-      final int udtPort = Integer.parseInt( named.get( "sc-port" ));
       stage.setTitle( "Site Central (SC)" );
       final Class<? extends Main> clazz = getClass();
       final FXMLLoader loader =
@@ -44,7 +42,9 @@ public class Main extends Application {
             ResourceBundle.getBundle( clazz.getPackageName() + "/messages" ));
       stage.setScene( new Scene( loader.load()));
       final Controller ctrl = loader.getController();
-      ctrl.init( stage, scPort, named.get( "udt-port" ), udtPort );
+      final int scPort  = Integer.parseInt( named.get( "sc-port" ));
+      final int udtPort = Integer.parseInt( named.get( "udt-port" ));
+      ctrl.init( stage, scPort, named.get( "udt-address" ), udtPort );
       stage.show();
    }
 

@@ -1,4 +1,4 @@
-package dab.udt;
+package udt;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,8 +13,9 @@ import dab.IUniteDeTraitement;
 import dab.net.IHM;
 import dab.net.SiteCentral;
 import dab.net.UniteDeTraitementDispatcher;
-import dab.udt.Automaton.Arc;
-import dab.udt.Automaton.Shortcut;
+import util.Automaton;
+import util.Automaton.Arc;
+import util.Automaton.Shortcut;
 
 class Date {
 
@@ -239,6 +240,7 @@ public final class UniteDeTraitement implements IUniteDeTraitement {
       _automaton.process( Event.CARTE_INSEREE );
    }
 
+   @SuppressWarnings("exports")
    @Override
    public void carteLue( dab.Carte  carte, dab.Compte  compte ) throws IOException {
       _carte .set( carte.id, carte.code, carte.month, carte.year, carte.nbEssais );

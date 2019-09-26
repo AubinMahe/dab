@@ -20,7 +20,7 @@ public final class Server extends Thread implements ISiteCentral {
    private final ILecteurDeCarte       _lecteurDeCarte;
    private final SiteCentralDispatcher _dispatcher;
 
-   public Server( int port, IRepository repository, SocketAddress[] lecteurDeCarteOffers ) throws IOException {
+   public Server( int port, IRepository repository, SocketAddress ... lecteurDeCarteOffers ) throws IOException {
       _channel = DatagramChannel.open( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
          .bind     ( new InetSocketAddress( port ));

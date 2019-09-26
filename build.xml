@@ -44,6 +44,7 @@
    <target name="util-java"   ><ant  dir="util-java" /></target>
    <target name="dab"         ><ant  dir="dab"       /></target>
    <target name="sc"          ><ant  dir="sc"        /></target>
+   <target name="udt-java"    ><ant  dir="udt-java"  /></target>
 
    <target name="build-all">
       <antcall target="generate-all-sources" />
@@ -61,6 +62,7 @@
             <parallel>
                <antcall target="dab" />
                <antcall target="sc" />
+               <antcall target="udt-java" />
             </parallel>
          </sequential>
       </parallel>
@@ -75,6 +77,7 @@
       <antcall target="util-java" />
       <antcall target="dab" />
       <antcall target="sc" />
+      <antcall target="udt-java" />
    </target>
 
    <target name="run-c" depends="util-c,udt-c">
@@ -89,6 +92,7 @@
          <arg value="run"/>
       </exec>
    </target>
+
    <target name="run-cpp" depends="util-cpp,udt-cpp">
       <exec executable="make" dir="udt-cpp">
          <arg value="IFACE=${iface}" />
@@ -102,11 +106,16 @@
       </exec>
    </target>
 
+   <target name="run-java" depends="util-java,udt-java">
+      <ant dir="udt-java" target="run" />
+   </target>
+
    <target name="clean">
       <ant  dir="dab"                                 target="clean" />
       <ant  dir="sc"                                  target="clean" />
       <exec dir="udt-c"        executable="make" ><arg value="clean" /></exec>
       <exec dir="udt-cpp"      executable="make" ><arg value="clean" /></exec>
+      <ant  dir="udt-java"                            target="clean" />
       <exec dir="util-c/tests" executable="make" ><arg value="clean" /></exec>
       <exec dir="util-c"       executable="make" ><arg value="clean" /></exec>
       <exec dir="util-cpp"     executable="make" ><arg value="clean" /></exec>

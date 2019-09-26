@@ -2,7 +2,6 @@ package sc.ui;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -132,7 +131,7 @@ public class Controller implements IRepository {
          stage.setY( prefs.getDouble( "y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage ));
-      new Server( port, this, new SocketAddress[]{ new InetSocketAddress( udtAddress, udtPort )});
+      new Server( port, this, new InetSocketAddress( udtAddress, udtPort ));
    }
 
    @Override

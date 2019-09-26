@@ -36,7 +36,7 @@ public class Main extends Application {
             + "\t--udt-port=<port de l'unité de traitement>\n"
             + "\t--dab-port=<this port>"
          )), 420, 200 ));
-         stage.setTitle( "Usage" );
+         stage.setTitle( getClass().getPackageName() + " usage" );
          stage.show();
          return;
       }

@@ -1,4 +1,4 @@
-package dab.udt;
+package util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +23,9 @@ public class Automaton<S, E> {
       }
    }
 
-   static final class Arc<S, E> {
+   public static final class Arc<S, E> {
 
-      Arc( S c, E e, S f ) {
+      public Arc( S c, E e, S f ) {
          current = c;
          event   = e;
          futur   = f;
@@ -36,9 +36,9 @@ public class Automaton<S, E> {
       private final S futur;
    }
 
-   static final class Shortcut<S, E> {
+   public static final class Shortcut<S, E> {
 
-      Shortcut( E e, S f ) {
+      public Shortcut( E e, S f ) {
          event = e;
          futur = f;
       }
@@ -47,7 +47,7 @@ public class Automaton<S, E> {
       private final S futur;
    }
 
-   public boolean process( Event event ) {
+   public boolean process( E event ) {
       S futur = _shortcuts.get( event );
       if( futur != null ) {
          _current = futur;
