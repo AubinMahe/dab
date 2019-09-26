@@ -2,7 +2,6 @@ package dab.ui;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
@@ -37,7 +36,6 @@ public class Controller extends Thread implements IIHM {
 
    private DatagramChannel    _channel;
    private IUniteDeTraitement _udt;
-   private SocketAddress      _udtAddress;
    private IHMDispatcher      _dispatcher;
    private Etat               _etat   = Etat.HORS_SERVICE;
    private String             _text   = "";
@@ -59,7 +57,7 @@ public class Controller extends Thread implements IIHM {
    @FXML private TextField _ajouterALaCaisse;
 
    @Override
-   public void setStatus( SocketAddress from, Etat etat ) {
+   public void setStatus( Etat etat ) {
       _etat = etat;
       _insererCarte.setDisable( etat != Etat.EN_SERVICE );
       final boolean maintenance = ( etat == Etat.MAINTENANCE );
@@ -128,7 +126,7 @@ public class Controller extends Thread implements IIHM {
    }
 
    @Override
-   public void setSoldeCaisse( SocketAddress from, double valeur ) {
+   public void setSoldeCaisse( double valeur ) {
       _caisse.setText( "Caisse : " + NumberFormat.getCurrencyInstance().format( valeur ));
    }
 
@@ -147,12 +145,12 @@ public class Controller extends Thread implements IIHM {
    }
 
    @Override
-   public void confisquerLaCarte( SocketAddress from ) {
+   public void confisquerLaCarte( ) {
       // Faire apparaître la carte dans le magasin des cartes confisquées.
    }
 
    @Override
-   public void shutdown( SocketAddress from ) {
+   public void shutdown( ) {
       ((Stage)_status.getScene().getWindow()).close();
    }
 
@@ -161,7 +159,7 @@ public class Controller extends Thread implements IIHM {
       prefs.putDouble( "x", stage.getX());
       prefs.putDouble( "y", stage.getY());
       try {
-         _udt.shutdown( _udtAddress );
+         _udt.shutdown();
          _channel.close();
       }
       catch( final IOException e ) {
@@ -169,7 +167,7 @@ public class Controller extends Thread implements IIHM {
       }
    }
 
-   public void init( Stage stage, int uiPort, String udtAddress, int udtPort )
+   public void init( Stage stage, int dabPort, String udtAddress, int udtPort )
       throws BackingStoreException, IOException
    {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
@@ -180,22 +178,21 @@ public class Controller extends Thread implements IIHM {
       stage.setOnCloseRequest( e -> done( stage ));
       _channel = DatagramChannel.open( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-         .bind     ( new InetSocketAddress( uiPort ));
+         .bind     ( new InetSocketAddress( dabPort ));
       _dispatcher = new IHMDispatcher( _channel, new IIHM() {
-         @Override public void shutdown( SocketAddress from ) throws IOException {
-            Platform.runLater(() -> Controller.this.shutdown( from )); }
-         @Override public void setStatus( SocketAddress from, Etat etat ) throws IOException {
-            Platform.runLater(() -> Controller.this.setStatus( from, etat )); }
-         @Override public void setSoldeCaisse( SocketAddress from, double solde ) throws IOException {
-            Platform.runLater(() -> Controller.this.setSoldeCaisse( from, solde )); }
-         @Override public void confisquerLaCarte( SocketAddress from ) throws IOException {
-            Platform.runLater(() -> Controller.this.confisquerLaCarte( from )); }
+         @Override public void shutdown() throws IOException {
+            Platform.runLater(() -> Controller.this.shutdown()); }
+         @Override public void setStatus(Etat etat ) throws IOException {
+            Platform.runLater(() -> Controller.this.setStatus( etat )); }
+         @Override public void setSoldeCaisse( double solde ) throws IOException {
+            Platform.runLater(() -> Controller.this.setSoldeCaisse( solde )); }
+         @Override public void confisquerLaCarte() throws IOException {
+            Platform.runLater(() -> Controller.this.confisquerLaCarte()); }
       });
-      _udt        = new UniteDeTraitement( _channel );
-      _udtAddress = new InetSocketAddress( udtAddress, udtPort );
+      _udt = new UniteDeTraitement( _channel, new InetSocketAddress( udtAddress, udtPort ));
       setDaemon( true );
       start();
-      _udt.maintenance( _udtAddress, true );
+      _udt.maintenance( true );
    }
 
    @FXML
@@ -222,10 +219,10 @@ public class Controller extends Thread implements IIHM {
                   ( _etat == Etat.SAISIE_CODE_2 )||
                   ( _etat == Etat.SAISIE_CODE_3 );
                if( saisieCode ) {
-                  _udt.codeSaisi( _udtAddress, _saisie );
+                  _udt.codeSaisi( _saisie );
                }
                else if( _etat == Etat.SAISIE_MONTANT ) {
-                  _udt.montantSaisi( _udtAddress, Double.parseDouble( _saisie ));
+                  _udt.montantSaisi( Double.parseDouble( _saisie ));
                }
             }
             catch( final IOException e ){
@@ -241,7 +238,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void carteInseree() {
       try {
-         _udt.carteInseree( _udtAddress, _carteID.getText());
+         _udt.carteInseree( _carteID.getText());
       }
       catch( final IOException e ) {
          e.printStackTrace();
@@ -252,7 +249,7 @@ public class Controller extends Thread implements IIHM {
    private void maintenance() {
       final boolean maintenance = _maintenance.isSelected();
       try {
-         _udt.maintenance( _udtAddress, maintenance );
+         _udt.maintenance( maintenance );
       }
       catch( final IOException e ){
          e.printStackTrace();
@@ -262,7 +259,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void rechargerLaCaisse() {
       try {
-         _udt.rechargerLaCaisse( _udtAddress, Double.parseDouble( _ajouterALaCaisse.getText()));
+         _udt.rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
       }
       catch( final Throwable t ){
          t.printStackTrace();
@@ -272,7 +269,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void prendreLaCarte() {
       try {
-         _udt.carteRetiree( _udtAddress );
+         _udt.carteRetiree();
       }
       catch( final Throwable t ){
          t.printStackTrace();
@@ -282,7 +279,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void prendreLesBillets() {
       try {
-         _udt.billetsRetires( _udtAddress );
+         _udt.billetsRetires();
       }
       catch( final Throwable t ){
          t.printStackTrace();
@@ -292,7 +289,7 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void anomalie() {
       try {
-         _udt.anomalie( _udtAddress, _anomalie.isSelected());
+         _udt.anomalie( _anomalie.isSelected());
       }
       catch( final Throwable t ){
          t.printStackTrace();

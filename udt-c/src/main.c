@@ -12,8 +12,8 @@ static int usage( const char * exename ) {
       " --udt-port=<port>"
       " --sc-address=<IP address or hostname>"
       " --sc-port=<port>"
-      " --ui-address=<IP address or hostname>"
-      " --ui-port=<port>\n\n",
+      " --dab-address=<IP address or hostname>"
+      " --dab-port=<port>\n\n",
       exename );
    return 1;
 }
@@ -28,22 +28,22 @@ int main( int argc, char * argv[] ) {
    util_args_parse( &map, argc, pairs, argc, argv );
    const char *   intrfc;
    unsigned short udtPort;
-   const char *   uiAddress;
-   unsigned short uiPort;
+   const char *   dabAddress;
+   unsigned short dabPort;
    const char *   scAddress;
    unsigned short scPort;
    bool ok =
-        ( UTIL_NO_ERROR == util_args_get_string( &map, "iface"     , &intrfc   ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "udt-port"  , &udtPort  ))
-      &&( UTIL_NO_ERROR == util_args_get_string( &map, "sc-address", &scAddress ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "sc-port"   , &scPort    ))
-      &&( UTIL_NO_ERROR == util_args_get_string( &map, "ui-address", &uiAddress ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "ui-port"   , &uiPort    ));
+        ( UTIL_NO_ERROR == util_args_get_string( &map, "iface"      , &intrfc   ))
+      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "udt-port"   , &udtPort  ))
+      &&( UTIL_NO_ERROR == util_args_get_string( &map, "sc-address" , &scAddress ))
+      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "sc-port"    , &scPort    ))
+      &&( UTIL_NO_ERROR == util_args_get_string( &map, "dab-address", &dabAddress ))
+      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "dab-port"   , &dabPort    ));
    if( ! ok ) {
       return usage( argv[0] );
    }
    dab_unite_de_traitement udt;
-   util_error err = dab_unite_de_traitement_init( &udt, intrfc, udtPort, scAddress, scPort, uiAddress, uiPort );
+   util_error err = dab_unite_de_traitement_init( &udt, intrfc, udtPort, scAddress, scPort, dabAddress, dabPort );
    if( UTIL_NO_ERROR == err ) {
       err = dab_unite_de_traitement_run( &udt );
    }

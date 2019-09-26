@@ -3,6 +3,9 @@ package disapp.generator;
 import java.io.File;
 import java.io.IOException;
 
+import disapp.generator.model.ComponentType;
+import disapp.generator.model.ImplementationType;
+
 public class Main {
 
    private final Model _model;
@@ -12,9 +15,20 @@ public class Main {
    }
 
    private void generateComponents() throws IOException {
-      new JavaGenerator( _model ).generateComponents();
-      new CGenerator   ( _model ).generateComponents();
-      new CppGenerator ( _model ).generateComponents();
+      final JavaGenerator java = new JavaGenerator( _model );
+      final CGenerator    c    = new CGenerator   ( _model );
+      final CppGenerator  cpp  = new CppGenerator ( _model );
+      for( final ComponentType component : _model.getApplication().getComponent()) {
+         for( final ImplementationType implementation : component.getImplementation()) {
+            final String srcDir     = implementation.getSrcDir();
+            final String moduleName = implementation.getModuleName();
+            switch( implementation.getLanguage()) {
+            case "Java": java.generateComponent( component, srcDir, moduleName ); break;
+            case "C"   : c   .generateComponent( component, srcDir, moduleName ); break;
+            case "C++" : cpp .generateComponent( component, srcDir, moduleName ); break;
+            }
+         }
+      }
    }
 
    private static void usage() {

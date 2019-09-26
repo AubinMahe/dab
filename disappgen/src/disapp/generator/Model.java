@@ -1,6 +1,7 @@
 package disapp.generator;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,6 +35,10 @@ final class Model {
    private final Map<String, StructType>        _structs        = new HashMap<>();
    private final Map<String, SortedSet<String>> _usedTypes         = new HashMap<>();
    private final Map<String, List<EventType>>   _eventsPerIface = new HashMap<>();
+   private final Map<ComponentType,
+      List<InterfaceUsageType>>                 _offers         = new HashMap<>();
+   private final Map<ComponentType,
+      List<InterfaceUsageType>>                 _requires       = new HashMap<>();
    private final File                           _source;
    private final boolean                        _force;
    private final DisappType                     _application;
@@ -58,11 +63,30 @@ final class Model {
          _structs.put( struct.getName(), struct );
       }
       for( final ComponentType component : _application.getComponent()) {
-         typesUsedBy( component.getOffers());
-         typesUsedBy( component.getRequires());
-         eventsFor( component.getOffers());
-         eventsFor( component.getRequires());
+         final List<InterfaceUsageType> offers   = get( "offers"  , component );
+         final List<InterfaceUsageType> requires = get( "requires", component );
+         _offers  .put( component, offers );
+         _requires.put( component, requires );
       }
+      for( final ComponentType component : _application.getComponent()) {
+         final List<InterfaceUsageType> offers   = getOffersOf  ( component );
+         final List<InterfaceUsageType> requires = getRequiresOf( component );
+         typesUsedBy( offers   );
+         typesUsedBy( requires );
+         eventsFor  ( offers   );
+         eventsFor  ( requires );
+      }
+   }
+
+   private static List<InterfaceUsageType> get( String tagName, ComponentType component ) {
+      final List<InterfaceUsageType> facets = new ArrayList<>( 3 );
+      for( final JAXBElement<InterfaceUsageType> element : component.getOffersOrRequires()) {
+         final String candidateTagName = element.getName().getLocalPart();
+         if( candidateTagName.equals( tagName )) {
+            facets.add( element.getValue());
+         }
+      }
+      return facets;
    }
 
    private void eventsFor( List<InterfaceUsageType> facets ) {
@@ -116,13 +140,21 @@ final class Model {
       throw new IllegalStateException( ifaceName + " isn't an interface" );
    }
 
-   public Map<String, Integer> getInterfaceIDs( List<InterfaceUsageType> usedInterfaces ) {
+   Map<String, Integer> getInterfaceIDs( List<InterfaceUsageType> usedInterfaces ) {
       final Map<String, Integer> ifaces = new LinkedHashMap<>();
       for( final InterfaceUsageType iface : usedInterfaces ) {
          final String ifaceName = iface.getInterface();
          ifaces.put( ifaceName, getInterfaceID( ifaceName ));
       }
       return ifaces;
+   }
+
+   List<InterfaceUsageType> getOffersOf( ComponentType component ) {
+      return _offers.get( component );
+   }
+
+   List<InterfaceUsageType> getRequiresOf( ComponentType component ) {
+      return _requires.get( component );
    }
 
    EnumerationType getEnum( String name ) {

@@ -33,6 +33,9 @@ clean:
 	rm -fr Release
 	rm -fr src-gen
 
+../disappgen.jar:
+	cd ../disappgen && ant
+
 $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 	cd .. && ant generate-all-sources
 
@@ -70,7 +73,13 @@ run:
 	make ../unite_de_traitement
 	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	../unite_de_traitement --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
+	../unite_de_traitement\
+ --iface=$(IFACE)\
+ --udt-port=$(UDT_PORT)\
+ --sc-address=$(SC_ADDRESS)\
+ --sc-port=$(SC_PORT)\
+ --dab-address=$(DAB_ADDRESS)\
+ --dab-port=$(DAB_PORT)
 
 run-debug:
 	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
@@ -82,7 +91,13 @@ run-mingw32:
 	cd ../sc        && xterm -geometry 132x30-650-0 -e 'ant run' &
 	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
 	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine\
- ../unite_de_traitement-mingw32 --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
+ ../unite_de_traitement-mingw32\
+ --iface=$(IFACE)\
+ --udt-port=$(UDT_PORT)\
+ --sc-address=$(SC_ADDRESS)\
+ --sc-port=$(SC_PORT)\
+ --dab-address=$(DAB_ADDRESS)\
+ --dab-port=$(DAB_PORT)
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

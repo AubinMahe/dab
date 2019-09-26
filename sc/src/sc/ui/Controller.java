@@ -1,6 +1,8 @@
 package sc.ui;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -123,14 +125,14 @@ public class Controller implements IRepository {
       prefs.putDouble( "y", stage.getY());
    }
 
-   public void init( Stage stage, int port ) throws BackingStoreException, IOException {
+   public void init( Stage stage, int port, String udtAddress, int udtPort ) throws BackingStoreException, IOException {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
          stage.setX( prefs.getDouble( "x", -4.0 ));
          stage.setY( prefs.getDouble( "y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage ));
-      new Server( port, this );
+      new Server( port, this, new SocketAddress[]{ new InetSocketAddress( udtAddress, udtPort )});
    }
 
    @Override

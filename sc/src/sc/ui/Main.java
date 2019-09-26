@@ -18,22 +18,24 @@ public class Main extends Application {
       boolean nan = false;
       try {
          Integer.parseInt( named.get( "sc-port" ));
+         Integer.parseInt( named.get( "udt-port" ));
       }
       catch( final Throwable t ) {
          nan = true;
       }
-      if(  ( ! named.containsKey( "sc-port" ))
-         || nan )
-      {
+      if(( ! named.containsKey( "udt-address" ))|| nan ) {
          stage.setScene( new Scene( new BorderPane( new Label(
             "Arguments obligatoires :\n"
-            + "\t--sc-port=<this port>"
+               + "\t--sc-port=<this port>"
+               + "\t--udt-address=<address of UniteDeTraitement's host>"
+               + "\t--udt-port=<port of UniteDeTraitement>"
          )), 420, 200 ));
          stage.setTitle( "Usage" );
          stage.show();
          return;
       }
-      final int scPort = Integer.parseInt( named.get( "sc-port" ));
+      final int scPort  = Integer.parseInt( named.get( "sc-port" ));
+      final int udtPort = Integer.parseInt( named.get( "sc-port" ));
       stage.setTitle( "Site Central (SC)" );
       final Class<? extends Main> clazz = getClass();
       final FXMLLoader loader =
@@ -42,7 +44,7 @@ public class Main extends Application {
             ResourceBundle.getBundle( clazz.getPackageName() + "/messages" ));
       stage.setScene( new Scene( loader.load()));
       final Controller ctrl = loader.getController();
-      ctrl.init( stage, scPort );
+      ctrl.init( stage, scPort, named.get( "udt-port" ), udtPort );
       stage.show();
    }
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Site-Central" default="jar">
 
+   <property file="../application-settings.properties" />
    <property name="jfx13" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
    <property name="jutil" value=".." />
    <property name="jar"   value="../${ant.project.name}.jar" />
@@ -42,7 +43,9 @@
          fork      ="true"
          modulepath="${jfx13}:${jutil}:${jar}"
          module    ="sc/sc.ui.Main">
-         <arg value="--sc-port=2416" />
+         <arg value="--sc-port=${sc.port}" />
+         <arg value="--udt-port=${udt.address}" />
+         <arg value="--udt-port=${udt.port}" />
       </java>
    </target>
 

@@ -81,28 +81,27 @@
       </xs:simpleContent>
    </xs:complexType>
    
-   <xs:complexType name="javaType">
-      <xs:attribute type="xs:string" name="src-dir" use="required" />
-      <xs:attribute type="xs:string" name="package" use="required" />
-   </xs:complexType>
+   <xs:simpleType name="languageType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="Java" />
+         <xs:enumeration value="C" />
+         <xs:enumeration value="C++" />
+      </xs:restriction>
+   </xs:simpleType>
    
-   <xs:complexType name="cppType">
-      <xs:attribute type="xs:string" name="src-dir"   use="required" />
-      <xs:attribute type="xs:string" name="namespace" use="required" />
-   </xs:complexType>
-   
-   <xs:complexType name="cType">
-      <xs:attribute type="xs:string" name="src-dir"   use="required" />
-      <xs:attribute type="xs:string" name="prefix"    use="required" />
+   <xs:complexType name="implementationType">
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
    </xs:complexType>
    
    <xs:complexType name="componentType">
       <xs:sequence>
-         <xs:element type="interfaceUsageType" name="offers"   minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="interfaceUsageType" name="requires" minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="javaType"           name="java"     minOccurs="0" maxOccurs="1" />
-         <xs:element type="cppType"            name="cpp"      minOccurs="0" maxOccurs="1" />
-         <xs:element type="cType"              name="c"        minOccurs="0" maxOccurs="1" />
+         <xs:choice minOccurs="1" maxOccurs="unbounded">
+            <xs:element type="interfaceUsageType" name="offers" />
+            <xs:element type="interfaceUsageType" name="requires" />
+         </xs:choice>
+         <xs:element type="implementationType"    name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:string" name="name" use="required" />
    </xs:complexType>

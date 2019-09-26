@@ -10,8 +10,8 @@ static int usage( const char * exename ) {
       " --udt-port=<port>"
       " --sc-address=<IP address or hostname>"
       " --sc-port=<port>"
-      " --ui-address=<IP address or hostname>"
-      " --ui-port=<port>\n\n",
+      " --dab-address=<IP address or hostname>"
+      " --dab-port=<port>\n\n",
       exename );
    return 1;
 }
@@ -24,22 +24,22 @@ int main( int argc, char * argv[] ) {
    util::Args args( argc, argv );
    std::string    intrfc;
    unsigned short udtPort;
-   std::string    uiAddress;
-   unsigned short uiPort;
+   std::string    dabAddress;
+   unsigned short dabPort;
    std::string    scAddress;
    unsigned short scPort;
-   bool ok = args.getString( "iface"     , intrfc    )
-      &&     args.getUShort( "udt-port"  , udtPort   )
-      &&     args.getString( "sc-address", scAddress )
-      &&     args.getUShort( "sc-port"   , scPort    )
-      &&     args.getString( "ui-address", uiAddress )
-      &&     args.getUShort( "ui-port"   , uiPort    );
+   bool ok = args.getString( "iface"      , intrfc    )
+      &&     args.getUShort( "udt-port"   , udtPort   )
+      &&     args.getString( "sc-address" , scAddress )
+      &&     args.getUShort( "sc-port"    , scPort    )
+      &&     args.getString( "dab-address", dabAddress )
+      &&     args.getUShort( "dab-port"   , dabPort    );
    if( ! ok ) {
       return usage( argv[0] );
    }
    dab::IUniteDeTraitement * udt = 0;
    try {
-      udt = dab::udt::newUniteDeTraitement( intrfc.c_str(), udtPort, scAddress.c_str(), scPort, uiAddress.c_str(), uiPort );
+      udt = dab::udt::newUniteDeTraitement( intrfc.c_str(), udtPort, scAddress.c_str(), scPort, dabAddress.c_str(), dabPort );
       udt->run();
    }
    catch( const std::exception & err ) {

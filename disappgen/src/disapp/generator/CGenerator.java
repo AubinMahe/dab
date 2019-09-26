@@ -8,7 +8,6 @@ import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
-import disapp.generator.model.CType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
@@ -70,45 +69,43 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : component.getRequires()) {
+      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
          final String            ifaceName  = required.getInterface();
          final InterfaceType     iface      = _model.getInterface( ifaceName );
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
          final int               rawSize    = _model.getBufferCapacity( iface );
-         final String            ifaceCName = CRenderer.cname( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
          tmpl.add( "prefix"   , _package   );
          tmpl.add( "usedTypes", usedTypes  );
-         tmpl.add( "ifaceName", ifaceCName );
+         tmpl.add( "ifaceName", ifaceName );
          tmpl.add( "rawSize"  , rawSize    );
          tmpl.add( "iface"    , iface      );
-         write( "", ifaceCName + ".h", tmpl );
+         write( "", CRenderer.cname( ifaceName ) + ".h", tmpl );
       }
    }
 
    private void generateRequiredImplementations( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : component.getRequires()) {
+      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
          final String            ifaceName  = required.getInterface();
          final InterfaceType     iface      = _model.getInterface( ifaceName );
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
          final int               rawSize    = _model.getBufferCapacity( iface );
-         final String            ifaceCName = CRenderer.cname( required.getInterface());
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
          tmpl.add( "prefix"   , _package   );
          tmpl.add( "usedTypes", usedTypes  );
-         tmpl.add( "ifaceName", ifaceCName );
+         tmpl.add( "ifaceName", ifaceName );
          tmpl.add( "rawSize"  , rawSize    );
          tmpl.add( "iface"    , iface      );
          tmpl.add( "ifaceID"  , ifaceID    );
          setRendererFieldsMaxWidth( iface );
-         write( "net", ifaceCName + ".c", tmpl );
+         write( "net", CRenderer.cname( ifaceName ) + ".c", tmpl );
       }
    }
 
    private void generateOfferedInterface( ComponentType component ) throws IOException {
       final String                   compName   = component.getName();
-      final List<InterfaceUsageType> allOffered = component.getOffers();
+      final List<InterfaceUsageType> allOffered = _model.getOffersOf( component );
       final SortedSet<String>        usedTypes  = _model.getUsedTypesBy( allOffered );
       final List<EventType>          events     = _model.getEventsOf( allOffered );
       final ST tmpl = _group.getInstanceOf( "/offeredInterface" );
@@ -130,7 +127,7 @@ public class CGenerator extends BaseGenerator {
 
    private void generateDispatcherImplementation( ComponentType component, int rawSize ) throws IOException {
       final String                       compName     = component.getName();
-      final List<InterfaceUsageType>     ifaces       = component.getOffers();
+      final List<InterfaceUsageType>     ifaces       = _model.getOffersOf( component );
       final Map<String, Integer>         interfaceIDs = _model.getInterfaceIDs( ifaces );
       final Map<String, List<EventType>> events       = _model.getEventsMapOf ( ifaces );
       final SortedSet<String>            usedTypes    = _model.getUsedTypesBy ( ifaces );
@@ -145,26 +142,19 @@ public class CGenerator extends BaseGenerator {
       write( "net", CRenderer.cname( compName ) + "_dispatcher.c", tmpl );
    }
 
-   private void generateComponent( ComponentType component ) throws IOException {
-      final int offersRawSize   = _model.getBufferCapacity( component.getOffers());
-      final List<String> generated = new LinkedList<>();
-      generateTypesUsedBy             ( component.getOffers()  , generated );
-      generateTypesUsedBy             ( component.getRequires(), generated );
+   void generateComponent( ComponentType component, String srcDir, String moduleName ) throws IOException {
+      _genDir  = srcDir;
+      _package = moduleName;
+      final List<InterfaceUsageType> offers        = _model.getOffersOf  ( component );
+      final List<InterfaceUsageType> requires      = _model.getRequiresOf( component );
+      final int                      offersRawSize = _model.getBufferCapacity( offers );
+      final List<String>             generated     = new LinkedList<>();
+      generateTypesUsedBy             ( offers  , generated );
+      generateTypesUsedBy             ( requires, generated );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterface        ( component );
       generateDispatcherInterface     ( component, offersRawSize );
       generateDispatcherImplementation( component, offersRawSize );
-   }
-
-   public void generateComponents() throws IOException {
-      for( final ComponentType component : _model.getApplication().getComponent()) {
-         final CType implType = component.getC();
-         if( implType != null ) {
-            _genDir  = implType.getSrcDir();
-            _package = implType.getPrefix();
-            generateComponent( component );
-         }
-      }
    }
 }

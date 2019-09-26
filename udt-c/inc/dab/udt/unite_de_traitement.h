@@ -31,10 +31,8 @@ typedef struct dab_udt_compte_s {
 typedef struct dab_unite_de_traitement_s {
 
    SOCKET                             socket;
-   dab_ihm                            ui;
-   struct sockaddr_in                 ui_target;
+   dab_ihm                            dab;
    dab_site_central                   sc;
-   struct sockaddr_in                 sc_target;
    dab_unite_de_traitement_dispatcher dispatcher;
    bool                               running;
    util_automaton                     automaton;

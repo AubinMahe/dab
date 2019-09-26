@@ -47,13 +47,12 @@ pair( field ) ::= <<
 
 
 
-signature( comma, fields ) ::= <<
-< if( ! fields && !comma )
+signature( fields ) ::= <<
+< if( ! fields )
      >void<
   else><
-     if( comma && fields )>, < endif><
-     first(fields):{field|<pair(field)>}><
-     rest (fields):{field|, <pair(field)>}><
+     first( fields ):{field|<pair(field)>}><
+     rest ( fields ):{field|, <pair(field)>}><
   endif>
 >>
 
@@ -61,7 +60,7 @@ signature( comma, fields ) ::= <<
 
 args( fields ) ::= <<
 < first( fields ):{field|<field.name>}><
-   rest( fields ):{field|, <field.name>}>
+  rest ( fields ):{field|, <field.name>}>
 >>
 
 
@@ -69,7 +68,7 @@ args( fields ) ::= <<
 structHeader( namespace, struct ) ::= <<
 #pragma once
 
-#include \<io/ByteBuffer.hpp\>
+#include \<io/ByteBuffer.hpp>
 
 namespace <namespace> {
 
@@ -89,7 +88,7 @@ namespace <namespace> {
 
 
 structBody( namespace, struct, maxLength, maxStrLength ) ::= <<
-#include \<<namespace>/<struct.name>.hpp\>
+#include \<<namespace>/<struct.name>.hpp>
 
 using namespace <namespace>;
 
@@ -135,7 +134,7 @@ void <struct.name>::get( io::ByteBuffer & source ) {
 enumHeader( namespace, enum ) ::= <<
 #pragma once
 
-#include \<iostream\>
+#include \<iostream>
 
 namespace <namespace> {
 
@@ -157,7 +156,7 @@ std::ostream & operator \<\< ( std::ostream & stream, const <namespace>::<enum.n
 
 
 enumBody( namespace, enum ) ::= <<
-#include \<<namespace>/<enum.name>.hpp\>
+#include \<<namespace>/<enum.name>.hpp>
 
 using namespace <namespace>;
 
@@ -176,9 +175,11 @@ std::ostream & operator \<\< ( std::ostream & stream, const <enum.name> & <enum.
 requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 
-#include \<io/DatagramSocket.hpp\>
+#include \<io/DatagramSocket.hpp>
 
-<usedTypes:{type|#include \<<namespace>/<type>.hpp\>
+#include \<initializer_list>
+
+<usedTypes:{type|#include \<<namespace>/<type>.hpp>
 }>
 namespace <namespace> {
 
@@ -191,37 +192,41 @@ namespace <namespace> {
    public:
 
 <iface.event:{event|
-      virtual void <event.name>( sockaddr_in & target<signature( true, event.field )> ) = 0;
+      virtual void <event.name>( <signature( event.field )> ) = 0;
 }>
    private:
       I<ifaceName>( const I<ifaceName> & ) = delete;
       I<ifaceName> & operator = ( const I<ifaceName> & ) = delete;
    };
 
-   I<ifaceName> * new<ifaceName>( io::DatagramSocket & socket );
+   I<ifaceName> * new<ifaceName>( io::DatagramSocket & socket, std::initializer_list\<sockaddr_in> targets );
 }
 >>
 
 
 
 requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
-#include \<<namespace>/I<iface.name>.hpp\>
+#include \<<namespace>/I<iface.name>.hpp>
+
+#include \<initializer_list>
+#include \<list>
 
 namespace <namespace>::net {
 
    class <iface.name> : public ::<namespace>::I<iface.name> {
    public:
 
-      <iface.name>( io::DatagramSocket & socket ) :
-         _socket( socket ),
-         _out   ( <rawSize> )
+      <iface.name>( io::DatagramSocket & socket, std::initializer_list\<sockaddr_in> targets ) :
+         _socket ( socket ),
+         _targets( targets ),
+         _out    ( <rawSize> )
       {}
 
    public:
 
 <iface.event:{event|
 
-      virtual void <event.name>( sockaddr_in & target<signature( true, event.field )> ) {
+      virtual void <event.name>( <signature( event.field )> ) {
          _out.clear();
          _out.putByte( <iface.name; format="ID">_ID );
          _out.putByte( <event.name; format="ID"> );
@@ -237,11 +242,13 @@ namespace <namespace>::net {
          < elseif( field.isFloat   )>_out.putFloat( <field.name> );
          < elseif( field.isDouble  )>_out.putDouble( <field.name> );
          < elseif( field.isString  )>_out.putString( <field.name> );
-         < elseif( field.isEnum    )>_out.putByte( static_cast\<byte\>( <field.name> ));
+         < elseif( field.isEnum    )>_out.putByte( static_cast\<byte>( <field.name> ));
          < elseif( field.isStruct  )><field.name>.put( _out );
          < endif>
 }>         _out.flip();
-         _socket.sendTo( _out, target );
+         for( auto & target : _targets ) {
+            _socket.sendTo( _out, target );
+         \}
       \}
 
 }>   private:
@@ -259,16 +266,16 @@ namespace <namespace>::net {
 
    private:
 
-      io::DatagramSocket & _socket;
-      sockaddr_in          _target;
-      io::ByteBuffer       _out;
+      io::DatagramSocket &    _socket;
+      std::list\<sockaddr_in>  _targets;
+      io::ByteBuffer          _out;
    };
 }
 
 namespace <namespace> {
 
-   I<iface.name> * new<iface.name>( io::DatagramSocket & socket ) {
-      return new ::<namespace>::net::<iface.name>( socket );
+   I<iface.name> * new<iface.name>( io::DatagramSocket & socket, std::initializer_list\<sockaddr_in> targets ) {
+      return new ::<namespace>::net::<iface.name>( socket, targets );
    }
 }
 >>
@@ -278,12 +285,12 @@ namespace <namespace> {
 offeredInterface( namespace, name, usedTypes, events ) ::= <<
 #pragma once
 
-#include \<string\>
+#include \<string>
 
-#include \<types.hpp\>
+#include \<types.hpp>
 
 <usedTypes:{used|
-#include \<<namespace>/<used>.hpp\>
+#include \<<namespace>/<used>.hpp>
 }>
 namespace <namespace> {
 
@@ -296,7 +303,7 @@ namespace <namespace> {
    public:
 
 <events:{event|
-      virtual void <event.name>( <signature( false, event.field )> ) = 0;
+      virtual void <event.name>( <signature( event.field )> ) = 0;
 }>
    public:
 
@@ -314,10 +321,10 @@ namespace <namespace> {
 dispatcherInterface( namespace, name, rawSize ) ::= <<
 #pragma once
 
-#include \<<namespace>/I<name>.hpp\>
+#include \<<namespace>/I<name>.hpp>
 
-#include \<io/ByteBuffer.hpp\>
-#include \<io/DatagramSocket.hpp\>
+#include \<io/ByteBuffer.hpp>
+#include \<io/DatagramSocket.hpp>
 
 namespace <namespace> {
 
@@ -342,33 +349,30 @@ dispatcherImplOneInterface( name, ifaceName ) ::= <<
 
 
 enum class <ifaceName>Event : byte {
-< first( events.(ifaceName)):{event|
-   <event.name; format="ID"> = 1,
-}><
- rest( events.(ifaceName)):{event|
-   <event.name; format="ID">,
+   < first( events.(ifaceName)):{event|<event.name; format="ID"> = 1,
+}><   rest( events.(ifaceName)):{event|<event.name; format="ID">,
 }>\};
 
 bool dispatch( <ifaceName>Event event ) {
    switch( event ) {
 <events.(ifaceName):{event|
    case <ifaceName>Event::<event.name; format="ID">:{
-<event.field:{field|
-   < if(     field.isBoolean )>bool <field.name> = _in.getBool();
-   < elseif( field.isByte    )>byte <field.name> = _in.getByte();
-   < elseif( field.isShort   )>short <field.name> = _in.getShort();
-   < elseif( field.isUshort  )>ushort <field.name> = _in.getUShort();
-   < elseif( field.isInt     )>int <field.name> = _in.getInt();
-   < elseif( field.isUint    )>uint <field.name> = _in.getUInt();
-   < elseif( field.isLong    )>long <field.name> = _in.getLong();
-   < elseif( field.isUlong   )>ulong <field.name> = _in.getULong();
-   < elseif( field.isFloat   )>float <field.name> = _in.getFloat();
-   < elseif( field.isDouble  )>double <field.name> = _in.getDouble();
-   < elseif( field.isString  )>std::string <field.name> = _in.getString();                            
-   < elseif( field.isEnum    )><field.userTypeName> <field.name> = _in.getByte();
-   < elseif( field.isStruct  )><field.userTypeName> <field.name>;
+      <event.field:{field|
+<     if( field.isBoolean )>bool <field.name> = _in.getBool();
+< elseif( field.isByte    )>byte <field.name> = _in.getByte();
+< elseif( field.isShort   )>short <field.name> = _in.getShort();
+< elseif( field.isUshort  )>ushort <field.name> = _in.getUShort();
+< elseif( field.isInt     )>int <field.name> = _in.getInt();
+< elseif( field.isUint    )>uint <field.name> = _in.getUInt();
+< elseif( field.isLong    )>long <field.name> = _in.getLong();
+< elseif( field.isUlong   )>ulong <field.name> = _in.getULong();
+< elseif( field.isFloat   )>float <field.name> = _in.getFloat();
+< elseif( field.isDouble  )>double <field.name> = _in.getDouble();
+< elseif( field.isString  )>std::string <field.name> = _in.getString();                            
+< elseif( field.isEnum    )><field.userTypeName> <field.name> = _in.getByte();
+< elseif( field.isStruct  )><field.userTypeName> <field.name>;
 <field.name>.get( _in );
-   < endif>
+< endif>
 }>      _listener.<event.name>( <args( event.field )> );
       break;
       \}
@@ -393,9 +397,9 @@ friend std::ostream & operator \<\< ( std::ostream & stream, <ifaceName>Event e 
 >>
 
 dispatcherImplementation( namespace, compName, ifaces, events, usedTypes, rawSize ) ::= <<
-#include \<<namespace>/I<compName>Dispatcher.hpp\>
+#include \<<namespace>/I<compName>Dispatcher.hpp>
 
-#include \<iostream\>
+#include \<iostream>
 
 namespace dab::net {
 
@@ -430,7 +434,7 @@ namespace dab::net {
          _in.clear();
          if( _socket.receive( _in )) {
             _in.flip();
-            Interface interface = static_cast\<Interface\>( _in.getByte());
+            Interface interface = static_cast\<Interface>( _in.getByte());
             byte      event     = _in.getByte();
             std::cerr
                \<\< "<compName>Dispatcher.hasDispatched|"
@@ -440,7 +444,7 @@ namespace dab::net {
                \<\< std::endl;
             switch( interface ) {
 <ifaces.keys:{ifaceName|
-            case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event\>( event ));
+            case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event>( event ));
 }>
             }
          }

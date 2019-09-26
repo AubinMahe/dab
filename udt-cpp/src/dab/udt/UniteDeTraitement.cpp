@@ -145,8 +145,8 @@ namespace dab::udt {
          unsigned short udtPort,
          const char *   scAddress,
          unsigned short scPort,
-         const char *   uiAddress,
-         unsigned short uiPort     );
+         const char *   dabAddress,
+         unsigned short dabPort     );
 
    public:
 
@@ -177,10 +177,8 @@ namespace dab::udt {
       typedef util::Automaton<dab::Etat, Event> automaton_t;
 
       io::DatagramSocket                  _socket;
-      dab::IIHM *                         _ui;
-      sockaddr_in                         _uiTarget;
+      dab::IIHM *                         _dab;
       dab::ISiteCentral *                 _sc;
-      sockaddr_in                         _scTarget;
       dab::IUniteDeTraitementDispatcher * _dispatcher;
       bool                                _running;
       automaton_t                         _automaton;
@@ -198,10 +196,10 @@ namespace dab::udt {
       unsigned short udtPort,
       const char *   scAddress,
       unsigned short scPort,
-      const char *   uiAddress,
-      unsigned short uiPort     )
+      const char *   dabAddress,
+      unsigned short dabPort     )
    {
-      return new UniteDeTraitement( intrfc, udtPort, scAddress, scPort, uiAddress, uiPort );
+      return new UniteDeTraitement( intrfc, udtPort, scAddress, scPort, dabAddress, dabPort );
    }
 }
 
@@ -245,12 +243,9 @@ UniteDeTraitement::UniteDeTraitement(
    unsigned short udtPort,
    const char *   scAddress,
    unsigned short scPort,
-   const char *   uiAddress,
-   unsigned short uiPort     )
+   const char *   dabAddress,
+   unsigned short dabPort     )
  :
-   _ui        ( newIHM                        ( _socket )),
-   _sc        ( newSiteCentral                ( _socket )),
-   _dispatcher( newUniteDeTraitementDispatcher( _socket, *this )),
    _automaton(
       Etat::AUCUN, {
          arc( Etat::AUCUN          , Event::MAINTENANCE_ON          , Etat::MAINTENANCE     ),
@@ -285,8 +280,13 @@ UniteDeTraitement::UniteDeTraitement(
    _valeurCaisse( 0.0 )
 {
    _socket.bind( intrfc, udtPort );
-   io::DatagramSocket::init( scAddress, scPort, _scTarget );
-   io::DatagramSocket::init( uiAddress, uiPort, _uiTarget );
+   sockaddr_in scTarget;
+   sockaddr_in dabTarget;
+   io::DatagramSocket::init( scAddress, scPort, scTarget );
+   io::DatagramSocket::init( dabAddress, dabPort, dabTarget );
+   _sc         = newSiteCentral                ( _socket, {scTarget});
+   _dab        = newIHM                        ( _socket, {dabTarget});
+   _dispatcher = newUniteDeTraitementDispatcher( _socket, *this );
 }
 
 /**
@@ -308,7 +308,7 @@ void UniteDeTraitement::maintenance( bool maintenance ) {
  */
 void UniteDeTraitement::rechargerLaCaisse( const double & montant ) {
    _valeurCaisse += montant;
-   _ui->setSoldeCaisse( _uiTarget, _valeurCaisse );
+   _dab->setSoldeCaisse( _valeurCaisse );
    if( _valeurCaisse < RETRAIT_MAX ) {
       _automaton.process( Event::SOLDE_CAISSE_INSUFFISANT );
    }
@@ -335,7 +335,7 @@ double UniteDeTraitement::getRetraitMax( void ) const {
 void UniteDeTraitement::carteInseree( const std::string & id ) {
    _carte .invalidate();
    _compte.invalidate();
-   _sc->getInformations( _scTarget, id );
+   _sc->getInformations( id );
    _automaton.process( Event::CARTE_INSEREE );
 }
 
@@ -354,7 +354,7 @@ void UniteDeTraitement::carteLue( const dab::Carte & carte, const dab::Compte & 
       }
       else {
          _automaton.process( Event::CARTE_CONFISQUEE );
-         _ui->confisquerLaCarte( _uiTarget );
+         _dab->confisquerLaCarte();
       }
    }
    else {
@@ -368,7 +368,7 @@ void UniteDeTraitement::codeSaisi( const std::string & code ) {
       _automaton.process( Event::BON_CODE );
    }
    else {
-      _sc->incrNbEssais( _scTarget, _carte.getId());
+      _sc->incrNbEssais( _carte.getId());
       _carte.incrementeNbEssais();
       if( _carte.getNbEssais() == 1 ) {
          _automaton.process( Event::MAUVAIS_CODE_1 );
@@ -378,15 +378,15 @@ void UniteDeTraitement::codeSaisi( const std::string & code ) {
       }
       else if( _carte.getNbEssais() == 3 ) {
          _automaton.process( Event::MAUVAIS_CODE_3 );
-         _ui->confisquerLaCarte( _uiTarget );
+         _dab->confisquerLaCarte();
       }
    }
 }
 
 void UniteDeTraitement::montantSaisi( const double & montant ) {
    _valeurCaisse -= montant;
-   _ui->setSoldeCaisse( _uiTarget, _valeurCaisse );
-   _sc->retrait( _scTarget, _carte.getId(), montant );
+   _dab->setSoldeCaisse( _valeurCaisse );
+   _sc->retrait( _carte.getId(), montant );
    _automaton.process( Event::MONTANT_OK );
 }
 
@@ -399,8 +399,8 @@ void UniteDeTraitement::billetsRetires( void ) {
 }
 
 void UniteDeTraitement::shutdown( void ) {
-   _ui->shutdown( _uiTarget );
-   _sc->shutdown(_scTarget );
+   _dab->shutdown();
+   _sc->shutdown();
    _automaton.process( Event::TERMINATE );
    _running = false;
 }
@@ -409,7 +409,7 @@ void UniteDeTraitement::run() {
    _running = true;
    while( _running ) {
       if( _dispatcher->hasDispatched()) {
-         _ui->setStatus( _uiTarget, _automaton.getCurrentState());
+         _dab->setStatus( _automaton.getCurrentState());
       }
    }
 }

@@ -74,8 +74,8 @@ util_error dab_unite_de_traitement_init(
    unsigned short            udt_port,
    const char *              sc_address,
    unsigned short            sc_port,
-   const char *              ui_address,
-   unsigned short            ui_port     )
+   const char *              dab_address,
+   unsigned short            dab_port     )
 {
    static util_arc arcs[] = {
       { DAB_ETAT_AUCUN          , DAB_EVENT_MAINTENANCE_ON          , DAB_ETAT_MAINTENANCE     },
@@ -117,12 +117,16 @@ util_error dab_unite_de_traitement_init(
    if( This->socket == INVALID_SOCKET ) {
       return UTIL_OS_ERROR;
    }
-   UTIL_ERROR_CHECK( dab_ihm_init                           ( &This->ui        , This->socket ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( dab_site_central_init                  ( &This->sc        , This->socket ), __FILE__, __LINE__ );
+   static struct sockaddr_in   sc_target;
+   static struct sockaddr_in * sc_targets [] = { &sc_target  };
+   static struct sockaddr_in   dab_target;
+   static struct sockaddr_in * dab_targets[] = { &dab_target };
+   UTIL_ERROR_CHECK( io_datagram_socket_init( sc_address , sc_port , &sc_target  ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( io_datagram_socket_init( dab_address, dab_port, &dab_target ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_ihm_init                           ( &This->dab       , This->socket, dab_targets, 1U ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_site_central_init                  ( &This->sc        , This->socket, sc_targets , 1U ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( dab_unite_de_traitement_dispatcher_init( &This->dispatcher, This->socket, This ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, intrfc, udt_port ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_datagram_socket_init( sc_address, sc_port, &This->sc_target ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_datagram_socket_init( ui_address, ui_port, &This->ui_target ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 }
 
@@ -146,7 +150,7 @@ util_error dab_unite_de_traitement_maintenance( dab_unite_de_traitement * This, 
 //--------------------------------------------------------------------------------------------------
 util_error dab_unite_de_traitement_recharger_la_caisse( dab_unite_de_traitement * This, double montant ) {
    This->valeur_caisse += montant;
-   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ui, &This->ui_target, This->valeur_caisse ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->dab, This->valeur_caisse ), __FILE__, __LINE__ );
    if( This->valeur_caisse < DAB_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_SOLDE_CAISSE_INSUFFISANT ), __FILE__, __LINE__ );
    }
@@ -175,7 +179,7 @@ util_error dab_unite_de_traitement_anomalie( dab_unite_de_traitement * This, boo
 util_error dab_unite_de_traitement_carte_inseree( dab_unite_de_traitement * This, const char * id ) {
    This->carte.is_valid = false;
    This->compte.is_valid = false;
-   UTIL_ERROR_CHECK( dab_site_central_get_informations( &This->sc, &This->sc_target, id ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_site_central_get_informations( &This->sc, id ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_CARTE_INSEREE ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 }
@@ -195,7 +199,7 @@ util_error dab_unite_de_traitement_carte_lue( dab_unite_de_traitement * This, co
       }
       else {
          UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_CARTE_CONFISQUEE ), __FILE__, __LINE__ );
-         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ui, &This->ui_target ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->dab ), __FILE__, __LINE__ );
       }
    }
    else {
@@ -210,7 +214,7 @@ util_error dab_unite_de_traitement_code_saisi( dab_unite_de_traitement * This, c
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_BON_CODE ), __FILE__, __LINE__ );
    }
    else {
-      UTIL_ERROR_CHECK( dab_site_central_incr_nb_essais( &This->sc, &This->sc_target, This->carte.id ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( dab_site_central_incr_nb_essais( &This->sc, This->carte.id ), __FILE__, __LINE__ );
       ++( This->carte.nb_essais );
       if( This->carte.nb_essais == 1 ) {
          UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_MAUVAIS_CODE_1 ), __FILE__, __LINE__ );
@@ -220,7 +224,7 @@ util_error dab_unite_de_traitement_code_saisi( dab_unite_de_traitement * This, c
       }
       else if( This->carte.nb_essais == 3 ) {
          UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_MAUVAIS_CODE_3 ), __FILE__, __LINE__ );
-         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ui, &This->ui_target ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->dab ), __FILE__, __LINE__ );
       }
    }
    return UTIL_NO_ERROR;
@@ -228,8 +232,8 @@ util_error dab_unite_de_traitement_code_saisi( dab_unite_de_traitement * This, c
 
 util_error dab_unite_de_traitement_montant_saisi( dab_unite_de_traitement * This, double montant ) {
    This->valeur_caisse -= montant;
-   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ui, &This->ui_target, This->valeur_caisse ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( dab_site_central_retrait( &This->sc, &This->sc_target, This->carte.id, montant ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->dab, This->valeur_caisse ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_site_central_retrait( &This->sc, This->carte.id, montant ), __FILE__, __LINE__ );
    return util_automaton_process( &This->automaton, DAB_EVENT_MONTANT_OK );
 }
 
@@ -243,8 +247,8 @@ util_error dab_unite_de_traitement_billets_retires( dab_unite_de_traitement * Th
 
 util_error dab_unite_de_traitement_shutdown( dab_unite_de_traitement * This ) {
    This->running = false;
-   UTIL_ERROR_CHECK( dab_ihm_shutdown( &This->ui, &This->ui_target ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( dab_site_central_shutdown( &This->sc, &This->sc_target ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_ihm_shutdown( &This->dab ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_site_central_shutdown( &This->sc ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENT_TERMINATE ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 }
@@ -255,7 +259,7 @@ util_error dab_unite_de_traitement_run( dab_unite_de_traitement * This ) {
       bool has_dispatched;
       UTIL_ERROR_CHECK( dab_unite_de_traitement_dispatcher_dispatch( &This->dispatcher, &has_dispatched ), __FILE__, __LINE__ );
       if( has_dispatched ) {
-         UTIL_ERROR_CHECK( dab_ihm_set_status( &This->ui, &This->ui_target, This->automaton.current ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( dab_ihm_set_status( &This->dab, This->automaton.current ), __FILE__, __LINE__ );
       }
    }
    return UTIL_NO_ERROR;

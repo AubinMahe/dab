@@ -9,7 +9,6 @@ import java.util.SortedSet;
 import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.ComponentType;
-import disapp.generator.model.CppType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
@@ -69,8 +68,8 @@ public class CppGenerator extends BaseGenerator {
       generateStructBody  ( name );
    }
 
-   private void generateRequiredInterface( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : component.getRequires()) {
+   private void generateRequiredInterfaces( ComponentType component ) throws IOException {
+      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
          final String            ifaceName  = required.getInterface();
          final InterfaceType     iface      = _model.getInterface( ifaceName );
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
@@ -86,7 +85,7 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateRequiredImplementations( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : component.getRequires()) {
+      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
          final String            ifaceName  = required.getInterface();
          final InterfaceType     iface      = _model.getInterface( ifaceName );
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
@@ -106,7 +105,7 @@ public class CppGenerator extends BaseGenerator {
 
    private void generateOfferedInterface( ComponentType component ) throws IOException {
       final String                   compName   = component.getName();
-      final List<InterfaceUsageType> allOffered = component.getOffers();
+      final List<InterfaceUsageType> allOffered = _model.getOffersOf( component );
       final SortedSet<String>        usedTypes  = _model.getUsedTypesBy( allOffered );
       final List<EventType>          events     = _model.getEventsOf( allOffered );
       final ST                       tmpl       = _group.getInstanceOf( "/offeredInterface" );
@@ -128,7 +127,7 @@ public class CppGenerator extends BaseGenerator {
 
    private void generateDispatcherImplementation( ComponentType component, int rawSize ) throws IOException {
       final String                       compName     = component.getName();
-      final List<InterfaceUsageType>     ifaces       = component.getOffers();
+      final List<InterfaceUsageType>     ifaces       = _model.getOffersOf( component );
       final Map<String, Integer>         interfaceIDs = _model.getInterfaceIDs( ifaces );
       final Map<String, List<EventType>> events       = _model.getEventsMapOf ( ifaces );
       final SortedSet<String>            usedTypes    = _model.getUsedTypesBy ( ifaces );
@@ -143,26 +142,19 @@ public class CppGenerator extends BaseGenerator {
       write( "net", component.getName() + "Dispatcher.cpp", tmpl );
    }
 
-   private void generateComponent( ComponentType component ) throws IOException {
-      final int offersRawSize = _model.getBufferCapacity( component.getOffers());
-      final List<String> generated = new LinkedList<>();
-      generateTypesUsedBy             ( component.getOffers()  , generated );
-      generateTypesUsedBy             ( component.getRequires(), generated );
-      generateRequiredInterface       ( component );
+   void generateComponent( ComponentType component, String srcDir, String moduleName ) throws IOException {
+      _genDir  = srcDir;
+      _package = moduleName;
+      final List<InterfaceUsageType> offers        = _model.getOffersOf  ( component );
+      final List<InterfaceUsageType> requires      = _model.getRequiresOf( component );
+      final int                      offersRawSize = _model.getBufferCapacity( offers );
+      final List<String>             generated     = new LinkedList<>();
+      generateTypesUsedBy             ( offers  , generated );
+      generateTypesUsedBy             ( requires, generated );
+      generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterface        ( component );
       generateDispatcherInterface     ( component, offersRawSize );
       generateDispatcherImplementation( component, offersRawSize );
-   }
-
-   public void generateComponents() throws IOException {
-      for( final ComponentType component : _model.getApplication().getComponent()) {
-         final CppType implType = component.getCpp();
-         if( implType != null ) {
-            _genDir  = implType.getSrcDir();
-            _package = implType.getNamespace();
-            generateComponent( component );
-         }
-      }
    }
 }

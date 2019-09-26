@@ -20,19 +20,19 @@ public final class Server extends Thread implements ISiteCentral {
    private final ILecteurDeCarte       _lecteurDeCarte;
    private final SiteCentralDispatcher _dispatcher;
 
-   public Server( int port, IRepository repository ) throws IOException {
+   public Server( int port, IRepository repository, SocketAddress[] lecteurDeCarteOffers ) throws IOException {
       _channel = DatagramChannel.open( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
          .bind     ( new InetSocketAddress( port ));
       _repository     = repository;
-      _lecteurDeCarte = new LecteurDeCarte( _channel );
+      _lecteurDeCarte = new LecteurDeCarte( _channel, lecteurDeCarteOffers );
       _dispatcher     = new SiteCentralDispatcher( _channel, this );
       setDaemon( true );
       start();
    }
 
    @Override
-   public void getInformations( SocketAddress from, String carteID ) throws IOException {
+   public void getInformations( String carteID ) throws IOException {
       System.err.printf( getClass().getName() + ".getInformations|carteID = '%s'\n", carteID );
       final ICarte carte   = _repository.getCarte ( carteID );
       if( carte != null ) {
@@ -43,13 +43,13 @@ public final class Server extends Thread implements ISiteCentral {
             final sc.Compte netCompte = new sc.Compte();
             carte .copyTo( netCarte );
             compte.copyTo( netCompte );
-            _lecteurDeCarte.carteLue( from, netCarte, netCompte );
+            _lecteurDeCarte.carteLue( netCarte, netCompte );
          }
       }
    }
 
    @Override
-   public void incrNbEssais( SocketAddress from, String carteID ) {
+   public void incrNbEssais( String carteID ) {
       System.err.printf( getClass().getName() + ".incrNbEssais( '%s' )\n", carteID );
       final ICarte carte = _repository.getCarte( carteID );
       if( carte != null ) {
@@ -58,7 +58,7 @@ public final class Server extends Thread implements ISiteCentral {
    }
 
    @Override
-   public void retrait( SocketAddress from, String carteID, double montant ) {
+   public void retrait( String carteID, double montant ) {
       System.err.printf( getClass().getName() + ".retrait\n" );
       final ICompte compte = _repository.getCompte( carteID );
       if( compte != null ) {
@@ -67,7 +67,7 @@ public final class Server extends Thread implements ISiteCentral {
    }
 
    @Override
-   public void shutdown( SocketAddress from ) {
+   public void shutdown() {
       _repository.close();
    }
 

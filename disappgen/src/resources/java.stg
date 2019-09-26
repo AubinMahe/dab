@@ -21,17 +21,15 @@ type( field ) ::= <<
 
 
 
-signature( comma, fields ) ::= <<
-< if( comma && fields )>, < endif><
-  first(fields):{field|<type(field)> <field.name>}><
-  rest (fields):{field|, <type(field)> <field.name>}>
+signature( fields ) ::= <<
+< first( fields ):{field|<type(field)> <field.name>}><
+  rest ( fields ):{field|, <type(field)> <field.name>}>
 >>
 
 
 
-args( comma, fields ) ::= <<
-< if( comma && fields )>, < endif><
-  first( fields ):{field|<field.name>}><
+args( fields ) ::= <<
+< first( fields ):{field|<field.name>}><
   rest ( fields ):{field|, <field.name>}>
 >>
 
@@ -90,7 +88,7 @@ public class <struct.name> {
 < elseif( field.isUlong   )>target.putLong   ( <field.name> );
 < elseif( field.isFloat   )>target.putFloat  ( <field.name> );
 < elseif( field.isDouble  )>target.putDouble ( <field.name> );
-< elseif( field.isEnum    )>target.put       ( <field.name> );
+< elseif( field.isEnum    )>target.put       ((byte)<field.name>.ordinal());
 < elseif( field.isString  )>ByteBufferHelper.putString( target, <field.name> );
 < elseif( field.isStruct  )><field.name>.put( target );
 < endif>
@@ -108,7 +106,7 @@ public class <struct.name> {
 < elseif( field.isUlong   )><field.name; format="width"> = source.getLong();
 < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat();
 < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-< elseif( field.isEnum    )><field.name; format="width"> = source.get();
+< elseif( field.isEnum    )><field.name; format="width"> = <field.userTypeName>.values()[source.get()];
 < elseif( field.isString  )><field.name; format="width"> = ByteBufferHelper.getString( source );
 < elseif( field.isStruct  )><field.name; format="width">.put( source );
 < endif>
@@ -128,7 +126,7 @@ import java.net.SocketAddress;
 }>
 public interface I<ifaceName> {
 
-   <iface.event:{event|void <event.name>( SocketAddress from<signature( true, event.field)> ) throws IOException;
+   <iface.event:{event|void <event.name>( <signature( event.field )> ) throws IOException;
 }>}
 >>
 
@@ -154,16 +152,18 @@ public class <ifaceName> implements I<ifaceName> {
    <iface.event:{event|private static final byte <event.name; format="ID"> = <i>;
 }>
    private final DatagramChannel _channel;
+   private final SocketAddress[] _targets;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
 
-   public <ifaceName>( DatagramChannel channel ) {
+   public <ifaceName>( DatagramChannel channel, SocketAddress ... targets ) {
       _channel = channel;
+      _targets = targets;
    }
 <iface.event:{event|
 
 
    @Override
-   public void <event.name>( SocketAddress target<signature( true, event.field )> ) throws IOException {
+   public void <event.name>( <signature( event.field )> ) throws IOException {
       _out.clear();
       _out.put( <iface.name; format="ID"> );
       _out.put( <event.name; format="ID"> );
@@ -178,13 +178,15 @@ public class <ifaceName> implements I<ifaceName> {
 < elseif( field.isUlong   )>_out.putLong( <field.name> );
 < elseif( field.isFloat   )>_out.putFloat( <field.name> );
 < elseif( field.isDouble  )>_out.putDouble( <field.name> );
-< elseif( field.isEnum    )>_out.put( <field.name> );
+< elseif( field.isEnum    )>_out.put((byte)<field.name>.ordinal());
 < elseif( field.isString  )>ByteBufferHelper.putString( _out, <field.name> );
 < elseif( field.isStruct  )><field.name>.put( _out );
 < endif>
 }>      _out.flip();
-      _channel.send( _out, target );
-      System.err.printf( "<ifaceName>.<event.name>|informations sent to %s\n", target );
+      for( final SocketAddress target : _targets ) {
+         _channel.send( _out, target );
+         System.err.printf( "<ifaceName>.<event.name>|informations sent to %s\n", target );
+      \}
    \}
 }>}
 >>
@@ -201,7 +203,7 @@ import java.net.SocketAddress;
 }>
 public interface I<name> {
 
-   <events:{event|void <event.name>( SocketAddress from<signature( true, event.field )> ) throws IOException;
+   <events:{event|void <event.name>( <signature( event.field )> ) throws IOException;
 }>}
 >>
 
@@ -209,32 +211,33 @@ public interface I<name> {
 
 dispatcherImplOneInterface( name, ifaceName ) ::= <<
 
-   private static enum <name>Event {
-      <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
-}>      ;
+private static enum <ifaceName>Event {
 
-      private final int _value;
+   <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
+}>   ;
 
-      <name>Event( int value ) {
-         _value = value;
-      }
+   private final int _value;
 
-      static <name>Event valueOf( int value ) {
-         for( final <name>Event e : values()) {
-            if( e._value == value ) {
-               return e;
-            }
-         }
-         return null;
-      }
+   <ifaceName>Event( int value ) {
+      _value = value;
    }
 
-   private boolean dispatch( <name>Event event, SocketAddress from ) throws IOException {
-      switch( event ) {
+   static <ifaceName>Event valueOf( int value ) {
+      for( final <ifaceName>Event e : values()) {
+         if( e._value == value ) {
+            return e;
+         }
+      }
+      return null;
+   }
+}
+
+private boolean dispatch( <ifaceName>Event event ) throws IOException {
+   switch( event ) {
 <events.(ifaceName):{event|
-      case <event.name; format="ID">:{
-         <event.field:{field|
-<     if( field.isBoolean )>final bool <field.name> = ByteBufferHelper.getBoolean( _in );
+   case <event.name; format="ID">:{
+      <event.field:{field|
+<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( _in );
 < elseif( field.isByte    )>final byte <field.name> = _in.get();
 < elseif( field.isShort   )>final short <field.name> = _in.getShort();
 < elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
@@ -246,16 +249,16 @@ dispatcherImplOneInterface( name, ifaceName ) ::= <<
 < elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
 < elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
 < elseif( field.isEnum    )>final <field.userTypeName> <field.name> = <field.userTypeName>.values()[_in.get()];
-< elseif( field.isStruct  )>final <field.userTypeName> <field.name>;
-<field.name>.get( _in );<
-  endif>
-}>         _listener.<event.name>( from<args( true, event.field )> );
-         return true;\}
+< elseif( field.isStruct  )>final <field.userTypeName> <field.name> = new <field.userTypeName>();
+<field.name>.get( _in );
+< endif>
+}>      _listener.<event.name>( <args( event.field )> );
+      return true;\}
 }>      default:
-         System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
-         return false;
-      }
+      System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
+      return false;
    }
+}
 >>
 
 dispatcherImplementation( package, compName, ifaces, events, usedTypes, rawSize ) ::= <<
@@ -273,10 +276,9 @@ import <package>.I<compName>;
 }>
 public class <compName>Dispatcher {
 
-   <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;}>
-
-<ifaces.keys:{ifaceName|
-<dispatcherImplOneInterface( compName, ifaceName )>
+   <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;
+}>   <ifaces.keys:{ifaceName|
+   <dispatcherImplOneInterface( compName, ifaceName )>
 }>
    private final ByteBuffer      _in = ByteBuffer.allocate( <rawSize> );
    private final DatagramChannel _channel;
@@ -289,14 +291,14 @@ public class <compName>Dispatcher {
 
    public boolean hasDispatched() throws IOException {
       _in.clear();
-      final SocketAddress from = _channel.receive( _in );
+      _channel.receive( _in );
       _in.flip();
       final byte intrfc = _in.get();
       final byte event  = _in.get();
       System.err.printf( "%s.run|intrfc = %d, event = %d\n", getClass().getName(), intrfc, event );
       switch( intrfc ) {
 <ifaces.keys:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">: return dispatch( <ifaceName>Event.valueOf( event ), from );
+      case INTRFC_<ifaceName; format="ID">: return dispatch( <ifaceName>Event.valueOf( event ));
 }>      }
       return false;
    }

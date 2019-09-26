@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Root" default="build-all">
 
+   <property file="application-settings.properties" />
    <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
    <target name="generate-all-sources" depends="disappgen">
       <dependset>
@@ -76,8 +77,30 @@
       <antcall target="sc" />
    </target>
 
-   <target name="run-c"   depends="util-c  ,udt-c"  ><exec executable="make" dir="udt-c"  ><arg value="run"/></exec></target>
-   <target name="run-cpp" depends="util-cpp,udt-cpp"><exec executable="make" dir="udt-cpp"><arg value="run"/></exec></target>
+   <target name="run-c" depends="util-c,udt-c">
+      <exec executable="make" dir="udt-c">
+         <arg value="IFACE=${iface}" />
+         <arg value="UDT_ADDRESS=${udt.address}" />
+         <arg value="UDT_PORT=${udt.port}" />
+         <arg value="SC_ADDRESS=${sc.address}" />
+         <arg value="SC_PORT=${sc.port}" />
+         <arg value="DAB_ADDRESS=${dab.address}" />
+         <arg value="DAB_PORT=${dab.port}" />
+         <arg value="run"/>
+      </exec>
+   </target>
+   <target name="run-cpp" depends="util-cpp,udt-cpp">
+      <exec executable="make" dir="udt-cpp">
+         <arg value="IFACE=${iface}" />
+         <arg value="UDT_ADDRESS=${udt.address}" />
+         <arg value="UDT_PORT=${udt.port}" />
+         <arg value="SC_ADDRESS=${sc.address}" />
+         <arg value="SC_PORT=${sc.port}" />
+         <arg value="DAB_ADDRESS=${dab.address}" />
+         <arg value="DAB_PORT=${dab.port}" />
+         <arg value="run"/>
+      </exec>
+   </target>
 
    <target name="clean">
       <ant  dir="dab"                                 target="clean" />

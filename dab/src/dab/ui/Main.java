@@ -17,14 +17,14 @@ public class Main extends Application {
       final Map<String, String> named = getParameters().getNamed();
       boolean nan = false;
       try {
-         Integer.parseInt( named.get( "ui-port"  ));
+         Integer.parseInt( named.get( "dab-port" ));
          Integer.parseInt( named.get( "udt-port" ));
       }
       catch( final Throwable t ) {
          nan = true;
       }
       if(  ( ! named.containsKey( "id"          ))
-         ||( ! named.containsKey( "ui-port"     ))
+         ||( ! named.containsKey( "dab-port"    ))
          ||( ! named.containsKey( "udt-address" ))
          ||( ! named.containsKey( "udt-port"    ))
          || nan )
@@ -34,17 +34,17 @@ public class Main extends Application {
             + "\t--id=<text>\n"
             + "\t--udt-address=<hôte de l'unité de traitement>\n"
             + "\t--udt-port=<port de l'unité de traitement>\n"
-            + "\t--ui-port=<this port>"
+            + "\t--dab-port=<this port>"
          )), 420, 200 ));
          stage.setTitle( "Usage" );
          stage.show();
          return;
       }
       final String dabID      = named.get( "id" );
-      final int    uiPort     = Integer.parseInt( named.get( "ui-port" ));
+      final int    dabPort    = Integer.parseInt( named.get( "dab-port" ));
       final String udtAddress =                   named.get( "udt-address" );
       final int    udtPort    = Integer.parseInt( named.get( "udt-port" ));
-      stage.setTitle( "IIHM du DAB '" + dabID + "'" );
+      stage.setTitle( "IHM du DAB '" + dabID + "'" );
       final Class<? extends Main> clazz = getClass();
       final FXMLLoader loader =
          new FXMLLoader(
@@ -52,7 +52,7 @@ public class Main extends Application {
             ResourceBundle.getBundle( clazz.getPackageName() + "/messages" ));
       stage.setScene( new Scene( loader.load()));
       final Controller ctrl = loader.getController();
-      ctrl.init( stage, uiPort, udtAddress, udtPort );
+      ctrl.init( stage, dabPort, udtAddress, udtPort );
       stage.show();
    }
 

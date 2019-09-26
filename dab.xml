@@ -92,7 +92,7 @@
    <component name="IHM">
       <offers   interface="IHM" />
       <requires interface="UniteDeTraitement" />
-      <java src-dir="dab/src-gen" package="dab" />
+      <implementation language="Java" src-dir="dab/src-gen"      module-name="dab" />
    </component>
 
    <component name="UniteDeTraitement">
@@ -100,14 +100,15 @@
       <offers   interface="LecteurDeCarte" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
-      <cpp src-dir="udt-cpp/src-gen" namespace="dab" />
-      <c   src-dir="udt-c/src-gen"   prefix   ="dab" />
+      <implementation language="Java" src-dir="udt-java/src-gen" module-name="dab" />
+      <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="dab" />
+      <implementation language="C"    src-dir="udt-c/src-gen"    module-name="dab" />
    </component>
 
    <component name="SiteCentral">
       <offers   interface="SiteCentral" />
       <requires interface="LecteurDeCarte" />
-      <java src-dir="sc/src-gen" package="sc" />
+      <implementation language="Java" src-dir="sc/src-gen"       module-name="sc" />
    </component>
 
 </distributed-application>
