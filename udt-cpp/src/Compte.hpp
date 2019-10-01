@@ -2,6 +2,8 @@
 
 #include <types.hpp>
 
+#include <dab/Compte.hpp>
+
 namespace udt {
 
    class Compte {
@@ -18,7 +20,14 @@ namespace udt {
          _id       = id;
          _solde    = solde;
          _autorise = autorise;
-         _isValid  = true;
+         _isValid  = ( _id.length() > 0 );
+      }
+
+      void set( const dab::Compte & compte ) {
+         _id       = compte.id;
+         _solde    = compte.solde;
+         _autorise = compte.autorise;
+         _isValid  = ( _id.length() > 0 );
       }
 
       void invalidate() { _isValid = false; }

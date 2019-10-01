@@ -17,14 +17,14 @@ util_error io_datagram_socket_init( const char * addr, ushort port, struct socka
    return UTIL_NO_ERROR;
 }
 
-util_error io_datagram_socket_bind( SOCKET sckt, const char * intrfc, ushort port ) {
-   if( ! sckt || ! intrfc ) {
+util_error io_datagram_socket_bind( SOCKET sckt, const char * address, ushort port ) {
+   if( ! sckt || ! address ) {
       return UTIL_NULL_ARG;
    }
    struct sockaddr_in localAddr;
    memset( &localAddr, 0, sizeof( localAddr ));
    localAddr.sin_family = AF_INET;
-   inet_pton( AF_INET, intrfc, &localAddr.sin_addr.s_addr );
+   inet_pton( AF_INET, address, &localAddr.sin_addr.s_addr );
    localAddr.sin_port = htons( port );
    if( bind( sckt, (struct sockaddr *)&localAddr, sizeof( localAddr ))) {
       closesocket( sckt );

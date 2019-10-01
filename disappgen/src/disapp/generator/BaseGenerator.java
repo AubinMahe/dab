@@ -1,29 +1,36 @@
 package disapp.generator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
 import disapp.generator.model.AutomatonType;
+import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
 import disapp.generator.model.InterfaceType;
-import disapp.generator.model.InterfaceUsageType;
+import disapp.generator.model.OfferedInterfaceUsageType;
+import disapp.generator.model.RequestType;
+import disapp.generator.model.RequiredInterfaceUsageType;
 
 abstract class BaseGenerator {
 
-   protected final Model        _model;
-   protected final STGroup      _group;
-   protected final BaseRenderer _renderer;
-   protected /* */ String       _genDir;
-   protected /* */ String       _package;
+   protected final SortedSet<File> _generatedFiles = new TreeSet<>();
+   protected final Model           _model;
+   protected final STGroup         _group;
+   protected final BaseRenderer    _renderer;
+   protected /* */ String          _genDir;
+   protected /* */ String          _moduleName;
 
    protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
       _model    = model;
@@ -38,46 +45,31 @@ abstract class BaseGenerator {
    abstract protected void generateEnum  ( String xUser ) throws IOException;
    abstract protected void generateStruct( String xUser ) throws IOException;
 
-   protected void generateTypesUsedBy( List<InterfaceUsageType> usages, List<String> generated ) throws IOException {
-      for( final InterfaceUsageType usage : usages ) {
-         final String        interfaceName = usage.getInterface();
-         final InterfaceType iface         = _model.getInterface( interfaceName );
-         for( final EventType event : iface.getEvent()) {
-            for( final FieldType field : event.getField()) {
-               final FieldtypeType type  = field.getType();
-               if(( type == FieldtypeType.ENUM )||( type == FieldtypeType.STRUCT )) {
-                  final String typeName = field.getUserTypeName();
-                  if( ! generated.contains( typeName )) {
-                     if( type == FieldtypeType.ENUM ) {
-                        generateEnum( typeName );
-                     }
-                     else if( type == FieldtypeType.STRUCT ) {
-                        generateStruct( typeName );
-                     }
-                     else {
-                        throw new IllegalStateException( type + " is not an Enum nor a Struct" );
-                     }
-                     generated.add( typeName );
-                  }
-               }
+   private void generateTypesUsedBy( InterfaceType iface ) throws IOException {
+      final SortedSet<String> used = _model.getUsedTypesBy( iface.getName());
+      if( used != null ) {
+         for( final String typeName : used ) {
+            if( _model.enumIsDefined( typeName )) {
+               generateEnum( typeName );
+            }
+            else if( _model.structIsDefined( typeName )){
+               generateStruct( typeName );
             }
          }
       }
    }
 
-   protected void generateTypesUsedBy( AutomatonType automaton, List<String> generated ) throws IOException {
-      if( automaton == null ) {
-         return;
+   protected void generateTypesUsedBy( ComponentType component ) throws IOException {
+      for( final OfferedInterfaceUsageType usage : component.getOffers()) {
+         generateTypesUsedBy((InterfaceType)usage.getInterface());
       }
-      String enumName  = automaton.getStateType();
-      if( ! generated.contains( enumName )) {
-         generateEnum( enumName );
-         generated.add( enumName );
+      for( final RequiredInterfaceUsageType usage : component.getRequires()) {
+         generateTypesUsedBy((InterfaceType)usage.getInterface());
       }
-      enumName  = automaton.getEventType();
-      if( ! generated.contains( enumName )) {
-         generateEnum( enumName );
-         generated.add( enumName );
+      final AutomatonType automaton = component.getAutomaton();
+      if( automaton != null ) {
+         generateEnum( automaton.getStateEnum().getName());
+         generateEnum( automaton.getEventEnum().getName());
       }
    }
 
@@ -104,29 +96,55 @@ abstract class BaseGenerator {
    protected void setRendererFieldsMaxWidth( InterfaceType iface ) {
       _renderer.set( "width"   , 0 );
       _renderer.set( "strWidth", 0 );
-      final List<EventType> events = iface.getEvent();
-      for( final EventType event : events ) {
-         configureRendererWidthsCumulative( event.getField() );
+      final List<Object> eventsOrRequests = _model.getEventsOrRequests().get( iface.getName());
+      for( final Object o : eventsOrRequests ) {
+         if( o instanceof EventType ) {
+            final EventType event = (EventType)o;
+            configureRendererWidthsCumulative( event.getField() );
+         }
+         else {
+            final RequestType request = (RequestType)o;
+            configureRendererWidthsCumulative( request.getArguments().getField());
+            configureRendererWidthsCumulative( request.getResponse().getField());
+         }
       }
    }
 
-   void setRendererInterfaceMaxWidth( String property, List<InterfaceUsageType> ifaces ) {
+   void setRendererInterfaceMaxWidth( String property, List<OfferedInterfaceUsageType> ifaces ) {
       int intrfcMaxWidth = 0;
-      for( final InterfaceUsageType iface : ifaces ) {
-         intrfcMaxWidth = Math.max( BaseRenderer.toID( iface.getInterface()).length(), intrfcMaxWidth );
+      for( final OfferedInterfaceUsageType offered : ifaces ) {
+         final InterfaceType iface     = (InterfaceType)offered.getInterface();
+         final String        ifaceName = iface.getName();
+         intrfcMaxWidth = Math.max( BaseRenderer.toID( ifaceName ).length(), intrfcMaxWidth );
       }
       _renderer.set( property, intrfcMaxWidth );
    }
 
-   protected void write( String subDir, String filename, ST source ) throws IOException {
-      final File target = new File( _genDir, _package + '/' + subDir + '/' + filename );
-      if( _model.isUpToDate( target )) {
-         return;
-      }
+   protected void generateMakefileSourcesList( String headerExt, String srcEx ) throws FileNotFoundException {
+      final STGroupFile group = new STGroupFile( getClass().getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
+      final ST          mk    = group.getInstanceOf( "/mk" );
+      final File   parent = new File( _genDir ).getParentFile();
+      final String subDir = _genDir.substring( parent.getPath().length() + 1 );
+      mk.add( "path"   , subDir + "/" + _moduleName );
+      mk.add( "srcs"   , _generatedFiles.stream().filter( f -> f.getName().endsWith( srcEx     )).toArray());
+      mk.add( "headers", _generatedFiles.stream().filter( f -> f.getName().endsWith( headerExt )).toArray());
+      final File target = new File( parent, "generated-files.mk" );
       target.getParentFile().mkdirs();
       try( final PrintStream ps = new PrintStream( target )) {
-         ps.print( source.render());
+         ps.print( mk.render());
       }
       System.out.printf( "%s written\n", target.getPath());
+   }
+
+   protected void write( String filename, ST source ) throws IOException {
+      final File target = new File( _genDir, _moduleName + '/' + filename );
+      if( ! _model.isUpToDate( target )) {
+         target.getParentFile().mkdirs();
+         try( final PrintStream ps = new PrintStream( target )) {
+            ps.print( source.render());
+         }
+         System.out.printf( "%s written\n", target.getPath());
+      }
+      _generatedFiles.add( target );
    }
 }

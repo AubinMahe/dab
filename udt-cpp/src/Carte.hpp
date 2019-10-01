@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <dab/Carte.hpp>
+
 namespace udt {
 
    class Carte {
@@ -21,8 +23,16 @@ namespace udt {
          _id       = carteID;
          _code     = code;
          _nbEssais = nbEssais;
-         _isValid  = true;
          _peremption.set( month, year );
+         _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
+      }
+
+      void set( const dab::Carte & carte ) {
+         _id       = carte.id;
+         _code     = carte.code;
+         _nbEssais = carte.nbEssais;
+         _peremption.set( carte.month, carte.year );
+         _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
       }
 
       inline void incrementeNbEssais( void ) { ++_nbEssais; }

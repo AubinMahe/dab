@@ -81,33 +81,45 @@
    </target>
 
    <target name="run-c" depends="util-c,udt-c">
-      <exec executable="make" dir="udt-c">
-         <arg value="IFACE=${iface}" />
-         <arg value="UDT_ADDRESS=${udt.address}" />
-         <arg value="UDT_PORT=${udt.port}" />
-         <arg value="SC_ADDRESS=${sc.address}" />
-         <arg value="SC_PORT=${sc.port}" />
-         <arg value="DAB_ADDRESS=${dab.address}" />
-         <arg value="DAB_PORT=${dab.port}" />
-         <arg value="run"/>
-      </exec>
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-1" /></exec>
+   </target>
+
+   <target name="run-c-2" depends="util-c,udt-c">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-1" /></exec>
+      <ant                    dir="dab"         target="run-2" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-2" /></exec>
    </target>
 
    <target name="run-cpp" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="udt-cpp">
-         <arg value="IFACE=${iface}" />
-         <arg value="UDT_ADDRESS=${udt.address}" />
-         <arg value="UDT_PORT=${udt.port}" />
-         <arg value="SC_ADDRESS=${sc.address}" />
-         <arg value="SC_PORT=${sc.port}" />
-         <arg value="DAB_ADDRESS=${dab.address}" />
-         <arg value="DAB_PORT=${dab.port}" />
-         <arg value="run"/>
-      </exec>
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-1" /></exec>
+   </target>
+
+   <target name="run-cpp-2" depends="util-cpp,udt-cpp">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-1" /></exec>
+      <ant                    dir="dab"         target="run-2" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-2" /></exec>
    </target>
 
    <target name="run-java" depends="util-java,udt-java">
-      <ant dir="udt-java" target="run" />
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <ant                    dir="udt-java"    target="run-1" />
+   </target>
+
+   <target name="run-java-2" depends="util-java,udt-java">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <ant                    dir="udt-java"    target="run-1" />
+      <ant                    dir="dab"         target="run-2" />
+      <ant                    dir="udt-java"    target="run-2" />
    </target>
 
    <target name="clean">

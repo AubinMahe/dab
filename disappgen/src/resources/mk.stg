@@ -1,0 +1,12 @@
+group Makefile;
+
+
+
+mk( path, srcs, headers ) ::= <<
+SRCSGEN =<srcs:{src|\
+ <path>/<src.name>}>
+
+HEADERSGEN=<headers:{header|\
+ <path>/<header.name>}>
+
+>>

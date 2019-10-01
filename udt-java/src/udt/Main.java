@@ -7,14 +7,7 @@ import util.CommandLine;
 public final class Main {
 
    static private void usage() {
-      System.err.printf(
-         "\nusage: %s --iface=<network interface>" +
-         " --udt-port=<port>" +
-         " --sc-address=<IP address or hostname>" +
-         " --sc-port=<port>" +
-         " --ui-address=<IP address or hostname>" +
-         " --ui-port=<port>\n\n",
-         Main.class.getName());
+      System.err.printf( "\nusage: %s --name=<instance name as defined in XML application file>\n\n", Main.class.getName());
       System.exit( 1 );
    }
 
@@ -23,15 +16,14 @@ public final class Main {
       if( ! arguments.parse( args )) {
          usage();
       }
-      final String    intrfc     = arguments.getString( "iface"      );
-      final int       udtPort    = arguments.getInt   ( "udt-port"   );
-      final String    scAddress  = arguments.getString( "sc-address" );
-      final int       scPort     = arguments.getInt   ( "sc-port"    );
-      final String    dabAddress = arguments.getString( "dab-address" );
-      final int       dabPort    = arguments.getInt   ( "dab-port"    );
-      UniteDeTraitement udt = null;
+      final String name = arguments.getString( "name" );
+      if( name == null ) {
+         usage();
+      }
+      Controleur udt = null;
       try {
-         udt = new UniteDeTraitement( intrfc, udtPort, scAddress, scPort, dabAddress, dabPort );
+         udt = new Controleur( name );
+         System.err.println( "Controleur '" + name + "'" );
          udt.run();
       }
       catch( final Throwable t ) {

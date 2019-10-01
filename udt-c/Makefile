@@ -1,22 +1,6 @@
-SRCS =\
- src/main.c\
- src/dab/udt/unite_de_traitement.c
+SRCS = src/main.c
 
-SRCSGEN =\
- src-gen/dab/etat.c\
- src-gen/dab/carte.c\
- src-gen/dab/compte.c\
- src-gen/dab/automaton.c\
- src-gen/dab/net/ihm.c\
- src-gen/dab/net/site_central.c\
- src-gen/dab/net/unite_de_traitement_dispatcher.c
-
-HEADERSGEN=\
- src-gen/dab/etat.h\
- src-gen/dab/ihm.h\
- src-gen/dab/site_central.h\
- src-gen/dab/unite_de_traitement.h\
- src-gen/dab/unite_de_traitement_dispatcher.h
+-include generated-files.mk
 
 CFLAGS = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -W -Wall -pedantic -c -std=c11
 
@@ -37,7 +21,7 @@ clean:
 ../disappgen.jar:
 	cd ../disappgen && ant
 
-$(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
+generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 	cd .. && ant generate-all-sources
 
 ../util-c/lib/libutil-c.a:
@@ -70,35 +54,14 @@ BUILD-mingw32/%.o: src-gen/%.c
 	@mkdir -p $$(dirname $@)
 	i686-w64-mingw32-gcc $(CFLAGS) -o $@ $<
 
-run:
-	make ../unite_de_traitement
-	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
-	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	../unite_de_traitement\
- --iface=$(IFACE)\
- --udt-port=$(UDT_PORT)\
- --sc-address=$(SC_ADDRESS)\
- --sc-port=$(SC_PORT)\
- --dab-address=$(DAB_ADDRESS)\
- --dab-port=$(DAB_PORT)
+run-1: ../unite_de_traitement
+	xterm -title UDT-1 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt1 &
 
-run-debug:
-	cd ../sc        && xterm -geometry 132x30-650+0 -e 'ant run' &
-	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	@echo "Allez, c'est parti pour le debug du bordel en C sous Eclipse..."
+run-2: ../unite_de_traitement
+	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt2 &
 
-run-mingw32:
-	make ../unite_de_traitement-mingw32
-	cd ../sc        && xterm -geometry 132x30-650-0 -e 'ant run' &
-	cd ../dab       && xterm -geometry 132x30-800-0 -e 'ant run' &
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine\
- ../unite_de_traitement-mingw32\
- --iface=$(IFACE)\
- --udt-port=$(UDT_PORT)\
- --sc-address=$(SC_ADDRESS)\
- --sc-port=$(SC_PORT)\
- --dab-address=$(DAB_ADDRESS)\
- --dab-port=$(DAB_PORT)
+run-mingw32: ../unite_de_traitement-mingw32
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../unite_de_traitement-mingw32 --name=udt-1
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

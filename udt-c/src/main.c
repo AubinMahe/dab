@@ -1,51 +1,226 @@
-#include <dab/udt/unite_de_traitement.h>
+#include <dab/controleur.h>
+#include <dab/evenement.h>
 
-#include <io/sockets.h>
 #include <util/args.h>
 
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct date_s {
+   byte   month;
+   ushort year;
+} date;
+
+typedef struct carte_s {
+   bool         is_valid;
+   char         id[5];
+   char         code[5];
+   char         compte[5];
+   date peremption;
+   byte         nb_essais;
+} carte;
+
+typedef struct compte_s {
+   bool   is_valid;
+   char   id[5];
+   double solde;
+   bool   autorise;
+} compte;
+
+typedef struct data_s {
+   carte  carte;
+   compte compte;
+   double valeur_caisse;
+} data;
+
+static void date_set( date * This, byte month, ushort year ) {
+   This->month= month;
+   This->year = year;
+}
+
+static bool date_is_valid( date * This ) {
+   return( This->month > 0 )&&( This->year > 0 );
+}
+
+static void carte_set( carte * This, const dab_carte * source ) {
+   strncpy( This->id  , source->id  , sizeof( This->id ));
+   strncpy( This->code, source->code, sizeof( This->code ));
+   This->nb_essais = source->nb_essais;
+   date_set( &This->peremption, source->month, source->year );
+   This->is_valid  =
+      (   strlen( This->id   ) > 0 )
+      &&( strlen( This->code ) > 0 )
+      &&( This->nb_essais < 4 )
+      && date_is_valid( &This->peremption );
+}
+
+static bool carte_compare_code( const carte * carte, const char * code ) {
+   return 0 == strncmp( carte->code, code, sizeof( carte->code ));
+}
+
+void compte_set( compte * This, const dab_compte * source ) {
+   strncpy( This->id, source->id, sizeof( This->id ));
+   This->solde    = source->solde;
+   This->autorise = source->autorise;
+   This->is_valid = ( strlen( This->id ) > 0 )&&( This->solde > 0.0 );
+}
+
+void compte_invalidate( compte * This ) {
+   fprintf( stderr, "compte_invalidate\n" );
+   This->is_valid = false;
+}
+
+static const double DAB_RETRAIT_MAX = 1000.0;
+
+util_error dab_controleur_maintenance( dab_controleur * This, bool maintenance ) {
+   if( maintenance ) {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAINTENANCE_ON ), __FILE__, __LINE__ );
+   }
+   else {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAINTENANCE_OFF ), __FILE__, __LINE__ );
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_recharger_la_caisse( dab_controleur * This, double montant ) {
+   data * d = This->user_context;
+   d->valeur_caisse += montant;
+   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ihm, d->valeur_caisse ), __FILE__, __LINE__ );
+   if( d->valeur_caisse < DAB_RETRAIT_MAX ) {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ), __FILE__, __LINE__ );
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_anomalie( dab_controleur * This, bool anomalie ) {
+   if( anomalie ) {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_ANOMALIE_ON ), __FILE__, __LINE__ );
+   }
+   else {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_ANOMALIE_OFF ), __FILE__, __LINE__ );
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_carte_inseree( dab_controleur * This, const char * id ) {
+   data * d = This->user_context;
+   d->carte.is_valid = false;
+   d->compte.is_valid = false;
+   UTIL_ERROR_CHECK( dab_site_central_get_informations( &This->site_central, id ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_INSEREE ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_get_informations( dab_controleur * This, const dab_carte * carte, const dab_compte * compte ) {
+   data * d = This->user_context;
+   carte_set( &d->carte, carte );
+   compte_set( &d->compte, compte );
+   if( d->carte.is_valid && d->compte.is_valid ) {
+      if( d->carte.nb_essais == 0 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_LUE_0 ), __FILE__, __LINE__ );
+      }
+      else if( d->carte.nb_essais == 1 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_LUE_1 ), __FILE__, __LINE__ );
+      }
+      else if( d->carte.nb_essais == 2 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_LUE_2 ), __FILE__, __LINE__ );
+      }
+      else {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_CONFISQUEE ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
+      }
+   }
+   else {
+      fprintf( stderr, "Carte et/ou compte invalide\n" );
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_INVALIDE ), __FILE__, __LINE__ );
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_code_saisi( dab_controleur * This, const char * code ) {
+   data * d = This->user_context;
+   if( carte_compare_code( &d->carte, code )) {
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BON_CODE ), __FILE__, __LINE__ );
+   }
+   else {
+      UTIL_ERROR_CHECK( dab_site_central_incr_nb_essais( &This->site_central, d->carte.id ), __FILE__, __LINE__ );
+      ++( d->carte.nb_essais );
+      if( d->carte.nb_essais == 1 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAUVAIS_CODE_1 ), __FILE__, __LINE__ );
+      }
+      else if( d->carte.nb_essais == 2 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAUVAIS_CODE_2 ), __FILE__, __LINE__ );
+      }
+      else if( d->carte.nb_essais == 3 ) {
+         UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAUVAIS_CODE_3 ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
+      }
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_montant_saisi( dab_controleur * This, double montant ) {
+   data * d = This->user_context;
+   if( montant > d->valeur_caisse ) {
+      UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ), __FILE__, __LINE__ );
+   }
+   else if( montant > d->compte.solde ) {
+      UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_COMPTE_INSUFFISANT ), __FILE__, __LINE__ );
+   }
+   else {
+      d->valeur_caisse -= montant;
+      UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ihm, d->valeur_caisse ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( dab_site_central_retrait( &This->site_central, d->carte.id, montant ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MONTANT_OK ), __FILE__, __LINE__ );
+   }
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_carte_retiree( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_RETIREE ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_billets_retires( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BILLETS_RETIRES ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_after_dispatch( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( dab_ihm_set_status( &This->ihm, This->automaton.current ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_shutdown( dab_controleur * This ) {
+   This->running = false;
+   UTIL_ERROR_CHECK( dab_ihm_shutdown( &This->ihm ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( dab_site_central_shutdown( &This->site_central ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_TERMINATE ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
 
 static int usage( const char * exename ) {
-   fprintf( stderr,
-      "\nusage: %s --iface=<network interface>"
-      " --udt-port=<port>"
-      " --sc-address=<IP address or hostname>"
-      " --sc-port=<port>"
-      " --dab-address=<IP address or hostname>"
-      " --dab-port=<port>\n\n",
-      exename );
+   fprintf( stderr, "\nusage: %s --name=<name as defined in XML application file>\n\n", exename );
    return 1;
 }
 
-/**
- * Point d'entrée du programme, usage typique :
- *      UniteDeTraitement --iface=enp3s0 --udt-port=2417 --sc-address=localhost --sc-port=2416 --ui-address=localhost --ui-port=2418
- */
 int main( int argc, char * argv[] ) {
-   util_pair pairs[argc];
-   util_map  map;
-   util_args_parse( &map, argc, pairs, argc, argv );
-   const char *   intrfc;
-   unsigned short udtPort;
-   const char *   dabAddress;
-   unsigned short dabPort;
-   const char *   scAddress;
-   unsigned short scPort;
-   bool ok =
-        ( UTIL_NO_ERROR == util_args_get_string( &map, "iface"      , &intrfc   ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "udt-port"   , &udtPort  ))
-      &&( UTIL_NO_ERROR == util_args_get_string( &map, "sc-address" , &scAddress ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "sc-port"    , &scPort    ))
-      &&( UTIL_NO_ERROR == util_args_get_string( &map, "dab-address", &dabAddress ))
-      &&( UTIL_NO_ERROR == util_args_get_ushort( &map, "dab-port"   , &dabPort    ));
-   if( ! ok ) {
+   util_pair    pairs[argc];
+   util_map     map;
+   const char * name = NULL;
+   util_args_parse( &map, (size_t)argc, pairs, argc, argv );
+   if( UTIL_NO_ERROR != util_args_get_string( &map, "name", &name )) {
       return usage( argv[0] );
    }
-   dab_unite_de_traitement udt;
-   util_error err = dab_unite_de_traitement_init( &udt, intrfc, udtPort, scAddress, scPort, dabAddress, dabPort );
+   dab_controleur controleur;
+   data d;
+   memset( &d, 0, sizeof( d ));
+   util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {
-      err = dab_unite_de_traitement_run( &udt );
+      err = dab_controleur_run( &controleur );
    }
    if( UTIL_OS_ERROR == err ) {
       perror( util_error_messages[err] );
@@ -53,6 +228,6 @@ int main( int argc, char * argv[] ) {
    else if( UTIL_NO_ERROR != err ) {
       fprintf( stderr, "%s\n", util_error_messages[err] );
    }
-   dab_unite_de_traitement_shutdown( &udt );
+   dab_controleur_shutdown( &controleur );
    return 0;
 }

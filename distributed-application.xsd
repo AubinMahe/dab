@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified">
+<xs:schema
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   attributeFormDefault="unqualified"
+   elementFormDefault="qualified">
 
    <xs:simpleType name="enumType">
       <xs:restriction base="xs:string">
@@ -13,15 +16,15 @@
    </xs:simpleType>
 
    <xs:complexType name="literalType">
-      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="xs:NCName" name="name" use="required" />
    </xs:complexType>
 
    <xs:complexType name="enumerationType">
       <xs:sequence>
          <xs:element type="literalType" name="literal" maxOccurs="unbounded" minOccurs="1" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required" />
-      <xs:attribute type="enumType"  name="type" use="optional" default="byte"/>
+      <xs:attribute type="xs:ID"    name="name" use="required" />
+      <xs:attribute type="enumType" name="type" use="optional" default="byte"/>
    </xs:complexType>
    
    <xs:simpleType name="fieldtypeType">
@@ -45,9 +48,9 @@
    <xs:complexType name="fieldType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:string"          name="name"         use="required" />
+            <xs:attribute type="xs:NCName"          name="name"         use="required" />
             <xs:attribute type="fieldtypeType"      name="type"         use="required" />
-            <xs:attribute type="xs:string"          name="userTypeName" use="optional" />
+            <xs:attribute type="xs:IDREF"           name="userType"     use="optional" />
             <xs:attribute type="xs:positiveInteger" name="length"       use="optional" />
             <xs:attribute type="xs:string"          name="description"  use="required" />
          </xs:extension>
@@ -56,29 +59,54 @@
 
    <xs:complexType name="structType">
       <xs:sequence>
-         <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="1" />
+         <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
    
    <xs:complexType name="eventType">
       <xs:sequence>
-         <xs:element type="fieldType" name="field" maxOccurs="unbounded" minOccurs="0" />
+         <xs:element type="fieldType" name="field" minOccurs="0" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="xs:NCName" name="name" use="required" />
    </xs:complexType>
+   
+   <xs:complexType name="responseType">
+      <xs:sequence>
+         <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="argumentsType">
+      <xs:sequence>
+         <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="requestType">
+      <xs:sequence>
+         <xs:element type="argumentsType" name="arguments" minOccurs="0" maxOccurs="1" />
+         <xs:element type="responseType"  name="response"  minOccurs="1" maxOccurs="1" />
+      </xs:sequence>
+      <xs:attribute type="xs:NCName" name="name" use="required" />
+   </xs:complexType>
+
    <xs:complexType name="interfaceType">
       <xs:sequence>
-         <xs:element type="eventType" name="event" maxOccurs="unbounded" minOccurs="0" />
+         <xs:choice maxOccurs="unbounded">
+            <xs:element type="eventType"   name="event" />
+            <xs:element type="requestType" name="request" />
+         </xs:choice>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
-   <xs:complexType name="interfaceUsageType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="xs:string" name="interface" use="required" />
-         </xs:extension>
-      </xs:simpleContent>
+
+   <xs:complexType name="offeredInterfaceUsageType">
+      <xs:attribute type="xs:IDREF" name="interface" use="required" />
+   </xs:complexType>
+   
+   <xs:complexType name="requiredInterfaceUsageType">
+      <xs:attribute type="xs:IDREF" name="interface" use="required" />
    </xs:complexType>
    
    <xs:simpleType name="languageType">
@@ -92,50 +120,89 @@
    <xs:complexType name="implementationType">
       <xs:attribute type="languageType" name="language"    use="required" />
       <xs:attribute type="xs:string"    name="src-dir"     use="required" />
-      <xs:attribute type="xs:string"    name="module-name" use="required" />
+      <xs:attribute type="xs:NCName"    name="module-name" use="required" />
    </xs:complexType>
 
    <xs:complexType name="transitionType">
-      <xs:attribute type="xs:string" name="from"  use="required" />
-      <xs:attribute type="xs:string" name="event" use="required" />
-      <xs:attribute type="xs:string" name="futur" use="required" />
+      <xs:attribute type="xs:NCName" name="from"  use="required" />
+      <xs:attribute type="xs:NCName" name="event" use="required" />
+      <xs:attribute type="xs:NCName" name="futur" use="required" />
    </xs:complexType>
 
    <xs:complexType name="shortcutType">
-      <xs:attribute type="xs:string" name="event" use="required" />
-      <xs:attribute type="xs:string" name="futur" use="required" />
+      <xs:attribute type="xs:NCName" name="event" use="required" />
+      <xs:attribute type="xs:NCName" name="futur" use="required" />
    </xs:complexType>
 
+   <xs:complexType name="stateEnumType">
+      <xs:attribute type="xs:ID" name="name" use="required" />
+   </xs:complexType>
+   
+   <xs:complexType name="eventEnumType">
+      <xs:attribute type="xs:ID" name="name" use="required" />
+   </xs:complexType>
+   
    <xs:complexType name="automatonType">
       <xs:sequence>
+         <xs:element type="stateEnumType"  name="state-enum" />
+         <xs:element type="eventEnumType"  name="event-enum" />
          <xs:element type="transitionType" name="transition" minOccurs="2" maxOccurs="unbounded" />
          <xs:element type="shortcutType"   name="shortcut"   minOccurs="2" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="state-type" use="optional" />
-      <xs:attribute type="xs:string" name="event-type" use="optional" />
-      <xs:attribute type="xs:string" name="initial"    use="required" />
+      <xs:attribute type="xs:NCName" name="initial" use="required" />
    </xs:complexType>
 
    <xs:complexType name="componentType">
       <xs:sequence>
-         <xs:choice minOccurs="1" maxOccurs="unbounded">
-            <xs:element type="interfaceUsageType" name="offers" />
-            <xs:element type="interfaceUsageType" name="requires" />
-         </xs:choice>
-         <xs:element type="implementationType" name="implementation" minOccurs="1" maxOccurs="unbounded" />
-         <xs:element type="automatonType"      name="automaton"      minOccurs="0" maxOccurs="1" />
+         <xs:element type="offeredInterfaceUsageType"  name="offers"         minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="requiredInterfaceUsageType" name="requires"       minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="implementationType"         name="implementation" minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required" />
+      <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
    
+   <xs:simpleType name="portNumberType">
+      <xs:restriction base="xs:int">
+         <xs:minInclusive value="1" />
+         <xs:maxInclusive value="65535" />
+      </xs:restriction>
+   </xs:simpleType>
+   
+   <xs:complexType name="requiresType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute type="xs:IDREF" name="interface"   use="required" />
+            <xs:attribute type="xs:IDREF" name="to-instance" use="required" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   
+   <xs:complexType name="instanceType">
+      <xs:sequence>
+         <xs:element type="requiresType" name="requires" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:ID"          name="name"      use="required" />
+      <xs:attribute type="xs:IDREF"       name="component" use="required" />
+      <xs:attribute type="xs:string"      name="address"   use="required" />
+      <xs:attribute type="portNumberType" name="port"      use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="deploymentType">
+      <xs:sequence>
+         <xs:element type="instanceType" name="instance" minOccurs="2" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+
    <xs:complexType name="disappType">
       <xs:sequence>
-         <xs:element type="enumerationType" name="enumeration" maxOccurs="unbounded" minOccurs="0" />
-         <xs:element type="structType"      name="struct"      maxOccurs="unbounded" minOccurs="0" />
-         <xs:element type="interfaceType"   name="interface"   maxOccurs="unbounded" minOccurs="1" />
-         <xs:element type="componentType"   name="component"   maxOccurs="unbounded" minOccurs="1" />
+         <xs:element type="enumerationType" name="enumeration" minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="structType"      name="struct"      minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="interfaceType"   name="interface"   minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="componentType"   name="component"   minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="deploymentType"  name="deployment"  minOccurs="1" maxOccurs="1" />
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" />
+      <xs:attribute type="xs:ID" name="name" />
    </xs:complexType>
 
    <xs:element name="distributed-application" type="disappType">
@@ -160,6 +227,21 @@
          <xs:field xpath="./@name"/>
       </xs:unique>
 
+      <xs:unique name="instance-name">
+         <xs:selector xpath=".//deployment/instance"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:unique name="literal-name">
+         <xs:selector xpath="./enum/literal"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
+      <xs:keyref name="response" refer="interface-name">
+         <xs:selector xpath=".//interface/event"/>
+         <xs:field xpath="./@response"/>
+      </xs:keyref>
+
       <xs:keyref name="offers" refer="interface-name">
          <xs:selector xpath=".//component/offers"/>
          <xs:field xpath="./@interface"/>
@@ -169,12 +251,22 @@
          <xs:selector xpath=".//component/requires"/>
          <xs:field xpath="./@interface"/>
       </xs:keyref>
-<!--
-      <xs:keyref name="enum" refer="enum-name">
-         <xs:selector xpath=".//interface/event/field[type='enum']"/>
-         <xs:field xpath="./@userTypeName"/>
+
+      <xs:keyref name="instance" refer="component-name">
+         <xs:selector xpath=".//deployment/instance"/>
+         <xs:field xpath="./@component"/>
       </xs:keyref>
--->
+      
+      <xs:keyref name="deployed-instance-requires-interface" refer="interface-name">
+         <xs:selector xpath=".//deployment/instance/requires"/>
+         <xs:field xpath="./@interface"/>
+      </xs:keyref>
+      
+      <xs:keyref name="deployed-instance-requires-instance" refer="instance-name">
+         <xs:selector xpath=".//deployment/instance/requires"/>
+         <xs:field xpath="./@to-instance"/>
+      </xs:keyref>
+      
    </xs:element>
 
 </xs:schema>

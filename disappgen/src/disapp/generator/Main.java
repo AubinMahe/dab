@@ -20,12 +20,10 @@ public class Main {
       final CppGenerator  cpp  = new CppGenerator ( _model );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final ImplementationType implementation : component.getImplementation()) {
-            final String srcDir     = implementation.getSrcDir();
-            final String moduleName = implementation.getModuleName();
             switch( implementation.getLanguage()) {
-            case "Java": java.generateComponent( component, srcDir, moduleName ); break;
-            case "C"   : c   .generateComponent( component, srcDir, moduleName ); break;
-            case "C++" : cpp .generateComponent( component, srcDir, moduleName ); break;
+            case "Java": java.generateComponent( component, implementation ); break;
+            case "C"   : c   .generateComponent( component, implementation ); break;
+            case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
       }

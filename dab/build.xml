@@ -38,16 +38,28 @@
       <jar destfile="${jar}" basedir="build" />
    </target>
 
-   <target name="run" depends="jar">
-      <java
-         fork      ="true"
-         modulepath="${jfx13}:${jutil}:${jar}"
-         module    ="dab/dab.ui.Main">
-         <arg value="--id=#1" />
-         <arg value="--udt-address=${udt.address}" />
-         <arg value="--udt-port=${udt.port}" />
-         <arg value="--dab-port=${dab.port}" />
-      </java>
+   <target name="run-1">
+      <exec spawn="true" executable="xterm">
+         <arg value="-title" /><arg value="IHM-1" />
+         <arg value="-geometry" /><arg value="90x30+-9+143" />
+         <arg value="-hold" />
+         <arg value="-e" /><arg value="java" />
+         <arg value="--module-path" /><arg value="${jfx13}:${jutil}:${jar}" />
+         <arg value="--module" /><arg value="dab/dab.ui.Main" />
+         <arg value="--name=ihm1" />
+      </exec>
+   </target>
+
+   <target name="run-2">
+      <exec spawn="true" executable="xterm">
+         <arg value="-title" /><arg value="IHM-2" />
+         <arg value="-geometry" /><arg value="90x30--9+143" />
+         <arg value="-hold" />
+         <arg value="-e" /><arg value="java" />
+         <arg value="--module-path" /><arg value="${jfx13}:${jutil}:${jar}" />
+         <arg value="--module" /><arg value="dab/dab.ui.Main" />
+         <arg value="--name=ihm2" />
+      </exec>
    </target>
 
 </project>

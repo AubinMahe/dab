@@ -14,16 +14,16 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float  <
   elseif( field.isDouble  )>double <
   elseif( field.isString  )>String <
-  elseif( field.isEnum    )><field.userTypeName><
-  elseif( field.isStruct  )><field.userTypeName><
+  elseif( field.isEnum    )><field.userType.name><
+  elseif( field.isStruct  )><field.userType.name><
   endif>
 >>
 
 
 
 signature( fields ) ::= <<
-< first( fields ):{field|<type(field)> <field.name>}><
-  rest ( fields ):{field|, <type(field)> <field.name>}>
+< first( fields ):{field|<trim((type(field)))> <field.name>}><
+  rest ( fields ):{field|, <trim((type(field)))> <field.name>}>
 >>
 
 
@@ -31,6 +31,27 @@ signature( fields ) ::= <<
 args( fields ) ::= <<
 < first( fields ):{field|<field.name>}><
   rest ( fields ):{field|, <field.name>}>
+>>
+
+
+
+byteBufferPut( fields ) ::= <<
+<fields:{field|
+< if(     field.isBoolean )>ByteBufferHelper.putBoolean( _out, <field.name> );
+< elseif( field.isByte    )>_out.put( <field.name> );
+< elseif( field.isShort   )>_out.putShort( <field.name> );
+< elseif( field.isUshort  )>_out.putShort( <field.name> );
+< elseif( field.isInt     )>_out.putInt( <field.name> );
+< elseif( field.isUint    )>_out.putInt( <field.name> );
+< elseif( field.isLong    )>_out.putLong( <field.name> );
+< elseif( field.isUlong   )>_out.putLong( <field.name> );
+< elseif( field.isFloat   )>_out.putFloat( <field.name> );
+< elseif( field.isDouble  )>_out.putDouble( <field.name> );
+< elseif( field.isEnum    )>_out.put((byte)<field.name>.ordinal());
+< elseif( field.isString  )>ByteBufferHelper.putString( _out, <field.name> );
+< elseif( field.isStruct  )><field.name>.put( _out );
+< endif>
+}>
 >>
 
 
@@ -71,11 +92,10 @@ public class <struct.name> {
 < elseif(       field.isFloat   )>float   <field.name>;
 < elseif(       field.isDouble  )>double  <field.name>;
 < elseif(       field.isString  )>String  <field.name>;
-< elseif(       field.isEnum    )><field.userTypeName> <field.name>;
-< elseif(       field.isStruct  )><field.userTypeName> <field.name>;
+< elseif(       field.isEnum    )><field.userType.name> <field.name>;
+< elseif(       field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
 < endif>
 }>
-
    public void put( ByteBuffer target ) {
       <struct.field:{field|
 < if(     field.isBoolean )>ByteBufferHelper.putBoolean( target, <field.name> );
@@ -106,7 +126,7 @@ public class <struct.name> {
 < elseif( field.isUlong   )><field.name; format="width"> = source.getLong();
 < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat();
 < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-< elseif( field.isEnum    )><field.name; format="width"> = <field.userTypeName>.values()[source.get()];
+< elseif( field.isEnum    )><field.name; format="width"> = <field.userType.name>.values()[source.get()];
 < elseif( field.isString  )><field.name; format="width"> = ByteBufferHelper.getString( source );
 < elseif( field.isStruct  )><field.name; format="width">.put( source );
 < endif>
@@ -118,23 +138,26 @@ public class <struct.name> {
 
 requiredInterface( package, usedTypes, ifaceName, rawSize, iface ) ::= <<
 package <package>;
+// requiredInterface
 
 import java.io.IOException;
-import java.net.SocketAddress;
 
-<usedTypes:{type|import <package>.<type>;
-}>
 public interface I<ifaceName> {
 
-   <iface.event:{event|void <event.name>( <signature( event.field )> ) throws IOException;
+   <iface.eventOrRequest:{eor|void <eor.name>(<
+if( eor.arguments )><
+    signature( eor.arguments.field )><
+else><
+    signature( eor.field )><
+endif>) throws IOException;
 }>}
 >>
 
 
 
 requiredImplementation( package, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
-package <package>.net;
-
+package <package>;
+//requiredImplementation
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -149,68 +172,85 @@ import <package>.I<ifaceName>;
 public class <ifaceName> implements I<ifaceName> {
 
    private static final byte <iface.name; format="ID"> = <ifaceID>;
-   <iface.event:{event|private static final byte <event.name; format="ID"> = <i>;
+   <iface.eventOrRequest:{event|private static final byte <event.name; format="ID"> = <i>;
 }>
    private final DatagramChannel _channel;
-   private final SocketAddress[] _targets;
+   private final SocketAddress   _target;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
 
-   public <ifaceName>( DatagramChannel channel, SocketAddress ... targets ) {
+   public <ifaceName>( DatagramChannel channel, SocketAddress target ) {
       _channel = channel;
-      _targets = targets;
+      _target  = target;
    }
-<iface.event:{event|
+<iface.eventOrRequest:{eor|
 
 
    @Override
-   public void <event.name>( <signature( event.field )> ) throws IOException {
+   public void <eor.name>(<
+if( eor.arguments )><
+    signature( eor.arguments.field )><
+else><
+    signature( eor.field )><
+endif>) throws IOException {
       _out.clear();
       _out.put( <iface.name; format="ID"> );
-      _out.put( <event.name; format="ID"> );
-      <event.field:{field|
-< if(     field.isBoolean )>ByteBufferHelper.putBoolean( _out, <field.name> );
-< elseif( field.isByte    )>_out.put( <field.name> );
-< elseif( field.isShort   )>_out.putShort( <field.name> );
-< elseif( field.isUshort  )>_out.putShort( <field.name> );
-< elseif( field.isInt     )>_out.putInt( <field.name> );
-< elseif( field.isUint    )>_out.putInt( <field.name> );
-< elseif( field.isLong    )>_out.putLong( <field.name> );
-< elseif( field.isUlong   )>_out.putLong( <field.name> );
-< elseif( field.isFloat   )>_out.putFloat( <field.name> );
-< elseif( field.isDouble  )>_out.putDouble( <field.name> );
-< elseif( field.isEnum    )>_out.put((byte)<field.name>.ordinal());
-< elseif( field.isString  )>ByteBufferHelper.putString( _out, <field.name> );
-< elseif( field.isStruct  )><field.name>.put( _out );
-< endif>
-}>      _out.flip();
-      for( final SocketAddress target : _targets ) {
-         _channel.send( _out, target );
-         System.err.printf( "<ifaceName>.<event.name>|informations sent to %s\n", target );
-      \}
+      _out.put( <eor.name; format="ID"> );
+      < if( eor.arguments )><
+           byteBufferPut( eor.arguments.field )><
+        else><
+           byteBufferPut( eor.field )><
+        endif>
+      _out.flip();
+      final int size = _out.remaining();
+      _channel.send( _out, _target );
+      System.err.printf( "<ifaceName>.<eor.name>|%d byte(s) sent to %s\n", size, _target );
    \}
 }>}
 >>
 
 
 
-offeredInterface( package, name, usedTypes, events ) ::= <<
+offeredInterface( package, name, usedTypes, eventsOrRequests ) ::= <<
 package <package>;
+// offeredInterface
 
 import java.io.IOException;
-import java.net.SocketAddress;
 
-<usedTypes:{used|import <package>.<used>;
-}>
 public interface I<name> {
 
-   <events:{event|void <event.name>( <signature( event.field )> ) throws IOException;
+   <eventsOrRequests:{eor|void <eor.name>(<
+if( eor.arguments )><
+    signature( eor.arguments.field )>, <name><eor.name; format="cap">Response reponse<
+else><
+    signature( eor.field )><
+endif>) throws IOException;
 }>}
 >>
 
 
 
-dispatcherImplOneInterface( name, ifaceName ) ::= <<
+byteBufferGet( field ) ::= <<
+<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( _in );
+< elseif( field.isByte    )>final byte <field.name> = _in.get();
+< elseif( field.isShort   )>final short <field.name> = _in.getShort();
+< elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
+< elseif( field.isInt     )>final int <field.name> = _in.getInt();
+< elseif( field.isUint    )>final uint <field.name> = _in.getUInt();
+< elseif( field.isLong    )>final long <field.name> = _in.getLong();
+< elseif( field.isUlong   )>final ulong <field.name> = _in.getULong();
+< elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
+< elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
+< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
+< elseif( field.isEnum    )>final <field.userType.name> <field.name> = <field.userType.name>.values()[_in.get()];
+< elseif( field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
+<field.name>.get( _in );
+< endif>
+>>
 
+
+
+dispatcherImplOneInterface() ::= <<
+//dispatcherImplOneInterface
 private static enum <ifaceName>Event {
 
    <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
@@ -232,27 +272,32 @@ private static enum <ifaceName>Event {
    }
 }
 
-private boolean dispatch( <ifaceName>Event event ) throws IOException {
+<events.(ifaceName):{eventOrRequest|< if( eventOrRequest.response )>
+private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<eventOrRequest.name; format="ID"> = <eventIDs.(ifaceName).(eventOrRequest.name)>;
+< endif>}>
+private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event ) throws IOException {
+   System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
-<events.(ifaceName):{event|
-   case <event.name; format="ID">:{
-      <event.field:{field|
-<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( _in );
-< elseif( field.isByte    )>final byte <field.name> = _in.get();
-< elseif( field.isShort   )>final short <field.name> = _in.getShort();
-< elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
-< elseif( field.isInt     )>final int <field.name> = _in.getInt();
-< elseif( field.isUint    )>final uint <field.name> = _in.getUInt();
-< elseif( field.isLong    )>final long <field.name> = _in.getLong();
-< elseif( field.isUlong   )>final ulong <field.name> = _in.getULong();
-< elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
-< elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
-< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
-< elseif( field.isEnum    )>final <field.userTypeName> <field.name> = <field.userTypeName>.values()[_in.get()];
-< elseif( field.isStruct  )>final <field.userTypeName> <field.name> = new <field.userTypeName>();
-<field.name>.get( _in );
-< endif>
-}>      _listener.<event.name>( <args( event.field )> );
+<events.(ifaceName):{eventOrRequest|
+   case <eventOrRequest.name; format="ID">:{
+      < if( eventOrRequest.arguments )><
+         eventOrRequest.arguments.field:{field|<byteBufferGet(field)>}>< 
+      else><
+         eventOrRequest.field:{field|<byteBufferGet(field)>}><
+      endif><
+      if( eventOrRequest.response )
+>      final <ifaceName><eventOrRequest.name; format="cap">Response response = new <ifaceName><eventOrRequest.name; format="cap">Response();
+      _listener.<eventOrRequest.name>( <args( eventOrRequest.arguments.field )>, response );
+      _out.clear();
+      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
+      _out.put( EVENT_<ifaceName; format="ID">_RESPONSES_<eventOrRequest.name; format="ID"> );
+      response.put( _out );
+      _out.flip();
+      _channel.send( _out, from );
+      System.err.printf( "SiteCentral.getInformations|response sent to %s\n", from );
+      < else
+>      _listener.<eventOrRequest.name>( <args( eventOrRequest.field )> );
+      < endif>
       return true;\}
 }>      default:
       System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
@@ -261,9 +306,9 @@ private boolean dispatch( <ifaceName>Event event ) throws IOException {
 }
 >>
 
-dispatcherImplementation( package, compName, ifaces, events, usedTypes, rawSize ) ::= <<
-package <package>.net;
-
+dispatcherImplementation( package, compName, ifaces, events, eventIDs, usedTypes, rawSize, respRawSize, requests ) ::= <<
+package <package>;
+//dispatcherImplementation
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -271,36 +316,118 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-import <package>.I<compName>;
-<usedTypes:{used|import <package>.<used>;
-}>
 public class <compName>Dispatcher {
 
    <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;
-}>   <ifaces.keys:{ifaceName|
-   <dispatcherImplOneInterface( compName, ifaceName )>
+}><ifaces.keys:{ifaceName|
+   <dispatcherImplOneInterface()>
 }>
-   private final ByteBuffer      _in = ByteBuffer.allocate( <rawSize> );
-   private final DatagramChannel _channel;
-   private final I<compName> _listener;
+   private final ByteBuffer      _in  = ByteBuffer.allocate( <rawSize> );
+< if( requests )
+>   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
+< endif>   private final DatagramChannel _channel;
+   private final <compName>Component _listener;
 
-   public <compName>Dispatcher( DatagramChannel channel, I<compName> listener ) {
+   public <compName>Dispatcher( DatagramChannel channel, <compName>Component listener ) {
       _channel  = channel;
       _listener = listener;
    }
 
    public boolean hasDispatched() throws IOException {
       _in.clear();
-      _channel.receive( _in );
+      final SocketAddress from = _channel.receive( _in );
       _in.flip();
       final byte intrfc = _in.get();
       final byte event  = _in.get();
-      System.err.printf( "%s.run|intrfc = %d, event = %d\n", getClass().getName(), intrfc, event );
+      System.err.printf( "%s.run|intrfc = %d, event = %d, %d byte(s) remaining in message\n",
+         getClass().getName(), intrfc, event, _in.remaining());
       switch( intrfc ) {
 <ifaces.keys:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">: return dispatch( <ifaceName>Event.valueOf( event ));
+      case INTRFC_<ifaceName; format="ID">: return dispatch( < if( requests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
 }>      }
       return false;
+   }
+}
+>>
+
+
+
+componentImplementation( package, component, responses, requires, instancesByName, instances, automaton ) ::= <<
+package <package>;
+//componentImplementation
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
+import java.nio.channels.DatagramChannel;
+
+public abstract class <component.name>Component implements Runnable<
+component.offers:          {o|, I<o.interface.name>}><
+responses.(component.name):{r|, I<r.interface.name>}> {
+
+< first(requires):{req|
+   <requires.(req):{rt|protected final <rt.interface.name> _<rt.interface.name; format="argument">;
+}>}>< if( automaton )>   protected final Automaton _automaton = new Automaton();
+< endif>   protected final <component.name>Dispatcher _dispatcher;
+
+   private DatagramChannel _channel;
+   private boolean         _running;
+
+   public <component.name>Component( String name ) throws IOException {
+      _running = false;
+< if( requires )>
+      InetSocketAddress < first(requires):{req|<
+      first( requires.(req) ):{rt|<rt.interface.name; format="argument">}><
+      rest ( requires.(req) ):{rt|, <rt.interface.name; format="argument">}>}>;
+< endif>
+< first(instances):{instance|
+      if( name.equals( "<instance.name>" )) {
+         _channel = DatagramChannel
+            .open     ( StandardProtocolFamily.INET )
+            .setOption( StandardSocketOptions.SO_REUSEADDR, true )
+            .bind     ( new InetSocketAddress( "<instance.address>", <instance.port> ));
+         <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
+            instancesByName.(req.toInstance.name).address>", <
+            instancesByName.(req.toInstance.name).port> );
+}>}>      < rest(instances):{instance|\}
+      else if( name.equals( "<instance.name>" )) {
+         _channel = DatagramChannel
+            .open     ( StandardProtocolFamily.INET )
+            .setOption( StandardSocketOptions.SO_REUSEADDR, true )
+            .bind     ( new InetSocketAddress( "<instance.address>", <instance.port> ));
+         <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
+            instancesByName.(req.toInstance.name).address>", <
+            instancesByName.(req.toInstance.name).port> );
+}>}>      }
+      else {
+         throw new IllegalArgumentException( "'" + name + "' isn't a valid name defined in XML application file!" );
+      }
+      < first(requires):{req|<
+      requires.(req):{rt|_<rt.interface.name; format="argument"> = new <
+        rt.interface.name>( _channel, <rt.interface.name; format="argument"> );
+}>}>      _dispatcher = new <component.name>Dispatcher( _channel, this );
+   }
+
+   protected abstract void afterDispatch() throws IOException;
+
+   protected void terminate() {
+      _running = false;
+   }
+
+   @Override
+   public final void run() {
+      _running = true;
+      while( _running ) {
+         try {
+            if( _dispatcher.hasDispatched()) {
+               afterDispatch();
+            }
+         }
+         catch( final IOException e ) {
+            e.printStackTrace();
+            terminate();
+         }
+      }
    }
 }
 >>
@@ -310,14 +437,19 @@ public class <compName>Dispatcher {
 automaton( package, automaton ) ::= <<
 package <package>;
 
-public class Automaton extends util.Automaton\<<automaton.stateType>, <automaton.eventType>\> {
+public class Automaton extends util.Automaton\<<automaton.stateEnum.name>, <automaton.eventEnum.name>\> {
 
    public Automaton() {
-      super( <automaton.stateType>.<automaton.initial> );
-      <automaton.transition:{transition|add( <automaton.stateType>.<transition.from>, <automaton.eventType>.<transition.event>, <automaton.stateType>.<transition.futur> );
+      super( <automaton.stateEnum.name>.<automaton.initial> );
+
+      <automaton.transition:{transition|add( <
+         automaton.stateEnum.name>.<transition.from>, <
+         automaton.eventEnum.name>.<transition.event>, <
+         automaton.stateEnum.name>.<transition.futur> );
 }>
-      <automaton.shortcut:{shortcut|add( <automaton.eventType>.<shortcut.event>, <automaton.stateType>.<shortcut.futur> );
-}>
-   }
+      <automaton.shortcut:{shortcut|add( <
+         automaton.eventEnum.name>.<shortcut.event>, <
+         automaton.stateEnum.name>.<shortcut.futur> );
+}>   }
 }
 >>

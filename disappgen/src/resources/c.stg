@@ -14,8 +14,8 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float <
   elseif( field.isDouble  )>double<
   elseif( field.isString  )>char  <
-  elseif( field.isEnum    )><field.userTypeName; format="cname"><
-  elseif( field.isStruct  )><field.userTypeName; format="cname"><
+  elseif( field.isEnum    )><field.userType.name; format="cname"><
+  elseif( field.isStruct  )><field.userType.name; format="cname"><
   endif>
 >>
 
@@ -25,8 +25,8 @@ signature( prefix, fields ) ::= <<
 <fields:{field|
 , < if( field.isBoolean )>bool<
 elseif( field.isString  )>const char *<
-elseif( field.isEnum    )><prefix>_<field.userTypeName; format="cname"><
-elseif( field.isStruct  )>const <prefix>_<field.userTypeName; format="cname"> *<
+elseif( field.isEnum    )><prefix>_<field.userType.name; format="cname"><
+elseif( field.isStruct  )>const <prefix>_<field.userType.name; format="cname"> *<
 else                     ><type(field)><
 endif                    > <field.name; format="cname">}>
 >>
@@ -37,6 +37,27 @@ args( fields ) ::= <<
 <fields:{field|, <
    if( field.isStruct  )>&<
    endif                ><field.name; format="cname">}>
+>>
+
+
+
+byteBufferPut( fields ) ::= <<
+<fields:{field|
+< if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <field.name; format="cname">, &This->out ), __FILE__, __LINE__ );
+< endif>
+}>
 >>
 
 
@@ -81,12 +102,21 @@ structHeader( prefix, struct ) ::= <<
 
 #include \<io/byte_buffer.h>
 
+<struct.field:{field|<
+if( field.isStruct )>
+#include \<<prefix>/<type(field)>.h><
+endif>}>
+
 typedef struct <prefix>_<struct.name; format="cname">_s {
-<struct.field:{field|
-   < if( field.isString )>char   <field.name; format="cname">[ <field.length> + 1 ];
-   < else                ><type(field)> <field.name; format="cname">;
-   < endif>
-}>} <prefix>_<struct.name; format="cname">;
+<struct.field:{field|<
+if( field.isString )>
+   char <field.name; format="cname">[ <field.length> + 1 ];<
+elseif( field.isStruct )>
+   <prefix>_<type(field)> <field.name; format="cname">;<
+else>
+   <type(field)> <field.name; format="cname">;<
+endif>}>
+} <prefix>_<struct.name; format="cname">;
 
 util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target );
 util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * source );
@@ -112,7 +142,7 @@ util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; fo
    < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
    < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
    < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userTypeName; format="cname">_put( This-><field.name; format="cname">, target ), __FILE__, __LINE__ );
+   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( &This-><field.name; format="cname">, target ), __FILE__, __LINE__ );
    < endif>
 }>   return UTIL_NO_ERROR;
 }
@@ -132,7 +162,7 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
    < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( source, This-><
          field.name; format="cname,strWidth">, sizeof( This-><field.name; format="cname,strWidth"> )), __FILE__, __LINE__ );
    < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userTypeName; format="cname">_get( This-><field.name; format="cname">, source ), __FILE__, __LINE__ );
+   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &This-><field.name; format="cname">, source ), __FILE__, __LINE__ );
    < endif>
 }>   return UTIL_NO_ERROR;
 }
@@ -142,76 +172,77 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
 
 requiredInterface( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
-
+//requiredInterface
 #include \<io/datagram_socket.h>
 
 <usedTypes:{type|#include \<<prefix>/<type; format="cname">.h>
 }>
+<iface.eventOrRequest:{eor|<if( eor.arguments )>
+#include \<<prefix>/<ifaceName; format="cname">_<eor.name; format="cname">_response.h>
+<endif>
+}>
 typedef struct <prefix>_<ifaceName; format="cname">_s {
-   SOCKET                socket;
-   struct sockaddr_in ** targets;
-   unsigned              targetCount;
-   byte                  raw[<rawSize>];
-   io_byte_buffer        out;
+   SOCKET             socket;
+   struct sockaddr_in target;
+   byte               raw[<rawSize>];
+   io_byte_buffer     out;
 } <prefix>_<ifaceName; format="cname">;
 
 util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"
-> * This, SOCKET socket, struct sockaddr_in ** targets, unsigned targetCount );
-<iface.event:{event|
-util_error <prefix>_<ifaceName; format="cname">_<event.name; format="cname">( <prefix>_<ifaceName; format="cname"
-    > * This<signature( prefix, event.field )> );
+> * This, SOCKET socket, struct sockaddr_in * target );
+<iface.eventOrRequest:{eor|
+util_error <prefix>_<ifaceName; format="cname">_<eor.name; format="cname">( <prefix>_<ifaceName; format="cname"
+    > * This<
+if( eor.arguments )><
+    signature( prefix, eor.arguments.field )><
+else><
+    signature( prefix, eor.field )><
+endif> );
 }>
 >>
 
 
 
 requiredImplementation( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+//requiredImplementation
 #include \<<prefix>/<iface.name; format="cname">.h>
 #include \<stdio.h>
 
 enum <prefix>_event_id {
-< first(iface.event):{event|
-   <prefix; format="upper">_<event.name; format="ID"> = 1,}>
-< rest(iface.event) :{event|
-   <prefix; format="upper">_<event.name; format="ID">,
+< first(iface.eventOrRequest):{eor|
+   <prefix; format="upper">_<eor.name; format="ID"> = 1,}>
+< rest(iface.eventOrRequest) :{eor|
+   <prefix; format="upper">_<eor.name; format="ID">,
 }>};
 
 static const byte <iface.name; format="ID">_ID = <ifaceID>;
 
 util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; format="cname"
-> * This, SOCKET socket, struct sockaddr_in ** targets, unsigned targetCount ) {
-   This->socket      = socket;
-   This->targets     = targets;
-   This->targetCount = targetCount;
+> * This, SOCKET socket, struct sockaddr_in * target ) {
+   This->socket = socket;
+   This->target = *target;
    return io_byte_buffer_wrap( &This->out, <rawSize>, This->raw );
 }
-<iface.event:{event|
+<iface.eventOrRequest:{eor|
 
 
-util_error <prefix>_<iface.name; format="cname">_<event.name; format="cname">( <prefix>_<iface.name; format="cname"
-   > * This<signature( prefix, event.field )> ) {
+util_error <prefix>_<iface.name; format="cname">_<eor.name; format="cname">( <prefix>_<iface.name; format="cname"
+   > * This<
+if( eor.arguments )><
+    signature( prefix, eor.arguments.field )><
+else><
+    signature( prefix, eor.field )><
+endif> ) {
    UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<event.name; format="ID"> ), __FILE__, __LINE__ );
-<event.field:{field|
-   < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userTypeName; format="cname">_put( <field.name; format="cname">, &This->out ), __FILE__, __LINE__ );
-   < endif>
-}>   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ), __FILE__, __LINE__ );
-   for( unsigned i = 0U; i \< This->targetCount; ++i ) {
-      UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, This->targets[i] ), __FILE__, __LINE__ );
-   \}
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<eor.name; format="ID"> ), __FILE__, __LINE__ );
+   < if( eor.arguments )><
+        byteBufferPut( eor.arguments.field )><
+     else><
+        byteBufferPut( eor.field )><
+     endif>
+   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, &This->target ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 \}
 }>
@@ -219,34 +250,14 @@ util_error <prefix>_<iface.name; format="cname">_<event.name; format="cname">( <
 
 
 
-offeredInterface( prefix, name, usedTypes, events ) ::= <<
-#pragma once
-
-#include \<string.h>
-#include \<types.h>
-
-<usedTypes:{used|
-
-#include \<<prefix>/<used; format="cname">.h>
-}>
-struct <prefix>_<name; format="cname">_s;
-typedef struct <prefix>_<name; format="cname">_s <prefix>_<name; format="cname">;
-
-<events:{event|
-util_error <prefix>_<name; format="cname">_<event.name; format="cname">( struct <prefix>_<name; format="cname">_s * This<
-signature( prefix, event.field )> );
-}>
->>
-
-
-
 dispatcherInterface( prefix, name, rawSize ) ::= <<
 #pragma once
-
-#include \<<prefix>/<name; format="cname">.h>
-
+//dispatcherInterface
 #include \<io/byte_buffer.h>
 #include \<io/datagram_socket.h>
+
+struct <prefix>_<name; format="cname">_s;
+typedef struct <prefix>_<name; format="cname">_s <prefix>_<name; format="cname">;
 
 typedef struct <prefix>_<name; format="cname">_dispatcher_s {
    SOCKET         socket;
@@ -255,17 +266,17 @@ typedef struct <prefix>_<name; format="cname">_dispatcher_s {
    <prefix>_<name; format="cname"> * listener;
 } <prefix>_<name; format="cname">_dispatcher;
 
-util_error <prefix>_<name; format="cname">_dispatcher_init(
-   <prefix>_<name; format="cname">_dispatcher * This,
-   SOCKET socket,
-   <prefix>_<name; format="cname"> *            listener );
-util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <prefix>_<name; format="cname">_dispatcher * This, bool * has_dispatched );
+util_error <prefix>_<name; format="cname">_dispatcher_init( <
+   prefix>_<name; format="cname">_dispatcher * This, SOCKET socket, <
+   prefix>_<name; format="cname"> * listener );
+util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <
+   prefix>_<name; format="cname">_dispatcher * This, bool * has_dispatched );
 >>
 
 
 
 dispatcherImplOneInterface( prefix, name, ifaceName ) ::= <<
-
+//dispatcherImplOneInterface
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
    <ifaceName; format="ID">_<event.name; format="ID"> = <i>,
@@ -289,8 +300,8 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isFloat   )>float <field.name; format="cname">;
       < elseif( field.isDouble  )>double <field.name; format="cname">;
       < elseif( field.isString  )>char <field.name; format="cname">[ <field.length> + 1 ];
-      < elseif( field.isEnum    )><prefix>_<field.userTypeName; format="cname"> <field.name; format="cname">;
-      < elseif( field.isStruct  )><prefix>_<field.userTypeName; format="cname"> <field.name; format="cname">;
+      < elseif( field.isEnum    )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+      < elseif( field.isStruct  )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
       < endif>
       <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
@@ -304,7 +315,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
       < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )), __FILE__, __LINE__ );                            
       < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userTypeName; format="cname">_get( &<field.name; format="cname">, &This->in ), __FILE__, __LINE__ );
+      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ), __FILE__, __LINE__ );
       < endif>
 }>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ), __FILE__, __LINE__ );
       *has_dispatched = true;
@@ -322,7 +333,10 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 >>
 
 dispatcherImplementation( prefix, compName, ifaces, events, usedTypes, rawSize ) ::= <<
+//dispatcherImplementation
 #include \<<prefix>/<compName; format="cname">_dispatcher.h>
+#include \<<prefix>/<compName; format="cname">.h>
+
 #include \<stdio.h>
 
 typedef enum <prefix>_<compName; format="cname">_dispatcher_interface_e {
@@ -366,6 +380,111 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
 
 
 
+componentInterface( prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests ) ::= <<
+#pragma once
+//componentInterface
+<component.requires:{required|#include \<<prefix>/<required.interface.name; format="cname">.h>
+}>
+<responses.(component.name):{r|#include \<<prefix>/<r.interface.name; format="cname">.h>
+}>
+< if( component.automaton )
+>#include \<util/automaton.h>
+<endif>
+<usedTypes:{used|
+#include \<<prefix>/<used; format="cname">.h>
+}>
+#include \<<prefix>/<component.name; format="cname">_dispatcher.h>
+
+typedef struct <prefix>_<component.name; format="cname">_s {
+   SOCKET         socket;
+   bool           running;
+< if( component.automaton )>   util_automaton automaton;
+< endif>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
+< first(requires):{req|<requires.(req):{rt|
+   <prefix>_<rt.interface.name; format="cname"> <rt.interface.name; format="cname">;
+}>}>   void * user_context;
+} <prefix>_<component.name; format="cname">;
+
+util_error <prefix>_<component.name; format="cname">_init     ( <prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
+util_error <prefix>_<component.name; format="cname">_run      ( <prefix>_<component.name; format="cname"> * This );
+util_error <prefix>_<component.name; format="cname">_terminate( <prefix>_<component.name; format="cname"> * This );
+<eventsOrRequests:{eor|
+util_error <prefix>_<component.name; format="cname">_<eor.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
+if( eor.arguments )><
+    signature( prefix, eor.arguments.field )>, <ifaceName; format="cname">_<eor.name; format="cname">_response * response<
+else><
+    signature( prefix, eor.field )><
+endif> );
+}>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
+>>
+
+
+
+componentImplementation( prefix, component, responses, requires, instancesByName, instances, automaton ) ::= <<
+// componentImplementation
+#include \<<prefix>/<component.name; format="cname">.h>
+< if( component.automaton )>#include \<dab/automaton.h>
+#include \<<prefix>/<component.automaton.eventEnum.name; format="cname">.h>
+< endif>
+#include \<stdio.h>
+#include \<stdlib.h>
+#include \<string.h>
+
+util_error <prefix>_<component.name; format="cname">_init( <
+   prefix>_<component.name; format="cname"> * This, const char * name, void * user_context ) {
+   memset( This, 0, sizeof( <prefix>_<component.name; format="cname"> ));
+   This->socket = socket( AF_INET, SOCK_DGRAM, 0 );
+   if( This->socket == INVALID_SOCKET ) {
+      return UTIL_OS_ERROR;
+   }
+   This->running      = false;
+   This->user_context = user_context;
+   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton ), __FILE__, __LINE__ );
+< if( requires )>
+   struct sockaddr_in < first(requires):{req|<
+      first( requires.(req) ):{rt|<rt.interface.name; format="cname">}><
+      rest ( requires.(req) ):{rt|, <rt.interface.name; format="cname">}>}>;
+< endif>
+< first(instances):{instance|
+   if( 0 ==  strcmp( name, "<instance.name>" )) {
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ), __FILE__, __LINE__ );
+      <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
+         instancesByName.(req.toInstance.name).address>", <
+         instancesByName.(req.toInstance.name).port>, &<
+         req.interface.name; format="cname"> ), __FILE__, __LINE__ );
+}>}>< rest(instances):{instance|
+  \}
+  else if( 0 ==  strcmp( name, "<instance.name>" )) {
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ), __FILE__, __LINE__ );
+      <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
+         instancesByName.(req.toInstance.name).address>", <
+         instancesByName.(req.toInstance.name).port>, &<
+         req.interface.name; format="cname"> ), __FILE__, __LINE__ );
+}>}>   }
+   else {
+      return UTIL_NOT_APPLICABLE;
+   }
+   < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
+      prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ), __FILE__, __LINE__ );
+}>}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.name; format="cname"> * This ) {
+   This->running = true;
+   while( This->running ) {
+      bool has_dispatched;
+      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_dispatch( &This->dispatcher, &has_dispatched ), __FILE__, __LINE__ );
+      if( has_dispatched ) {
+         UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_after_dispatch( This ), __FILE__, __LINE__ );
+      }
+   }
+   return UTIL_NO_ERROR;
+}
+>>
+
+
+
 automatonHeader( prefix, automaton ) ::= <<
 #pragma once
 
@@ -378,27 +497,27 @@ util_error <prefix>_automaton_init( util_automaton * automaton );
 
 automatonBody( prefix, automaton ) ::= <<
 #include \<<prefix>/automaton.h>
-#include \<<prefix>/<automaton.stateType; format="cname">.h>
-#include \<<prefix>/<automaton.eventType; format="cname">.h>
+#include \<<prefix>/<automaton.stateEnum.name; format="cname">.h>
+#include \<<prefix>/<automaton.eventEnum.name; format="cname">.h>
 
 static util_transition transitions[] = {
    <automaton.transition:{transition|{ <
-      prefix; format="ID">_<automaton.stateType; format="ID">_<transition.from ; format="ID">, <
-      prefix; format="ID">_<automaton.eventType; format="ID">_<transition.event; format="ID">, <
-      prefix; format="ID">_<automaton.stateType; format="ID">_<transition.futur; format="ID"> \},
+      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
+      prefix; format="ID">_<automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
+      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
 }>
 };
 
 static util_shortcut shortcuts[] = {
    <automaton.shortcut:{shortcut|{ <
-      prefix; format="ID">_<automaton.eventType; format="ID">_<shortcut.event; format="ID">, <
-      prefix; format="ID">_<automaton.stateType; format="ID">_<shortcut.futur; format="ID"> \},
+      prefix; format="ID">_<automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
+      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
 }>
 };
 
 util_error <prefix>_automaton_init( util_automaton * automaton ) {
    return util_automaton_init(
-      automaton, <prefix; format="ID">_<automaton.stateType; format="ID">_<automaton.initial; format="ID">,
+      automaton, <prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<automaton.initial; format="ID">,
       transitions, sizeof( transitions )/sizeof( transitions[0] ),
       shortcuts  , sizeof( shortcuts   )/sizeof( shortcuts  [0] ));
 }

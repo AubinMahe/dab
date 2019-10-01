@@ -2,6 +2,13 @@ package udt;
 
 class Carte {
 
+   final Date    _peremption = new Date();
+   /* */ boolean _isValid;
+   /* */ String  _id;
+   /* */ String  _code;
+   /* */ String  _compte;
+   /* */ byte    _nbEssais;
+
    Carte() {
       _isValid = false;
    }
@@ -10,8 +17,16 @@ class Carte {
       _id       = carteID;
       _code     = code;
       _nbEssais = nbEssais;
-      _isValid  = true;
       _peremption.set( month, year );
+      _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&& _peremption.isValid() ;
+   }
+
+   void set( dab.Carte carte ) {
+      _id       = carte.id;
+      _code     = carte.code;
+      _nbEssais = carte.nbEssais;
+      _peremption.set( carte.month, carte.year );
+      _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&& _peremption.isValid() ;
    }
 
    void incrementeNbEssais() {
@@ -35,11 +50,4 @@ class Carte {
    }
 
    byte getNbEssais() { return _nbEssais; }
-
-   final Date    _peremption = new Date();
-   /* */ boolean _isValid;
-   /* */ String  _id;
-   /* */ String  _code;
-   /* */ String  _compte;
-   /* */ byte    _nbEssais;
 }

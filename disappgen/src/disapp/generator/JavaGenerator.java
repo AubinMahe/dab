@@ -1,7 +1,6 @@
 package disapp.generator;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -11,10 +10,14 @@ import org.stringtemplate.v4.ST;
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
-import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
+import disapp.generator.model.ImplementationType;
+import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
-import disapp.generator.model.InterfaceUsageType;
+import disapp.generator.model.OfferedInterfaceUsageType;
+import disapp.generator.model.RequestType;
+import disapp.generator.model.RequiredInterfaceUsageType;
+import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
 
 public class JavaGenerator extends BaseGenerator {
@@ -27,9 +30,9 @@ public class JavaGenerator extends BaseGenerator {
    protected void generateEnum( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
       final ST              tmpl = _group.getInstanceOf( "/enum" );
-      tmpl.add( "package", _package );
-      tmpl.add( "enum"   , enm      );
-      write( "", name + ".java", tmpl );
+      tmpl.add( "package", _moduleName );
+      tmpl.add( "enum"   , enm );
+      write( name + ".java", tmpl );
    }
 
    @Override
@@ -37,101 +40,121 @@ public class JavaGenerator extends BaseGenerator {
       final StructType      struct = _model.getStruct( name );
       final List<FieldType> fields = struct.getField();
       final ST              tmpl   = _group.getInstanceOf( "/struct" );
-      tmpl.add( "package", _package );
-      tmpl.add( "struct" , struct   );
+      tmpl.add( "package", _moduleName );
+      tmpl.add( "struct" , struct );
       setRendererFieldsMaxWidth( fields );
-      write( "", name + ".java", tmpl );
+      write( name + ".java", tmpl );
    }
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
-         final String            ifaceName  = required.getInterface();
-         final InterfaceType     iface      = _model.getInterface( ifaceName );
+      for( final RequiredInterfaceUsageType required : component.getRequires()) {
+         final InterfaceType     iface      = (InterfaceType)required.getInterface();
+         final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferCapacity( iface );
+         final int               rawSize    = _model.getBufferOutCapacity( required );
+         _model.getInterface( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
-         tmpl.add( "package"  , _package   );
-         tmpl.add( "usedTypes", usedTypes  );
+         tmpl.add( "package"  , _moduleName   );
          tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "rawSize"  , rawSize    );
-         tmpl.add( "iface"    , iface      );
-         write( "", 'I' + required.getInterface() + ".java", tmpl );
+         tmpl.add( "usedTypes", usedTypes );
+         tmpl.add( "rawSize"  , rawSize );
+         tmpl.add( "iface"    , iface );
+         write( 'I' + ifaceName + ".java", tmpl );
       }
    }
 
    private void generateRequiredImplementations( ComponentType component ) throws IOException {
-      for( final InterfaceUsageType required : _model.getRequiresOf( component )) {
-         final String            ifaceName  = required.getInterface();
-         final InterfaceType     iface      = _model.getInterface( ifaceName );
+      for( final RequiredInterfaceUsageType required : component.getRequires()) {
+         final InterfaceType     iface      = (InterfaceType)required.getInterface();
+         final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferCapacity( iface );
+         final int               rawSize    = _model.getBufferOutCapacity( required );
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
-         tmpl.add( "package"  , _package  );
+         tmpl.add( "package"  , _moduleName  );
          tmpl.add( "usedTypes", usedTypes );
          tmpl.add( "ifaceName", ifaceName );
          tmpl.add( "rawSize"  , rawSize   );
          tmpl.add( "iface"    , iface     );
          tmpl.add( "ifaceID"  , ifaceID   );
          setRendererFieldsMaxWidth( iface );
-         write( "net", ifaceName + ".java", tmpl );
+         write( ifaceName + ".java", tmpl );
       }
    }
 
    private void generateOfferedInterfaces( ComponentType component ) throws IOException {
-      final String                   compName   = component.getName();
-      final List<InterfaceUsageType> allOffered = _model.getOffersOf( component );
-      final SortedSet<String>        usedTypes  = _model.getUsedTypesBy( allOffered );
-      final List<EventType>          events     = _model.getEventsOf( allOffered );
-      final ST                       tmpl       = _group.getInstanceOf( "/offeredInterface" );
-      tmpl.add( "package"  , _package  );
-      tmpl.add( "name"     , compName  );
-      tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "events"   , events    );
-      write( "", 'I' + component.getName() + ".java", tmpl );
-   }
-
-   private void generateDispatcherImplementation( ComponentType component, int rawSize ) throws IOException {
-      final String                       compName     = component.getName();
-      final List<InterfaceUsageType>     ifaces       = _model.getOffersOf( component );
-      final Map<String, Integer>         interfaceIDs = _model.getInterfaceIDs( ifaces );
-      final Map<String, List<EventType>> events       = _model.getEventsMapOf ( ifaces );
-      final SortedSet<String>            usedTypes    = _model.getUsedTypesBy ( ifaces );
-      final ST                           tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "package"  , _package     );
-      tmpl.add( "compName" , compName     );
-      tmpl.add( "ifaces"   , interfaceIDs );
-      tmpl.add( "events"   , events       );
-      tmpl.add( "usedTypes", usedTypes    );
-      tmpl.add( "rawSize"  , rawSize      );
-      setRendererInterfaceMaxWidth( "width", ifaces );
-      write( "net", component.getName() + "Dispatcher.java", tmpl );
-   }
-
-   private void generateAutomaton( AutomatonType automaton ) throws IOException {
-      if( automaton != null ) {
-         final ST tmpl = _group.getInstanceOf( "/automaton" );
-         tmpl.add( "package"  , _package  );
-         tmpl.add( "automaton", automaton );
-         write( "", "Automaton.java", tmpl );
+      for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+         final InterfaceType     iface            = (InterfaceType)offered.getInterface();
+         final String            ifaceName        = iface.getName();
+         final SortedSet<String> usedTypes        = _model.getUsedTypesBy( ifaceName );
+         final List<Object>      eventsOrRequests = _model.getEventsOrRequests().get( ifaceName );
+         final ST                tmpl             = _group.getInstanceOf( "/offeredInterface" );
+         tmpl.add( "package"         , _moduleName );
+         tmpl.add( "name"            , ifaceName );
+         tmpl.add( "usedTypes"       , usedTypes );
+         tmpl.add( "eventsOrRequests", eventsOrRequests );
+         write( 'I' + ifaceName + ".java", tmpl );
       }
    }
 
-   void generateComponent( ComponentType component, String srcDir, String moduleName ) throws IOException {
-      _genDir  = srcDir;
-      _package = moduleName;
-      final List<InterfaceUsageType> offers        = _model.getOffersOf( component );
-      final List<InterfaceUsageType> requires      = _model.getRequiresOf( component );
-      final int                      offersRawSize = _model.getBufferCapacity( offers );
-      final List<String>             generated     = new LinkedList<>();
-      final AutomatonType            automaton     = component.getAutomaton();
-      generateTypesUsedBy             ( offers  , generated );
-      generateTypesUsedBy             ( requires, generated );
-      generateTypesUsedBy             ( component.getAutomaton(), generated );
+   private void generateDispatcherImplementation( ComponentType component ) throws IOException {
+      final String                          compName    = component.getName();
+      final List<OfferedInterfaceUsageType> offers      = component.getOffers();
+      final Map<String, Integer>            ifaces      = _model.getInterfaceIDs( offers );
+      final Map<String, Map<String, Byte>>  eventIDs    = _model.getEventIDs();
+      final Map<String, List<Object>>       events      = _model.getOfferedEventsOrRequests( component );
+      final SortedSet<String>               usedTypes   = _model.getUsedTypesBy( offers );
+      final Map<String, List<RequestType>>  requests    = Model.getRequestMap( events );
+      final int                             rawSize     = _model.getBufferInCapacity( component );
+      final int                             respRawSize = _model.getBufferResponseCapacity( events );
+      final ST                              tmpl        = _group.getInstanceOf( "/dispatcherImplementation" );
+      tmpl.add( "package"    , _moduleName );
+      tmpl.add( "compName"   , compName );
+      tmpl.add( "ifaces"     , ifaces );
+      tmpl.add( "events"     , events );
+      tmpl.add( "eventIDs"   , eventIDs );
+      tmpl.add( "usedTypes"  , usedTypes );
+      tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "respRawSize", respRawSize );
+      tmpl.add( "requests"   , requests );
+      setRendererInterfaceMaxWidth( "width", offers );
+      write( component.getName() + "Dispatcher.java", tmpl );
+   }
+
+   private void generateComponentImplementation( ComponentType component ) throws IOException {
+      final List<InstanceType>              instances       = _model.getInstancesOf( component );
+      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
+      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final AutomatonType                   automaton       = component.getAutomaton();
+      final ST                              tmpl            = _group.getInstanceOf( "/componentImplementation" );
+      tmpl.add( "package"        , _moduleName );
+      tmpl.add( "component"      , component );
+      tmpl.add( "requires"       , requires );
+      tmpl.add( "instancesByName", instancesByName );
+      tmpl.add( "instances"      , instances );
+      tmpl.add( "automaton"      , automaton );
+      write( component.getName() + "Component.java", tmpl );
+   }
+
+   private void generateAutomaton( ComponentType component ) throws IOException {
+      final AutomatonType automaton = component.getAutomaton();
+      if( automaton != null ) {
+         final ST tmpl = _group.getInstanceOf( "/automaton" );
+         tmpl.add( "package"  , _moduleName );
+         tmpl.add( "automaton", automaton );
+         write( "Automaton.java", tmpl );
+      }
+   }
+
+   void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
+      _genDir     = implementation.getSrcDir();
+      _moduleName = implementation.getModuleName();
+      generateTypesUsedBy             ( component );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterfaces       ( component );
-      generateDispatcherImplementation( component, offersRawSize );
-      generateAutomaton               ( automaton );
+      generateDispatcherImplementation( component );
+      generateComponentImplementation ( component );
+      generateAutomaton               ( component );
    }
 }

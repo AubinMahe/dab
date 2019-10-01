@@ -1,20 +1,12 @@
 package dab.ui;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
-import java.nio.channels.DatagramChannel;
 import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import dab.Etat;
 import dab.IIHM;
-import dab.IUniteDeTraitement;
-import dab.net.IHMDispatcher;
-import dab.net.UniteDeTraitement;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -34,12 +26,10 @@ import javafx.stage.Stage;
  */
 public class Controller extends Thread implements IIHM {
 
-   private DatagramChannel    _channel;
-   private IUniteDeTraitement _udt;
-   private IHMDispatcher      _dispatcher;
-   private Etat               _etat   = Etat.HORS_SERVICE;
-   private String             _text   = "";
-   private String             _saisie = "";
+   private Distributeur _component;
+   private Etat         _etat   = Etat.HORS_SERVICE;
+   private String       _text   = "";
+   private String       _saisie = "";
 
    @FXML private Label     _status;
    @FXML private Pane      _left;
@@ -66,7 +56,7 @@ public class Controller extends Thread implements IIHM {
          _status.setText( "DAB en service" );
       }
       switch( etat ) {
-      case AUCUN:
+      default:
          System.err.printf( "Etat DAB inattendu : %s\n", etat );
          //$FALL-THROUGH$
       case HORS_SERVICE:
@@ -95,14 +85,14 @@ public class Controller extends Thread implements IIHM {
       case SAISIE_MONTANT:
          setScreenText( "Veuillez entrer le montant du retrait : " );
       break;
-      case RETRAIT_CARTE:
+      case RETRAIT_CARTE_BILLETS:
          setScreenText( "Veuillez prendre la carte pour obtenir les billets..." );
          break;
-      case RETRAIT_CARTE_ILLISIBLE:
-         setScreenText( "Carte illisible, veuillez la reprendre..." );
+      case RETRAIT_CARTE_SOLDE_CAISSE:
+         setScreenText( "Solde caisse insuffisant, veuillez reprendre votre carte..." );
          break;
-      case RETRAIT_CARTE_SOLDE:
-         setScreenText( "Solde insuffisant,veuillez reprendre votre carte..." );
+      case RETRAIT_CARTE_SOLDE_COMPTE:
+         setScreenText( "Solde compte insuffisant, veuillez reprendre votre carte..." );
          break;
       case RETRAIT_BILLETS:
          setScreenText( "Veuillez prendre les billets..." );
@@ -111,7 +101,10 @@ public class Controller extends Thread implements IIHM {
       _maintenanceIHM.setVisible( maintenance );
       _left          .setDisable( maintenance );
       _right         .setDisable( maintenance );
-      if( etat == Etat.RETRAIT_CARTE ) {
+      if(  ( etat == Etat.RETRAIT_CARTE_BILLETS      )
+         ||( etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
+         ||( etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ))
+      {
          _etatDuDistributeur.setText( "Fermé" );
          _prendreLaCarte   .setVisible( true );
          _prendreLesBillets.setVisible( false );
@@ -162,47 +155,25 @@ public class Controller extends Thread implements IIHM {
       ((Stage)_status.getScene().getWindow()).close();
    }
 
-   private void done( Stage stage ) {
+   private void done( Stage stage, String instanceName ) {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
-      prefs.putDouble( "x", stage.getX());
-      prefs.putDouble( "y", stage.getY());
-      try {
-         _udt.shutdown();
-         _channel.close();
-      }
-      catch( final IOException e ) {
-         e.printStackTrace();
-      }
+      prefs.putDouble( instanceName + "-x", stage.getX());
+      prefs.putDouble( instanceName + "-y", stage.getY());
+      _component.done();
    }
 
-   public void init( Stage stage, int dabPort, String udtAddress, int udtPort )
+   public void init( Stage stage, String instanceName )
       throws BackingStoreException, IOException
    {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
-         stage.setX( prefs.getDouble( "x", -4.0 ));
-         stage.setY( prefs.getDouble( "y", -4.0 ));
+         stage.setX( prefs.getDouble( instanceName + "-x", -4.0 ));
+         stage.setY( prefs.getDouble( instanceName + "-y", -4.0 ));
       }
-      stage.setOnCloseRequest( e -> done( stage ));
-      _channel = DatagramChannel.open( StandardProtocolFamily.INET )
-         .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-         .bind     ( new InetSocketAddress( dabPort ));
-      _dispatcher = new IHMDispatcher( _channel, new IIHM() {
-         @Override public void shutdown() throws IOException {
-            Platform.runLater(() -> Controller.this.shutdown()); }
-         @Override public void setStatus(Etat etat ) throws IOException {
-            Platform.runLater(() -> Controller.this.setStatus( etat )); }
-         @Override public void setSoldeCaisse( double solde ) throws IOException {
-            Platform.runLater(() -> Controller.this.setSoldeCaisse( solde )); }
-         @Override public void confisquerLaCarte() throws IOException {
-            Platform.runLater(() -> Controller.this.confisquerLaCarte()); }
-         @Override public void ejecterLaCarte() throws IOException {
-            Platform.runLater(() -> Controller.this.ejecterLaCarte()); }
-      });
-      _udt = new UniteDeTraitement( _channel, new InetSocketAddress( udtAddress, udtPort ));
+      stage.setOnCloseRequest( e -> done( stage, instanceName ));
+      _component = new Distributeur( instanceName, this );
       setDaemon( true );
       start();
-      _udt.maintenance( true );
    }
 
    @FXML
@@ -223,20 +194,15 @@ public class Controller extends Thread implements IIHM {
             }
             break;
          case "Entrer":
-            try {
-               final boolean saisieCode =
-                  ( _etat == Etat.SAISIE_CODE_1 )||
-                  ( _etat == Etat.SAISIE_CODE_2 )||
-                  ( _etat == Etat.SAISIE_CODE_3 );
-               if( saisieCode ) {
-                  _udt.codeSaisi( _saisie );
-               }
-               else if( _etat == Etat.SAISIE_MONTANT ) {
-                  _udt.montantSaisi( Double.parseDouble( _saisie ));
-               }
+            final boolean saisieCode =
+               ( _etat == Etat.SAISIE_CODE_1 )||
+               ( _etat == Etat.SAISIE_CODE_2 )||
+               ( _etat == Etat.SAISIE_CODE_3 );
+            if( saisieCode ) {
+               _component.codeSaisi( _saisie );
             }
-            catch( final IOException e ){
-               e.printStackTrace();
+            else if( _etat == Etat.SAISIE_MONTANT ) {
+               _component.montantSaisi( Double.parseDouble( _saisie ));
             }
             _saisie = "";
             break;
@@ -247,74 +213,31 @@ public class Controller extends Thread implements IIHM {
 
    @FXML
    private void carteInseree() {
-      try {
-         _udt.carteInseree( _carteID.getText());
-      }
-      catch( final IOException e ) {
-         e.printStackTrace();
-      }
+      _component.carteInseree( _carteID.getText());
    }
 
    @FXML
    private void maintenance() {
-      final boolean maintenance = _maintenance.isSelected();
-      try {
-         _udt.maintenance( maintenance );
-      }
-      catch( final IOException e ){
-         e.printStackTrace();
-      }
+      _component.maintenance( _maintenance.isSelected());
    }
 
    @FXML
    private void rechargerLaCaisse() {
-      try {
-         _udt.rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
+      _component.rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
    }
 
    @FXML
    private void prendreLaCarte() {
-      try {
-         _udt.carteRetiree();
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
+      _component.carteRetiree();
    }
 
    @FXML
    private void prendreLesBillets() {
-      try {
-         _udt.billetsRetires();
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
+      _component.billetsRetires();
    }
 
    @FXML
    private void anomalie() {
-      try {
-         _udt.anomalie( _anomalie.isSelected());
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   @Override
-   public void run() {
-      try {
-         for(;;) {
-            _dispatcher.hasDispatched();
-         }
-      }
-      catch( final Throwable t ) {
-         t.printStackTrace();
-      }
+      _component.anomalie( _anomalie.isSelected());
    }
 }

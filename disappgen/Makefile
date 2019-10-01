@@ -3,6 +3,7 @@
 all: $(SRCS)
 
 $(SRCS): ../distributed-application.xsd
+	@rm -fr src-gen
 	@mkdir -p src-gen
 	xjc -d src-gen -p disapp.generator.model -readOnly $<
 

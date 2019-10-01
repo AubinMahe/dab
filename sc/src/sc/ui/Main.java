@@ -1,6 +1,5 @@
 package sc.ui;
 
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import javafx.application.Application;
@@ -14,37 +13,24 @@ public class Main extends Application {
 
    @Override
    public void start( Stage stage ) throws Exception {
-      final Map<String, String> named = getParameters().getNamed();
-      boolean nan = false;
-      try {
-         Integer.parseInt( named.get( "sc-port" ));
-         Integer.parseInt( named.get( "udt-port" ));
-      }
-      catch( final Throwable t ) {
-         nan = true;
-      }
-      if(( ! named.containsKey( "udt-address" ))|| nan ) {
-         stage.setScene( new Scene( new BorderPane( new Label(
-            "Arguments obligatoires :\n"
-               + "\t--sc-port=<this port>\n"
-               + "\t--udt-address=<address of UniteDeTraitement's host>\n"
-               + "\t--udt-port=<port of UniteDeTraitement>\n"
-         )), 420, 200 ));
+      final String name = getParameters().getNamed().get( "name" );
+      if( name == null ) {
+         stage.setScene(
+            new Scene( new BorderPane( new Label(
+               "Mandatory argument :\n\t--name=<instance name as defined in XML application file>\n" )),
+            600, 200 ));
          stage.setTitle( getClass().getPackageName() + " usage" );
          stage.show();
          return;
       }
-      stage.setTitle( "Site Central (SC)" );
+      stage.setTitle( "Site Central (" + name + ")" );
       final Class<? extends Main> clazz = getClass();
       final FXMLLoader loader =
-         new FXMLLoader(
-            clazz.getResource( "ui.fxml" ),
-            ResourceBundle.getBundle( clazz.getPackageName() + "/messages" ));
+         new FXMLLoader( clazz.getResource( "ui.fxml" ), ResourceBundle.getBundle( clazz.getPackageName() + "/messages" ));
       stage.setScene( new Scene( loader.load()));
+      stage.setTitle( "Site Central '" + name + "'" );
       final Controller ctrl = loader.getController();
-      final int scPort  = Integer.parseInt( named.get( "sc-port" ));
-      final int udtPort = Integer.parseInt( named.get( "udt-port" ));
-      ctrl.init( stage, scPort, named.get( "udt-address" ), udtPort );
+      ctrl.init( stage, name );
       stage.show();
    }
 

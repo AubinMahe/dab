@@ -3,45 +3,6 @@
    xsi:noNamespaceSchemaLocation="distributed-application.xsd"
    name="DAB">
 
-   <enumeration name="Etat" type="byte">
-      <literal name="AUCUN" />
-      <literal name="MAINTENANCE" />
-      <literal name="HORS_SERVICE" />
-      <literal name="EN_SERVICE" />
-      <literal name="LECTURE_CARTE" />
-      <literal name="SAISIE_CODE_1" />
-      <literal name="SAISIE_CODE_2" />
-      <literal name="SAISIE_CODE_3" />
-      <literal name="SAISIE_MONTANT" />
-      <literal name="RETRAIT_CARTE" />
-      <literal name="RETRAIT_BILLETS" />
-      <literal name="RETRAIT_CARTE_ILLISIBLE" />
-      <literal name="RETRAIT_CARTE_SOLDE" />
-   </enumeration>
-
-   <enumeration name="Evenement" type="byte">
-      <literal name="MAINTENANCE_ON" />
-      <literal name="MAINTENANCE_OFF" />
-      <literal name="SOLDE_CAISSE_INSUFFISANT" />
-      <literal name="ANOMALIE_ON" />
-      <literal name="ANOMALIE_OFF" />
-      <literal name="CARTE_INSEREE" />
-      <literal name="CARTE_LUE_0" />
-      <literal name="CARTE_LUE_1" />
-      <literal name="CARTE_LUE_2" />
-      <literal name="CARTE_INVALIDE" />
-      <literal name="BON_CODE" />
-      <literal name="MAUVAIS_CODE_1" />
-      <literal name="MAUVAIS_CODE_2" />
-      <literal name="MAUVAIS_CODE_3" />
-      <literal name="CARTE_CONFISQUEE" />
-      <literal name="SOLDE_INSUFFISANT" />
-      <literal name="MONTANT_OK" />
-      <literal name="CARTE_RETIREE" />
-      <literal name="BILLETS_RETIRES" />
-      <literal name="TERMINATE" />
-   </enumeration>
-
    <struct name="Carte">
       <field name="id"       type="string" length="4" description="Identifiant de la carte" />
       <field name="code"     type="string" length="4" description="Identifiant de la carte" />
@@ -58,7 +19,7 @@
 
    <interface name="IHM">
       <event name="setStatus">
-         <field name="etat" type="enum" userTypeName="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+         <field name="etat" type="enum" userType="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
       </event>
       <event name="setSoldeCaisse">
          <field name="solde" type="double"  description="Montant de la caisse en €" />
@@ -79,8 +40,7 @@
          <field name="anomalie"    type="boolean" description="Anomalie active (true) ou inactive (false)" />
       </event>
       <event name="carteInseree">
-         <field name="carteID"     type="string"  length="4"
-            description="Identifiant de la carte insérée par l'utilisateur final" />
+         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
       </event>
       <event name="codeSaisi">
          <field name="code"        type="string"  length="4" description="Code de la carte" />
@@ -93,17 +53,16 @@
       <event name="shutdown" />
    </interface>
 
-   <interface name="LecteurDeCarte">
-      <event name="carteLue">
-         <field name="carte"  type="struct" userTypeName="Carte"  description="Données de carte retournées par le Site central" />
-         <field name="compte" type="struct" userTypeName="Compte" description="Données de compte retournées par le Site central" />
-      </event>
-   </interface>
-
    <interface name="SiteCentral">
-      <event name="getInformations">
-         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
-      </event>
+      <request name="getInformations">
+         <arguments>
+            <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
+         </arguments>
+         <response>
+            <field name="carte"  type="struct" userType="Carte" description="Données de la carte" />
+            <field name="compte" type="struct" userType="Compte" description="Données du compte" />
+         </response>
+      </request>
       <event name="incrNbEssais">
          <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
       </event>
@@ -114,54 +73,74 @@
       <event name="shutdown" />
    </interface>
 
-   <component name="IHM">
+   <component name="Distributeur">
       <offers   interface="IHM" />
       <requires interface="UniteDeTraitement" />
-      <implementation language="Java" src-dir="dab/src-gen"      module-name="dab" />
+      <implementation language="Java" src-dir="dab/src-gen" module-name="dab" />
    </component>
 
-   <component name="UniteDeTraitement">
+   <component name="Controleur">
       <offers   interface="UniteDeTraitement" />
-      <offers   interface="LecteurDeCarte" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
       <implementation language="Java" src-dir="udt-java/src-gen" module-name="dab" />
       <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="dab" />
       <implementation language="C"    src-dir="udt-c/src-gen"    module-name="dab" />
-      <automaton state-type="Etat" event-type="Evenement" initial="AUCUN">
-         <transition from="AUCUN"               event="MAINTENANCE_ON"           futur="MAINTENANCE" />
-         <transition from="MAINTENANCE"         event="MAINTENANCE_OFF"          futur="EN_SERVICE" />
-         <transition from="MAINTENANCE"         event="SOLDE_CAISSE_INSUFFISANT" futur="MAINTENANCE" />
-         <transition from="EN_SERVICE "         event="MAINTENANCE_ON"           futur="MAINTENANCE" />
-         <transition from="HORS_SERVICE"        event="ANOMALIE_OFF"             futur="MAINTENANCE" />
-         <transition from="HORS_SERVICE"        event="MAINTENANCE_ON"           futur="MAINTENANCE" />
-         <transition from="EN_SERVICE"          event="SOLDE_CAISSE_INSUFFISANT" futur="HORS_SERVICE" />
-         <transition from="EN_SERVICE"          event="CARTE_INSEREE"            futur="LECTURE_CARTE" />
-         <transition from="LECTURE_CARTE"       event="CARTE_LUE_0"              futur="SAISIE_CODE_1" />
-         <transition from="LECTURE_CARTE"       event="CARTE_LUE_1"              futur="SAISIE_CODE_2" />
-         <transition from="LECTURE_CARTE"       event="CARTE_LUE_2"              futur="SAISIE_CODE_3" />
-         <transition from="LECTURE_CARTE"       event="CARTE_INVALIDE"           futur="EN_SERVICE" />
-         <transition from="LECTURE_CARTE"       event="CARTE_CONFISQUEE"         futur="EN_SERVICE" />
-         <transition from="SAISIE_CODE_1"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
-         <transition from="SAISIE_CODE_1"       event="MAUVAIS_CODE_1"           futur="SAISIE_CODE_2" />
-         <transition from="SAISIE_CODE_2"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
-         <transition from="SAISIE_CODE_2"       event="MAUVAIS_CODE_2"           futur="SAISIE_CODE_3" />
-         <transition from="SAISIE_CODE_3"       event="BON_CODE"                 futur="SAISIE_MONTANT" />
-         <transition from="SAISIE_CODE_3"       event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
-         <transition from="SAISIE_MONTANT"      event="MONTANT_OK"               futur="RETRAIT_CARTE" />
-         <transition from="SAISIE_MONTANT"      event="SOLDE_INSUFFISANT"        futur="RETRAIT_CARTE_SOLDE" />
-         <transition from="RETRAIT_CARTE_SOLDE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
-         <transition from="RETRAIT_CARTE"       event="CARTE_RETIREE"            futur="RETRAIT_BILLETS" />
-         <transition from="RETRAIT_BILLETS"     event="BILLETS_RETIRES"          futur="EN_SERVICE" />
+      <automaton initial="MAINTENANCE">
+         <state-enum name="Etat" />
+         <event-enum name="Evenement" />
+         <transition from="MAINTENANCE"                event="MAINTENANCE_OFF"          futur="EN_SERVICE" />
+         <transition from="MAINTENANCE"                event="SOLDE_CAISSE_INSUFFISANT" futur="MAINTENANCE" />
+         <transition from="EN_SERVICE"                 event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+         <transition from="HORS_SERVICE"               event="ANOMALIE_OFF"             futur="MAINTENANCE" />
+         <transition from="HORS_SERVICE"               event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+         <transition from="EN_SERVICE"                 event="SOLDE_CAISSE_INSUFFISANT" futur="HORS_SERVICE" />
+         <transition from="EN_SERVICE"                 event="CARTE_INSEREE"            futur="LECTURE_CARTE" />
+         <transition from="LECTURE_CARTE"              event="CARTE_LUE_0"              futur="SAISIE_CODE_1" />
+         <transition from="LECTURE_CARTE"              event="CARTE_LUE_1"              futur="SAISIE_CODE_2" />
+         <transition from="LECTURE_CARTE"              event="CARTE_LUE_2"              futur="SAISIE_CODE_3" />
+         <transition from="LECTURE_CARTE"              event="CARTE_INVALIDE"           futur="EN_SERVICE" />
+         <transition from="LECTURE_CARTE"              event="CARTE_CONFISQUEE"         futur="EN_SERVICE" />
+         <transition from="SAISIE_CODE_1"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_1"              event="MAUVAIS_CODE_1"           futur="SAISIE_CODE_2" />
+         <transition from="SAISIE_CODE_2"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_2"              event="MAUVAIS_CODE_2"           futur="SAISIE_CODE_3" />
+         <transition from="SAISIE_CODE_3"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+         <transition from="SAISIE_CODE_3"              event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
+         <transition from="SAISIE_MONTANT"             event="MONTANT_OK"               futur="RETRAIT_CARTE_BILLETS" />
+         <transition from="SAISIE_MONTANT"             event="SOLDE_CAISSE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_CAISSE" />
+         <transition from="SAISIE_MONTANT"             event="SOLDE_COMPTE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_COMPTE" />
+         <transition from="SAISIE_MONTANT"             event="MONTANT_EXCESSIF"         futur="RETRAIT_CARTE_SOLDE_COMPTE" />
+         <transition from="RETRAIT_CARTE_SOLDE_CAISSE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+         <transition from="RETRAIT_CARTE_SOLDE_COMPTE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+         <transition from="RETRAIT_CARTE_BILLETS"      event="CARTE_RETIREE"            futur="RETRAIT_BILLETS" />
+         <transition from="RETRAIT_BILLETS"            event="BILLETS_RETIRES"          futur="EN_SERVICE" />
          <shortcut event="TERMINATE"   futur="HORS_SERVICE" />
          <shortcut event="ANOMALIE_ON" futur="HORS_SERVICE" />
       </automaton>
    </component>
 
-   <component name="SiteCentral">
-      <offers   interface="SiteCentral" />
-      <requires interface="LecteurDeCarte" />
-      <implementation language="Java" src-dir="sc/src-gen"       module-name="sc" />
+   <component name="Banque">
+      <offers interface="SiteCentral" />
+      <implementation language="Java" src-dir="sc/src-gen" module-name="sc" />
    </component>
+   
+   <deployment>
+      <instance name="sc"   component="Banque"       address="127.0.0.1" port="2416" />
+      <instance name="udt1" component="Controleur"   address="127.0.0.1" port="2417">
+         <requires interface="SiteCentral" to-instance="sc" />
+         <requires interface="IHM"         to-instance="ihm1" />
+      </instance>
+      <instance name="ihm1" component="Distributeur" address="127.0.0.1" port="2418">
+         <requires interface="UniteDeTraitement" to-instance="udt1" />
+      </instance>
+      <instance name="udt2" component="Controleur"   address="127.0.0.1" port="2419">
+         <requires interface="SiteCentral" to-instance="sc" />
+         <requires interface="IHM"         to-instance="ihm2" />
+      </instance>
+      <instance name="ihm2" component="Distributeur" address="127.0.0.1" port="2420">
+         <requires interface="UniteDeTraitement" to-instance="udt2" />
+      </instance>
+   </deployment>
 
 </distributed-application>
