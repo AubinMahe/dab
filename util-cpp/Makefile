@@ -4,8 +4,10 @@ SRCS =\
  src/io/Selector.cpp\
  src/io/sockets.cpp\
  src/os/Event.cpp\
+ src/os/Mutex.cpp\
  src/os/StdApiException.cpp\
- src/util/Args.cpp
+ src/util/Args.cpp\
+ src/util/Timeout.cpp
 
 CPPFLAGS = -I inc -O3 -g0 -W -Wall -pedantic -c -std=c++1z
 LIB      = util-cpp

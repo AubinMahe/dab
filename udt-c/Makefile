@@ -36,7 +36,7 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 
 ../unite_de_traitement-mingw32: ../util-c/lib/libutil-c-mingw32.a $(OBJSW32)
 	cd ../util-c && make
-	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -lws2_32 -o $@
+	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -lws2_32 -lpthread -o $@
 
 BUILD/%.o: src/%.c
 	@mkdir -p $$(dirname $@)

@@ -32,11 +32,11 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 
 ../UniteDeTraitement: ../util-cpp/lib/libutil-cpp.a $(OBJS)
 	cd ../util-cpp && make
-	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -o $@
+	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -lpthread -o $@
 
 ../UniteDeTraitement-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a $(OBJSW32)
 	cd ../util-cpp && make
-	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -lws2_32 -o $@
+	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -lws2_32 -lpthread -o $@
 
 BUILD/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
