@@ -1,17 +1,22 @@
 package udt;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.concurrent.ScheduledFuture;
 
 import dab.ControleurComponent;
 import dab.Evenement;
+import util.Timeout;
 
 public final class Controleur extends ControleurComponent {
 
-   private static final double RETRAIT_MAX = 1000.0;
+   private static final double   RETRAIT_MAX            = 1000.0;
+   private static final Duration DELAI_DU_SAISI_DU_CODE = Duration.ofSeconds( 30 );
 
-   private final Carte  _carte  = new Carte();
-   private final Compte _compte = new Compte();
-   private /* */ double _valeurCaisse;
+   private final Carte              _carte  = new Carte();
+   private final Compte             _compte = new Compte();
+   private /* */ ScheduledFuture<?> _delaiDeSaisieDuCode;
+   private /* */ double             _valeurCaisse;
 
    public Controleur( String name ) throws IOException {
       super( name );
@@ -55,6 +60,16 @@ public final class Controleur extends ControleurComponent {
       _siteCentral.getInformations( id );
    }
 
+   private void expirationDuDelaiDeSaisieDuCode() {
+      try {
+         _iHM.confisquerLaCarte();
+         _automaton.process( Evenement.DELAI_EXPIRE );
+      }
+      catch( final IOException t ) {
+         t.printStackTrace();
+      }
+   }
+
    @Override
    public void getInformations( dab.Carte carte, dab.Compte compte ) throws IOException {
       _carte .set( carte );
@@ -72,7 +87,9 @@ public final class Controleur extends ControleurComponent {
          else {
             _automaton.process( Evenement.CARTE_CONFISQUEE );
             _iHM.confisquerLaCarte();
+            return;
          }
+         _delaiDeSaisieDuCode = Timeout.start( DELAI_DU_SAISI_DU_CODE, this::expirationDuDelaiDeSaisieDuCode );
       }
       else {
          System.err.printf( "Carte et/ou compte invalide\n" );
@@ -82,6 +99,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void codeSaisi( String code ) throws IOException {
+      _delaiDeSaisieDuCode.cancel( true );
       if( ! _carte._isValid ) {
          _automaton.process( Evenement.CARTE_INVALIDE );
       }
@@ -92,9 +110,11 @@ public final class Controleur extends ControleurComponent {
          _siteCentral.incrNbEssais( _carte.getId());
          _carte.incrementeNbEssais();
          if( _carte.getNbEssais() == 1 ) {
+            _delaiDeSaisieDuCode = Timeout.start( DELAI_DU_SAISI_DU_CODE, this::expirationDuDelaiDeSaisieDuCode );
             _automaton.process( Evenement.MAUVAIS_CODE_1 );
          }
          else if( _carte.getNbEssais() == 2 ) {
+            _delaiDeSaisieDuCode = Timeout.start( DELAI_DU_SAISI_DU_CODE, this::expirationDuDelaiDeSaisieDuCode );
             _automaton.process( Evenement.MAUVAIS_CODE_2 );
          }
          else if( _carte.getNbEssais() == 3 ) {

@@ -103,10 +103,13 @@
          <transition from="LECTURE_CARTE"              event="CARTE_CONFISQUEE"         futur="EN_SERVICE" />
          <transition from="SAISIE_CODE_1"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
          <transition from="SAISIE_CODE_1"              event="MAUVAIS_CODE_1"           futur="SAISIE_CODE_2" />
+         <transition from="SAISIE_CODE_1"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="SAISIE_CODE_2"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
          <transition from="SAISIE_CODE_2"              event="MAUVAIS_CODE_2"           futur="SAISIE_CODE_3" />
+         <transition from="SAISIE_CODE_2"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="SAISIE_CODE_3"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
          <transition from="SAISIE_CODE_3"              event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
+         <transition from="SAISIE_CODE_3"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="SAISIE_MONTANT"             event="MONTANT_OK"               futur="RETRAIT_CARTE_BILLETS" />
          <transition from="SAISIE_MONTANT"             event="SOLDE_CAISSE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_CAISSE" />
          <transition from="SAISIE_MONTANT"             event="SOLDE_COMPTE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_COMPTE" />

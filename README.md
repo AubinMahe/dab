@@ -31,6 +31,7 @@ La logique applicative dans **Unité de Traitement** est en grande partie décri
 ## Construire et exécuter les projets :
 
 **Pour les impatients :**
+- Version Java : `ant run-java` 
 - Version C : `ant run-c` 
 - Version C++ : `ant run-cpp`
 
@@ -92,7 +93,5 @@ A comparer avec la solution en série :
 
 ## Reste à faire
 
-1. Il n'existe pas de gestion des temporisations : impact sur les librairies et le framework.
-1. Compléter l'automate car il est possible d'être grandement à découvert : il n'y a pas de limite aux retraits effectués (Youpi !).
 1. L'IHM du **Distributeur Automatique de Billets** ne montre pas les cartes confisquées ni les billets qui n'ont pas été pris par l'utilisateur.
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque interface avec  [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit) pour mettre au point et valider le comportement de chaque composant.

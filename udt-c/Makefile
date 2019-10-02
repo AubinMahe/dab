@@ -32,7 +32,7 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 
 ../unite_de_traitement: ../util-c/lib/libutil-c.a $(OBJS)
 	cd ../util-c && make
-	gcc $(OBJS) -L../util-c/lib -lutil-c -o $@
+	gcc $(OBJS) -L../util-c/lib -lutil-c -lpthread -o $@
 
 ../unite_de_traitement-mingw32: ../util-c/lib/libutil-c-mingw32.a $(OBJSW32)
 	cd ../util-c && make

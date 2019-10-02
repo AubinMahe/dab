@@ -9,7 +9,8 @@ SRCS =\
  src/util/args.c\
  src/util/automaton.c\
  src/util/error_codes.c\
- src/util/map.c
+ src/util/map.c\
+ src/util/timeout.c
 
 CFLAGS  = -I inc -O3 -g0 -W -Wall -pedantic -std=c11
 LIB     = util-c

@@ -2,6 +2,7 @@
 #include "Compte.hpp"
 
 #include <dab/ControleurComponent.hpp>
+#include <util/Timeout.hpp>
 
 namespace udt {
 
@@ -10,7 +11,8 @@ namespace udt {
 
       Controleur( const std::string & name ) :
          dab::ControleurComponent( name ),
-         _valeurCaisse( 0.0 )
+         _valeurCaisse( 0.0 ),
+         _timeoutDelaiDeSaisieDuCode( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::expirationDuDelaiDeSaisieDuCode )
       {}
 
    public:
@@ -48,6 +50,11 @@ namespace udt {
          _siteCentral->getInformations( id );
       }
 
+      void expirationDuDelaiDeSaisieDuCode( void ) {
+         _iHM->confisquerLaCarte();
+         _automaton.process( dab::Evenement::DELAI_EXPIRE );
+      }
+
       virtual void getInformations( const dab::Carte & carte, const dab::Compte & compte ) {
          _carte .set( carte );
          _compte.set( compte );
@@ -64,7 +71,9 @@ namespace udt {
             else {
                _automaton.process( dab::Evenement::CARTE_CONFISQUEE );
                _iHM->confisquerLaCarte();
+               return;
             }
+            _timeoutDelaiDeSaisieDuCode.start();
          }
          else {
             ::fprintf( stderr, "Carte et/ou compte invalide\n" );
@@ -73,6 +82,7 @@ namespace udt {
       }
 
       virtual void codeSaisi( const std::string & code ) {
+         _timeoutDelaiDeSaisieDuCode.cancel();
          if( ! _carte.isValid()) {
             _automaton.process( dab::Evenement::CARTE_INVALIDE );
          }
@@ -83,14 +93,16 @@ namespace udt {
             _siteCentral->incrNbEssais( _carte.getId());
             _carte.incrementeNbEssais();
             if( _carte.getNbEssais() == 1 ) {
+               _timeoutDelaiDeSaisieDuCode.start();
                _automaton.process( dab::Evenement::MAUVAIS_CODE_1 );
             }
             else if( _carte.getNbEssais() == 2 ) {
+               _timeoutDelaiDeSaisieDuCode.start();
                _automaton.process( dab::Evenement::MAUVAIS_CODE_2 );
             }
             else if( _carte.getNbEssais() == 3 ) {
-               _automaton.process( dab::Evenement::MAUVAIS_CODE_3 );
                _iHM->confisquerLaCarte();
+               _automaton.process( dab::Evenement::MAUVAIS_CODE_3 );
             }
          }
       }
@@ -132,8 +144,11 @@ namespace udt {
 
    private:
 
-      Carte  _carte;
-      Compte _compte;
-      double _valeurCaisse;
+      static const unsigned DELAI_DE_SAISIE_DU_CODE = 30*1000;// millisecondes
+
+      Carte                             _carte;
+      Compte                            _compte;
+      double                            _valeurCaisse;
+      util::TimeoutCallBack<Controleur> _timeoutDelaiDeSaisieDuCode;
    };
 }
