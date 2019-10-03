@@ -3,11 +3,11 @@ package disapp.generator;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
-import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.FieldType;
@@ -153,12 +153,14 @@ public class CppGenerator extends BaseGenerator {
       final List<InstanceType>              instances       = _model.getInstancesOf( component );
       final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
       final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final Set<String>                     actions         = _model.getAutomatonActions( component );
       final ST tmpl = _group.getInstanceOf( "/componentInterface" );
       tmpl.add( "namespace"      , _moduleName );
       tmpl.add( "component"      , component );
       tmpl.add( "requires"       , requires );
       tmpl.add( "instancesByName", instancesByName );
       tmpl.add( "instances"      , instances );
+      tmpl.add( "actions"        , actions );
       write( component.getName() + "Component.hpp", tmpl );
    }
 
@@ -176,15 +178,14 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateAutomaton( ComponentType component ) throws IOException {
-      final AutomatonType automaton = component.getAutomaton();
-      if( automaton != null ) {
+      if( component.getAutomaton() != null ) {
          final ST header = _group.getInstanceOf( "/automatonHeader" );
          header.add( "namespace", _moduleName  );
-         header.add( "automaton", automaton );
+         header.add( "component", component );
          write( "Automaton.hpp", header );
          final ST body = _group.getInstanceOf( "/automatonBody" );
          body.add( "namespace", _moduleName  );
-         body.add( "automaton", automaton );
+         body.add( "component", component );
          write( "Automaton.cpp", body );
       }
    }

@@ -61,12 +61,18 @@ util_error util_timeout_tests( bool perf ) {
    util_timeout timeout___50;
    util_timeout timeout___75;
    util_timeout timeout_1500;
-   UTIL_ERROR_CHECK( util_timeout_start(  100, action, &ctxt__100, &timeout__100 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( 9000, action, &ctxt_9000, &timeout_9000 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start(  200, action, &ctxt__200, &timeout__200 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start(   50, action, &ctxt___50, &timeout___50 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start(   75, action, &ctxt___75, &timeout___75 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( 1500, action, &ctxt_1500, &timeout_1500 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout__100,  100, action, &ctxt__100 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout_9000, 9000, action, &ctxt_9000 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout__200,  200, action, &ctxt__200 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout___50,   50, action, &ctxt___50 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout___75,   75, action, &ctxt___75 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout_1500, 1500, action, &ctxt_1500 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout__100 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout_9000 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout__200 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout___50 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout___75 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout_1500 ), __FILE__, __LINE__ );
    if( perf ) {
       struct timespec step = { 12, 0 };
       if( nanosleep( &step, NULL )) {
@@ -80,7 +86,7 @@ util_error util_timeout_tests( bool perf ) {
          perror( "nanosleep" );
          return UTIL_OS_ERROR;
       }
-      UTIL_ERROR_CHECK( util_timeout_cancel( timeout_9000 ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( util_timeout_cancel( &timeout_9000 ), __FILE__, __LINE__ );
       step.tv_sec  = 9;
       step.tv_nsec = 0;
       if( nanosleep( &step, NULL )) {

@@ -142,12 +142,23 @@
       <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
    
+   <xs:complexType name="actionType">
+      <xs:attribute type="xs:NCName" name="state"  use="required" />
+      <xs:attribute type="xs:NCName" name="action" use="required" />
+   </xs:complexType>
+   
    <xs:complexType name="automatonType">
       <xs:sequence>
          <xs:element type="stateEnumType"  name="state-enum" />
          <xs:element type="eventEnumType"  name="event-enum" />
-         <xs:element type="transitionType" name="transition" minOccurs="2" maxOccurs="unbounded" />
-         <xs:element type="shortcutType"   name="shortcut"   minOccurs="2" maxOccurs="unbounded" />
+         <xs:element type="transitionType" name="transition"     minOccurs="2" maxOccurs="unbounded" />
+         <xs:element type="shortcutType"   name="shortcut"       minOccurs="2" maxOccurs="unbounded" />
+         <xs:sequence minOccurs="0" maxOccurs="unbounded" >
+            <xs:choice>
+               <xs:element type="actionType" name="on-entry" />
+               <xs:element type="actionType" name="on-exit"  />
+            </xs:choice>
+         </xs:sequence>
       </xs:sequence>
       <xs:attribute type="xs:NCName" name="initial" use="required" />
    </xs:complexType>

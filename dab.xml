@@ -40,10 +40,10 @@
          <field name="anomalie"    type="boolean" description="Anomalie active (true) ou inactive (false)" />
       </event>
       <event name="carteInseree">
-         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
+         <field name="carteID"     type="string" length="4" description="Identifiant de la carte" />
       </event>
       <event name="codeSaisi">
-         <field name="code"        type="string"  length="4" description="Code de la carte" />
+         <field name="code"        type="string" length="4" description="Code de la carte" />
       </event>
       <event name="montantSaisi">
          <field name="montant"     type="double"  description="Montant du retrait en €" />
@@ -111,15 +111,29 @@
          <transition from="SAISIE_CODE_3"              event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
          <transition from="SAISIE_CODE_3"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="SAISIE_MONTANT"             event="MONTANT_OK"               futur="RETRAIT_CARTE_BILLETS" />
+         <transition from="SAISIE_MONTANT"             event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="SAISIE_MONTANT"             event="SOLDE_CAISSE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_CAISSE" />
          <transition from="SAISIE_MONTANT"             event="SOLDE_COMPTE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_COMPTE" />
          <transition from="SAISIE_MONTANT"             event="MONTANT_EXCESSIF"         futur="RETRAIT_CARTE_SOLDE_COMPTE" />
          <transition from="RETRAIT_CARTE_SOLDE_CAISSE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+         <transition from="RETRAIT_CARTE_SOLDE_CAISSE" event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="RETRAIT_CARTE_SOLDE_COMPTE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+         <transition from="RETRAIT_CARTE_SOLDE_COMPTE" event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="RETRAIT_CARTE_BILLETS"      event="CARTE_RETIREE"            futur="RETRAIT_BILLETS" />
+         <transition from="RETRAIT_CARTE_BILLETS"      event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <transition from="RETRAIT_BILLETS"            event="BILLETS_RETIRES"          futur="EN_SERVICE" />
-         <shortcut event="TERMINATE"   futur="HORS_SERVICE" />
-         <shortcut event="ANOMALIE_ON" futur="HORS_SERVICE" />
+         <transition from="RETRAIT_BILLETS"            event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+         <shortcut                                     event="TERMINATE"                futur="HORS_SERVICE" />
+         <shortcut                                     event="ANOMALIE_ON"              futur="HORS_SERVICE" />
+         <on-entry state="SAISIE_CODE_1"              action="armerLeTimeoutDeSaisieDuCode" />
+         <on-entry state="SAISIE_CODE_2"              action="armerLeTimeoutDeSaisieDuCode" />
+         <on-entry state="SAISIE_CODE_3"              action="armerLeTimeoutDeSaisieDuCode" />
+         <on-entry state="SAISIE_MONTANT"             action="armerLeTimeoutDeSaisieDuMontant" />
+         <on-entry state="RETRAIT_CARTE_SOLDE_CAISSE" action="armerLeTimeoutDeRetraitDeLaCarte" />
+         <on-entry state="RETRAIT_CARTE_SOLDE_COMPTE" action="armerLeTimeoutDeRetraitDeLaCarte" />
+         <on-entry state="RETRAIT_CARTE_BILLETS"      action="armerLeTimeoutDeRetraitDeLaCarte" />
+         <on-entry state="RETRAIT_BILLETS"            action="armerLeTimeoutDeRetraitDesBillets" />
+         <on-exit  state="RETRAIT_BILLETS"            action="annulerLeTimeoutDeRetraitDesBillets" />
       </automaton>
    </component>
 

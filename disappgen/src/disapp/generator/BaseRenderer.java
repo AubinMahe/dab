@@ -26,6 +26,24 @@ public class BaseRenderer extends StringRenderer {
       return sb.toString();
    }
 
+   public static String lowerCamelCase( String name ) {
+      final StringBuilder sb = new StringBuilder( 2*name.length());
+      for( int i = 0, count = name.length(); i < count; ++i ) {
+         final char    c          = name.charAt( i );
+         final boolean nextExists = (( i + 1 ) < count );
+         if( nextExists &&(( c == '_' )||( c == '-' ))) {
+            sb.append( Character.toUpperCase( name.charAt( ++i )));
+         }
+         else {
+            sb.append( c );
+         }
+      }
+      final String retVal = sb.toString();
+      return ( retVal.length() > 0 )
+         ? (Character.toLowerCase( retVal.charAt(0)) + retVal.substring( 1 ))
+         : retVal;
+   }
+
    public static String cap( String str ) {
       return ( str.length() > 0 )
          ? (Character.toUpperCase( str.charAt(0)) + str.substring( 1 ))
@@ -34,15 +52,17 @@ public class BaseRenderer extends StringRenderer {
 
    protected String apply( String command, Locale locale, String str ) {
       switch( command ) {
-      case "upper"     : return str.toString().toUpperCase( locale );
-      case "lower"     : return str.toString().toLowerCase( locale );
-      case "cap"       : return cap( str );
-      case "url-encode": return URLEncoder.encode( str, Charset.defaultCharset());
-      case "xml-encode": return escapeHTML( str );
-      case "argument"  : return (str.length() > 0) ? Character.toLowerCase( str.charAt(0)) + str.substring( 1 ) : str;
-      case "ID"        : return toID( str );
-      case "width"     :
-      case "strWidth"  :
+      case "upper"         : return str.toString().toUpperCase( locale );
+      case "lower"         : return str.toString().toLowerCase( locale );
+      case "cap"           : return cap( str );
+      case "UpperCamelCase": return cap( lowerCamelCase( str ));
+      case "lowerCamelCase": return lowerCamelCase( str );
+      case "url-encode"    : return URLEncoder.encode( str, Charset.defaultCharset());
+      case "xml-encode"    : return escapeHTML( str );
+      case "argument"      : return (str.length() > 0) ? Character.toLowerCase( str.charAt(0)) + str.substring( 1 ) : str;
+      case "ID"            : return toID( str );
+      case "width"         :
+      case "strWidth"      :
          final Object property = _properties.get( command );
          if( property != null ) {
             final int width = (int)property;

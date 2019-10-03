@@ -501,7 +501,7 @@ namespace <namespace> {
 
 
 
-componentInterface( namespace, component, responses, requires, instancesByName, instances ) ::= <<
+componentInterface( namespace, component, responses, requires, instancesByName, instances, actions ) ::= <<
 #pragma once
 //componentInterface
 <component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
@@ -530,6 +530,11 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
       virtual void afterDispatch( void ) = 0;
 
+   public:
+
+<actions:{action|
+      virtual void <action>( void ) = 0;
+}>
    protected:
 
       void terminate();
@@ -545,10 +550,10 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
       I<component.name>Dispatcher * _dispatcher;
 
    protected:
-< first(requires):{req|<requires.(req):{rt|
+< if( component.automaton )>      Automaton _automaton;
+< endif>< first(requires):{req|<requires.(req):{rt|
       I<rt.interface.name> * _<rt.interface.name; format="argument">;
-}>}>< if( component.automaton )>      Automaton _automaton;< endif>
-   };
+}>}>   };
 }
 >>
 
@@ -565,7 +570,8 @@ using namespace <namespace>;
 
 <component.name>Component::<component.name>Component( const std::string & name ) :
    _running   ( false ),
-   _dispatcher( 0 )< first(requires):{req|<requires.(req):{rt|,
+   _dispatcher( 0     ),
+   _automaton ( *this )< first(requires):{req|<requires.(req):{rt|,
    _<rt.interface.name; format="argument">( 0 )}>}>
 {< if( requires )>
    sockaddr_in < first(requires):{req|<
@@ -613,20 +619,24 @@ void <component.name>Component::run() {
 
 
 
-automatonHeader( namespace, automaton ) ::= <<
+automatonHeader( namespace, component ) ::= <<
 #pragma once
 
 #include \<util/Automaton.hpp>
 
-#include \<<namespace>/<automaton.stateEnum.name>.hpp>
-#include \<<namespace>/<automaton.eventEnum.name>.hpp>
+#include \<<namespace>/<component.automaton.stateEnum.name>.hpp>
+#include \<<namespace>/<component.automaton.eventEnum.name>.hpp>
 
 namespace <namespace> {
 
-   class Automaton : public util::Automaton\<<automaton.stateEnum.name>, <automaton.eventEnum.name>\> {
+   class <component.name>Component;
+   class Automaton : public util::Automaton\<<
+      component.name>Component, <
+      component.automaton.stateEnum.name>, <
+      component.automaton.eventEnum.name>\> {
    public:
 
-      Automaton( void );
+      Automaton( <component.name>Component & component );
 
    private:
       Automaton( const Automaton & ) = delete;
@@ -637,21 +647,29 @@ namespace <namespace> {
 
 
 
-automatonBody( namespace, automaton ) ::= <<
+automatonBody( namespace, component ) ::= <<
 #include "Automaton.hpp"
+#include \<<namespace>/<component.name>Component.hpp>
 
 using namespace <namespace>;
 
-Automaton :: Automaton( void ) :
-   util::Automaton\<<automaton.stateEnum.name>, <automaton.eventEnum.name>\>( <automaton.stateEnum.name>::<automaton.initial> )
+Automaton :: Automaton( <component.name>Component & component ) :
+   util::Automaton\<<
+      component.name>Component, <
+      component.automaton.stateEnum.name>, <
+      component.automaton.eventEnum.name>\>( component, <
+         component.automaton.stateEnum.name>::<component.automaton.initial> )
 {
-   <automaton.transition:{transition|add( <
-      automaton.stateEnum.name>::<transition.from>, <
-      automaton.eventEnum.name>::<transition.event>, <
-      automaton.stateEnum.name>::<transition.futur> );
+   <component.automaton.transition:{transition|add( <
+      component.automaton.stateEnum.name>::<transition.from>, <
+      component.automaton.eventEnum.name>::<transition.event>, <
+      component.automaton.stateEnum.name>::<transition.futur> );
 }>
-   <automaton.shortcut:{shortcut|add( <
-      automaton.eventEnum.name>::<shortcut.event>, <
-      automaton.stateEnum.name>::<shortcut.futur> );
+   <component.automaton.shortcut:{shortcut|add( <
+      component.automaton.eventEnum.name>::<shortcut.event>, <
+      component.automaton.stateEnum.name>::<shortcut.futur> );
+}>
+   <component.automaton.onEntryOrOnExit:{elt|add<elt.name.localPart; format="UpperCamelCase">( <
+      component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> );
 }>}
 >>

@@ -380,7 +380,7 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
 
 
 
-componentInterface( prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests ) ::= <<
+componentInterface( prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests, actions ) ::= <<
 #pragma once
 //componentInterface
 <component.requires:{required|#include \<<prefix>/<required.interface.name; format="cname">.h>
@@ -416,6 +416,9 @@ else><
     signature( prefix, eor.field )><
 endif> );
 }>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
+<actions:{action|
+util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <prefix>_<component.name; format="cname"> * This );
+}>
 >>
 
 
@@ -439,7 +442,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
    }
    This->running      = false;
    This->user_context = user_context;
-   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton, This ), __FILE__, __LINE__ );
 < if( requires )>
    struct sockaddr_in < first(requires):{req|<
       first( requires.(req) ):{rt|<rt.interface.name; format="cname">}><
@@ -485,40 +488,52 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
 
 
 
-automatonHeader( prefix, automaton ) ::= <<
+automatonHeader( prefix, component ) ::= <<
 #pragma once
 
 #include \<util/automaton.h>
+#include \<<prefix>/<component.name; format="cname">.h>
 
-util_error <prefix>_automaton_init( util_automaton * automaton );
+util_error <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
 >>
 
 
 
-automatonBody( prefix, automaton ) ::= <<
+automatonBody( prefix, component ) ::= <<
 #include \<<prefix>/automaton.h>
-#include \<<prefix>/<automaton.stateEnum.name; format="cname">.h>
-#include \<<prefix>/<automaton.eventEnum.name; format="cname">.h>
+#include \<<prefix>/<component.automaton.stateEnum.name; format="cname">.h>
+#include \<<prefix>/<component.automaton.eventEnum.name; format="cname">.h>
 
 static util_transition transitions[] = {
-   <automaton.transition:{transition|{ <
-      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
-      prefix; format="ID">_<automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
-      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
+   <component.automaton.transition:{transition|{ <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
+      prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
 }>
 };
 
 static util_shortcut shortcuts[] = {
-   <automaton.shortcut:{shortcut|{ <
-      prefix; format="ID">_<automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
-      prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
+   <component.automaton.shortcut:{shortcut|{ <
+      prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
 }>
 };
 
-util_error <prefix>_automaton_init( util_automaton * automaton ) {
+static util_automaton_actions actions[] = {
+   <component.automaton.onEntryOrOnExit:{eoe|{ <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
+      eoe.value.state; format="ID">, (util_automaton_action)&<
+      prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
+}>
+};
+
+util_error <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
    return util_automaton_init(
-      automaton, <prefix; format="ID">_<automaton.stateEnum.name; format="ID">_<automaton.initial; format="ID">,
+      automaton, <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<component.automaton.initial; format="ID">,
       transitions, sizeof( transitions )/sizeof( transitions[0] ),
-      shortcuts  , sizeof( shortcuts   )/sizeof( shortcuts  [0] ));
+      shortcuts  , sizeof( shortcuts   )/sizeof( shortcuts  [0] ),
+      actor      ,
+      actions    , sizeof( actions     )/sizeof( actions    [0] ) );
 }
 >>

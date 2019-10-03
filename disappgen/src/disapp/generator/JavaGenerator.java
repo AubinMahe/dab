@@ -3,6 +3,7 @@ package disapp.generator;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
@@ -23,7 +24,7 @@ import disapp.generator.model.StructType;
 public class JavaGenerator extends BaseGenerator {
 
    public JavaGenerator( Model model ) {
-      super( model, "java.stg", new BaseRenderer() );
+      super( model, "java.stg", new BaseRenderer());
    }
 
    @Override
@@ -125,14 +126,14 @@ public class JavaGenerator extends BaseGenerator {
       final List<InstanceType>              instances       = _model.getInstancesOf( component );
       final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
       final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
-      final AutomatonType                   automaton       = component.getAutomaton();
+      final Set<String>                     actions         = _model.getAutomatonActions( component );
       final ST                              tmpl            = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "package"        , _moduleName );
       tmpl.add( "component"      , component );
       tmpl.add( "requires"       , requires );
       tmpl.add( "instancesByName", instancesByName );
       tmpl.add( "instances"      , instances );
-      tmpl.add( "automaton"      , automaton );
+      tmpl.add( "actions"        , actions );
       write( component.getName() + "Component.java", tmpl );
    }
 
@@ -141,7 +142,7 @@ public class JavaGenerator extends BaseGenerator {
       if( automaton != null ) {
          final ST tmpl = _group.getInstanceOf( "/automaton" );
          tmpl.add( "package"  , _moduleName );
-         tmpl.add( "automaton", automaton );
+         tmpl.add( "component", component );
          write( "Automaton.java", tmpl );
       }
    }

@@ -8,11 +8,12 @@
 
 namespace util {
 
-   template<class S, class E>
+   template<class A, class S, class E>
    class Automaton {
    public:
 
-      Automaton( S initial ) :
+      Automaton( A & actor, S initial ) :
+         _actor  ( actor   ),
          _current( initial )
       {}
 
@@ -26,6 +27,16 @@ namespace util {
          for( auto p : _transitions ) {
             _transitions[p.first][event] = futur;
          }
+      }
+
+      typedef void (A:: * action_t)( void );
+
+      void addOnEntry( S state, action_t onEntryAction ) {
+         _onEntries[state] = onEntryAction;
+      }
+
+      void addOnExit( S state, action_t onExitAction ) {
+         _onExits[state] = onExitAction;
       }
 
    public:
@@ -42,13 +53,30 @@ namespace util {
             ss << "util.Automaton.process|unexpected event: " << event << " from state: " << _current;
             throw std::runtime_error( ss.str());
          }
+         {
+            const auto & it = _onExits.find( _current );
+            if( it != _onExits.end()) {
+               const action_t & action = it->second;
+               (_actor.*action)();
+            }
+         }
          _current = it -> second;
          std::cerr << "Nouvel état : " << _current << std::endl;
+         {
+            const auto & it = _onEntries.find( _current );
+            if( it != _onEntries.end()) {
+               const action_t & action = it->second;
+               (_actor.*action)();
+            }
+         }
       }
 
    private:
 
+      A                         & _actor;
       S                           _current;
       std::map<S, std::map<E, S>> _transitions;
+      std::map<S, action_t>       _onEntries;
+      std::map<S, action_t>       _onExits;
    };
 }

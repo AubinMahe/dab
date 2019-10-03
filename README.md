@@ -2,16 +2,16 @@
 
 ## Architecture et framework
 
-L'application est décrite par des **composants**. Les relations entre composants sont décrites sous formes d'**interfaces** **offertes** ou **requises**. Dans ce modèle simplifié, les interfaces ne contiennent que des **événements**. La réception d'un événement active un traitement qui à sont tour peut déclencher l'émission d'un ou plusieurs événement d'une interface. Les événements sont composés d'un ensemble de **données** de types **scalaire**, **énuméré** ou **agrégat**.
+L'application est décrite par des **composants**. Les relations entre composants sont décrites sous formes d'**interfaces** **offertes** ou **requises**. Dans ce modèle simplifié, les interfaces ne contiennent que des **événements**, certains de types **requêtes**/**réponses**. La réception d'un événement active un traitement qui à sont tour peut déclencher l'émission d'un ou plusieurs événement d'une interface. Les événements sont composés d'un ensemble de **données** de types **scalaire**, **énuméré** ou **agrégat**.
 
-Le méta modèle de ce genre d'application est décrit par un schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) et le modèle de cette application est décrit par le document XML : [dab.xml](dab.xml)
+Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml)
 
-La régularité de l'architecture sous-tend la régularité du code, il est donc possible de générer une grande partie de l'application :
+La régularité de l'architecture sous-tend la régularité du code, une grande partie de l'application est donc générée :
 - Le code de communication, création, envoi et réception des messages UDP (événements)
 - Le code d'activation des acteurs concerné par les événements reçus (routage)
 
-Il a donc été développé quelques bibliothèques de classes (Java et C++) et de fonctions C (sans malloc) afin de :
-- Rendre homogène le traitement des messages et des événements quelque soit le langage cible.
+Il a été développé quelques bibliothèques de classes (Java et C++) et de fonctions C (sans malloc) afin de :
+- Rendre homogène le traitement des messages et des événements quel que soit le langage cible.
 - Faciliter le portage entre les OS GNU/Linux et MS-Windows
 
 Ainsi, la génération de code s'appuie sur un modèle commun et par trois modèles `StringTemplate` spécifiques des trois langages cibles.
@@ -26,7 +26,7 @@ Ainsi, la génération de code s'appuie sur un modèle commun et par trois modè
 
 ## Logique applicative
 
-La logique applicative dans **Unité de Traitement** est en grande partie décrite par un [automate fini](https://fr.wikipedia.org/wiki/Automate_fini) qui ne couvre que les cas nominaux et quelques cas de panne (Cf. "reste à faire" en fin de page).
+La logique applicative dans **Unité de Traitement** est en grande partie décrite par un [automate fini](https://fr.wikipedia.org/wiki/Automate_fini) qui ne couvre que les cas nominaux et quelques cas de panne (Cf. "reste à faire" en fin de page). Le support des événements temporisés ou *timeouts* est fourni par les bibliothèques. Les actions associées aux entrées dans un état mettent en oeuvre l'armement et l'annulation des *timeouts*.
 
 ## Construire et exécuter les projets :
 
@@ -56,42 +56,9 @@ En pas-à-pas, pour comprendre :
     * sc        : `(cd sc && ant)`
     * dab       : `(cd dab && ant)`
 
-La cible `build-all` de [build.xml](build.xml) décrit les dépendances entre binaires et donc le parallélisme optimal pour produire l'application.
-
-    <target name="build-all">
-       <parallel>
-          <sequential>
-             <antcall target="util-c" />
-             <antcall target="udt-c" />
-          </sequential>
-          <sequential>
-             <antcall target="util-cpp" />
-             <antcall target="udt-cpp" />
-          </sequential>
-          <sequential>
-             <antcall target="util-java" />
-             <parallel>
-                <antcall target="dab" />
-                <antcall target="sc" />
-             </parallel>
-          </sequential>
-       </parallel>
-    </target>
-
-![8 Cores CPU](ParallelBuild.png "8 Cores CPU")
-
-Temps passé à produire :
-- real  0m12,026s
-- user  0m22,053s
-- sys   0m1,970s
-
-A comparer avec la solution en série :
-
-- real  0m15,277s
-- user  0m18,172s
-- sys   0m1,854s
-
 ## Reste à faire
 
-1. L'IHM du **Distributeur Automatique de Billets** ne montre pas les cartes confisquées ni les billets qui n'ont pas été pris par l'utilisateur.
-1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque interface avec  [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit) pour mettre au point et valider le comportement de chaque composant.
+1. L'IHM du distributeur automatique de billets ne montre pas les cartes confisquées ni les billets qui n'ont pas été pris par l'utilisateur.
+1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permet de pauser une exécution et de la reprendre puisque le temps est simulé. Cette approche élimine les coroutines et donc les mutex.
+1. Automate : associer une action au franchissement d'une transition.
+1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec  [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit).

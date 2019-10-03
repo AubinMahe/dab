@@ -11,8 +11,11 @@ namespace udt {
 
       Controleur( const std::string & name ) :
          dab::ControleurComponent( name ),
-         _valeurCaisse( 0.0 ),
-         _timeoutDelaiDeSaisieDuCode( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::expirationDuDelaiDeSaisieDuCode )
+         _valeurCaisse         ( 0.0 ),
+         _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
+         _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
+         _timeoutPrendreCarte  ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
+         _timeoutPrendreBillets( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte )
       {}
 
    public:
@@ -50,11 +53,6 @@ namespace udt {
          _siteCentral->getInformations( id );
       }
 
-      void expirationDuDelaiDeSaisieDuCode( void ) {
-         _iHM->confisquerLaCarte();
-         _automaton.process( dab::Evenement::DELAI_EXPIRE );
-      }
-
       virtual void getInformations( const dab::Carte & carte, const dab::Compte & compte ) {
          _carte .set( carte );
          _compte.set( compte );
@@ -73,7 +71,6 @@ namespace udt {
                _iHM->confisquerLaCarte();
                return;
             }
-            _timeoutDelaiDeSaisieDuCode.start();
          }
          else {
             ::fprintf( stderr, "Carte et/ou compte invalide\n" );
@@ -82,7 +79,6 @@ namespace udt {
       }
 
       virtual void codeSaisi( const std::string & code ) {
-         _timeoutDelaiDeSaisieDuCode.cancel();
          if( ! _carte.isValid()) {
             _automaton.process( dab::Evenement::CARTE_INVALIDE );
          }
@@ -93,11 +89,9 @@ namespace udt {
             _siteCentral->incrNbEssais( _carte.getId());
             _carte.incrementeNbEssais();
             if( _carte.getNbEssais() == 1 ) {
-               _timeoutDelaiDeSaisieDuCode.start();
                _automaton.process( dab::Evenement::MAUVAIS_CODE_1 );
             }
             else if( _carte.getNbEssais() == 2 ) {
-               _timeoutDelaiDeSaisieDuCode.start();
                _automaton.process( dab::Evenement::MAUVAIS_CODE_2 );
             }
             else if( _carte.getNbEssais() == 3 ) {
@@ -144,11 +138,49 @@ namespace udt {
 
    private:
 
-      static const unsigned DELAI_DE_SAISIE_DU_CODE = 30*1000;// millisecondes
+      void confisquerLaCarte( void ) {
+         _iHM->confisquerLaCarte();
+         _automaton.process( dab::Evenement::DELAI_EXPIRE );
+      }
+
+   public:
+
+      virtual void armerLeTimeoutDeSaisieDuCode( void ) {
+         _timeoutSaisirCode.start();
+      }
+
+      virtual void armerLeTimeoutDeSaisieDuMontant( void ) {
+         _timeoutSaisirCode   .cancel();
+         _timeoutSaisirMontant.start();
+      }
+
+      virtual void armerLeTimeoutDeRetraitDeLaCarte( void ) {
+         _timeoutSaisirMontant .cancel();
+         _timeoutPrendreCarte.start();
+      }
+
+      virtual void armerLeTimeoutDeRetraitDesBillets( void ) {
+         _timeoutPrendreCarte   .cancel();
+         _timeoutPrendreBillets.start();
+      }
+
+      virtual void annulerLeTimeoutDeRetraitDesBillets( void ) {
+         _timeoutPrendreBillets.cancel();
+      }
+
+   private:
+
+      static const unsigned DELAI_DE_SAISIE_DU_CODE        = 30*1000;// millisecondes
+      static const unsigned DELAI_DE_SAISIE_DU_MONTANT     = 30*1000;// millisecondes
+      static const unsigned DELAI_POUR_PRENDRE_LA_CARTE    = 10*1000;// millisecondes
+      static const unsigned DELAI_POUR_PRENDRE_LES_BILLETS = 10*1000;// millisecondes
 
       Carte                             _carte;
       Compte                            _compte;
       double                            _valeurCaisse;
-      util::TimeoutCallBack<Controleur> _timeoutDelaiDeSaisieDuCode;
+      util::TimeoutCallBack<Controleur> _timeoutSaisirCode;
+      util::TimeoutCallBack<Controleur> _timeoutSaisirMontant;
+      util::TimeoutCallBack<Controleur> _timeoutPrendreCarte;
+      util::TimeoutCallBack<Controleur> _timeoutPrendreBillets;
    };
 }

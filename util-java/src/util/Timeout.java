@@ -12,7 +12,35 @@ public class Timeout {
 
    private static final ScheduledExecutorService _Executor = Executors.newScheduledThreadPool( TIMEOUT_MAX_COUNT );
 
-   public static ScheduledFuture<?> start( Duration duration, Runnable actionWhenElapsed ) {
-      return _Executor.schedule( actionWhenElapsed, duration.toNanos(), TimeUnit.NANOSECONDS );
+   private final long               _duration;
+   private final Runnable           _actionWhenElapsed;
+   private /* */ ScheduledFuture<?> _future;
+
+   public Timeout( Duration duration, Runnable actionWhenElapsed ) {
+      _duration          = duration.toNanos();
+      _actionWhenElapsed = actionWhenElapsed;
+   }
+
+   public void start() {
+      cancel();
+      _future = _Executor.schedule( _actionWhenElapsed, _duration, TimeUnit.NANOSECONDS );
+   }
+
+   public void cancel() {
+      if( _future != null ) {
+         _future.cancel( true );
+      }
+   }
+
+   public boolean hasBeenScheduled() {
+      return _future != null;
+   }
+
+   public boolean isCancelled() {
+      return ( _future != null )&& _future.isCancelled();
+   }
+
+   public boolean isDone() {
+      return ( _future != null )&& _future.isCancelled();
    }
 }

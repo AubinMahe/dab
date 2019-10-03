@@ -29,13 +29,6 @@ typedef struct compte_s {
    bool   autorise;
 } compte;
 
-typedef struct business_logic_data_s {
-   carte  carte;
-   compte compte;
-   double valeur_caisse;
-   void * timeout_id_delai_de_saisie_du_code;
-} business_logic_data;
-
 static void date_set( date * This, byte month, ushort year ) {
    This->month= month;
    This->year = year;
@@ -73,8 +66,17 @@ void compte_invalidate( compte * This ) {
    This->is_valid = false;
 }
 
-static const double   DAB_RETRAIT_MAX        = 1000.0;
-static const unsigned DELAI_DE_SAISIE_DU_CODE = 30*1000;// millisecondes
+static const double DAB_RETRAIT_MAX = 1000.0;
+
+typedef struct business_logic_data_s {
+   carte        carte;
+   compte       compte;
+   double       valeur_caisse;
+   util_timeout timeout_saisir_code;
+   util_timeout timeout_saisir_montant;
+   util_timeout timeout_prendre_carte;
+   util_timeout timeout_prendre_billets;
+} business_logic_data;
 
 util_error dab_controleur_maintenance( dab_controleur * This, bool maintenance ) {
    if( maintenance ) {
@@ -115,13 +117,6 @@ util_error dab_controleur_carte_inseree( dab_controleur * This, const char * id 
    return UTIL_NO_ERROR;
 }
 
-static util_error expiration_du_delai_de_saisie_du_code( void * arg ) {
-   dab_controleur * This = arg;
-   UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_DELAI_EXPIRE ), __FILE__, __LINE__ );
-   return UTIL_NO_ERROR;
-}
-
 util_error dab_controleur_get_informations( dab_controleur * This, const dab_carte * carte, const dab_compte * compte ) {
    business_logic_data * d = This->user_context;
    carte_set( &d->carte, carte );
@@ -141,10 +136,6 @@ util_error dab_controleur_get_informations( dab_controleur * This, const dab_car
          UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
          return UTIL_NO_ERROR;
       }
-      UTIL_ERROR_CHECK(
-         util_timeout_start(
-            DELAI_DE_SAISIE_DU_CODE, expiration_du_delai_de_saisie_du_code, This, &d->timeout_id_delai_de_saisie_du_code ),
-         __FILE__, __LINE__ );
    }
    else {
       fprintf( stderr, "Carte et/ou compte invalide\n" );
@@ -155,7 +146,6 @@ util_error dab_controleur_get_informations( dab_controleur * This, const dab_car
 
 util_error dab_controleur_code_saisi( dab_controleur * This, const char * code ) {
    business_logic_data * d = This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( d->timeout_id_delai_de_saisie_du_code ), __FILE__, __LINE__ );
    if( carte_compare_code( &d->carte, code )) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BON_CODE ), __FILE__, __LINE__ );
    }
@@ -163,17 +153,9 @@ util_error dab_controleur_code_saisi( dab_controleur * This, const char * code )
       UTIL_ERROR_CHECK( dab_site_central_incr_nb_essais( &This->site_central, d->carte.id ), __FILE__, __LINE__ );
       ++( d->carte.nb_essais );
       if( d->carte.nb_essais == 1 ) {
-         UTIL_ERROR_CHECK(
-            util_timeout_start(
-               DELAI_DE_SAISIE_DU_CODE, expiration_du_delai_de_saisie_du_code, This, &d->timeout_id_delai_de_saisie_du_code ),
-            __FILE__, __LINE__ );
          UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAUVAIS_CODE_1 ), __FILE__, __LINE__ );
       }
       else if( d->carte.nb_essais == 2 ) {
-         UTIL_ERROR_CHECK(
-            util_timeout_start(
-               DELAI_DE_SAISIE_DU_CODE, expiration_du_delai_de_saisie_du_code, This, &d->timeout_id_delai_de_saisie_du_code ),
-            __FILE__, __LINE__ );
          UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MAUVAIS_CODE_2 ), __FILE__, __LINE__ );
       }
       else if( d->carte.nb_essais == 3 ) {
@@ -218,6 +200,39 @@ util_error dab_controleur_after_dispatch( dab_controleur * This ) {
    return UTIL_NO_ERROR;
 }
 
+util_error dab_controleur_armer_le_timeout_de_saisie_du_code( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_saisir_code ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_armer_le_timeout_de_saisie_du_montant( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_code    ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_saisir_montant ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_armer_le_timeout_de_retrait_de_la_carte( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_montant ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_prendre_carte ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_armer_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_carte   ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_prendre_billets ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_annuler_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_billets ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
 util_error dab_controleur_shutdown( dab_controleur * This ) {
    This->running = false;
    UTIL_ERROR_CHECK( dab_ihm_shutdown( &This->ihm ), __FILE__, __LINE__ );
@@ -226,10 +241,22 @@ util_error dab_controleur_shutdown( dab_controleur * This ) {
    return UTIL_NO_ERROR;
 }
 
+util_error dab_controleur_confisquer_la_carte( void * uc ) {
+   dab_controleur * This = (dab_controleur *)uc;
+   UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_DELAI_EXPIRE ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
+}
+
 static int usage( const char * exename ) {
    fprintf( stderr, "\nusage: %s --name=<name as defined in XML application file>\n\n", exename );
    return 1;
 }
+
+static const unsigned DELAI_DE_SAISIE_DU_CODE        = 30*1000;// millisecondes
+static const unsigned DELAI_DE_SAISIE_DU_MONTANT     = 30*1000;// millisecondes
+static const unsigned DELAI_POUR_PRENDRE_LA_CARTE    = 10*1000;// millisecondes
+static const unsigned DELAI_POUR_PRENDRE_LES_BILLETS = 10*1000;// millisecondes
 
 int main( int argc, char * argv[] ) {
    util_pair    pairs[argc];
@@ -242,6 +269,10 @@ int main( int argc, char * argv[] ) {
    dab_controleur controleur;
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
    util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {
       err = dab_controleur_run( &controleur );

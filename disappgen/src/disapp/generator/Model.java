@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -40,18 +41,19 @@ final class Model {
    private static final String RESPONSES_INTERFACE_SUFFIX = "Responses";
    private static final String RESPONSES_STRUCT_SUFFIX    = "Response";
 
-   private final Map<String, InterfaceType>              _interfaces       = new LinkedHashMap<>();
-   private final Map<String, InterfaceType>              _responses        = new LinkedHashMap<>();
-   private final Map<String, EnumerationType>            _enums            = new LinkedHashMap<>();
-   private final Map<String, StructType>                 _structs          = new LinkedHashMap<>();
-   private final Map<String, SortedSet<String>>          _usedTypes        = new LinkedHashMap<>();
-   private final Map<String, List<Object>>               _eventsOrRequests = new LinkedHashMap<>();
-   private final Map<String, InstanceType>               _instancesByName  = new LinkedHashMap<>();
-   private final Map<String, Map<String, Byte>>          _eventIDs         = new LinkedHashMap<>();
-   private final File                                    _source;
-   private final boolean                                 _force;
-   private final DisappType                              _application;
-   private final long                                    _lastModified;
+   private final Map<String, InterfaceType>      _interfaces       = new LinkedHashMap<>();
+   private final Map<String, InterfaceType>      _responses        = new LinkedHashMap<>();
+   private final Map<String, EnumerationType>    _enums            = new LinkedHashMap<>();
+   private final Map<String, StructType>         _structs          = new LinkedHashMap<>();
+   private final Map<String, SortedSet<String>>  _usedTypes        = new LinkedHashMap<>();
+   private final Map<String, List<Object>>       _eventsOrRequests = new LinkedHashMap<>();
+   private final Map<String, InstanceType>       _instancesByName  = new LinkedHashMap<>();
+   private final Map<String, Map<String, Byte>>  _eventIDs         = new LinkedHashMap<>();
+   private final Map<ComponentType, Set<String>> _actions          = new LinkedHashMap<>();
+   private final File                            _source;
+   private final boolean                         _force;
+   private final DisappType                      _application;
+   private final long                            _lastModified;
 
    Model( File source, boolean force ) throws JAXBException {
       final JAXBContext             jaxbContext  = JAXBContext.newInstance( "disapp.generator.model" );
@@ -143,6 +145,13 @@ final class Model {
          if( automaton != null ) {
             createEventAndStateIfNecessary( automaton );
          }
+         _actions.put( component, ( component.getAutomaton() == null ) ? null :
+            component.getAutomaton()
+               .getOnEntryOrOnExit()
+               .stream()
+               .map( e -> e.getValue())
+               .map( action -> action.getAction())
+               .collect( Collectors.toCollection( LinkedHashSet::new )));
       }
    }
 
@@ -552,5 +561,9 @@ final class Model {
          }
       }
       return requestsMap;
+   }
+
+   public Set<String> getAutomatonActions( ComponentType component ) {
+      return _actions.get( component );
    }
 }

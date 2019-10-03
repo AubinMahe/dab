@@ -352,7 +352,7 @@ public class <compName>Dispatcher {
 
 
 
-componentImplementation( package, component, responses, requires, instancesByName, instances, automaton ) ::= <<
+componentImplementation( package, component, responses, requires, instancesByName, instances, actions ) ::= <<
 package <package>;
 //componentImplementation
 import java.io.IOException;
@@ -367,7 +367,7 @@ responses.(component.name):{r|, I<r.interface.name>}> {
 
 < first(requires):{req|
    <requires.(req):{rt|protected final <rt.interface.name> _<rt.interface.name; format="argument">;
-}>}>< if( automaton )>   protected final Automaton _automaton = new Automaton();
+}>}>< if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
 < endif>   protected final <component.name>Dispatcher _dispatcher;
 
    private DatagramChannel _channel;
@@ -409,7 +409,9 @@ responses.(component.name):{r|, I<r.interface.name>}> {
    }
 
    protected abstract void afterDispatch() throws IOException;
-
+<actions:{action|
+   protected abstract void <action>();
+}>
    protected void terminate() {
       _running = false;
    }
@@ -434,22 +436,26 @@ responses.(component.name):{r|, I<r.interface.name>}> {
 
 
 
-automaton( package, automaton ) ::= <<
+automaton( package, component ) ::= <<
 package <package>;
 
-public class Automaton extends util.Automaton\<<automaton.stateEnum.name>, <automaton.eventEnum.name>\> {
+public class Automaton extends util.Automaton\<<component.automaton.stateEnum.name>, <component.automaton.eventEnum.name>\> {
 
-   public Automaton() {
-      super( <automaton.stateEnum.name>.<automaton.initial> );
+   public Automaton( <component.name>Component component ) {
+      super( <component.automaton.stateEnum.name>.<component.automaton.initial> );
 
-      <automaton.transition:{transition|add( <
-         automaton.stateEnum.name>.<transition.from>, <
-         automaton.eventEnum.name>.<transition.event>, <
-         automaton.stateEnum.name>.<transition.futur> );
+      <component.automaton.transition:{transition|add( <
+         component.automaton.stateEnum.name>.<transition.from>, <
+         component.automaton.eventEnum.name>.<transition.event>, <
+         component.automaton.stateEnum.name>.<transition.futur> );
 }>
-      <automaton.shortcut:{shortcut|add( <
-         automaton.eventEnum.name>.<shortcut.event>, <
-         automaton.stateEnum.name>.<shortcut.futur> );
+      <component.automaton.shortcut:{shortcut|add( <
+         component.automaton.eventEnum.name>.<shortcut.event>, <
+         component.automaton.stateEnum.name>.<shortcut.futur> );
+}>
+      <component.automaton.onEntryOrOnExit:{elt|add<elt.name.localPart; format="UpperCamelCase">( <
+         component.automaton.stateEnum.name>.<elt.value.state>, component::<
+         elt.value.action> );
 }>   }
 }
 >>
