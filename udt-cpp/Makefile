@@ -55,7 +55,7 @@ BUILD-mingw32/%.o: src-gen/%.cpp
 	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $<
 
 run-1: ../UniteDeTraitement
-	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e ../UniteDeTraitement --name=udt1 &
+	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../UniteDeTraitement --name=udt1 &
 
 run-2: ../UniteDeTraitement
 	xterm -title UDT-2 -geometry 90x30-0+0 -hold -e ../UniteDeTraitement --name=udt2 &

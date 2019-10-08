@@ -17,13 +17,13 @@
       <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
    </struct>
 
+   <struct name="EtatDuDab">
+      <field name="etat" type="enum" userType="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+      <field name="soldeCaisse" type="double"  description="Montant de la caisse en €" />
+   </struct>
+
    <interface name="IHM">
-      <event name="setStatus">
-         <field name="etat" type="enum" userType="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
-      </event>
-      <event name="setSoldeCaisse">
-         <field name="solde" type="double"  description="Montant de la caisse en €" />
-      </event>
+      <data  name="etatDuDab" type="struct" userType="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="ejecterLaCarte" />
       <event name="confisquerLaCarte" />
       <event name="shutdown" />

@@ -41,21 +41,21 @@ args( fields ) ::= <<
 
 
 
-byteBufferPut( fields ) ::= <<
+byteBufferPut( this, fields ) ::= <<
 <fields:{field|
-< if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <field.name; format="cname">, &This->out ), __FILE__, __LINE__ );
+< if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
+< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <this><field.name; format="cname">, &This->out ), __FILE__, __LINE__ );
 < endif>
 }>
 >>
@@ -103,7 +103,7 @@ structHeader( prefix, struct ) ::= <<
 #include \<io/byte_buffer.h>
 
 <struct.field:{field|<
-if( field.isStruct )>
+if( field.isStruct || field.isEnum )>
 #include \<<prefix>/<type(field)>.h><
 endif>}>
 
@@ -111,7 +111,7 @@ typedef struct <prefix>_<struct.name; format="cname">_s {
 <struct.field:{field|<
 if( field.isString )>
    char <field.name; format="cname">[ <field.length> + 1 ];<
-elseif( field.isStruct )>
+elseif( field.isStruct || field.isEnum )>
    <prefix>_<type(field)> <field.name; format="cname">;<
 else>
    <type(field)> <field.name; format="cname">;<
@@ -161,7 +161,7 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
    < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
    < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( source, This-><
          field.name; format="cname,strWidth">, sizeof( This-><field.name; format="cname,strWidth"> )), __FILE__, __LINE__ );
-   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
+   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, (byte *)&This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
    < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &This-><field.name; format="cname">, source ), __FILE__, __LINE__ );
    < endif>
 }>   return UTIL_NO_ERROR;
@@ -177,26 +177,32 @@ requiredInterface( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 
 <usedTypes:{type|#include \<<prefix>/<type; format="cname">.h>
 }>
-<iface.eventOrRequest:{eor|<if( eor.arguments )>
-#include \<<prefix>/<ifaceName; format="cname">_<eor.name; format="cname">_response.h>
-<endif>
+<iface.eventOrRequestOrData:{facet|<
+if( facet.arguments )>
+#include \<<prefix>/<ifaceName; format="cname">_<facet.name; format="cname">_response.h>
+< endif>
 }>
 typedef struct <prefix>_<ifaceName; format="cname">_s {
    SOCKET             socket;
    struct sockaddr_in target;
    byte               raw[<rawSize>];
-   io_byte_buffer     out;
+   io_byte_buffer     out;<
+iface.eventOrRequestOrData:{facet|<
+if( facet.type )>
+
+   <prefix>_<type(facet)> <facet.name; format="cname">;<
+endif>}>
 } <prefix>_<ifaceName; format="cname">;
 
 util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"
 > * This, SOCKET socket, struct sockaddr_in * target );
-<iface.eventOrRequest:{eor|
-util_error <prefix>_<ifaceName; format="cname">_<eor.name; format="cname">( <prefix>_<ifaceName; format="cname"
+<iface.eventOrRequestOrData:{facet|
+util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">< if( facet.type )>_publish< endif>( <prefix>_<ifaceName; format="cname"
     > * This<
-if( eor.arguments )><
-    signature( prefix, eor.arguments.field )><
+if( facet.arguments )><
+    signature( prefix, facet.arguments.field )><
 else><
-    signature( prefix, eor.field )><
+    signature( prefix, facet.field )><
 endif> );
 }>
 >>
@@ -209,10 +215,10 @@ requiredImplementation( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) 
 #include \<stdio.h>
 
 enum <prefix>_event_id {
-< first(iface.eventOrRequest):{eor|
-   <prefix; format="upper">_<eor.name; format="ID"> = 1,}>
-< rest(iface.eventOrRequest) :{eor|
-   <prefix; format="upper">_<eor.name; format="ID">,
+< first(iface.eventOrRequestOrData):{facet|
+   <prefix; format="upper">_<facet.name; format="ID"> = 1,}>
+< rest(iface.eventOrRequestOrData) :{facet|
+   <prefix; format="upper">_<facet.name; format="ID">,
 }>};
 
 static const byte <iface.name; format="ID">_ID = <ifaceID>;
@@ -223,23 +229,25 @@ util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; for
    This->target = *target;
    return io_byte_buffer_wrap( &This->out, <rawSize>, This->raw );
 }
-<iface.eventOrRequest:{eor|
+<iface.eventOrRequestOrData:{facet|
 
 
-util_error <prefix>_<iface.name; format="cname">_<eor.name; format="cname">( <prefix>_<iface.name; format="cname"
+util_error <prefix>_<iface.name; format="cname">_<facet.name; format="cname">< if( facet.type )>_publish< endif>( <prefix>_<iface.name; format="cname"
    > * This<
-if( eor.arguments )><
-    signature( prefix, eor.arguments.field )><
+if( facet.arguments )><
+    signature( prefix, facet.arguments.field )><
 else><
-    signature( prefix, eor.field )><
+    signature( prefix, facet.field )><
 endif> ) {
    UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<eor.name; format="ID"> ), __FILE__, __LINE__ );
-   < if( eor.arguments )><
-        byteBufferPut( eor.arguments.field )><
-     else><
-        byteBufferPut( eor.field )><
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<facet.name; format="ID"> ), __FILE__, __LINE__ );
+   < if( facet.arguments )><
+        byteBufferPut( "", facet.arguments.field )><
+     elseif( facet.type )><
+        byteBufferPut( "&This->", facet )><
+     elseif( facet.field )><
+        byteBufferPut( "", facet.field )><
      endif>
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, &This->target ), __FILE__, __LINE__ );
@@ -408,12 +416,12 @@ typedef struct <prefix>_<component.name; format="cname">_s {
 util_error <prefix>_<component.name; format="cname">_init     ( <prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
 util_error <prefix>_<component.name; format="cname">_run      ( <prefix>_<component.name; format="cname"> * This );
 util_error <prefix>_<component.name; format="cname">_terminate( <prefix>_<component.name; format="cname"> * This );
-<eventsOrRequests:{eor|
-util_error <prefix>_<component.name; format="cname">_<eor.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
-if( eor.arguments )><
-    signature( prefix, eor.arguments.field )>, <ifaceName; format="cname">_<eor.name; format="cname">_response * response<
+<eventsOrRequests:{facet|
+util_error <prefix>_<component.name; format="cname">_<facet.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
+if( facet.arguments )><
+    signature( prefix, facet.arguments.field )>, <ifaceName; format="cname">_<facet.name; format="cname">_response * response<
 else><
-    signature( prefix, eor.field )><
+    signature( prefix, facet.field )><
 endif> );
 }>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
 <actions:{action|

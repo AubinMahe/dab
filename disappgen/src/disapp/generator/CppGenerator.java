@@ -111,7 +111,7 @@ public class CppGenerator extends BaseGenerator {
          final InterfaceType     iface            = (InterfaceType)offered.getInterface();
          final String            ifaceName        = iface.getName();
          final SortedSet<String> usedTypes        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eventsOrRequests = _model.getEventsOrRequests().get( ifaceName );
+         final List<Object>      eventsOrRequests = _model.getFacets().get( ifaceName );
          final ST                tmpl             = _group.getInstanceOf( "/offeredInterface" );
          tmpl.add( "namespace"       , _moduleName );
          tmpl.add( "name"            , ifaceName );

@@ -2,7 +2,7 @@ package dab.ui;
 
 import java.io.IOException;
 
-import dab.Etat;
+import dab.EtatDuDab;
 import javafx.application.Platform;
 
 public class Distributeur extends dab.DistributeurComponent {
@@ -17,14 +17,13 @@ public class Distributeur extends dab.DistributeurComponent {
       networkThread.start();
    }
 
-   @Override
-   public void setStatus(Etat etat ) throws IOException {
-      Platform.runLater(() -> _controller.setStatus( etat ));
+   EtatDuDab getEtatDuDab() {
+      return etatDuDab;
    }
 
    @Override
-   public void setSoldeCaisse( double solde ) throws IOException {
-      Platform.runLater(() -> _controller.setSoldeCaisse( solde ));
+   public void etatDuDabPublished() throws IOException {
+      Platform.runLater( _controller::etatDuDabPublished );
    }
 
    @Override

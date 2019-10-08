@@ -143,7 +143,7 @@ public class CGenerator extends BaseGenerator {
          final InterfaceType     iface     = (InterfaceType)offered.getInterface();
          final String            ifaceName = iface.getName();
          final SortedSet<String> ut        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eor       = _model.getEventsOrRequests().get( ifaceName );
+         final List<Object>      eor       = _model.getFacets().get( ifaceName );
          if( ut != null ) {
             usedTypes.addAll( ut );
          }

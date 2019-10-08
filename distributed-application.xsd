@@ -96,6 +96,7 @@
          <xs:choice maxOccurs="unbounded">
             <xs:element type="eventType"   name="event" />
             <xs:element type="requestType" name="request" />
+            <xs:element type="fieldType"   name="data" />
          </xs:choice>
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />

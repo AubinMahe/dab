@@ -11,7 +11,6 @@ namespace udt {
 
       Controleur( const std::string & name ) :
          dab::ControleurComponent( name ),
-         _valeurCaisse         ( 0.0 ),
          _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
          _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
          _timeoutPrendreCarte  ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
@@ -30,9 +29,8 @@ namespace udt {
       }
 
       virtual void rechargerLaCaisse( const double & montant ) {
-         _valeurCaisse += montant;
-         _iHM->setSoldeCaisse( _valeurCaisse );
-         if( _valeurCaisse < 1000 ) {
+         _iHM->etatDuDab().soldeCaisse += montant;
+         if( _iHM->etatDuDab().soldeCaisse < 1000 ) {
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
       }
@@ -102,7 +100,7 @@ namespace udt {
       }
 
       virtual void montantSaisi( const double & montant ) {
-         if( montant > _valeurCaisse ) {
+         if( montant > _iHM->etatDuDab().soldeCaisse ) {
             _iHM->ejecterLaCarte();
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
@@ -111,8 +109,7 @@ namespace udt {
             _automaton.process( dab::Evenement::SOLDE_COMPTE_INSUFFISANT );
          }
          else {
-            _valeurCaisse -= montant;
-            _iHM->setSoldeCaisse( _valeurCaisse );
+            _iHM->etatDuDab().soldeCaisse -= montant;
             _siteCentral->retrait( _carte.getId(), montant );
             _automaton.process( dab::Evenement::MONTANT_OK );
          }
@@ -132,15 +129,24 @@ namespace udt {
          terminate();
       }
 
+      /**
+       * Méthode appelée après réception et traitement d'un événement ou d'une requête.
+       */
       virtual void afterDispatch( void ) {
-         _iHM->setStatus( _automaton.getCurrentState());
+         _iHM->etatDuDab().etat = _automaton.getCurrentState();
+         _iHM->publishEtatDuDab();
       }
 
    private:
 
+      /**
+       * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
+       */
       void confisquerLaCarte( void ) {
          _iHM->confisquerLaCarte();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
+         _iHM->etatDuDab().etat = _automaton.getCurrentState();
+         _iHM->publishEtatDuDab();
       }
 
    public:
@@ -177,7 +183,6 @@ namespace udt {
 
       Carte                             _carte;
       Compte                            _compte;
-      double                            _valeurCaisse;
       util::TimeoutCallBack<Controleur> _timeoutSaisirCode;
       util::TimeoutCallBack<Controleur> _timeoutSaisirMontant;
       util::TimeoutCallBack<Controleur> _timeoutPrendreCarte;

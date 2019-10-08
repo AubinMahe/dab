@@ -85,15 +85,15 @@ public class JavaGenerator extends BaseGenerator {
 
    private void generateOfferedInterfaces( ComponentType component ) throws IOException {
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
-         final InterfaceType     iface            = (InterfaceType)offered.getInterface();
-         final String            ifaceName        = iface.getName();
-         final SortedSet<String> usedTypes        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eventsOrRequests = _model.getEventsOrRequests().get( ifaceName );
-         final ST                tmpl             = _group.getInstanceOf( "/offeredInterface" );
-         tmpl.add( "package"         , _moduleName );
-         tmpl.add( "name"            , ifaceName );
-         tmpl.add( "usedTypes"       , usedTypes );
-         tmpl.add( "eventsOrRequests", eventsOrRequests );
+         final InterfaceType     iface     = (InterfaceType)offered.getInterface();
+         final String            ifaceName = iface.getName();
+         final SortedSet<String> usedTypes = _model.getUsedTypesBy( ifaceName );
+         final List<Object>      facets    = _model.getFacets().get( ifaceName );
+         final ST                tmpl      = _group.getInstanceOf( "/offeredInterface" );
+         tmpl.add( "package"  , _moduleName );
+         tmpl.add( "name"     , ifaceName );
+         tmpl.add( "usedTypes", usedTypes );
+         tmpl.add( "facets"   , facets );
          write( 'I' + ifaceName + ".java", tmpl );
       }
    }
@@ -126,6 +126,7 @@ public class JavaGenerator extends BaseGenerator {
       final List<InstanceType>              instances       = _model.getInstancesOf( component );
       final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
       final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final Map<String, List<FieldType>>    data            = Model.getOfferedDataOf( component );
       final Set<String>                     actions         = _model.getAutomatonActions( component );
       final ST                              tmpl            = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "package"        , _moduleName );
@@ -134,6 +135,7 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "instancesByName", instancesByName );
       tmpl.add( "instances"      , instances );
       tmpl.add( "actions"        , actions );
+      tmpl.add( "data"           , data );
       write( component.getName() + "Component.java", tmpl );
    }
 

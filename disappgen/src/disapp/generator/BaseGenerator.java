@@ -73,18 +73,22 @@ abstract class BaseGenerator {
       }
    }
 
-   private void configureRendererWidthsCumulative( List<FieldType> fields ) {
+   private void configureRendererWidthsCumulative( FieldType field ) {
       int maxLength    = (Integer)_renderer.get(    "width" );
       int maxStrLength = (Integer)_renderer.get( "strWidth" );
-      for( final FieldType field : fields ) {
-         final String cname = _renderer.name( field.getName());
-         maxLength = Math.max( maxLength, cname.length());
-         if( field.getType() == FieldtypeType.STRING ) {
-            maxStrLength = Math.max( maxStrLength, cname.length());
-         }
+      final String cname = _renderer.name( field.getName());
+      maxLength = Math.max( maxLength, cname.length());
+      if( field.getType() == FieldtypeType.STRING ) {
+         maxStrLength = Math.max( maxStrLength, cname.length());
       }
       _renderer.set( "width"   , maxLength    );
       _renderer.set( "strWidth", maxStrLength );
+   }
+
+   private void configureRendererWidthsCumulative( List<FieldType> fields ) {
+      for( final FieldType field : fields ) {
+         configureRendererWidthsCumulative( field );
+      }
    }
 
    protected void setRendererFieldsMaxWidth( List<FieldType> fields ) {
@@ -96,16 +100,23 @@ abstract class BaseGenerator {
    protected void setRendererFieldsMaxWidth( InterfaceType iface ) {
       _renderer.set( "width"   , 0 );
       _renderer.set( "strWidth", 0 );
-      final List<Object> eventsOrRequests = _model.getEventsOrRequests().get( iface.getName());
+      final List<Object> eventsOrRequests = _model.getFacets().get( iface.getName());
       for( final Object o : eventsOrRequests ) {
          if( o instanceof EventType ) {
             final EventType event = (EventType)o;
             configureRendererWidthsCumulative( event.getField() );
          }
-         else {
+         else if( o instanceof RequestType ) {
             final RequestType request = (RequestType)o;
             configureRendererWidthsCumulative( request.getArguments().getField());
             configureRendererWidthsCumulative( request.getResponse().getField());
+         }
+         else if( o instanceof FieldType ) {
+            final FieldType data = (FieldType)o;
+            configureRendererWidthsCumulative( data );
+         }
+         else {
+            throw new IllegalStateException();
          }
       }
    }

@@ -71,7 +71,6 @@ static const double DAB_RETRAIT_MAX = 1000.0;
 typedef struct business_logic_data_s {
    carte        carte;
    compte       compte;
-   double       valeur_caisse;
    util_timeout timeout_saisir_code;
    util_timeout timeout_saisir_montant;
    util_timeout timeout_prendre_carte;
@@ -89,10 +88,8 @@ util_error dab_controleur_maintenance( dab_controleur * This, bool maintenance )
 }
 
 util_error dab_controleur_recharger_la_caisse( dab_controleur * This, double montant ) {
-   business_logic_data * d = This->user_context;
-   d->valeur_caisse += montant;
-   UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ihm, d->valeur_caisse ), __FILE__, __LINE__ );
-   if( d->valeur_caisse < DAB_RETRAIT_MAX ) {
+   This->ihm.etat_du_dab.solde_caisse += montant;
+   if( This->ihm.etat_du_dab.solde_caisse < DAB_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ), __FILE__, __LINE__ );
    }
    return UTIL_NO_ERROR;
@@ -168,7 +165,7 @@ util_error dab_controleur_code_saisi( dab_controleur * This, const char * code )
 
 util_error dab_controleur_montant_saisi( dab_controleur * This, double montant ) {
    business_logic_data * d = This->user_context;
-   if( montant > d->valeur_caisse ) {
+   if( montant > This->ihm.etat_du_dab.solde_caisse ) {
       UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ), __FILE__, __LINE__ );
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ), __FILE__, __LINE__ );
    }
@@ -177,8 +174,7 @@ util_error dab_controleur_montant_saisi( dab_controleur * This, double montant )
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_COMPTE_INSUFFISANT ), __FILE__, __LINE__ );
    }
    else {
-      d->valeur_caisse -= montant;
-      UTIL_ERROR_CHECK( dab_ihm_set_solde_caisse( &This->ihm, d->valeur_caisse ), __FILE__, __LINE__ );
+      This->ihm.etat_du_dab.solde_caisse -= montant;
       UTIL_ERROR_CHECK( dab_site_central_retrait( &This->site_central, d->carte.id, montant ), __FILE__, __LINE__ );
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MONTANT_OK ), __FILE__, __LINE__ );
    }
@@ -196,7 +192,8 @@ util_error dab_controleur_billets_retires( dab_controleur * This ) {
 }
 
 util_error dab_controleur_after_dispatch( dab_controleur * This ) {
-   UTIL_ERROR_CHECK( dab_ihm_set_status( &This->ihm, This->automaton.current ), __FILE__, __LINE__ );
+   This->ihm.etat_du_dab.etat = This->automaton.current;
+   UTIL_ERROR_CHECK( dab_ihm_etat_du_dab_publish( &This->ihm ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 }
 

@@ -65,21 +65,21 @@ args( fields ) ::= <<
 
 
 
-byteBufferPut( fields ) ::= <<
+byteBufferPut( prefix, fields ) ::= <<
 <fields:{field|
-< if(     field.isBoolean )>_out.putBool( <field.name> );
-< elseif( field.isByte    )>_out.putByte( <field.name> );
-< elseif( field.isShort   )>_out.putShort( <field.name> );
-< elseif( field.isUshort  )>_out.putUShort( <field.name> );
-< elseif( field.isInt     )>_out.putInt( <field.name> );
-< elseif( field.isUint    )>_out.putUInt( <field.name> );
-< elseif( field.isLong    )>_out.putLong( <field.name> );
-< elseif( field.isUlong   )>_out.putULong( <field.name> );
-< elseif( field.isFloat   )>_out.putFloat( <field.name> );
-< elseif( field.isDouble  )>_out.putDouble( <field.name> );
-< elseif( field.isString  )>_out.putString( <field.name> );
-< elseif( field.isEnum    )>_out.putByte( static_cast\<byte>( <field.name> ));
-< elseif( field.isStruct  )><field.name>.put( _out );
+< if(     field.isBoolean )>_out.putBool( <prefix><field.name> );
+< elseif( field.isByte    )>_out.putByte( <prefix><field.name> );
+< elseif( field.isShort   )>_out.putShort( <prefix><field.name> );
+< elseif( field.isUshort  )>_out.putUShort( <prefix><field.name> );
+< elseif( field.isInt     )>_out.putInt( <prefix><field.name> );
+< elseif( field.isUint    )>_out.putUInt( <prefix><field.name> );
+< elseif( field.isLong    )>_out.putLong( <prefix><field.name> );
+< elseif( field.isUlong   )>_out.putULong( <prefix><field.name> );
+< elseif( field.isFloat   )>_out.putFloat( <prefix><field.name> );
+< elseif( field.isDouble  )>_out.putDouble( <prefix><field.name> );
+< elseif( field.isString  )>_out.putString( <prefix><field.name> );
+< elseif( field.isEnum    )>_out.putByte( static_cast\<byte>( <prefix><field.name> ));
+< elseif( field.isStruct  )><prefix><field.name>.put( _out );
 < endif>
 }>
 >>
@@ -92,7 +92,7 @@ structHeader( namespace, struct ) ::= <<
 #include \<io/ByteBuffer.hpp>
 
 <struct.field:{field|<
-if( field.isStruct )>
+if( field.isStruct || field.isEnum )>
 #include \<<namespace>/<type(field)>.hpp><
 endif>}>
 
@@ -133,7 +133,7 @@ void <struct.name>::put( io::ByteBuffer & target ) const {
    < elseif( field.isFloat   )>target.putFloat ( <field.name> );
    < elseif( field.isDouble  )>target.putDouble( <field.name> );
    < elseif( field.isString  )>target.putString( <field.name> );
-   < elseif( field.isEnum    )>target.putByte  ( <field.name> );
+   < elseif( field.isEnum    )>target.putByte  ((byte)<field.name> );
    < elseif( field.isStruct  )><field.name>.put( target );
    < endif>
 }>}
@@ -151,7 +151,7 @@ void <struct.name>::get( io::ByteBuffer & source ) {
    < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
    < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
    < elseif( field.isString  )><field.name; format="width"> = source.getString();
-   < elseif( field.isEnum    )><field.name; format="width"> = source.getByte  ();
+   < elseif( field.isEnum    )><field.name; format="width"> = (<field.userType.name>)source.getByte();
    < elseif( field.isStruct  )><field.name>.get( source );
    < endif>
 }>}
@@ -207,8 +207,8 @@ requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface ) ::= <<
 
 <usedTypes:{type|#include \<<namespace>/<type>.hpp>
 }>
-<iface.eventOrRequest:{eor|<if( eor.arguments )>
-#include \<<namespace>/<ifaceName><eor.name; format="cap">Response.hpp>
+<iface.eventOrRequestOrData:{facet|<if( facet.arguments )>
+#include \<<namespace>/<ifaceName><facet.name; format="cap">Response.hpp>
 <endif>
 }>
 namespace <namespace> {
@@ -221,12 +221,15 @@ namespace <namespace> {
 
    public:
 
-<iface.eventOrRequest:{eor|
-      virtual void <eor.name>( <
-if( eor.arguments )><
-    signature( eor.arguments.field )><
+<iface.eventOrRequestOrData:{facet|
+< if( facet.type )>
+      virtual <type(facet)> & <facet.name>( void ) = 0;
+< endif>
+      virtual void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+if( facet.arguments )><
+         signature( facet.arguments.field )><
 else><
-    signature( eor.field )><
+         signature( facet.field )><
 endif> ) = 0;
 }>
    private:
@@ -256,22 +259,31 @@ namespace <namespace> {
 
    public:
 
-<iface.eventOrRequest:{eor|
+<iface.eventOrRequestOrData:{facet|
 
-      virtual void <eor.name>( <
-if( eor.arguments )><
-    signature( eor.arguments.field )><
+< if( facet.type )>
+      virtual <type(facet)> & <facet.name>( void ) {
+         return _<facet.name>;
+      \}
+
+< endif>
+      virtual void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+if( facet.arguments )><
+    signature( facet.arguments.field )><
 else><
-    signature( eor.field )><
+    signature( facet.field )><
 endif> ) {
          _out.clear();
          _out.putByte( <iface.name; format="ID">_ID );
-         _out.putByte( <eor.name; format="ID"> );
-         < if( eor.arguments )><
-            byteBufferPut( eor.arguments.field )><
-         else><
-            byteBufferPut( eor.field )><
-         endif>
+         _out.putByte( <facet.name; format="ID"> );
+         <
+if( facet.arguments )><
+         byteBufferPut( "", facet.arguments.field )><
+elseif( facet.type )><
+         byteBufferPut( "_", facet )><
+else><
+         byteBufferPut( "", facet.field )><
+endif>
          _out.flip();
          _socket.sendTo( _out, _target );
       \}
@@ -279,10 +291,10 @@ endif> ) {
 }>   private:
 
       enum EventID {
-< first(iface.eventOrRequest):{eor|
-         <eor.name; format="ID"> = 1,}>
-< rest(iface.eventOrRequest) :{eor|
-         <eor.name; format="ID">,
+< first(iface.eventOrRequestOrData):{facet|
+         <facet.name; format="ID"> = 1,}>
+< rest(iface.eventOrRequestOrData) :{facet|
+         <facet.name; format="ID">,
 }>      };
 
       enum Interface {
@@ -294,7 +306,9 @@ endif> ) {
       io::DatagramSocket & _socket;
       sockaddr_in          _target;
       io::ByteBuffer       _out;
-   };
+<iface.eventOrRequestOrData:{facet|< if( facet.type )>
+      <facet.userType.name> _<facet.name>;
+< endif>}>   };
 }
 
 namespace <namespace> {
@@ -327,12 +341,12 @@ namespace <namespace> {
 
    public:
 
-<eventsOrRequests:{eor|
-      virtual void <eor.name>( <
-if( eor.arguments )><
-    signature( eor.arguments.field )>, <ifaceName><eor.name; format="cap">Response & response<
+<eventsOrRequests:{facet|
+      virtual void <facet.name>( <
+if( facet.arguments )><
+    signature( facet.arguments.field )>, <ifaceName><facet.name; format="cap">Response & response<
 else><
-    signature( eor.field )><
+    signature( facet.field )><
 endif> ) = 0;
 }>
    public:

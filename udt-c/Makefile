@@ -55,7 +55,7 @@ BUILD-mingw32/%.o: src-gen/%.c
 	i686-w64-mingw32-gcc $(CFLAGS) -o $@ $<
 
 run-1: ../unite_de_traitement
-	xterm -title UDT-1 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt1 &
+	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../unite_de_traitement --name=udt1 &
 
 run-2: ../unite_de_traitement
 	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt2 &

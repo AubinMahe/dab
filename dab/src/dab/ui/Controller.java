@@ -47,17 +47,18 @@ public class Controller extends Thread implements IIHM {
    @FXML private TextField _ajouterALaCaisse;
 
    @Override
-   public void setStatus( Etat etat ) {
-      _etat = etat;
-      _insererCarte.setDisable( etat != Etat.EN_SERVICE );
-      final boolean maintenance = ( etat == Etat.MAINTENANCE );
-      final boolean hs          = ( etat == Etat.HORS_SERVICE );
+   public void etatDuDabPublished() {
+      _etat = _component.getEtatDuDab().etat;
+      _caisse.setText( "Caisse : " + NumberFormat.getCurrencyInstance().format( _component.getEtatDuDab().soldeCaisse ));
+      _insererCarte.setDisable( _etat != Etat.EN_SERVICE );
+      final boolean maintenance = ( _etat == Etat.MAINTENANCE );
+      final boolean hs          = ( _etat == Etat.HORS_SERVICE );
       if( ! ( maintenance || hs )) {
          _status.setText( "DAB en service" );
       }
-      switch( etat ) {
+      switch( _etat ) {
       default:
-         System.err.printf( "Etat DAB inattendu : %s\n", etat );
+         System.err.printf( "Etat DAB inattendu : %s\n", _etat );
          //$FALL-THROUGH$
       case HORS_SERVICE:
          _status.setText( "DAB hors service"   );
@@ -101,15 +102,15 @@ public class Controller extends Thread implements IIHM {
       _maintenanceIHM.setVisible( maintenance );
       _left          .setDisable( maintenance );
       _right         .setDisable( maintenance );
-      if(  ( etat == Etat.RETRAIT_CARTE_BILLETS      )
-         ||( etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
-         ||( etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ))
+      if(  ( _etat == Etat.RETRAIT_CARTE_BILLETS      )
+         ||( _etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
+         ||( _etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ))
       {
          _etatDuDistributeur.setText( "Fermé" );
          _prendreLaCarte   .setVisible( true );
          _prendreLesBillets.setVisible( false );
       }
-      else if( etat == Etat.RETRAIT_BILLETS ) {
+      else if( _etat == Etat.RETRAIT_BILLETS ) {
          _etatDuDistributeur.setText( "Ouvert" );
          _prendreLaCarte   .setVisible( false );
          _prendreLesBillets.setVisible( true );
@@ -119,11 +120,6 @@ public class Controller extends Thread implements IIHM {
          _prendreLaCarte   .setVisible( false );
          _prendreLesBillets.setVisible( false );
       }
-   }
-
-   @Override
-   public void setSoldeCaisse( double valeur ) {
-      _caisse.setText( "Caisse : " + NumberFormat.getCurrencyInstance().format( valeur ));
    }
 
    private void refreshScreen() {

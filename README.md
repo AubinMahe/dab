@@ -2,7 +2,7 @@
 
 ## Architecture et framework
 
-L'application est décrite par des **composants**. Les relations entre composants sont décrites sous formes d'**interfaces** **offertes** ou **requises**. Dans ce modèle simplifié, les interfaces ne contiennent que des **événements**, certains de types [**requêtes**/**réponses**](https://en.wikipedia.org/wiki/Request%E2%80%93response). La réception d'un événement active un traitement qui à sont tour peut déclencher l'émission d'un ou plusieurs événement d'une interface. Les événements sont composés d'un ensemble de **données** de types **scalaire**, **énuméré** ou **agrégat**.
+L'application est décrite par des **composants**. Les relations entre composants sont décrites sous formes d'**interfaces** **offertes** ou **requises**. Les interfaces contiennent des **événements**, certains de types **[requêtes/réponses](https://en.wikipedia.org/wiki/Request%E2%80%93response)** et des **données partagées** selon le modèle **[publish/subscribe](https://fr.wikipedia.org/wiki/Publish-subscribe)**. La réception d'un événement active un traitement qui à son tour peut déclencher l'émission d'un ou plusieurs événements d'une interface. Les événements sont composés d'un ensemble de **données** de types **scalaire**, **énuméré** ou **agrégat**.
 
 Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml)
 
