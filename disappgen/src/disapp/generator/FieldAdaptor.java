@@ -10,7 +10,7 @@ import disapp.generator.model.EnumerationType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
 
-public class TypeAdaptor extends ObjectModelAdaptor {
+public class FieldAdaptor extends ObjectModelAdaptor {
 
    @Override
    public Object getProperty( Interpreter interpreter, ST self, Object o, Object property, String propertyName ) throws STNoSuchPropertyException {

@@ -3,28 +3,37 @@
 #include <limits.h>
 #include <string.h>
 
+#include <stdexcept>
+
 using namespace util;
 
 Args::Args( int argc, char * argv[] ) {
+   if( argc > (int)(sizeof( _named )/sizeof( _named[0]))) {
+      throw std::overflow_error( "Too many arguments" );
+   }
+   _count = argc - 1;
    for( int i = 1; i < argc; ++i ) {
       const char * arg = argv[i];
       if(( arg[0] == '-' )&&( arg[1] == '-' )) {
          const char * eok = strchr( arg, '=' );
          if( ! eok ) {
-            throw std::runtime_error( std::string( "Unexpected argument: " ) + arg );
+            static char msg[200];
+            sprintf( msg, "Unexpected argument: %s", arg );
+            throw std::runtime_error( msg );
          }
-         std::string key   = std::string( arg + 2, eok );
-         std::string value = ( eok + 1 );
-         _named[key] = value;
+         _named[i-1].name  = arg + 2;
+         _named[i-1].value = eok + 1;
       }
       else {
-         throw std::runtime_error( std::string( "Unexpected argument: " ) + arg );
+         static char msg[200];
+         sprintf( msg, "Unexpected argument: %s", arg );
+         throw std::runtime_error( msg );
       }
    }
 }
 
-bool Args::getChar( const std::string & key, char & target ) const {
-   std::string value;
+bool Args::getChar( const char * key, char & target ) const {
+   const char * value = 0;
    if( getString( key, value )) {
       target = value[0];
       return true;
@@ -32,7 +41,7 @@ bool Args::getChar( const std::string & key, char & target ) const {
    return false;
 }
 
-bool Args::getByte( const std::string & key, unsigned char & target ) const {
+bool Args::getByte( const char * key, unsigned char & target ) const {
    uint64_t value;
    if( getUInt64( key, value )) {
       if( value > UCHAR_MAX ) {
@@ -44,7 +53,7 @@ bool Args::getByte( const std::string & key, unsigned char & target ) const {
    return false;
 }
 
-bool Args::getShort( const std::string & key, short & target ) const {
+bool Args::getShort( const char * key, short & target ) const {
    int64_t value;
    if( getInt64( key, value )) {
       if( value > SHRT_MAX ) {
@@ -55,7 +64,7 @@ bool Args::getShort( const std::string & key, short & target ) const {
    return false;
 }
 
-bool Args::getUShort( const std::string & key, unsigned short & target ) const {
+bool Args::getUShort( const char * key, unsigned short & target ) const {
    uint64_t value;
    if( getUInt64( key, value )) {
       if( value > USHRT_MAX ) {
@@ -67,7 +76,7 @@ bool Args::getUShort( const std::string & key, unsigned short & target ) const {
    return false;
 }
 
-bool Args::getInt( const std::string & key, int & target ) const {
+bool Args::getInt( const char * key, int & target ) const {
    int64_t value;
    if( getInt64( key, value )) {
       if( value > INT_MAX ) {
@@ -78,7 +87,7 @@ bool Args::getInt( const std::string & key, int & target ) const {
    return false;
 }
 
-bool Args::getUInt( const std::string & key, unsigned int & target ) const {
+bool Args::getUInt( const char * key, unsigned int & target ) const {
    uint64_t value;
    if( getUInt64( key, value )) {
       if( value > UINT_MAX ) {
@@ -90,7 +99,7 @@ bool Args::getUInt( const std::string & key, unsigned int & target ) const {
    return false;
 }
 
-bool Args::getLong( const std::string & key, long & target ) const {
+bool Args::getLong( const char * key, long & target ) const {
    int64_t value;
    if( getInt64( key, value )) {
       if( value > LONG_MAX ) {
@@ -101,7 +110,7 @@ bool Args::getLong( const std::string & key, long & target ) const {
    return false;
 }
 
-bool Args::getULong( const std::string & key, unsigned long & target ) const {
+bool Args::getULong( const char * key, unsigned long & target ) const {
    uint64_t value;
    if( getUInt64( key, value )) {
       if( value > ULONG_MAX ) {
@@ -113,11 +122,11 @@ bool Args::getULong( const std::string & key, unsigned long & target ) const {
    return false;
 }
 
-bool Args::getInt64( const std::string & key, int64_t & target ) const {
-   std::string number;
-   if( getString( key, number )) {
+bool Args::getInt64( const char * key, int64_t & target ) const {
+   const char * strval = 0;
+   if( getString( key, strval )) {
       char * error = 0;
-      int64_t value = strtoll( number.c_str(), &error, 10 );
+      int64_t value = strtoll( strval, &error, 10 );
       if( error || *error ) {
          return false;
       }
@@ -127,11 +136,11 @@ bool Args::getInt64( const std::string & key, int64_t & target ) const {
    return false;
 }
 
-bool Args::getUInt64( const std::string & key, uint64_t & target ) const {
-   std::string number;
-   if( getString( key, number )) {
+bool Args::getUInt64( const char * key, uint64_t & target ) const {
+   const char * strval = 0;
+   if( getString( key, strval )) {
       char * error = 0;
-      uint64_t value = strtoull( number.c_str(), &error, 10 );
+      uint64_t value = strtoull( strval, &error, 10 );
       if( error && *error ) {
          return false;
       }
@@ -141,11 +150,11 @@ bool Args::getUInt64( const std::string & key, uint64_t & target ) const {
    return false;
 }
 
-bool Args::getFloat( const std::string & key, float & target ) const {
-   std::string number;
-   if( getString( key, number )) {
+bool Args::getFloat( const char * key, float & target ) const {
+   const char * strval = 0;
+   if( getString( key, strval )) {
       char * error = 0;
-      float value = strtof( number.c_str(), &error );
+      float value = strtof( strval, &error );
       if( error || *error ) {
          return false;
       }
@@ -155,11 +164,11 @@ bool Args::getFloat( const std::string & key, float & target ) const {
    return false;
 }
 
-bool Args::getDouble( const std::string & key, double & target ) const {
-   std::string number;
-   if( getString( key, number )) {
+bool Args::getDouble( const char * key, double & target ) const {
+   const char * strval = 0;
+   if( getString( key, strval )) {
       char * error = 0;
-      double value = strtod( number.c_str(), &error );
+      double value = strtod( strval, &error );
       if( error || *error ) {
          return false;
       }
@@ -169,11 +178,23 @@ bool Args::getDouble( const std::string & key, double & target ) const {
    return false;
 }
 
-bool Args::getString( const std::string & key, std::string & target ) const {
-   auto it = _named.find( key );
-   if( it == _named.end()) {
+int Args::NVP::comparator( const Args::NVP * left, const Args::NVP * right ) {
+   const char * eq = strchr( left ->name, '=' );
+   long         le = eq ? ( eq - left ->name ) : strlen( left ->name );
+   /*         */eq = strchr( right->name, '=' );
+   long         re = eq ? ( eq - right->name ) : strlen( right->name );
+   return strncmp( left->name, right->name, (le < re) ? le : re );
+}
+
+typedef int ( * comparator_t )( const void *, const void * );
+
+bool Args::getString( const char * key, const char * & target ) const {
+   NVP   k   = { key, 0 };
+   NVP * ka   = &k;
+   NVP * nvp = (NVP *)::bsearch( ka, _named, _count, sizeof( NVP ), (comparator_t)NVP::comparator );
+   if( ! nvp ) {
       return false;
    }
-   target = it->second;
+   target = nvp->value;
    return true;
 }

@@ -3,7 +3,7 @@
 	<name>udt-cpp</name>
 	<comment></comment>
 	<projects>
-		<project>CppUtil</project>
+		<project>util-cpp</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

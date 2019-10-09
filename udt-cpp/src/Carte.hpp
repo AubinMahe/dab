@@ -1,8 +1,8 @@
 #include "Date.hpp"
 
-#include <string>
-
 #include <dab/Carte.hpp>
+
+#include <string.h>
 
 namespace udt {
 
@@ -14,25 +14,21 @@ namespace udt {
       {}
 
       void set(
-         const std::string & carteID,
-         const std::string & code,
-         byte                month,
-         ushort              year,
-         byte                nbEssais )
+         const char *   carteID,
+         const char *   code,
+         byte           month,
+         unsigned short year,
+         byte           nbEssais )
       {
-         _id       = carteID;
-         _code     = code;
+         strncpy( _id  , carteID, sizeof( _id   )); _id  [sizeof( _id   )-1] = '\0';
+         strncpy( _code, code   , sizeof( _code )); _code[sizeof( _code )-1] = '\0';
          _nbEssais = nbEssais;
          _peremption.set( month, year );
-         _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
+         _isValid  = ( strlen( _id ) > 0 )&&( strlen( _code ) > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
       }
 
       void set( const dab::Carte & carte ) {
-         _id       = carte.id;
-         _code     = carte.code;
-         _nbEssais = carte.nbEssais;
-         _peremption.set( carte.month, carte.year );
-         _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
+         set( carte.id, carte.code, carte.month, carte.year, carte.nbEssais );
       }
 
       inline void incrementeNbEssais( void ) { ++_nbEssais; }
@@ -41,19 +37,18 @@ namespace udt {
 
       inline bool isValid( void ) const { return _isValid; }
 
-      inline const std::string & getId( void ) const { return _id; }
+      inline const char * getId( void ) const { return _id; }
 
-      inline bool compareCode( const std::string & code ) const { return _code == code; }
+      inline bool compareCode( const char * code ) const { return 0 == strcmp( _code, code ); }
 
       inline byte getNbEssais( void ) const { return _nbEssais; }
 
    private:
 
-      bool        _isValid;
-      std::string _id;
-      std::string _code;
-      std::string _compte;
-      Date        _peremption;
-      byte        _nbEssais;
+      bool _isValid;
+      char _id  [4+1];
+      char _code[4+1];
+      Date _peremption;
+      byte _nbEssais;
    };
 }

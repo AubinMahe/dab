@@ -3,17 +3,17 @@ group CPP;
 
 
 type( field ) ::= <<
-< if(     field.isBoolean )>bool       <
-  elseif( field.isByte    )>byte       <
-  elseif( field.isShort   )>short      <
-  elseif( field.isUshort  )>ushort     <
-  elseif( field.isInt     )>int        <
-  elseif( field.isUint    )>uint       <
-  elseif( field.isLong    )>long       <
-  elseif( field.isUlong   )>ulong      <
-  elseif( field.isFloat   )>float      <
-  elseif( field.isDouble  )>double     <
-  elseif( field.isString  )>std::string<
+< if(     field.isBoolean )>bool<
+  elseif( field.isByte    )>byte<
+  elseif( field.isShort   )>short<
+  elseif( field.isUshort  )>unsigned short<
+  elseif( field.isInt     )>int<
+  elseif( field.isUint    )>unsigned int<
+  elseif( field.isLong    )>int64_t<
+  elseif( field.isUlong   )>uint64_t<
+  elseif( field.isFloat   )>float<
+  elseif( field.isDouble  )>double<
+  elseif( field.isString  )>char<
   elseif( field.isEnum    )><field.userType.name><
   elseif( field.isStruct  )><field.userType.name><
   endif>
@@ -25,11 +25,11 @@ enumtype( field ) ::= <<
 <     if( field.isBoolean )>bool<
   elseif( field.isByte    )>unsigned char<
   elseif( field.isShort   )>short<
-  elseif( field.isUshort  )>ushort<
+  elseif( field.isUshort  )>unsigned short<
   elseif( field.isInt     )>int<
   elseif( field.isUint    )>unsigned<
-  elseif( field.isLong    )>long<
-  elseif( field.isUlong   )>unsigned long<
+  elseif( field.isLong    )>int64_t<
+  elseif( field.isUlong   )>uint64_t<
   endif>
 >>
 
@@ -37,7 +37,7 @@ enumtype( field ) ::= <<
 
 pair( field ) ::= <<
 <     if( field.isBoolean )>bool<
-  elseif( field.isString  )>const std::string &<
+  elseif( field.isString  )>const char *<
   elseif( field.isEnum    )><field.userType.name><
   elseif( field.isDouble  )>const double &<
   elseif( field.isStruct  )>const <field.userType.name> &<
@@ -102,7 +102,7 @@ namespace <namespace> {
 
 <struct.field:{field|<
 if( field.isString )>
-      std::string <field.name>;<
+      char <field.name>[<field.length> + 1];<
 else>
       <type(field)> <field.name>;<
 endif>}>
@@ -150,7 +150,8 @@ void <struct.name>::get( io::ByteBuffer & source ) {
    < elseif( field.isUlong   )><field.name; format="width"> = source.getULong ();
    < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
    < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-   < elseif( field.isString  )><field.name; format="width"> = source.getString();
+   < elseif( field.isString  )>source.getString( <
+                                  field.name; format="strWidth">, sizeof( <field.name; format="strWidth"> ));
    < elseif( field.isEnum    )><field.name; format="width"> = (<field.userType.name>)source.getByte();
    < elseif( field.isStruct  )><field.name>.get( source );
    < endif>
@@ -159,10 +160,8 @@ void <struct.name>::get( io::ByteBuffer & source ) {
 
 
 
-enumHeader( namespace, enum ) ::= <<
+enum( namespace, enum ) ::= <<
 #pragma once
-
-#include \<iostream>
 
 namespace <namespace> {
 
@@ -177,30 +176,11 @@ namespace <namespace> {
       LAST
    };
 }
-
-std::ostream & operator \<\< ( std::ostream & stream, const <namespace>::<enum.name> & <enum.name; format="lower"> );
 >>
 
 
 
-enumBody( namespace, enum ) ::= <<
-#include \<<namespace>/<enum.name>.hpp>
-
-using namespace <namespace>;
-
-std::ostream & operator \<\< ( std::ostream & stream, const <enum.name> & <enum.name; format="lower"> ) {
-   switch( <enum.name; format="lower"> ) {
-<enum.literal:{literal|
-   case <enum.name>::<literal.name; format="upper">: return stream \<\< "<literal.name; format="upper">"; break;
-}>   case <enum.name>::LAST: return stream \<\< "LAST (inutilisé)"; break;
-   }
-   return stream \<\< "inconnu (" \<\< <enum.name; format="lower"> \<\< ")";
-}
->>
-
-
-
-requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface ) ::= <<
+requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #pragma once
 //requiredInterface
 #include \<io/DatagramSocket.hpp>
@@ -213,82 +193,28 @@ requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface ) ::= <<
 }>
 namespace <namespace> {
 
-   class I<ifaceName> {
+   class <ifaceName> {
    public:
 
-      I<ifaceName>( void ) = default;
-      virtual ~ I<ifaceName>( void ) = default;
+      <ifaceName>( io::DatagramSocket & socket, const sockaddr_in & target );
 
    public:
 
 <iface.eventOrRequestOrData:{facet|
 < if( facet.type )>
-      virtual <type(facet)> & <facet.name>( void ) = 0;
-< endif>
-      virtual void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
-if( facet.arguments )><
-         signature( facet.arguments.field )><
-else><
-         signature( facet.field )><
-endif> ) = 0;
-}>
-   private:
-      I<ifaceName>( const I<ifaceName> & ) = delete;
-      I<ifaceName> & operator = ( const I<ifaceName> & ) = delete;
-   };
-
-   I<ifaceName> * new<ifaceName>( io::DatagramSocket & socket, sockaddr_in & target );
-}
->>
-
-
-
-requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
-#include \<<namespace>/I<iface.name>.hpp>
-//requiredImplementation
-namespace <namespace> {
-
-   class <iface.name> : public ::<namespace>::I<iface.name> {
-   public:
-
-      <iface.name>( io::DatagramSocket & socket, sockaddr_in & target ) :
-         _socket( socket ),
-         _target( target ),
-         _out   ( <rawSize> )
-      {}
-
-   public:
-
-<iface.eventOrRequestOrData:{facet|
-
-< if( facet.type )>
-      virtual <type(facet)> & <facet.name>( void ) {
+      <type(facet)> & <facet.name>( void ) {
          return _<facet.name>;
       \}
 
 < endif>
-      virtual void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+      void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
 if( facet.arguments )><
-    signature( facet.arguments.field )><
+         signature( facet.arguments.field )><
 else><
-    signature( facet.field )><
-endif> ) {
-         _out.clear();
-         _out.putByte( <iface.name; format="ID">_ID );
-         _out.putByte( <facet.name; format="ID"> );
-         <
-if( facet.arguments )><
-         byteBufferPut( "", facet.arguments.field )><
-elseif( facet.type )><
-         byteBufferPut( "_", facet )><
-else><
-         byteBufferPut( "", facet.field )><
-endif>
-         _out.flip();
-         _socket.sendTo( _out, _target );
-      \}
-
-}>   private:
+         signature( facet.field )><
+endif> );
+}>
+   private:
 
       enum EventID {
 < first(iface.eventOrRequestOrData):{facet|
@@ -303,20 +229,56 @@ endif>
 
    private:
 
+      byte                 _raw[<rawSize>];
       io::DatagramSocket & _socket;
       sockaddr_in          _target;
       io::ByteBuffer       _out;
 <iface.eventOrRequestOrData:{facet|< if( facet.type )>
-      <facet.userType.name> _<facet.name>;
-< endif>}>   };
-}
+      <facet.userType.name> _<facet.name>;< endif>}>
 
-namespace <namespace> {
-
-   I<iface.name> * new<iface.name>( io::DatagramSocket & socket, sockaddr_in & target ) {
-      return new ::<namespace>::<iface.name>( socket, target );
-   }
+   private:
+      <ifaceName>( const <ifaceName> & ) = delete;
+      <ifaceName> & operator = ( const <ifaceName> & ) = delete;
+   };
 }
+>>
+
+
+
+requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+#include \<<namespace>/<iface.name>.hpp>
+//requiredImplementation
+using namespace <namespace>;
+
+<iface.name>::<iface.name>( io::DatagramSocket & socket, const sockaddr_in & target ) :
+   _socket( socket ),
+   _target( target ),
+   _out   ( _raw, <rawSize> )
+{}
+<iface.eventOrRequestOrData:{facet|
+
+
+void <iface.name>::< if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+if( facet.arguments )><
+    signature( facet.arguments.field )><
+else><
+    signature( facet.field )><
+endif> ) {
+   _out.clear();
+   _out.putByte( <iface.name; format="ID">_ID );
+   _out.putByte( <facet.name; format="ID"> );
+   <
+if( facet.arguments )><
+   byteBufferPut( "", facet.arguments.field )><
+elseif( facet.type )><
+   byteBufferPut( "_", facet )><
+else><
+   byteBufferPut( "", facet.field )><
+endif>
+   _out.flip();
+   _socket.sendTo( _out, _target );
+\}
+}>
 >>
 
 
@@ -324,8 +286,6 @@ namespace <namespace> {
 offeredInterface( namespace, name, usedTypes, eventsOrRequests ) ::= <<
 #pragma once
 //offeredInterface
-#include \<string>
-
 #include \<types.hpp>
 
 <usedTypes:{used|
@@ -362,42 +322,66 @@ endif> ) = 0;
 
 
 
-dispatcherInterface( namespace, name, rawSize ) ::= <<
+dispatcherInterface( namespace, compName, ifaces, events, rawSize ) ::= <<
 #pragma once
 //dispatcherInterface
-#include \<<namespace>/<name>Component.hpp>
-
 #include \<io/ByteBuffer.hpp>
 #include \<io/DatagramSocket.hpp>
 
 namespace <namespace> {
 
-   class I<name>Dispatcher {
+   class <compName>Component;
+   class <compName>Dispatcher {
    public:
 
-      I<name>Dispatcher( void ) = default;
-      virtual ~ I<name>Dispatcher( void ) = default;
+      <compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener );
 
    public:
 
-      virtual bool hasDispatched( void ) = 0;
+      bool hasDispatched( void );
+
+   private:
+
+      enum class Interface : byte {
+<ifaces.keys:{ifaceName|
+         <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
+}>      };
+<ifaces.keys:{ifaceName|
+
+
+      enum class <ifaceName>Event : byte {
+<  first( events.(ifaceName)):{event|         <event.name; format="ID"> = 1,
+}>< rest( events.(ifaceName)):{event|         <event.name; format="ID">,
+}>      \};
+
+      bool dispatch( <ifaceName>Event event );
+}>
+      byte                 _raw[<rawSize>];
+      io::DatagramSocket & _socket;
+      io::ByteBuffer       _in;
+      <compName>Component & _listener;
    };
-
-   I<name>Dispatcher * new<name>Dispatcher( io::DatagramSocket & socket, <name>Component & listener );
 }
 >>
 
 
 
-dispatcherImplOneInterface( name, ifaceName ) ::= <<
-//dispatcherImplOneInterface
+dispatcherImplementation( namespace, compName, ifaces, events, usedTypes ) ::= <<
+//dispatcherImplementation
+#include \<<namespace>/<compName>Dispatcher.hpp>
+#include \<<namespace>/<compName>Component.hpp>
 
-enum class <ifaceName>Event : byte {
-<  first( events.(ifaceName)):{event|   <event.name; format="ID"> = 1,
-}>< rest( events.(ifaceName)):{event|   <event.name; format="ID">,
-}>\};
+using namespace <namespace>;
 
-bool dispatch( <ifaceName>Event event ) {
+<compName>Dispatcher::<compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener ) :
+   _socket  ( socket ),
+   _in      ( _raw, sizeof( _raw )),
+   _listener( listener )
+{}
+<ifaces.keys:{ifaceName|
+
+
+bool <compName>Dispatcher::dispatch( <ifaceName>Event event ) {
    switch( event ) {
 <events.(ifaceName):{event|
    case <ifaceName>Event::<event.name; format="ID">:{
@@ -405,14 +389,15 @@ bool dispatch( <ifaceName>Event event ) {
 <     if( field.isBoolean )>bool <field.name> = _in.getBool();
 < elseif( field.isByte    )>byte <field.name> = _in.getByte();
 < elseif( field.isShort   )>short <field.name> = _in.getShort();
-< elseif( field.isUshort  )>ushort <field.name> = _in.getUShort();
+< elseif( field.isUshort  )>unsigned short <field.name> = _in.getUShort();
 < elseif( field.isInt     )>int <field.name> = _in.getInt();
-< elseif( field.isUint    )>uint <field.name> = _in.getUInt();
-< elseif( field.isLong    )>long <field.name> = _in.getLong();
-< elseif( field.isUlong   )>ulong <field.name> = _in.getULong();
+< elseif( field.isUint    )>unsigned int <field.name> = _in.getUInt();
+< elseif( field.isLong    )>int64_t <field.name> = _in.getLong();
+< elseif( field.isUlong   )>uint64_t <field.name> = _in.getULong();
 < elseif( field.isFloat   )>float <field.name> = _in.getFloat();
 < elseif( field.isDouble  )>double <field.name> = _in.getDouble();
-< elseif( field.isString  )>std::string <field.name> = _in.getString();                            
+< elseif( field.isString  )>char <field.name>[<field.length> + 1];
+_in.getString( <field.name>, sizeof( <field.name> ));
 < elseif( field.isEnum    )><field.userType.name> <field.name> = _in.getByte();
 < elseif( field.isStruct  )><field.userType.name> <field.name>;
 <field.name>.get( _in );
@@ -420,96 +405,25 @@ bool dispatch( <ifaceName>Event event ) {
 }>      _listener.<event.name>( <args( event.field )> );
       break;
       \}
-}>   default:
-      std::cerr
-         \<\< "<name>Dispatcher.dispatch|Message reçu ignoré"
-         \<\< ", interface = <ifaceName>"
-         \<\< ", event = " \<\< event
-         \<\< std::endl;
+}>   default: fprintf( stderr, "<compName>Dispatcher.dispatch|Unknown event in <ifaceName>: %d\n", (byte)event );
       return false;
    \}
    return true;
-}
-
-friend std::ostream & operator \<\< ( std::ostream & stream, <ifaceName>Event e ) {
-   switch( e ) {
-<events.(ifaceName):{event|
-   case <ifaceName>Event::<event.name; format="ID,width">: return stream \<\< "<event.name; format="ID">";
-}>   }
-   return stream \<\< "???";
-}
->>
-
-dispatcherImplementation( namespace, compName, ifaces, events, usedTypes, rawSize ) ::= <<
-//dispatcherImplementation
-#include \<<namespace>/I<compName>Dispatcher.hpp>
-#include \<<namespace>/<compName>Component.hpp>
-
-#include \<iostream>
-
-namespace <namespace> {
-
-   class <compName>Dispatcher : public ::<namespace>::I<compName>Dispatcher {
-   private:
-
-      enum class Interface : byte {
-<ifaces.keys:{ifaceName|
-         <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
-}>      };
-
-      friend std::ostream & operator \<\< ( std::ostream & stream, Interface e ) {
-         switch( e ) {
-<ifaces.keys:{ifaceName|
-         case Interface::<ifaceName; format="ID,width">: return stream \<\< "<ifaceName; format="ID,width">";
-}>         }
-         return stream \<\< "???";
-      }
-      <ifaces.keys:{ifaceName|<dispatcherImplOneInterface( compName, ifaceName )>}>
-
-   public:
-
-      <compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener ) :
-         _socket  ( socket ),
-         _listener( listener ),
-         _in      ( <rawSize> )
-      {}
-
-   public:
-
-      bool hasDispatched( void ) {
-         _in.clear();
-         if( _socket.receive( _in )) {
-            _in.flip();
-            Interface interface = static_cast\<Interface>( _in.getByte());
-            byte      event     = _in.getByte();
-            std::cerr
-               \<\< "<compName>Dispatcher.hasDispatched|"
-               \<\< "interface = " \<\< interface
-               \<\< " ("           \<\< (int)interface \<\< ')'
-               \<\< ", event: "    \<\< (int)event
-               \<\< std::endl;
-            switch( interface ) {
-<ifaces.keys:{ifaceName|
-            case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event>( event ));
+\}
 }>
-            }
-         }
-         return false;
+bool <compName>Dispatcher::hasDispatched( void ) {
+   _in.clear();
+   if( _socket.receive( _in )) {
+      _in.flip();
+      byte interface = _in.getByte();
+      byte event     = _in.getByte();
+      switch( static_cast\<Interface>( interface)) {
+<ifaces.keys:{ifaceName|
+      case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event>( event ));
+}>      default: fprintf( stderr, "<compName>Dispatcher.dispatch|Unknown interface: %d\n", interface );
       }
-
-   private:
-
-      io::DatagramSocket & _socket;
-      <compName>Component & _listener;
-      io::ByteBuffer _in;
-   };
-}
-
-namespace <namespace> {
-
-   I<compName>Dispatcher * new<compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener ) {
-      return new ::<namespace>::<compName>Dispatcher( socket, listener );
    }
+   return false;
 }
 >>
 
@@ -520,17 +434,17 @@ componentInterface( namespace, component, responses, requires, instancesByName, 
 //componentInterface
 <component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
 }>
-<component.requires:{required|#include \<<namespace>/I<required.interface.name>.hpp>
+<component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
 }>
 <responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
 }>
+#include \<<namespace>/<component.name>Dispatcher.hpp>
+
 #include \<io/DatagramSocket.hpp>
 
 < if( component.automaton )>#include \<<namespace>/Automaton.hpp>< endif>
 
 namespace <namespace> {
-
-   class I<component.name>Dispatcher;
 
    class <component.name>Component : <
 first(component.offers):{ offered  |public I<offered.interface.name>}><
@@ -538,7 +452,7 @@ rest (component.offers):{ offered|, public I<offered.interface.name>}><
 responses.(component.name):{r    |, public I<r.interface.name>}> {
    public:
 
-      <component.name>Component( const std::string & name );
+      <component.name>Component( const char * name );
 
    protected:
 
@@ -561,12 +475,15 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
       io::DatagramSocket _socket;
       bool               _running;
-      I<component.name>Dispatcher * _dispatcher;
+
+      <component.name>Dispatcher _dispatcher;
 
    protected:
+
 < if( component.automaton )>      Automaton _automaton;
-< endif>< first(requires):{req|<requires.(req):{rt|
-      I<rt.interface.name> * _<rt.interface.name; format="argument">;
+< endif>
+< first(requires):{req|<requires.(req):{rt|
+      <rt.interface.name> _<rt.interface.name; format="argument">;
 }>}>   };
 }
 >>
@@ -576,45 +493,52 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 componentImplementation( namespace, component, responses, requires, instancesByName, instances ) ::= <<
 //componentImplementation
 #include \<<namespace>/<component.name>Component.hpp>
-#include \<<namespace>/I<component.name>Dispatcher.hpp>
+#include \<<namespace>/<component.name>Dispatcher.hpp>
+
+#include  \<string.h>
 
 #include  \<stdexcept>
 
 using namespace <namespace>;
+< first(requires):{req|<requires.(req):{rt|
 
-<component.name>Component::<component.name>Component( const std::string & name ) :
-   _running   ( false ),
-   _dispatcher( 0     ),
-   _automaton ( *this )< first(requires):{req|<requires.(req):{rt|,
-   _<rt.interface.name; format="argument">( 0 )}>}>
-{< if( requires )>
-   sockaddr_in < first(requires):{req|<
-      first( requires.(req) ):{rt|<rt.interface.name; format="argument">}><
-      rest ( requires.(req) ):{rt|, <rt.interface.name; format="argument">}>}>;
-< endif>
+
+static sockaddr_in & init<rt>SocketAddress( const char * name ) {
+   static sockaddr_in address;
 < first(instances):{instance|
-   if( name == "<instance.name>" ) {
+   if( 0 == strcmp( name, "<instance.name>" )) {
+      io::DatagramSocket::init( "<
+         requires.(instance.name).(rt).toInstance.address>", <
+         requires.(instance.name).(rt).toInstance.port>, address );
+}>< rest(instances):{instance|
+   \}
+   else if( 0 == strcmp( name, "<instance.name>" )) {
+      io::DatagramSocket::init( "<
+         requires.(instance.name).(rt).toInstance.address>", <
+         requires.(instance.name).(rt).toInstance.port>, address );
+   \}
+}>   else {
+      char buffer[200];
+      sprintf( buffer, "%s:%d:'%s' isn't a valid name as defined in XML application file!", __FILE__, __LINE__, name );
+      throw std::invalid_argument( buffer );
+   \}
+   return address;
+\}}>}>
+
+<component.name>Component::<component.name>Component( const char * name ) :
+   _running   ( false ),
+   _dispatcher( _socket, *this ),
+   _automaton ( *this )< first(requires):{req|<requires.(req):{rt|,
+   _<rt; format="argument">( _socket, init<rt>SocketAddress( name ))}>}>
+{
+< first(instances):{instance|
+   if( 0 == strcmp( name, "<instance.name>" )) {
       _socket.bind( "<instance.address>", <instance.port> );
-      <requires.(instance.name):{req|io::DatagramSocket::init( "<
-         instancesByName.(req.toInstance.name).address>", <
-         instancesByName.(req.toInstance.name).port>, <
-         req.interface.name; format="argument"> );
-}>}>< rest(instances):{instance|
-  \}
-  else if( name == "<instance.name>" ) {
+}>< rest(instances):{instance|
+   \}
+   else if( 0 == strcmp( name, "<instance.name>" )) {
       _socket.bind( "<instance.address>", <instance.port> );
-      <requires.(instance.name):{req|io::DatagramSocket::init( "<
-         instancesByName.(req.toInstance.name).address>", <
-         instancesByName.(req.toInstance.name).port>, <
-         req.interface.name; format="argument"> );
-}>}>   }
-   else {
-      throw std::invalid_argument( "'" + name + "' isn't a valid name defined in XML application file!" );
-   }
-   < first(requires):{req|<
-      requires.(req):{rt|_<rt.interface.name; format="argument"
-         > = new<rt.interface.name>( _socket, <rt.interface.name; format="argument"> );
-}>}>   _dispatcher = new<component.name>Dispatcher( _socket, *this );
+}>   }
 }
 
 void <component.name>Component::terminate() {
@@ -624,7 +548,7 @@ void <component.name>Component::terminate() {
 void <component.name>Component::run() {
    _running = true;
    while( _running ) {
-      if( _dispatcher->hasDispatched()) {
+      if( _dispatcher.hasDispatched()) {
          afterDispatch();
       }
    }
@@ -674,16 +598,31 @@ Automaton :: Automaton( <component.name>Component & component ) :
       component.automaton.eventEnum.name>\>( component, <
          component.automaton.stateEnum.name>::<component.automaton.initial> )
 {
-   <component.automaton.transition:{transition|add( <
-      component.automaton.stateEnum.name>::<transition.from>, <
-      component.automaton.eventEnum.name>::<transition.event>, <
-      component.automaton.stateEnum.name>::<transition.futur> );
+   static Transition transitions[] = {<component.automaton.transition:{tr|
+
+      { <component.automaton.stateEnum.name>::<tr.from>, <
+         component.automaton.eventEnum.name>::<tr.event>, <
+         component.automaton.stateEnum.name>::<tr.futur> \},
+}>   };
+   setTransitions( transitions, sizeof(transitions)/sizeof(transitions[0]));
+
+   static Shortcut shortcuts[] = {<component.automaton.shortcut:{shortcut|
+
+      { <component.automaton.eventEnum.name>::<shortcut.event>, <
+         component.automaton.stateEnum.name>::<shortcut.futur> \},
+}>   };
+   setShortcuts( shortcuts, sizeof(shortcuts)/sizeof(shortcuts[0]));
+
+   static Action onEntries[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnEntry )>
+      { <component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
-   <component.automaton.shortcut:{shortcut|add( <
-      component.automaton.eventEnum.name>::<shortcut.event>, <
-      component.automaton.stateEnum.name>::<shortcut.futur> );
+   };
+   setOnEntries( onEntries, sizeof(onEntries)/sizeof(onEntries[0]));
+
+   static Action onExits[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnExit )>
+      { <component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
-   <component.automaton.onEntryOrOnExit:{elt|add<elt.name.localPart; format="UpperCamelCase">( <
-      component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> );
-}>}
+   };
+   setOnExits( onExits, sizeof(onExits)/sizeof(onExits[0]));
+}
 >>

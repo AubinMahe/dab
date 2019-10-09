@@ -129,7 +129,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="src-gen/dab_ST" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src-gen2|src-gen/dab_ST" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				
@@ -267,7 +267,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="src-gen/dab_ST" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        <entry excluding="src-gen2|src-gen/dab_ST" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				

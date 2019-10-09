@@ -1,7 +1,6 @@
 #pragma once
 
-#include <map>
-#include <string>
+#include <types.hpp>
 
 namespace util {
 
@@ -12,23 +11,30 @@ namespace util {
 
    public:
 
-      bool getChar  ( const std::string & key, char &           target ) const;
-      bool getByte  ( const std::string & key, unsigned char &  target ) const;
-      bool getShort ( const std::string & key, short &          target ) const;
-      bool getUShort( const std::string & key, unsigned short & target ) const;
-      bool getInt   ( const std::string & key, int &            target ) const;
-      bool getUInt  ( const std::string & key, unsigned int &   target ) const;
-      bool getLong  ( const std::string & key, long &           target ) const;
-      bool getULong ( const std::string & key, unsigned long &  target ) const;
-      bool getInt64 ( const std::string & key, int64_t &        target ) const;
-      bool getUInt64( const std::string & key, uint64_t &       target ) const;
-      bool getFloat ( const std::string & key, float &          target ) const;
-      bool getDouble( const std::string & key, double &         target ) const;
-      bool getString( const std::string & key, std::string &    target ) const;
+      bool getChar  ( const char * key, char &           target ) const;
+      bool getByte  ( const char * key, byte &           target ) const;
+      bool getShort ( const char * key, short &          target ) const;
+      bool getUShort( const char * key, unsigned short & target ) const;
+      bool getInt   ( const char * key, int &            target ) const;
+      bool getUInt  ( const char * key, unsigned int &   target ) const;
+      bool getLong  ( const char * key, long &           target ) const;
+      bool getULong ( const char * key, unsigned long &  target ) const;
+      bool getInt64 ( const char * key, int64_t &        target ) const;
+      bool getUInt64( const char * key, uint64_t &       target ) const;
+      bool getFloat ( const char * key, float &          target ) const;
+      bool getDouble( const char * key, double &         target ) const;
+      bool getString( const char * key, const char * &   target ) const;
 
    private:
 
-      std::map<std::string, std::string> _named;
+      struct NVP {
+         const char * name;
+         const char * value;
+         static int comparator( const NVP * left, const NVP * right );
+      };
+
+      unsigned _count;
+      NVP      _named[100];
 
       Args( const Args & ) = delete;
       Args & operator = ( const Args & ) = delete;

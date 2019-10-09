@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.xml.bind.JAXBElement;
+
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
@@ -37,9 +39,9 @@ abstract class BaseGenerator {
       _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
       _renderer = renderer;
       _group.registerRenderer( String.class, _renderer );
-      final TypeAdaptor ta = new TypeAdaptor();
-      _group.registerModelAdaptor( FieldType      .class, ta );
-      _group.registerModelAdaptor( EnumerationType.class, ta );
+      _group.registerModelAdaptor( FieldType      .class, new FieldAdaptor());
+      _group.registerModelAdaptor( EnumerationType.class, new EnumerationAdaptor());
+      _group.registerModelAdaptor( JAXBElement    .class, new ActionAdaptor());
    }
 
    abstract protected void generateEnum  ( String xUser ) throws IOException;

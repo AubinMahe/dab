@@ -11,6 +11,7 @@ all: ../UniteDeTraitement ../UniteDeTraitement-mingw32
 
 clean:
 	rm -f  deps
+	rm -f  generated-files.mk
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 	rm -fr bin

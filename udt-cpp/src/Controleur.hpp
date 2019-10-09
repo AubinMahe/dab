@@ -9,7 +9,7 @@ namespace udt {
    class Controleur : public dab::ControleurComponent {
    public:
 
-      Controleur( const std::string & name ) :
+      Controleur( const char * name ) :
          dab::ControleurComponent( name ),
          _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
          _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
@@ -29,8 +29,8 @@ namespace udt {
       }
 
       virtual void rechargerLaCaisse( const double & montant ) {
-         _iHM->etatDuDab().soldeCaisse += montant;
-         if( _iHM->etatDuDab().soldeCaisse < 1000 ) {
+         _iHM.etatDuDab().soldeCaisse += montant;
+         if( _iHM.etatDuDab().soldeCaisse < 1000 ) {
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
       }
@@ -44,11 +44,11 @@ namespace udt {
          }
       }
 
-      virtual void carteInseree( const std::string & id ) {
+      virtual void carteInseree( const char * id ) {
          _carte .invalidate();
          _compte.invalidate();
          _automaton.process( dab::Evenement::CARTE_INSEREE );
-         _siteCentral->getInformations( id );
+         _siteCentral.getInformations( id );
       }
 
       virtual void getInformations( const dab::Carte & carte, const dab::Compte & compte ) {
@@ -66,7 +66,7 @@ namespace udt {
             }
             else {
                _automaton.process( dab::Evenement::CARTE_CONFISQUEE );
-               _iHM->confisquerLaCarte();
+               _iHM.confisquerLaCarte();
                return;
             }
          }
@@ -76,7 +76,7 @@ namespace udt {
          }
       }
 
-      virtual void codeSaisi( const std::string & code ) {
+      virtual void codeSaisi( const char * code ) {
          if( ! _carte.isValid()) {
             _automaton.process( dab::Evenement::CARTE_INVALIDE );
          }
@@ -84,7 +84,7 @@ namespace udt {
             _automaton.process( dab::Evenement::BON_CODE );
          }
          else {
-            _siteCentral->incrNbEssais( _carte.getId());
+            _siteCentral.incrNbEssais( _carte.getId());
             _carte.incrementeNbEssais();
             if( _carte.getNbEssais() == 1 ) {
                _automaton.process( dab::Evenement::MAUVAIS_CODE_1 );
@@ -93,24 +93,24 @@ namespace udt {
                _automaton.process( dab::Evenement::MAUVAIS_CODE_2 );
             }
             else if( _carte.getNbEssais() == 3 ) {
-               _iHM->confisquerLaCarte();
+               _iHM.confisquerLaCarte();
                _automaton.process( dab::Evenement::MAUVAIS_CODE_3 );
             }
          }
       }
 
       virtual void montantSaisi( const double & montant ) {
-         if( montant > _iHM->etatDuDab().soldeCaisse ) {
-            _iHM->ejecterLaCarte();
+         if( montant > _iHM.etatDuDab().soldeCaisse ) {
+            _iHM.ejecterLaCarte();
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
          else if( montant > _compte.getSolde()) {
-            _iHM->ejecterLaCarte();
+            _iHM.ejecterLaCarte();
             _automaton.process( dab::Evenement::SOLDE_COMPTE_INSUFFISANT );
          }
          else {
-            _iHM->etatDuDab().soldeCaisse -= montant;
-            _siteCentral->retrait( _carte.getId(), montant );
+            _iHM.etatDuDab().soldeCaisse -= montant;
+            _siteCentral.retrait( _carte.getId(), montant );
             _automaton.process( dab::Evenement::MONTANT_OK );
          }
       }
@@ -123,8 +123,8 @@ namespace udt {
       }
 
       virtual void shutdown( void ) {
-         _iHM->shutdown();
-         _siteCentral->shutdown();
+         _iHM.shutdown();
+         _siteCentral.shutdown();
          _automaton.process( dab::Evenement::TERMINATE );
          terminate();
       }
@@ -133,8 +133,8 @@ namespace udt {
        * Méthode appelée après réception et traitement d'un événement ou d'une requête.
        */
       virtual void afterDispatch( void ) {
-         _iHM->etatDuDab().etat = _automaton.getCurrentState();
-         _iHM->publishEtatDuDab();
+         _iHM.etatDuDab().etat = _automaton.getCurrentState();
+         _iHM.publishEtatDuDab();
       }
 
    private:
@@ -143,10 +143,10 @@ namespace udt {
        * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
        */
       void confisquerLaCarte( void ) {
-         _iHM->confisquerLaCarte();
+         _iHM.confisquerLaCarte();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
-         _iHM->etatDuDab().etat = _automaton.getCurrentState();
-         _iHM->publishEtatDuDab();
+         _iHM.etatDuDab().etat = _automaton.getCurrentState();
+         _iHM.publishEtatDuDab();
       }
 
    public:

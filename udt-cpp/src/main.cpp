@@ -11,22 +11,25 @@ static int usage( const char * exename ) {
 
 int main( int argc, char * argv[] ) {
    util::Args  args( argc, argv );
-   std::string name;
+   const char * name;
    bool ok = args.getString( "name", name );
    if( ! ok ) {
       return usage( argv[0] );
    }
-   dab::IUniteDeTraitement * udt = 0;
    try {
-      udt = new udt::Controleur( name );
-      udt->run();
+      udt::Controleur ctrl( name );
+      try {
+         ctrl.run();
+      }
+      catch( const std::exception & err ) {
+         fprintf( stderr, "\n%s\n", err.what());
+         ctrl.shutdown();
+         return 5;
+      }
    }
    catch( const std::exception & err ) {
       fprintf( stderr, "\n%s\n", err.what());
-      if( udt ) {
-         udt->shutdown();
-      }
-      return 5;
+      return 6;
    }
    return 0;
 }

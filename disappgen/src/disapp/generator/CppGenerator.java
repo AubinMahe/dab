@@ -25,26 +25,13 @@ public class CppGenerator extends BaseGenerator {
       super( model, "cpp.stg", new BaseRenderer() );
    }
 
-   private void generateEnumHeader( String name ) throws IOException {
+   @Override
+   protected void generateEnum( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
-      final ST              tmpl = _group.getInstanceOf( "/enumHeader" );
+      final ST              tmpl = _group.getInstanceOf( "/enum" );
       tmpl.add( "namespace", _moduleName );
       tmpl.add( "enum"     , enm      );
       write( name + ".hpp", tmpl );
-   }
-
-   private void generateEnumBody( String name ) throws IOException {
-      final EnumerationType enm  = _model.getEnum( name );
-      final ST              tmpl = _group.getInstanceOf( "/enumBody" );
-      tmpl.add( "namespace", _moduleName );
-      tmpl.add( "enum"     , enm      );
-      write( name + ".cpp", tmpl );
-   }
-
-   @Override
-   protected void generateEnum( String name ) throws IOException {
-      generateEnumHeader( name );
-      generateEnumBody  ( name );
    }
 
    private void generateStructHeader( String name ) throws IOException {
@@ -77,13 +64,15 @@ public class CppGenerator extends BaseGenerator {
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
          final int               rawSize    = _model.getBufferOutCapacity( required );
+         final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
          tmpl.add( "namespace", _moduleName   );
          tmpl.add( "ifaceName", ifaceName );
          tmpl.add( "usedTypes", usedTypes );
          tmpl.add( "rawSize"  , rawSize );
          tmpl.add( "iface"    , iface );
-         write( 'I' + ifaceName + ".hpp", tmpl );
+         tmpl.add( "ifaceID"  , ifaceID   );
+         write( ifaceName + ".hpp", tmpl );
       }
    }
 
@@ -122,13 +111,19 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateDispatcherInterface( ComponentType component ) throws IOException {
-      final String compName = component.getName();
-      final int    rawSize  = _model.getBufferInCapacity( component );
-      final ST     tmpl     = _group.getInstanceOf( "/dispatcherInterface" );
+      final String                          compName     = component.getName();
+      final List<OfferedInterfaceUsageType> ifaces       = component.getOffers();
+      final Map<String, Integer>            interfaceIDs = _model.getInterfaceIDs( ifaces );
+      final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
+      final int                             rawSize      = _model.getBufferInCapacity( component );
+      final ST                              tmpl         = _group.getInstanceOf( "/dispatcherInterface" );
       tmpl.add( "namespace", _moduleName );
-      tmpl.add( "name"     , compName );
+      tmpl.add( "compName" , compName );
+      tmpl.add( "ifaces"   , interfaceIDs );
+      tmpl.add( "events"   , events );
       tmpl.add( "rawSize"  , rawSize );
-      write( 'I' + component.getName() + "Dispatcher.hpp", tmpl );
+      setRendererInterfaceMaxWidth( "width", ifaces );
+      write( component.getName() + "Dispatcher.hpp", tmpl );
    }
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
@@ -137,14 +132,12 @@ public class CppGenerator extends BaseGenerator {
       final Map<String, Integer>            interfaceIDs = _model.getInterfaceIDs( ifaces );
       final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
       final SortedSet<String>               usedTypes    = _model.getUsedTypesBy( ifaces );
-      final int                             rawSize      = _model.getBufferInCapacity( component );
       final ST                              tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "namespace"  , _moduleName );
-      tmpl.add( "compName"   , compName );
-      tmpl.add( "ifaces"     , interfaceIDs );
-      tmpl.add( "events"     , events );
-      tmpl.add( "usedTypes"  , usedTypes );
-      tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "namespace", _moduleName );
+      tmpl.add( "compName" , compName );
+      tmpl.add( "ifaces"   , interfaceIDs );
+      tmpl.add( "events"   , events );
+      tmpl.add( "usedTypes", usedTypes );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( component.getName() + "Dispatcher.cpp", tmpl );
    }
@@ -165,9 +158,10 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final List<InstanceType>              instances       = _model.getInstancesOf( component );
-      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
-      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final List<InstanceType>        instances       = _model.getInstancesOf( component );
+      final Map<String,
+         Map<String, RequiresType>>   requires        = _model.getRequiredInstancesMapOf( component );
+      final Map<String, InstanceType> instancesByName = _model.getInstancesByName();
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "namespace"      , _moduleName );
       tmpl.add( "component"      , component );

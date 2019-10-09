@@ -1,7 +1,6 @@
 #pragma once
 
 #include <types.hpp>
-#include <string>
 
 namespace io {
 
@@ -11,16 +10,20 @@ namespace io {
       ByteOrder_LITTLE_ENDIAN
    };
 
+   /**
+    * This class raises std::invalid_argument, std::runtime_error,
+    * std::overflow_error (put operation),
+    * std::underflow_error (get operation)
+    */
    class ByteBuffer {
    public:
 
-      ByteBuffer( size_t capacity, byte * array = 0 );
+      /**
+       * @throw std::invalid_argument when array is null
+       */
+      ByteBuffer( byte * array, size_t capacity );
 
-      ByteBuffer( const ByteBuffer & right );
-
-      ByteBuffer & operator = ( const ByteBuffer & );
-
-      ~ ByteBuffer( void );
+      ~ ByteBuffer( void ) = default;
 
    public:
 
@@ -90,11 +93,7 @@ namespace io {
 
       ByteBuffer & putString( const char * value );
 
-      ByteBuffer & putString( const std::string & value ) {
-         return putString( value.c_str());
-      }
-
-      std::string getString( void );
+      const char * getString( char * dest, size_t dest_size );
 
       ByteBuffer & put( ByteBuffer & source );
 
@@ -106,5 +105,10 @@ namespace io {
       size_t    _capacity;
       size_t    _mark;
       byte *    _bytes;
+
+   private:
+
+      ByteBuffer( const ByteBuffer & right ) = delete;
+      ByteBuffer & operator = ( const ByteBuffer & ) = delete;
    };
 }

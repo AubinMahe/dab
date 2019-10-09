@@ -584,6 +584,24 @@ final class Model {
       return instances;
    }
 
+   Map<String, Map<String, RequiresType>> getRequiredInstancesMapOf( ComponentType component ) {
+      final Map<String, Map<String, RequiresType>> instances = new LinkedHashMap<>();
+      for( final InstanceType instance : _application.getDeployment().getInstance()) {
+         if( instance.getComponent() == component ) {
+            if( ! instance.getRequires().isEmpty()) {
+               Map<String, RequiresType> requires = instances.get( instance.getName());
+               if( requires == null ) {
+                  instances.put( instance.getName(), requires = new LinkedHashMap<>());
+               }
+               for( final RequiresType req : instance.getRequires()) {
+                  requires.put(((InterfaceType)req.getInterface()).getName(), req );
+               }
+            }
+         }
+      }
+      return instances;
+   }
+
    Map<String, InstanceType> getInstancesByName() {
       return _instancesByName;
    }
