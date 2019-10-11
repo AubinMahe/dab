@@ -8,6 +8,15 @@ namespace util {
    class Timeout {
    public:
 
+      enum State {
+         INITIALIZED,
+         RUNNING,
+         CANCELED,
+         ELAPSED
+      };
+
+   public:
+
       Timeout( unsigned milliseconds );
       virtual ~ Timeout() = default;
 
@@ -16,6 +25,8 @@ namespace util {
       void start( void );
 
       void cancel( void );
+
+      State getState( void ) const  { return _state; }
 
    public:
 
@@ -27,9 +38,10 @@ namespace util {
 
    private:
 
-      unsigned        _delayMs;
-      struct timespec _deadline;
-      os::Event       _event;
+      unsigned  _delayMs;
+      timespec  _deadline;
+      os::Event _event;
+      State     _state;
 
    private:
       Timeout( const Timeout & ) = delete;

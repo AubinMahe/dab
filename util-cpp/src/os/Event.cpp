@@ -1,38 +1,63 @@
 #include <os/Event.hpp>
 #include <util/Exceptions.hpp>
+#include <types.hpp>
+
+#include <sys/time.h>
+#include <inttypes.h>
+#include <stdio.h>
 
 using namespace os;
 
 Event::Event( void ) {
 #ifdef _WIN32
    _event = ::CreateEvent( 0, FALSE, FALSE, 0 );
+   if( ! _event ) {
+      throw util::Runtime( UTIL_CTXT, "CreateEvent" );
+   }
 #else
-   ::pthread_mutex_init( &_condLock , 0 );
-   ::pthread_cond_init ( &_condition, 0 );
+   if( ::pthread_mutex_init( &_condLock, 0 )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_mutex_init" );
+   }
+   if( ::pthread_cond_init( &_condition, 0 )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_cond_init" );
+   }
 #endif
 }
 
 Event:: ~ Event( void ) {
 #ifdef _WIN32
-   ::CloseHandle( _event );
+   if( ! ::CloseHandle( _event )) {
+      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
+   }
 #else
-   ::pthread_mutex_destroy( &_condLock );
-   ::pthread_cond_destroy ( &_condition );
+   if( ::pthread_mutex_destroy( &_condLock )) {
+      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "pthread_mutex_destroy" ).what());
+   }
+   if( ::pthread_cond_destroy( &_condition )) {
+      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "pthread_cond_destroy" ).what());
+   }
 #endif
 }
 
-bool Event::wait( const struct timespec * deadline /* = 0 */ ) {
+bool Event::wait( const timespec * deadline /* = 0 */ ) {
    bool retVal = true;
 #ifdef _WIN32
    if( deadline ) {
-      FILETIME utcTime;
-      GetSystemTimeAsFileTime( &utcTime );
-      ULARGE_INTEGER utcTime_100_nanos;
-      utcTime_100_nanos.u.LowPart  = utcTime.dwLowDateTime;
-      utcTime_100_nanos.u.HighPart = utcTime.dwHighDateTime;
-      long deadline_ms = 10000000 * deadline->tv_sec  + deadline->tv_nsec / 100;
-      unsigned long timeout = (unsigned long)((((ULONGLONG)deadline_ms) - utcTime_100_nanos.QuadPart ) / 10000UL );
-      DWORD ret = ::WaitForSingleObject( _event, timeout );
+      timeval tv;
+      if( ::gettimeofday( &tv, NULL )) {
+         throw util::Runtime( UTIL_CTXT, "gettimeofday" );
+      }
+      int64_t now_ms = tv.tv_sec;
+      now_ms *= 1000;
+      now_ms += tv.tv_usec / 1000;
+      int64_t deadline_ms = deadline->tv_sec;
+      deadline_ms *= 1000;
+      deadline_ms += deadline->tv_nsec / 1000000;
+      int64_t timeout = deadline_ms - now_ms;
+      if( timeout < 0 ) {
+         throw util::Unexpected( UTIL_CTXT, "timeout < 0!");
+      }
+      DWORD ret = ::WaitForSingleObject( _event, (unsigned)timeout );
       if( WAIT_FAILED == ret ) {
          throw util::Runtime( UTIL_CTXT, "WaitForSingleObject" );
       }
@@ -55,6 +80,7 @@ bool Event::wait( const struct timespec * deadline /* = 0 */ ) {
          int ret = pthread_cond_timedwait( &_condition, &_condLock, deadline );
          if( ETIMEDOUT == ret ) {
             retVal = false;
+            break;
          }
          else if( ! _signaled ) {
             throw util::Runtime( UTIL_CTXT, "pthread_cond_timedwait" );
@@ -77,9 +103,15 @@ void Event::signal( void ) {
 #ifdef _WIN32
    ::PulseEvent( _event );
 #else
-   ::pthread_mutex_lock  ( &_condLock );
+   if( ::pthread_mutex_lock( &_condLock )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_mutex_lock" );
+   }
    _signaled = true;
-   ::pthread_cond_signal ( &_condition );
-   ::pthread_mutex_unlock( &_condLock );
+   if( ::pthread_cond_signal( &_condition )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_cond_signal" );
+   }
+   if( ::pthread_mutex_unlock( &_condLock )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_mutex_unlock" );
+   }
 #endif
 }

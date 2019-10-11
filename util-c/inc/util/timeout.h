@@ -4,8 +4,6 @@
 extern "C" {
 #endif
 
-#include "../types.h"
-#include "error_codes.h"
 #include <os/event.h>
 
 typedef util_error ( * util_timeout_action )( void * user_context );

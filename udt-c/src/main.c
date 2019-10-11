@@ -241,10 +241,16 @@ util_error dab_controleur_shutdown( dab_controleur * This ) {
    return UTIL_NO_ERROR;
 }
 
+/**
+ * Déclenchée par timeout, cette fonction ne peut attendre qu'afterDispatch() publie l'état du DAB
+ */
 util_error dab_controleur_confisquer_la_carte( void * uc ) {
+   fprintf( stderr, "dab_controleur_confisquer_la_carte\n" );
    dab_controleur * This = (dab_controleur *)uc;
    UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_DELAI_EXPIRE ), __FILE__, __LINE__ );
+   This->ihm.etat_du_dab.etat = This->automaton.current;
+   UTIL_ERROR_CHECK( dab_ihm_etat_du_dab_publish( &This->ihm ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
 }
 
@@ -270,10 +276,10 @@ int main( int argc, char * argv[] ) {
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
    dab_controleur controleur;
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte, &controleur ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte, &controleur ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte, &controleur ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_confisquer_la_carte, &controleur ), __FILE__, __LINE__ );
    fprintf( stderr, "dab_controleur_init\n" );
    util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {

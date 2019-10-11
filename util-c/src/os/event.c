@@ -1,26 +1,23 @@
 #include <os/event.h>
+#include <os/errors.h>
+#include <types.h>
+
 #include <errno.h>
+#include <sys/time.h>   // gettimeofday
 
 util_error os_event_init( os_event * This ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
 #ifdef _WIN32
    This->event = CreateEvent( NULL, FALSE, FALSE, NULL );
 #else
-   if(   pthread_mutex_init( &This->condLock , 0 )
-      || pthread_cond_init ( &This->condition, 0 ))
-   {
-      return UTIL_OS_ERROR;
-   }
+   OS_CHECK( pthread_mutex_init( &This->condLock , 0 ), __FILE__, __LINE__ );
+   OS_CHECK( pthread_cond_init ( &This->condition, 0 ), __FILE__, __LINE__ );
 #endif
    return UTIL_NO_ERROR;
 }
 
 util_error os_event_destroy( os_event * This ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
    util_error retVal = UTIL_NO_ERROR;
 #ifdef _WIN32
    if( ! CloseHandle( This->event  )) {
@@ -38,72 +35,64 @@ util_error os_event_destroy( os_event * This ) {
 }
 
 util_error os_event_wait( os_event * This, const struct timespec * deadline ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
    util_error retVal = UTIL_NO_ERROR;
 #ifdef _WIN32
    if( deadline ) {
-      FILETIME utcTime;
-      GetSystemTimeAsFileTime( &utcTime );
-      ULARGE_INTEGER utcTime_100_nanos;
-      utcTime_100_nanos.u.LowPart  = utcTime.dwLowDateTime;
-      utcTime_100_nanos.u.HighPart = utcTime.dwHighDateTime;
-      long deadline_ms = 10000000 * deadline->tv_sec  + deadline->tv_nsec / 100;
-      unsigned long timeout = (unsigned long)((((ULONGLONG)deadline_ms) - utcTime_100_nanos.QuadPart ) / 10000UL );
-      WaitForSingleObject( This->event, timeout );
+      struct timeval tv;
+      OS_CHECK( gettimeofday( &tv, NULL ), __FILE__, __LINE__ );
+      int64_t now_ms = tv.tv_sec;
+      now_ms *= 1000;
+      now_ms += tv.tv_usec / 1000;
+      int64_t deadline_ms = deadline->tv_sec;
+      deadline_ms *= 1000;
+      deadline_ms += deadline->tv_nsec / 1000000;
+      int64_t timeout = deadline_ms - now_ms;
+      DWORD ret = WaitForSingleObject( This->event, (unsigned)timeout );
+      OS_ASSERT( "WaitForSingleObject", WAIT_FAILED != ret, __FILE__, __LINE__-1 );
+      if( WAIT_TIMEOUT == ret ) {
+         retVal = UTIL_OVERFLOW;
+      }
    }
    else {
-      WaitForSingleObject( This->event, INFINITE );
+      OS_ERROR( WaitForSingleObject( This->event, INFINITE ), WAIT_FAILED, __FILE__, __LINE__ );
    }
 #else
-   if( pthread_mutex_lock( &This->condLock )) {
-      return UTIL_OS_ERROR;
-   }
+   OS_CHECK( pthread_mutex_lock( &This->condLock ), __FILE__, __LINE__ );
    This->signaled = false;
    while( ! This->signaled ) {
       if( deadline ) {
          int ret = pthread_cond_timedwait( &This->condition, &This->condLock, deadline );
          if( ETIMEDOUT == ret ) {
             retVal = UTIL_OVERFLOW;
+            break;
          }
-         else {
+         if( ret ) {
             retVal = UTIL_OS_ERROR;
+            break;
          }
       }
       else {
-         if( pthread_cond_wait( &This->condition, &This->condLock )) {
-            retVal = UTIL_OS_ERROR;
-         }
+         OS_CHECK( pthread_cond_wait( &This->condition, &This->condLock ), __FILE__, __LINE__ );
       }
    }
-   if( pthread_mutex_unlock( &This->condLock )) {
-      retVal = UTIL_OS_ERROR;
-   }
+   OS_CHECK( pthread_mutex_unlock( &This->condLock ), __FILE__, __LINE__ );
 #endif
    return retVal;
 }
 
 util_error os_event_signal( os_event * This ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
    util_error retVal = UTIL_NO_ERROR;
 #ifdef _WIN32
    if( ! SetEvent( This->event )) {
       retVal = UTIL_OS_ERROR;
    }
 #else
-   if( pthread_mutex_lock( &This->condLock )) {
-      return UTIL_OS_ERROR;
-   }
+   OS_CHECK( pthread_mutex_lock( &This->condLock ), __FILE__, __LINE__ );
    This->signaled = true;
-   if( pthread_cond_signal ( &This->condition )) {
-      retVal = UTIL_OS_ERROR;
-   }
-   if( pthread_mutex_unlock( &This->condLock )) {
-      retVal = UTIL_OS_ERROR;
-   }
+   OS_CHECK( pthread_cond_signal ( &This->condition ), __FILE__, __LINE__ );
+   OS_CHECK( pthread_mutex_unlock( &This->condLock ), __FILE__, __LINE__ );
 #endif
    return retVal;
 }

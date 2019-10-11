@@ -17,62 +17,44 @@ static void * util_timeout_waiting( void * arg ) {
    if( status == UTIL_OVERFLOW ) {
       This->action( This->user_context );
    }
-   else if( status ) {
-      perror( "pthread_cond_timedwait" );
+   else if( UTIL_NO_ERROR != status ) {
+      fprintf( stderr, "%s:%d:os_event_wait:%s:%s\n", __FILE__, __LINE__-5, util_error_messages[status], strerror( errno ));
    }
    return NULL;
 }
 
 util_error util_timeout_init( util_timeout * This, unsigned milliseconds, util_timeout_action action, void * user_context ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
    memset( This, 0, sizeof( util_timeout ));
-   util_error retVal = os_event_init( &This->event );
-   if( UTIL_NO_ERROR == retVal ) {
-      This->delay_sec    = milliseconds / MILLIS_PER_SECOND;
-      This->delay_ms     = milliseconds % MILLIS_PER_SECOND;
-      This->action       = action;
-      This->user_context = user_context;
-   }
-   return retVal;
+   UTIL_ERROR_CHECK( os_event_init( &This->event ), __FILE__, __LINE__ );
+   This->delay_sec    = milliseconds / MILLIS_PER_SECOND;
+   This->delay_ms     = milliseconds % MILLIS_PER_SECOND;
+   This->action       = action;
+   This->user_context = user_context;
+   return UTIL_NO_ERROR;
 }
 
 util_error util_timeout_destroy( util_timeout * This ) {
-   return os_event_destroy( &This->event );
+   UTIL_ERROR_CHECK( os_event_destroy( &This->event ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
 }
 
 util_error util_timeout_start( util_timeout * This ) {
    struct timeval tv;
-   if( gettimeofday( &tv, NULL )) {
-      perror( "gettimeofday" );
-      return UTIL_OS_ERROR;
-   }
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
-#ifdef _WIN32
+   UTIL_ERROR_CHECK( gettimeofday( &tv, NULL ), __FILE__, __LINE__ );
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
    This->deadline.tv_sec   = tv.tv_sec + (long)This->delay_sec;
    This->deadline.tv_nsec  = MICROS_PER_NANO * ( tv.tv_usec + (long)( MICROS_PER_MILLI * This->delay_ms ));
    This->deadline.tv_sec  += (long)( This->deadline.tv_nsec / NANOS_PER_SECOND );
    This->deadline.tv_nsec %= (long)NANOS_PER_SECOND;
-#else
-   This->deadline.tv_sec  = tv.tv_sec + This->delay_sec;
-   This->deadline.tv_nsec = MICROS_PER_NANO * ( tv.tv_usec + MICROS_PER_MILLI * This->delay_ms );
-   This->deadline.tv_sec  += This->deadline.tv_nsec / NANOS_PER_SECOND;
-   This->deadline.tv_nsec %= NANOS_PER_SECOND;
-#endif
    os_thread thread;
-   util_error retVal = os_thread_create( &thread, util_timeout_waiting, This );
-   if( UTIL_NO_ERROR == retVal ) {
-      retVal = os_thread_detach( &thread );
-   }
-   return retVal;
+   UTIL_ERROR_CHECK( os_thread_create( &thread, util_timeout_waiting, This ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( os_thread_detach( &thread ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
 }
 
 util_error util_timeout_cancel( util_timeout * This ) {
-   if( ! This ) {
-      return UTIL_NULL_ARG;
-   }
-   return os_event_signal( &This->event );
+   UTIL_CHECK_NON_NULL( This, __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( os_event_signal( &This->event ), __FILE__, __LINE__ );
+   return UTIL_NO_ERROR;
 }

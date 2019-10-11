@@ -144,6 +144,7 @@ namespace udt {
        * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
        */
       void confisquerLaCarte( void ) {
+         fprintf( stderr, "Controleur.confisquerLaCarte\n" );
          _iHM.confisquerLaCarte();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
          _iHM.etatDuDab().etat = _automaton.getCurrentState();

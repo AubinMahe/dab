@@ -1,5 +1,6 @@
 #include <util/Exceptions.hpp>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -40,7 +41,10 @@ private:
    int _i;
 };
 
-int main( void ) {
+void timeoutTests( bool perf );
+
+int main( int argc, char * argv[] ) {
+   bool perf = ( argc > 1 )&&( 0 == strcmp( argv[1], "--perf=true" ));
    try {
       C1().thisMethodRaiseUnexpected();
    }
@@ -67,4 +71,5 @@ int main( void ) {
    }
    fprintf( stderr, "%s\n",
       util::Runtime( __FILE__, __LINE__, __PRETTY_FUNCTION__, "printing test" ).what());
+   timeoutTests( perf );
 }

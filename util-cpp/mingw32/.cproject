@@ -59,6 +59,14 @@
                                 								
                                 <option defaultValue="gnu.c.debugging.level.max" id="gnu.c.compiler.option.debugging.level.480649875" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
+                                <option id="gnu.c.compiler.option.warnings.pedantic.1681803776" superClass="gnu.c.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.toerrors.1584287166" superClass="gnu.c.compiler.option.warnings.toerrors" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.wconversion.2089030194" superClass="gnu.c.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.extrawarn.512360838" superClass="gnu.c.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.281215516" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
                                 							
                             </tool>
@@ -75,15 +83,15 @@
                                     								
                                 </option>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.pedantic.356299798" superClass="gnu.cpp.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.pedantic.356299798" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.extrawarn.769111868" superClass="gnu.cpp.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.extrawarn.769111868" name="Extra warnings (-Wextra)" superClass="gnu.cpp.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.wconversion.770269687" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.wconversion.770269687" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.dialect.std.2029816058" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+                                <option id="gnu.cpp.compiler.option.dialect.std.2029816058" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.dialect.flags.164962103" superClass="gnu.cpp.compiler.option.dialect.flags" useByScannerDiscovery="true" value="-std=c++17" valueType="string"/>
+                                <option id="gnu.cpp.compiler.option.dialect.flags.164962103" name="Other dialect flags" superClass="gnu.cpp.compiler.option.dialect.flags" useByScannerDiscovery="true" value="-std=c++17" valueType="string"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1065959090" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							
@@ -169,6 +177,14 @@
                                 								
                                 <option defaultValue="gnu.c.debugging.level.none" id="gnu.c.compiler.option.debugging.level.189225214" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
+                                <option id="gnu.c.compiler.option.warnings.pedantic.546351009" superClass="gnu.c.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.toerrors.1192195554" superClass="gnu.c.compiler.option.warnings.toerrors" value="false" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.wconversion.138752281" superClass="gnu.c.compiler.option.warnings.wconversion" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.extrawarn.13564165" superClass="gnu.c.compiler.option.warnings.extrawarn" value="true" valueType="boolean"/>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.999358536" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
                                 							
                             </tool>
@@ -185,15 +201,15 @@
                                     								
                                 </option>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.pedantic.164796519" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.pedantic.164796519" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.extrawarn.1128367518" superClass="gnu.cpp.compiler.option.warnings.extrawarn" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.extrawarn.1128367518" name="Extra warnings (-Wextra)" superClass="gnu.cpp.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.wconversion.152395019" superClass="gnu.cpp.compiler.option.warnings.wconversion" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.wconversion.152395019" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.dialect.std.637242589" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+                                <option id="gnu.cpp.compiler.option.dialect.std.637242589" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.dialect.flags.1688600440" superClass="gnu.cpp.compiler.option.dialect.flags" value="-std=c++17" valueType="string"/>
+                                <option id="gnu.cpp.compiler.option.dialect.flags.1688600440" name="Other dialect flags" superClass="gnu.cpp.compiler.option.dialect.flags" useByScannerDiscovery="true" value="-std=c++17" valueType="string"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1129783152" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							

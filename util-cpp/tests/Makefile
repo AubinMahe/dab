@@ -1,30 +1,53 @@
 SRCS =\
- src/main.cpp
+ src/main.cpp\
+ src/timeoutTests.cpp
 
-CPPFLAGS = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
-LIB      = util-cpp
-LIBW32   = $(LIB)-mingw32
-OBJS     = $(SRCS:src/%cpp=BUILD/%o)
-OBJSW32  = $(SRCS:src/%cpp=BUILD-mingw32/%o)
+CPPFLAGS    = -I ../inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+LIB         = util-cpp
+LIBW32      = $(LIB)-mingw32
+LIBFLAGS    = -L ../lib -l $(LIB) -lpthread -lefence
+LIBW32FLAGS = -L ../lib -l $(LIBW32) -lws2_32
+OBJS        = $(SRCS:src/%cpp=BUILD/%o)
+OBJSW32     = $(SRCS:src/%cpp=BUILD-mingw32/%o)
 
-all: lib/lib$(LIB).a lib/lib$(LIB)-mingw32.a
+.PHONY: all
+all:
+	cd .. && make
+	make tests tests-win32
+	@echo "'make run[-win32]' pour les tests fonctionnels avec 'Valgrind'"
+	@echo "'make perf[-win32]' pour les tests de performance"
 
+.PHONY: clean
 clean:
-	rm -f  deps
-	rm -fr lib
+	rm -f  tests
+	rm -f  tests-win32
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
-	rm -fr bin
-	rm -fr Debug
-	rm -fr Release
 
-lib/lib$(LIB).a: $(OBJS)
-	@mkdir -p $$(dirname $@)
-	ar crv $@ $(OBJS)
+$(UTILC)/lib/lib$(LIB).a $(UTILC)/lib/lib$(LIBW32).a:
+	cd .. && make
 
-lib/lib$(LIBW32).a: $(OBJSW32)
-	@mkdir -p $$(dirname $@)
-	ar crv $@ $(OBJSW32)
+tests: $(OBJS) $(UTILC)/lib/lib$(LIB).a
+	g++ $(CFLAGS) -o $@ $(OBJS) $(LIBFLAGS)
+
+tests-win32: $(OBJSW32) $(UTILC)/lib/lib$(LIBW32).a
+	i686-w64-mingw32-g++ $(CFLAGS) -o $@ $(OBJSW32) $(LIBW32FLAGS)
+
+.PHONY: run
+run: tests
+	valgrind --track-origins=yes --leak-check=full ./tests --perf=false
+
+.PHONY: run-win32
+run-win32: tests-win32
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ./tests-win32 --perf=false
+
+.PHONY: perf
+perf: tests
+	./tests --perf=true
+
+.PHONY: perf-win32
+perf-win32: tests-win32
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ./tests-win32 --perf=true
 
 BUILD/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
