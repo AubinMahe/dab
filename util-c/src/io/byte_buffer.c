@@ -1,13 +1,12 @@
-#include <io/byte_buffer.h>
-
-#include <string.h>
-
 #ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <winsock2.h>
+#  include <os/win32.h>
 #else
 #  include <arpa/inet.h>
 #endif
+
+#include <io/byte_buffer.h>
+
+#include <string.h>
 
 #ifdef _MSC_VER
 #  define ssize_t int
@@ -183,7 +182,7 @@ util_error io_byte_buffer_get_bool( io_byte_buffer * This, bool * value ) {
  */
 
 util_error io_byte_buffer_put_short( io_byte_buffer * This, short value ) {
-   return io_byte_buffer_put_short( This, (unsigned short)value );
+   return io_byte_buffer_put_ushort( This, (unsigned short)value );
 }
 
 util_error io_byte_buffer_get_short( io_byte_buffer * This, short * target ) {

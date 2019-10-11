@@ -1,7 +1,6 @@
 #include <io/ByteBuffer.hpp>
-#include <os/StdApiException.hpp>
 
-#include <stdexcept>
+#include <util/Exceptions.hpp>
 
 #include <string.h>
 
@@ -21,12 +20,6 @@ using namespace io;
 static bool init            = true;
 static bool hostIsBigEndian = false;
 
-static const char * buildWhat( const char * file, unsigned line, const char * classMethod, const char * message ) {
-   static char what[1000] = "";
-   ::sprintf( what, "%s:%d: %s:%s\n", file, line, classMethod, message );
-   return what;
-}
-
 ByteBuffer::ByteBuffer( byte * array, size_t capacity ) :
    _order   ( ByteOrder_BIG_ENDIAN ),
    _position( 0 ),
@@ -35,9 +28,7 @@ ByteBuffer::ByteBuffer( byte * array, size_t capacity ) :
    _mark    ( capacity + 1 ),
    _bytes   ( array )
 {
-   if( ! array ) {
-      throw std::invalid_argument( buildWhat( __FILE__, __LINE__, "ByteBuffer.<ctor>", "array is null" ));
-   }
+   util::nullCheck( UTIL_CTXT, array, "array" );
    if( init ) {
       init            = false;
       hostIsBigEndian = ( htonl(1) == 1 );
@@ -66,7 +57,7 @@ ByteBuffer & ByteBuffer::reset( void ) {
       _position = _mark;
    }
    else {
-      throw std::runtime_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.reset", "invalid mark" ));
+      throw util::NotApplicable( UTIL_CTXT, "invalid mark" );
    }
    return *this;
 }
@@ -86,7 +77,7 @@ ByteBuffer & ByteBuffer::position( size_t position ) {
       _position = position;
    }
    else {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.position", "position > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) > limit(%zu)", _position, _limit );
    }
    return *this;
 }
@@ -102,7 +93,7 @@ size_t ByteBuffer::remaining( void ) const {
 ByteBuffer & ByteBuffer::put( const byte * src, size_t from, size_t to ) {
    const size_t count = to - from;
    if( _position + count > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.put", "position + (to - from) > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + (to(%zu) - from(%zu)) > limit(%zu)", _position, to, from, _limit );
    }
    memcpy( _bytes + _position, src + from, count );
    _position += count;
@@ -112,7 +103,7 @@ ByteBuffer & ByteBuffer::put( const byte * src, size_t from, size_t to ) {
 ByteBuffer & ByteBuffer::get( byte * target, size_t from, size_t to ) {
    const size_t count = to - from;
    if( _position + count > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.get", "position + (to - from) <= limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + (to(%zu) - from(%zu)) <= limit(%zu)", _position, to, from, _limit );
    }
    memcpy( target+from, _bytes + _position, count );
    _position += count;
@@ -121,7 +112,7 @@ ByteBuffer & ByteBuffer::get( byte * target, size_t from, size_t to ) {
 
 ByteBuffer & ByteBuffer::putByte( byte value ) {
    if( _position + 1 > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putByte", "position + 1 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + 1 > limit(%zu)", _position, _limit );
    }
    _bytes[_position] = value;
    _position += 1;
@@ -130,7 +121,7 @@ ByteBuffer & ByteBuffer::putByte( byte value ) {
 
 byte ByteBuffer::getByte( void ) {
    if( _position + 1 > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getByte", "position + 1 > limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + 1 > limit(%zu)", _position, _limit );
    }
    byte b = _bytes[_position];
    _position += 1;
@@ -139,7 +130,7 @@ byte ByteBuffer::getByte( void ) {
 
 ByteBuffer & ByteBuffer::putBool( bool value ) {
    if( _position + 1 > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putBool", "position + 1 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + 1 > limit(%zu)", _position, _limit );
    }
    _bytes[_position] = value ? 1 : 0;
    _position += 1;
@@ -148,7 +139,7 @@ ByteBuffer & ByteBuffer::putBool( bool value ) {
 
 bool ByteBuffer::getBool( void ) {
    if( _position + 1 > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getBool", "position + 1 > limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + 1 > limit(%zu)", _position, _limit );
    }
    byte b = _bytes[_position];
    _position += 1;
@@ -170,7 +161,7 @@ short ByteBuffer::getShort( void ) {
 
 ByteBuffer & ByteBuffer::putUShort( unsigned short value ) {
    if( _position + sizeof( unsigned short ) > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putUShort", "position + 2 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + 2 > limit(%zu)", _position, _limit );
    }
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( _order == ByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
@@ -185,7 +176,7 @@ ByteBuffer & ByteBuffer::putUShort( unsigned short value ) {
 unsigned short ByteBuffer::getUShort( void ) {
    unsigned short value;
    if( _position + sizeof( unsigned short ) > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getUShort", "position + 2 > limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + 2 > limit(%zu)", _position, _limit );
    }
    memcpy( &value, _bytes + _position, sizeof( unsigned short ));
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
@@ -209,7 +200,7 @@ int ByteBuffer::getInt( void ) {
 
 ByteBuffer & ByteBuffer::putUInt( unsigned int value ) {
    if( _position + sizeof( unsigned int ) > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putUInt", "position + 4 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + 4 > limit(%zu)", _position, _limit );
    }
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( _order == ByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
@@ -226,7 +217,7 @@ ByteBuffer & ByteBuffer::putUInt( unsigned int value ) {
 
 ByteBuffer & ByteBuffer::putUInt( size_t index, unsigned int value ) {
    if( index + sizeof( unsigned int ) > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putUInt", "index + 4 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "index(%zu) + 4 > limit(%zu)", _position, _limit );
    }
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( _order == ByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
@@ -243,7 +234,7 @@ ByteBuffer & ByteBuffer::putUInt( size_t index, unsigned int value ) {
 unsigned int ByteBuffer::getUInt( void ) {
    unsigned int value;
    if( _position + sizeof( unsigned int ) > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getUInt", "position + 4 > limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + 4 > limit(%zu)", _position, _limit );
    }
    memcpy( &value, _bytes + _position, sizeof( int ));
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
@@ -268,7 +259,7 @@ int64_t ByteBuffer::getLong( void ) {
 
 ByteBuffer & ByteBuffer::putULong( uint64_t value ) {
    if( _position + sizeof( uint64_t ) > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.putULong", "position + 8 > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + 8 > limit(%zu)", _position, _limit );
    }
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( _order == ByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
@@ -290,7 +281,7 @@ ByteBuffer & ByteBuffer::putULong( uint64_t value ) {
 uint64_t ByteBuffer::getULong( void ) {
    uint64_t value;
    if( _position + sizeof( uint64_t ) > _limit ) {
-      throw std::underflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getULong", "position + 8 > limit" ));
+      throw util::Underflow( UTIL_CTXT, "position(%zu) + 8 > limit(%zu)", _position, _limit );
    }
    memcpy( &value, _bytes + _position, sizeof( int64_t ));
    if( ( _order == ByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
@@ -345,7 +336,7 @@ ByteBuffer & ByteBuffer::putString( const char * source ) {
 const char * ByteBuffer::getString( char * dest, size_t dest_size ) {
    unsigned int len = getUInt();
    if( len >= dest_size ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.getString", "received length >= dest_size" ));
+      throw util::Overflow( UTIL_CTXT, "received length(%zu) >= dest_size(%zu)", len, dest_size );
    }
    get((byte *)dest, 0, len );
    dest[len] = '\0';
@@ -355,8 +346,8 @@ const char * ByteBuffer::getString( char * dest, size_t dest_size ) {
 ByteBuffer & ByteBuffer::put( ByteBuffer & source ) {
    size_t count = source._limit - source._position;
    if( _position + count > _limit ) {
-      throw std::overflow_error( buildWhat( __FILE__, __LINE__, "ByteBuffer.put(ByteBuffer &)",
-         "position + (source.limit - source.position) > limit" ));
+      throw util::Overflow( UTIL_CTXT, "position(%zu) + (source.limit(%zu) - source.position(%zu)) > limit(%zu)",
+         _position, source._limit, source._position, _limit );
    }
    memcpy( _bytes + _position, source._bytes + source._position, count );
    source._position += count;

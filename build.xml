@@ -86,6 +86,12 @@
       <exec executable="make" dir="udt-c"  ><arg value="run-1" /></exec>
    </target>
 
+   <target name="run-c-win32" depends="util-c,udt-c">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-win32-1" /></exec>
+   </target>
+
    <target name="run-c-2" depends="util-c,udt-c">
       <ant                    dir="sc"          target="run"   />
       <ant                    dir="dab"         target="run-1" />
@@ -94,10 +100,24 @@
       <exec executable="make" dir="udt-c"  ><arg value="run-2" /></exec>
    </target>
 
+   <target name="run-c-win32-2" depends="util-c,udt-c">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-win32-1" /></exec>
+      <ant                    dir="dab"         target="run-2" />
+      <exec executable="make" dir="udt-c"  ><arg value="run-win32-2" /></exec>
+   </target>
+
    <target name="run-cpp" depends="util-cpp,udt-cpp">
       <ant                    dir="sc"          target="run"   />
       <ant                    dir="dab"         target="run-1" />
       <exec executable="make" dir="udt-cpp"><arg value="run-1" /></exec>
+   </target>
+
+   <target name="run-cpp-win32" depends="util-cpp,udt-cpp">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-win32-1" /></exec>
    </target>
 
    <target name="run-cpp-2" depends="util-cpp,udt-cpp">
@@ -106,6 +126,14 @@
       <exec executable="make" dir="udt-cpp"><arg value="run-1" /></exec>
       <ant                    dir="dab"         target="run-2" />
       <exec executable="make" dir="udt-cpp"><arg value="run-2" /></exec>
+   </target>
+
+   <target name="run-cpp-win32-2" depends="util-cpp,udt-cpp">
+      <ant                    dir="sc"          target="run"   />
+      <ant                    dir="dab"         target="run-1" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-win32-1" /></exec>
+      <ant                    dir="dab"         target="run-2" />
+      <exec executable="make" dir="udt-cpp"><arg value="run-win32-2" /></exec>
    </target>
 
    <target name="run-java" depends="util-java,udt-java">

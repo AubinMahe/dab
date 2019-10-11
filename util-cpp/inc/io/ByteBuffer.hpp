@@ -11,15 +11,16 @@ namespace io {
    };
 
    /**
-    * This class raises std::invalid_argument, std::runtime_error,
-    * std::overflow_error (put operation),
-    * std::underflow_error (get operation)
+    * This class raises util::NullArg, std::Runtime (OS calls errors),
+    * util::Overflow (put operation),
+    * util::Underflow (get operation)
     */
    class ByteBuffer {
    public:
 
       /**
-       * @throw std::invalid_argument when array is null
+       * Wraps a byte buffer.
+       * Raises util::NullArg when array is null.
        */
       ByteBuffer( byte * array, size_t capacity );
 

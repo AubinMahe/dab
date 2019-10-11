@@ -6,13 +6,14 @@ SRCS =\
  src/os/errors.c\
  src/os/event.c\
  src/os/mutex.c\
+ src/os/thread.c\
  src/util/args.c\
  src/util/automaton.c\
  src/util/error_codes.c\
  src/util/map.c\
  src/util/timeout.c
 
-CFLAGS  = -I inc -O3 -g0 -W -Wall -pedantic -std=c11
+CFLAGS  = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -std=c11
 LIB     = util-c
 LIBW32  = $(LIB)-mingw32
 OBJS    = $(SRCS:src/%c=BUILD/%o)

@@ -1,15 +1,16 @@
 #include <util/Args.hpp>
+#include <util/Exceptions.hpp>
 
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
-
-#include <stdexcept>
 
 using namespace util;
 
 Args::Args( int argc, char * argv[] ) {
-   if( argc > (int)(sizeof( _named )/sizeof( _named[0]))) {
-      throw std::overflow_error( "Too many arguments" );
+   const int max = (int)(sizeof( _named )/sizeof( _named[0]));
+   if( argc > max ) {
+      throw Overflow( UTIL_CTXT, "Too many arguments %d > %d", argc, max );
    }
    _count = argc - 1;
    for( int i = 1; i < argc; ++i ) {
@@ -17,17 +18,13 @@ Args::Args( int argc, char * argv[] ) {
       if(( arg[0] == '-' )&&( arg[1] == '-' )) {
          const char * eok = strchr( arg, '=' );
          if( ! eok ) {
-            static char msg[200];
-            sprintf( msg, "Unexpected argument: %s", arg );
-            throw std::runtime_error( msg );
+            throw Unexpected( UTIL_CTXT, "%s", arg );
          }
          _named[i-1].name  = arg + 2;
          _named[i-1].value = eok + 1;
       }
       else {
-         static char msg[200];
-         sprintf( msg, "Unexpected argument: %s", arg );
-         throw std::runtime_error( msg );
+         throw Unexpected( UTIL_CTXT, "%s", arg );
       }
    }
 }

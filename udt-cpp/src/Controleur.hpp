@@ -1,7 +1,8 @@
+#include <dab/ControleurComponent.hpp>
+
 #include "Carte.hpp"
 #include "Compte.hpp"
 
-#include <dab/ControleurComponent.hpp>
 #include <util/Timeout.hpp>
 
 namespace udt {

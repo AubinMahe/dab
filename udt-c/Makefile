@@ -2,7 +2,7 @@ SRCS = src/main.c
 
 -include generated-files.mk
 
-CFLAGS = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -W -Wall -pedantic -c -std=c11
+CFLAGS = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
 
 OBJS    = $(SRCS:src/%c=BUILD/%o) $(SRCSGEN:src-gen/%c=BUILD/%o)
 OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
@@ -36,7 +36,7 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 
 ../unite_de_traitement-mingw32: ../util-c/lib/libutil-c-mingw32.a $(OBJSW32)
 	cd ../util-c && make
-	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -lws2_32 -lpthread -o $@
+	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.c
 	@mkdir -p $$(dirname $@)
@@ -60,8 +60,13 @@ run-1: ../unite_de_traitement
 run-2: ../unite_de_traitement
 	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt2 &
 
-run-mingw32: ../unite_de_traitement-mingw32
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../unite_de_traitement-mingw32 --name=udt-1
+run-win32-1: ../unite_de_traitement-mingw32
+	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
+	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e wine ../unite_de_traitement-mingw32 --name=udt1
+
+run-win32-2: ../unite_de_traitement-mingw32
+	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
+	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e wine ../unite_de_traitement-mingw32 --name=udt2
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

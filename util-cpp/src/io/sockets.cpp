@@ -1,6 +1,6 @@
 #include <io/sockets.hpp>
 #include <io/DatagramSocket.hpp>
-#include <os/StdApiException.hpp>
+#include <util/Exceptions.hpp>
 
 #include <string.h>
 
@@ -11,7 +11,7 @@
 
 /**
  * inet_pton4, inet_pton6 : Author: Paul Vixie, 1996.
- */
+ * /
 extern "C" int inet_pton4( const char * src, char * dst ) {
     uint8_t tmp[NS_INADDRSZ], *tp;
     int saw_digit = 0;
@@ -57,7 +57,7 @@ extern "C" int inet_pton6( const char * src, char * dst ) {
     uint8_t *tp = (uint8_t*) memset(tmp, '\0', NS_IN6ADDRSZ);
     uint8_t *endp = tp + NS_IN6ADDRSZ;
     uint8_t *colonp = NULL;
-    /* Leading :: requires some special handling. */
+    // Leading :: requires some special handling.
     if (*src == ':') {
         if (*++src != ':')
             return 0;
@@ -98,7 +98,7 @@ extern "C" int inet_pton6( const char * src, char * dst ) {
         if (ch == '.' && ((tp + NS_INADDRSZ) <= endp) && inet_pton4(curtok, (char*) tp) > 0) {
             tp += NS_INADDRSZ;
             saw_xdigit = 0;
-            break; /* '\0' was seen by inet_pton4(). */
+            break; // '\0' was seen by inet_pton4().
         }
         return 0;
     }
@@ -109,10 +109,7 @@ extern "C" int inet_pton6( const char * src, char * dst ) {
         *tp++ = (uint8_t) val & 0xff;
     }
     if (colonp != NULL) {
-        /*
-         * Since some memmove()'s erroneously fail to handle
-         * overlapping regions, we'll do the shift by hand.
-         */
+        // Since some memmove()'s erroneously fail to handle overlapping regions, we'll do the shift by hand.
         const int n = tp - colonp;
         if (tp == endp)
             return 0;
@@ -135,14 +132,14 @@ extern"C" int inet_pton( int af, const char * src, void * dst ) {
    default      : return -1;
    }
 }
-
+*/
 static struct WinsockInit {
    WinsockInit( void ) {
       WORD    wVersionRequested = MAKEWORD(2, 2);
       WSADATA wsaData;
       int     err = WSAStartup(wVersionRequested, &wsaData);
       if( err ) {
-         throw os::StdApiException( "WinsockInit", __FILE__, __LINE__ );
+         throw util::Runtime( UTIL_CTXT, "WinsockInit" );
       }
    }
 } initWinsock;

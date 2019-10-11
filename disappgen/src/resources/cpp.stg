@@ -325,8 +325,8 @@ endif> ) = 0;
 dispatcherInterface( namespace, compName, ifaces, events, rawSize ) ::= <<
 #pragma once
 //dispatcherInterface
-#include \<io/ByteBuffer.hpp>
 #include \<io/DatagramSocket.hpp>
+#include \<io/ByteBuffer.hpp>
 
 namespace <namespace> {
 
@@ -432,6 +432,8 @@ bool <compName>Dispatcher::hasDispatched( void ) {
 componentInterface( namespace, component, responses, requires, instancesByName, instances, actions ) ::= <<
 #pragma once
 //componentInterface
+#include \<io/DatagramSocket.hpp>
+
 <component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
 }>
 <component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
@@ -439,8 +441,6 @@ componentInterface( namespace, component, responses, requires, instancesByName, 
 <responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
 }>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
-
-#include \<io/DatagramSocket.hpp>
 
 < if( component.automaton )>#include \<<namespace>/Automaton.hpp>< endif>
 

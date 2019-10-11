@@ -1,9 +1,11 @@
 #pragma once
 
+#include <os/win32.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <stdexcept>
+#include "Exceptions.hpp"
 
 namespace util {
 
@@ -108,9 +110,7 @@ namespace util {
                Transition   key = { _current, event, S()};
                Transition * tr  = search( _transitions, _trCount, key );
                if( ! tr ) {
-                  char msg[200];
-                  sprintf( msg, "util.Automaton.process|unexpected event: %d from state: %d\n", (int)event, (int)_current );
-                  throw std::runtime_error( msg );
+                  throw Unexpected( UTIL_CTXT, "event: %d from state: %d\n", (int)event, (int)_current );
                }
                futur = tr->futur;
             }

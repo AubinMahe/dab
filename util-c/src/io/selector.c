@@ -18,8 +18,13 @@ util_error io_selector_init( fd_set * set, ... ) {
 util_error io_selector_select( fd_set * set, unsigned timeoutValue ) {
    struct timeval timeout;
    if( timeoutValue > 0 ) {
+#ifdef _WIN32
+      timeout.tv_sec  = (long)(timeoutValue / 1000);
+      timeout.tv_usec = (long)(1000 * ( timeoutValue % 1000 ));
+#else
       timeout.tv_sec  = timeoutValue / 1000;
       timeout.tv_usec = 1000 * ( timeoutValue % 1000 );
+#endif
    }
    int count = select( FD_SETSIZE, set, 0, 0, ( timeoutValue > 0 ) ? &timeout : 0 );
    if( count < 0 ) {

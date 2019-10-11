@@ -1,15 +1,13 @@
 #pragma once
 
-#include <os/StdApiException.hpp>
-#include <io/ByteBuffer.hpp>
-
 #ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <winsock2.h>
+#  include <os/win32.hpp>
 #else
 #  include <netinet/in.h>
    typedef int SOCKET;
 #endif
+
+#include <io/ByteBuffer.hpp>
 
 namespace io {
 

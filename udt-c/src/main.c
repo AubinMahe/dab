@@ -192,6 +192,9 @@ util_error dab_controleur_billets_retires( dab_controleur * This ) {
 }
 
 util_error dab_controleur_after_dispatch( dab_controleur * This ) {
+   fprintf( stderr, "dab_controleur_after_dispatch|state = %s, solde caisse : %7.2f\n",
+      dab_etat_to_string( This->automaton.current ),
+      This->ihm.etat_du_dab.solde_caisse );
    This->ihm.etat_du_dab.etat = This->automaton.current;
    UTIL_ERROR_CHECK( dab_ihm_etat_du_dab_publish( &This->ihm ), __FILE__, __LINE__ );
    return UTIL_NO_ERROR;
@@ -263,15 +266,18 @@ int main( int argc, char * argv[] ) {
    if( UTIL_NO_ERROR != util_args_get_string( &map, "name", &name )) {
       return usage( argv[0] );
    }
-   dab_controleur controleur;
+   io_winsock_init();
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
+   dab_controleur controleur;
    UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_confisquer_la_carte, &d ), __FILE__, __LINE__ );
+   fprintf( stderr, "dab_controleur_init\n" );
    util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {
+      fprintf( stderr, "dab_controleur_run\n" );
       err = dab_controleur_run( &controleur );
    }
    if( UTIL_OS_ERROR == err ) {
@@ -281,5 +287,6 @@ int main( int argc, char * argv[] ) {
       fprintf( stderr, "%s\n", util_error_messages[err] );
    }
    dab_controleur_shutdown( &controleur );
+   fprintf( stderr, "dab_controleur_shutdown\n" );
    return 0;
 }

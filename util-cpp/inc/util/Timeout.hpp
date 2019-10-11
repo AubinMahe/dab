@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pthread.h>
+#include <os/Event.hpp>
 #include <time.h>
 
 namespace util {
@@ -29,8 +29,7 @@ namespace util {
 
       unsigned        _delayMs;
       struct timespec _deadline;
-      pthread_cond_t  _cond;
-      pthread_mutex_t _mutex;
+      os::Event       _event;
 
    private:
       Timeout( const Timeout & ) = delete;

@@ -330,7 +330,7 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       break;
    \}
 }>   default:
-      fprintf( stderr, "<prefix>_<name; format="cname">_dispatcher|Message reçu ignoré\n" );
+      fprintf( stderr, "<prefix>_<name; format="cname">_dispatcher|Ignored message:\n" );
       fprintf( stderr, "\tinterface = <ifaceName>\n" );
       fprintf( stderr, "\tevent     = %d\n", event );
       break;
@@ -342,8 +342,8 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 
 dispatcherImplementation( prefix, compName, ifaces, events, usedTypes, rawSize ) ::= <<
 //dispatcherImplementation
-#include \<<prefix>/<compName; format="cname">_dispatcher.h>
 #include \<<prefix>/<compName; format="cname">.h>
+#include \<<prefix>/<compName; format="cname">_dispatcher.h>
 
 #include \<stdio.h>
 
@@ -377,10 +377,13 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ), __FILE__, __LINE__ );
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ), __FILE__, __LINE__ );
+   fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|interface = %d, event = %d\n", interface, event );
    switch( interface ) {
 <ifaces.keys:{ifaceName|
    case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched ), __FILE__, __LINE__ ); break;
-}>
+}>   default:
+      fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
+      return UTIL_NOT_APPLICABLE;
    }
    return UTIL_NO_ERROR;
 }
@@ -473,6 +476,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
          req.interface.name; format="cname"> ), __FILE__, __LINE__ );
 }>}>   }
    else {
+      fprintf( stderr, "unknown deployment name '%s'!\n", name );
       return UTIL_NOT_APPLICABLE;
    }
    < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
@@ -499,8 +503,8 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
 automatonHeader( prefix, component ) ::= <<
 #pragma once
 
-#include \<util/automaton.h>
 #include \<<prefix>/<component.name; format="cname">.h>
+#include \<util/automaton.h>
 
 util_error <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
 >>

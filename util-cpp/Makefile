@@ -5,11 +5,12 @@ SRCS =\
  src/io/sockets.cpp\
  src/os/Event.cpp\
  src/os/Mutex.cpp\
- src/os/StdApiException.cpp\
+ src/os/Thread.cpp\
  src/util/Args.cpp\
+ src/util/Exceptions.cpp\
  src/util/Timeout.cpp
 
-CPPFLAGS = -I inc -O3 -g0 -W -Wall -pedantic -c -std=c++1z
+CPPFLAGS = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
 LIB      = util-cpp
 LIBW32   = $(LIB)-mingw32
 OBJS     = $(SRCS:src/%cpp=BUILD/%o)

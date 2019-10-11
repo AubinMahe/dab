@@ -1,5 +1,4 @@
 #include <io/datagram_socket.h>
-#include <io/sockets.h>
 
 #include <string.h>
 
@@ -60,7 +59,11 @@ util_error io_datagram_socket_receive( SOCKET sckt, io_byte_buffer * bb, struct 
    byte *    buffer = bb->bytes + bb->position;
    int       flags  = 0;
    socklen_t len    = from ? sizeof( from ) : 0;
+#ifdef _WIN32
+   ssize_t   count  = recvfrom( sckt, (char *)buffer, (int)max, flags, (struct sockaddr *)from, &len );
+#else
    ssize_t   count  = recvfrom( sckt, (char *)buffer, max, flags, (struct sockaddr *)from, &len );
+#endif
    if( count < 0 ) {
       return UTIL_OS_ERROR;
    }
@@ -74,7 +77,11 @@ util_error io_datagram_socket_send( SOCKET sckt, io_byte_buffer * bb ) {
    }
    size_t       len    = bb->limit - bb->position;
    const char * buffer = (const char *)( bb->bytes + bb->position );
+#ifdef _WIN32
+   ssize_t      count  = send( sckt, buffer, (int)len, 0 );
+#else
    ssize_t      count  = send( sckt, buffer, len, 0 );
+#endif
    if( count < 0 || ( len != (size_t)count )) {
       return UTIL_OS_ERROR;
    }
@@ -88,7 +95,11 @@ util_error io_datagram_socket_sendTo( SOCKET sckt, io_byte_buffer * bb, struct s
    }
    size_t       len    = bb->limit - bb->position;
    const char * buffer = (const char *)( bb->bytes + bb->position );
+#ifdef _WIN32
+   ssize_t      count  = sendto( sckt, buffer, (int)len, 0, (struct sockaddr *)target, sizeof( struct sockaddr_in ));
+#else
    ssize_t      count  = sendto( sckt, buffer, len, 0, (struct sockaddr *)target, sizeof( struct sockaddr_in ));
+#endif
    if( count < 0 || ( len != (size_t)count )) {
       return UTIL_OS_ERROR;
    }

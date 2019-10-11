@@ -1,14 +1,12 @@
-#include <os/errors.h>
-
 #ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#  include <winsock2.h>
+#  include <os/win32.h>
 #elif __linux__
 #  include <errno.h>
 #  include <string.h>
 #endif
 #include <stdio.h>
+
+#include <os/errors.h>
 
 util_error os_get_error_message( const char * func, const char * file, unsigned line, char *target, unsigned sizeof_target ) {
    if( !func || ! file || ! target) {

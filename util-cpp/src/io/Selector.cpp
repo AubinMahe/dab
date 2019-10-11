@@ -1,5 +1,5 @@
 #include <io/Selector.hpp>
-#include <os/StdApiException.hpp>
+#include <util/Exceptions.hpp>
 
 #include <sys/time.h>
 
@@ -20,7 +20,7 @@ bool Selector::select( unsigned timeoutValue ) {
    }
    int count = ::select( FD_SETSIZE, &_ensemble, 0, 0, ( timeoutValue > 0 ) ? &timeout : 0 );
    if( count < 0 ) {
-      throw os::StdApiException( "SetOfSocket.select", __FILE__, __LINE__ );
+      throw util::Runtime( __FILE__, __LINE__, __PRETTY_FUNCTION__, "select" );
    }
    return count > 0;
 }
