@@ -3,6 +3,7 @@ package dab.ui;
 import java.io.IOException;
 
 import dab.EtatDuDab;
+import dab.IUniteDeTraitement;
 import javafx.application.Platform;
 
 public class Distributeur extends dab.DistributeurComponent {
@@ -32,6 +33,11 @@ public class Distributeur extends dab.DistributeurComponent {
    }
 
    @Override
+   public void placerLesBilletsDansLaCorbeille() throws IOException {
+      Platform.runLater(() -> _controller.placerLesBilletsDansLaCorbeille());
+   }
+
+   @Override
    public void ejecterLaCarte() throws IOException {
       Platform.runLater(() -> _controller.ejecterLaCarte());
    }
@@ -46,84 +52,7 @@ public class Distributeur extends dab.DistributeurComponent {
       Platform.runLater(() -> _controller.shutdown());
    }
 
-   public void done() {
-      try {
-         _uniteDeTraitement.shutdown();
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void codeSaisi( String code ) {
-      try {
-         _uniteDeTraitement.codeSaisi( code );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void montantSaisi( double montant ) {
-      try {
-         _uniteDeTraitement.montantSaisi( montant );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void carteInseree( String id ) {
-      try {
-         _uniteDeTraitement.carteInseree( id );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void maintenance( boolean maintenance ) {
-      try {
-         _uniteDeTraitement.maintenance( maintenance );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void rechargerLaCaisse( double montant ) {
-      try {
-         _uniteDeTraitement.rechargerLaCaisse( montant );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void carteRetiree() {
-      try {
-         _uniteDeTraitement.carteRetiree();
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void billetsRetires() {
-      try {
-         _uniteDeTraitement.billetsRetires();
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
-   }
-
-   public void anomalie( boolean anomalie ) {
-      try {
-         _uniteDeTraitement.anomalie( anomalie );
-      }
-      catch( final Throwable t ){
-         t.printStackTrace();
-      }
+   public IUniteDeTraitement uniteDeTraitement() {
+      return _uniteDeTraitement;
    }
 }

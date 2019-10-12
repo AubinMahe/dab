@@ -2,7 +2,9 @@ SRCS = src/main.cpp
 
 -include generated-files.mk
 
-CPPFLAGS = -I ../util-cpp/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+CPPFLAGS    = -I ../util-cpp/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+WINVER      = 0x06010000
+CPPW32FLAGS = $(CPPFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 
 OBJS    = $(SRCS:src/%cpp=BUILD/%o) $(SRCSGEN:src-gen/%cpp=BUILD/%o)
 OBJSW32 = $(SRCS:src/%cpp=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%cpp=BUILD-mingw32/%o)
@@ -49,11 +51,11 @@ BUILD/%.o: src-gen/%.cpp
 
 BUILD-mingw32/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $<
+	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
 BUILD-mingw32/%.o: src-gen/%.cpp
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $<
+	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
 run-1: ../UniteDeTraitement
 	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../UniteDeTraitement --name=udt1 &

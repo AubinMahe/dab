@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Root" default="build-all">
+<project name="Root" default="all">
 
    <property file="application-settings.properties" />
+      
    <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
    <target name="generate-all-sources" depends="disappgen">
       <dependset>
@@ -34,30 +35,47 @@
       </java>
    </target>
 
-   <target name="util-c"      ><exec dir="util-c"       executable="make" failonerror="true" /></target>
-   <target name="util-c-tests"><exec dir="util-c/tests" executable="make" failonerror="true" /></target>
-   <target name="udt-c"       ><exec dir="udt-c"        executable="make" failonerror="true" /></target>
+   <target name="util-c"  ><exec dir="util-c"   executable="make" output="util-c/compile.log"   failonerror="true" /></target>
+   <target name="udt-c"   ><exec dir="udt-c"    executable="make" output="udt-c/compile.log"    failonerror="true" /></target>
+   <target name="util-cpp"><exec dir="util-cpp" executable="make" output="util-cpp/compile.log" failonerror="true" /></target>
+   <target name="udt-cpp" ><exec dir="udt-cpp"  executable="make" output="udt-cpp/compile.log"  failonerror="true" /></target>
 
-   <target name="util-cpp"    ><exec dir="util-cpp"     executable="make" failonerror="true" /></target>
-   <target name="udt-cpp"     ><exec dir="udt-cpp"      executable="make" failonerror="true" /></target>
+   <target name="util-java"><ant dir="util-java" output="compile.log" /></target>
+   <target name="dab"      ><ant dir="dab"       output="compile.log" /></target>
+   <target name="sc"       ><ant dir="sc"        output="compile.log" /></target>
+   <target name="udt-java" ><ant dir="udt-java"  output="compile.log" /></target>
 
-   <target name="util-java"   ><ant  dir="util-java" /></target>
-   <target name="dab"         ><ant  dir="dab"       /></target>
-   <target name="sc"          ><ant  dir="sc"        /></target>
-   <target name="udt-java"    ><ant  dir="udt-java"  /></target>
+   <target name="util-c-tests"  ><exec dir="util-c/tests"   executable="make" failonerror="true" /></target>
+   <target name="util-cpp-tests"><exec dir="util-cpp/tests" executable="make" failonerror="true" /></target>
 
-   <target name="build-all">
+   <target name="show-errors">
+      <concat>
+         <fileset dir="." includes="*/compile.log">
+             <contains text="error"/>
+         </fileset>
+      </concat>
+   </target>
+
+   <target name="all">
       <antcall target="generate-all-sources" />
+      <echo>
+
+         Les fichiers de log de compilations sont nommés compile.log dans leur dossier respectif.
+
+      </echo>
       <parallel>
          <sequential>
+            <echo message="    -- Compilation C    --" />
             <antcall target="util-c" />
             <antcall target="udt-c" />
          </sequential>
          <sequential>
+            <echo message="    -- Compilation C++  --" />
             <antcall target="util-cpp" />
             <antcall target="udt-cpp" />
          </sequential>
          <sequential>
+            <echo message="    -- Compilation Java --" />
             <antcall target="util-java" />
             <parallel>
                <antcall target="udt-java" />
@@ -66,18 +84,12 @@
             </parallel>
          </sequential>
       </parallel>
-   </target>
+      <echo>
 
-   <target name="build-all-en-serie">
-      <antcall target="generate-all-sources" />
-      <antcall target="util-c" />
-      <antcall target="udt-c" />
-      <antcall target="util-cpp" />
-      <antcall target="udt-cpp" />
-      <antcall target="util-java" />
-      <antcall target="udt-java" />
-      <antcall target="dab" />
-      <antcall target="sc" />
+         Les fichiers de log de compilations sont nommés compile.log dans leur dossier respectif.
+
+      </echo>
+      <antcall target="show-errors" />
    </target>
 
    <target name="run-c" depends="util-c,udt-c">

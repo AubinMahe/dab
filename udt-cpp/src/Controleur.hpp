@@ -12,10 +12,10 @@ namespace udt {
 
       Controleur( const char * name ) :
          dab::ControleurComponent( name ),
-         _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
-         _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
-         _timeoutPrendreCarte  ( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte ),
-         _timeoutPrendreBillets( *this, DELAI_DE_SAISIE_DU_CODE, &Controleur::confisquerLaCarte )
+         _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE       , &Controleur::confisquerLaCarte ),
+         _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_MONTANT    , &Controleur::confisquerLaCarte ),
+         _timeoutPrendreCarte  ( *this, DELAI_POUR_PRENDRE_LA_CARTE   , &Controleur::confisquerLaCarte ),
+         _timeoutPrendreBillets( *this, DELAI_POUR_PRENDRE_LES_BILLETS, &Controleur::placerLesBilletsDansLaCorbeille )
       {}
 
    public:
@@ -119,8 +119,14 @@ namespace udt {
       virtual void carteRetiree( void ) {
          _automaton.process( dab::Evenement::CARTE_RETIREE );
       }
+
       virtual void billetsRetires( void ) {
          _automaton.process( dab::Evenement::BILLETS_RETIRES );
+      }
+
+      virtual void annulationDemandeeParLeClient() {
+         _iHM.ejecterLaCarte();
+         _automaton.process( dab::Evenement::ANNULATION_CLIENT );
       }
 
       virtual void shutdown( void ) {
@@ -130,12 +136,20 @@ namespace udt {
          terminate();
       }
 
+   private:
+
+      void publishEtatDuDab( void ) {
+         _iHM.etatDuDab().etat = _automaton.getCurrentState();
+         _iHM.publishEtatDuDab();
+      }
+
+   public:
+
       /**
        * Méthode appelée après réception et traitement d'un événement ou d'une requête.
        */
       virtual void afterDispatch( void ) {
-         _iHM.etatDuDab().etat = _automaton.getCurrentState();
-         _iHM.publishEtatDuDab();
+         publishEtatDuDab();
       }
 
    private:
@@ -144,11 +158,20 @@ namespace udt {
        * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
        */
       void confisquerLaCarte( void ) {
-         fprintf( stderr, "Controleur.confisquerLaCarte\n" );
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _iHM.confisquerLaCarte();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
-         _iHM.etatDuDab().etat = _automaton.getCurrentState();
-         _iHM.publishEtatDuDab();
+         publishEtatDuDab();
+      }
+
+      /**
+       * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
+       */
+      void placerLesBilletsDansLaCorbeille( void ) {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         _iHM.placerLesBilletsDansLaCorbeille();
+         _automaton.process( dab::Evenement::DELAI_EXPIRE );
+         publishEtatDuDab();
       }
 
    public:

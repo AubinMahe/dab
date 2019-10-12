@@ -61,18 +61,18 @@ util_error util_timeout_tests( bool perf ) {
    util_timeout timeout___50;
    util_timeout timeout___75;
    util_timeout timeout_1500;
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout__100,  100, action, &ctxt__100 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout_9000, 9000, action, &ctxt_9000 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout__200,  200, action, &ctxt__200 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout___50,   50, action, &ctxt___50 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout___75,   75, action, &ctxt___75 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_init( &timeout_1500, 1500, action, &ctxt_1500 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout__100 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout_9000 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout__200 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout___50 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout___75 ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( util_timeout_start( &timeout_1500 ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout__100,  100, action, &ctxt__100 ));
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout_9000, 9000, action, &ctxt_9000 ));
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout__200,  200, action, &ctxt__200 ));
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout___50,   50, action, &ctxt___50 ));
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout___75,   75, action, &ctxt___75 ));
+   UTIL_ERROR_CHECK( util_timeout_init( &timeout_1500, 1500, action, &ctxt_1500 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout__100 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout_9000 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout__200 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout___50 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout___75 ));
+   UTIL_ERROR_CHECK( util_timeout_start( &timeout_1500 ));
    if( perf ) {
 #ifdef _WIN32
       Sleep( 12*1000 );
@@ -94,7 +94,7 @@ util_error util_timeout_tests( bool perf ) {
          return UTIL_OS_ERROR;
       }
 #endif
-      UTIL_ERROR_CHECK( util_timeout_cancel( &timeout_9000 ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( util_timeout_cancel( &timeout_9000 ));
 #ifdef _WIN32
       Sleep( 9*1000 );
 #else

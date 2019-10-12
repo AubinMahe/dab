@@ -2,7 +2,9 @@ SRCS = src/main.c
 
 -include generated-files.mk
 
-CFLAGS = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
+CFLAGS    = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
+WINVER    = 0x06010000
+CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 
 OBJS    = $(SRCS:src/%c=BUILD/%o) $(SRCSGEN:src-gen/%c=BUILD/%o)
 OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
@@ -48,11 +50,11 @@ BUILD/%.o: src-gen/%.c
 
 BUILD-mingw32/%.o: src/%.c
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-gcc $(CFLAGS) -o $@ $<
+	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
 BUILD-mingw32/%.o: src-gen/%.c
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-gcc $(CFLAGS) -o $@ $<
+	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
 run-1: ../unite_de_traitement
 	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../unite_de_traitement --name=udt1 &

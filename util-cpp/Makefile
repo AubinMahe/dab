@@ -10,11 +10,13 @@ SRCS =\
  src/util/Exceptions.cpp\
  src/util/Timeout.cpp
 
-CPPFLAGS = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
-LIB      = util-cpp
-LIBW32   = $(LIB)-mingw32
-OBJS     = $(SRCS:src/%cpp=BUILD/%o)
-OBJSW32  = $(SRCS:src/%cpp=BUILD-mingw32/%o)
+CPPFLAGS    = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+WINVER      = 0x06010000
+CPPW32FLAGS = $(CPPFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
+LIB         = util-cpp
+LIBW32      = $(LIB)-mingw32
+OBJS        = $(SRCS:src/%cpp=BUILD/%o)
+OBJSW32     = $(SRCS:src/%cpp=BUILD-mingw32/%o)
 
 all: lib/lib$(LIB).a lib/lib$(LIB)-mingw32.a
 
@@ -41,7 +43,7 @@ BUILD/%.o: src/%.cpp
 
 BUILD-mingw32/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $<
+	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
 deps: $(SRCS)
 	g++ $(CPPFLAGS) -MM $(SRCS) | awk '/.*\.o:/ {print "BUILD/"$$0        ; next } {print}'  > $@

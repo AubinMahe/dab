@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
@@ -30,32 +31,29 @@ public class Controller extends Thread implements IIHM {
    private Etat         _etat   = Etat.HORS_SERVICE;
    private String       _text   = "";
    private String       _saisie = "";
+   private double       _dernierMontantSaisi = 0.0;
 
-   @FXML private Label     _status;
-   @FXML private Pane      _left;
-   @FXML private Pane      _right;
-   @FXML private TextArea  _screen;
-   @FXML private TextField _carteID;
-   @FXML private Button    _insererCarte;
-   @FXML private Label     _etatDuDistributeur;
-   @FXML private CheckBox  _maintenance;
-   @FXML private Pane      _maintenanceIHM;
-   @FXML private Button    _prendreLesBillets;
-   @FXML private Button    _prendreLaCarte;
-   @FXML private CheckBox  _anomalie;
-   @FXML private Label     _caisse;
-   @FXML private TextField _ajouterALaCaisse;
+   @FXML private Label            _status;
+   @FXML private TextArea         _screen;
+   @FXML private Pane             _numpad;
+   @FXML private Pane             _right;
+   @FXML private TextField        _carteID;
+   @FXML private Button           _insererCarte;
+   @FXML private CheckBox         _maintenance;
+   @FXML private Pane             _maintenanceIHM;
+   @FXML private Button           _prendreLesBillets;
+   @FXML private Button           _prendreLaCarte;
+   @FXML private CheckBox         _anomalie;
+   @FXML private ListView<String> _corbeille;
+   @FXML private ListView<String> _magasin;
+   @FXML private Label            _caisse;
+   @FXML private TextField        _ajouterALaCaisse;
 
    @Override
    public void etatDuDabPublished() {
       _etat = _component.getEtatDuDab().etat;
       _caisse.setText( "Caisse : " + NumberFormat.getCurrencyInstance().format( _component.getEtatDuDab().soldeCaisse ));
-      _insererCarte.setDisable( _etat != Etat.EN_SERVICE );
-      final boolean maintenance = ( _etat == Etat.MAINTENANCE );
-      final boolean hs          = ( _etat == Etat.HORS_SERVICE );
-      if( ! ( maintenance || hs )) {
-         _status.setText( "DAB en service" );
-      }
+      _status.setText( "DAB en service" );
       switch( _etat ) {
       default:
          System.err.printf( "Etat DAB inattendu : %s\n", _etat );
@@ -99,27 +97,16 @@ public class Controller extends Thread implements IIHM {
          setScreenText( "Veuillez prendre les billets..." );
          break;
       }
-      _maintenanceIHM.setVisible( maintenance );
-      _left          .setDisable( maintenance );
-      _right         .setDisable( maintenance );
-      if(  ( _etat == Etat.RETRAIT_CARTE_BILLETS      )
-         ||( _etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
-         ||( _etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ))
-      {
-         _etatDuDistributeur.setText( "Fermé" );
-         _prendreLaCarte   .setVisible( true );
-         _prendreLesBillets.setVisible( false );
-      }
-      else if( _etat == Etat.RETRAIT_BILLETS ) {
-         _etatDuDistributeur.setText( "Ouvert" );
-         _prendreLaCarte   .setVisible( false );
-         _prendreLesBillets.setVisible( true );
-      }
-      else {
-         _etatDuDistributeur.setText( "Fermé" );
-         _prendreLaCarte   .setVisible( false );
-         _prendreLesBillets.setVisible( false );
-      }
+      final boolean maintenance =     _etat == Etat.MAINTENANCE;
+      _insererCarte     .setDisable(  _etat != Etat.EN_SERVICE );
+      _maintenanceIHM   .setDisable( ! maintenance );
+      _screen           .setDisable(   maintenance );
+      _numpad           .setDisable(   maintenance );
+      _right            .setDisable(   maintenance );
+      _prendreLaCarte   .setVisible(( _etat == Etat.RETRAIT_CARTE_BILLETS      )
+         ||                         ( _etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
+         ||                         ( _etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ));
+      _prendreLesBillets.setVisible(  _etat == Etat.RETRAIT_BILLETS );
    }
 
    private void refreshScreen() {
@@ -138,12 +125,22 @@ public class Controller extends Thread implements IIHM {
 
    @Override
    public void confisquerLaCarte( ) {
-      // TODO Faire apparaître la carte dans le magasin des cartes confisquées.
+      System.err.println( "Placement de la carte dans le magasin interne." );
+      _magasin.getItems().add( "Carte n°" + _carteID.getText());
+      _carteID.setText( null );
+   }
+
+   @Override
+   public void placerLesBilletsDansLaCorbeille() {
+      System.err.println(
+         "Placement des billets oubliés dans la corbeille interne : " + _dernierMontantSaisi + ", carte " + _carteID.getText());
+      _corbeille.getItems().add( _dernierMontantSaisi + " €, carte n°" + _carteID.getText());
+      _carteID.setText( null );
    }
 
    @Override
    public void ejecterLaCarte() {
-      // TODO Afficher un message sur deux lignes
+      System.err.println( "Ejection de la carte..." );
    }
 
    @Override
@@ -152,10 +149,15 @@ public class Controller extends Thread implements IIHM {
    }
 
    private void done( Stage stage, String instanceName ) {
-      final Preferences prefs = Preferences.userNodeForPackage( getClass());
-      prefs.putDouble( instanceName + "-x", stage.getX());
-      prefs.putDouble( instanceName + "-y", stage.getY());
-      _component.done();
+      try {
+         final Preferences prefs = Preferences.userNodeForPackage( getClass());
+         prefs.putDouble( instanceName + "-x", stage.getX());
+         prefs.putDouble( instanceName + "-y", stage.getY());
+         _component.uniteDeTraitement().shutdown();
+      }
+      catch( final IOException e ){
+         e.printStackTrace();
+      }
    }
 
    public void init( Stage stage, String instanceName )
@@ -173,7 +175,7 @@ public class Controller extends Thread implements IIHM {
    }
 
    @FXML
-   private void key( ActionEvent ae ) {
+   private void key( ActionEvent ae ) throws IOException {
       final Button btn  = (Button)ae.getSource();
       final String text = btn.getText().strip();
       if( text.length() == 1 ) {
@@ -183,6 +185,7 @@ public class Controller extends Thread implements IIHM {
          switch( text.strip()) {
          case "Annuler":
             _saisie = "";
+            _component.uniteDeTraitement().annulationDemandeeParLeClient();
             break;
          case "Effacer":
             if( _saisie.length() > 0 ) {
@@ -195,10 +198,11 @@ public class Controller extends Thread implements IIHM {
                ( _etat == Etat.SAISIE_CODE_2 )||
                ( _etat == Etat.SAISIE_CODE_3 );
             if( saisieCode ) {
-               _component.codeSaisi( _saisie );
+               _component.uniteDeTraitement().codeSaisi( _saisie );
             }
             else if( _etat == Etat.SAISIE_MONTANT ) {
-               _component.montantSaisi( Double.parseDouble( _saisie ));
+               _dernierMontantSaisi = Double.parseDouble( _saisie );
+               _component.uniteDeTraitement().montantSaisi( _dernierMontantSaisi );
             }
             _saisie = "";
             break;
@@ -208,32 +212,42 @@ public class Controller extends Thread implements IIHM {
    }
 
    @FXML
-   private void carteInseree() {
-      _component.carteInseree( _carteID.getText());
+   private void carteInseree() throws IOException {
+      _component.uniteDeTraitement().carteInseree( _carteID.getText());
    }
 
    @FXML
-   private void maintenance() {
-      _component.maintenance( _maintenance.isSelected());
+   private void maintenance() throws IOException {
+      _component.uniteDeTraitement().maintenance( _maintenance.isSelected());
    }
 
    @FXML
-   private void rechargerLaCaisse() {
-      _component.rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
+   private void rechargerLaCaisse() throws IOException {
+      _component.uniteDeTraitement().rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
    }
 
    @FXML
-   private void prendreLaCarte() {
-      _component.carteRetiree();
+   private void prendreLaCarte() throws IOException {
+      _component.uniteDeTraitement().carteRetiree();
    }
 
    @FXML
-   private void prendreLesBillets() {
-      _component.billetsRetires();
+   private void prendreLesBillets() throws IOException {
+      _component.uniteDeTraitement().billetsRetires();
    }
 
    @FXML
-   private void anomalie() {
-      _component.anomalie( _anomalie.isSelected());
+   private void anomalie() throws IOException {
+      _component.uniteDeTraitement().anomalie( _anomalie.isSelected());
+   }
+
+   @FXML
+   private void viderLaCorbeille() {
+      _corbeille.getItems().clear();
+   }
+
+   @FXML
+   private void viderLeMagasin() {
+      _magasin.getItems().clear();
    }
 }

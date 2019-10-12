@@ -1,5 +1,6 @@
 #pragma once
 
+#include <types.hpp>
 #include <exception>
 
 namespace util {
@@ -57,5 +58,5 @@ namespace util {
       virtual const char * getName() const noexcept { return "Runtime"; }
    };
 
-#  define UTIL_CTXT __FILE__, __LINE__, __PRETTY_FUNCTION__
+#  define UTIL_CTXT __FILE__, __LINE__, HPMS_FUNCNAME
 }

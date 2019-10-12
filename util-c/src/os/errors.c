@@ -7,14 +7,15 @@
 
 #include <os/errors.h>
 
-util_error os_error_print( const char * call, const char * file, unsigned line ) {
+void os_error_print( const char * call, const char * file, unsigned line, const char * func ) {
    if( ! call ) {
-      fprintf( stderr, "os_get_error_message: call is null!" );
-      return UTIL_NULL_ARG;
+      call = "???";
    }
    if( ! file ) {
-      fprintf( stderr, "os_get_error_message: file is null!" );
-      return UTIL_NULL_ARG;
+      file = "???";
+   }
+   if( ! func ) {
+      func = "???";
    }
    char systMsg[1000] = "";
 #ifdef _WIN32
@@ -24,11 +25,10 @@ util_error os_error_print( const char * call, const char * file, unsigned line )
    }
    if( 0 == FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, 0, err, 0, systMsg, sizeof( systMsg ), 0 )) {
       fprintf( stderr, "%s:%d:%s:unable to format message for error %lu\n", file, line, call, err );
-      return UTIL_OS_ERROR;
+      return;
    }
 #elif __linux__
    strncpy( systMsg, strerror( errno ), sizeof( systMsg ));
 #endif
-   fprintf( stderr, "%s:%d:%s:%s\n", file, line, call, systMsg );
-   return UTIL_OS_ERROR;
+   fprintf( stderr, "%s:%d:%s:%s:%s\n", file, line, func, call, systMsg );
 }

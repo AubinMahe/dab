@@ -20,7 +20,7 @@ public final class Controleur extends ControleurComponent {
    private final Timeout _timeoutSaisirCode     = new Timeout( DELAI_DE_SAISIE_DU_CODE       , this::confisquerLaCarte );
    private final Timeout _timeoutSaisirMontant  = new Timeout( DELAI_DE_SAISIE_DU_MONTANT    , this::confisquerLaCarte );
    private final Timeout _timeoutPrendreCarte   = new Timeout( DELAI_POUR_PRENDRE_LA_CARTE   , this::confisquerLaCarte );
-   private final Timeout _timeoutPrendreBillets = new Timeout( DELAI_POUR_PRENDRE_LES_BILLETS, this::confisquerLaCarte );
+   private final Timeout _timeoutPrendreBillets = new Timeout( DELAI_POUR_PRENDRE_LES_BILLETS, this::placerLesBilletsDansLaCorbeille );
 
    public Controleur( String name ) throws IOException {
       super( name );
@@ -142,6 +142,12 @@ public final class Controleur extends ControleurComponent {
    }
 
    @Override
+   public void annulationDemandeeParLeClient() throws IOException {
+      _iHM.ejecterLaCarte();
+      _automaton.process( Evenement.ANNULATION_CLIENT );
+   }
+
+   @Override
    public void shutdown() throws IOException {
       _iHM.shutdown();
       _siteCentral.shutdown();
@@ -149,17 +155,32 @@ public final class Controleur extends ControleurComponent {
       terminate();
    }
 
-   @Override
-   protected void afterDispatch() throws IOException {
+   private void publishEtatDuDab() throws IOException {
       _iHM.etatDuDab.etat = _automaton.getCurrentState();
       _iHM.publishEtatDuDab();
+   }
+
+   @Override
+   protected void afterDispatch() throws IOException {
+      publishEtatDuDab();
    }
 
    private void confisquerLaCarte() {
       try {
          _iHM.confisquerLaCarte();
          _automaton.process( Evenement.DELAI_EXPIRE );
-         _iHM.publishEtatDuDab();
+         publishEtatDuDab();
+      }
+      catch( final IOException t ) {
+         t.printStackTrace();
+      }
+   }
+
+   private void placerLesBilletsDansLaCorbeille() {
+      try {
+         _iHM.placerLesBilletsDansLaCorbeille();
+         _automaton.process( Evenement.DELAI_EXPIRE );
+         publishEtatDuDab();
       }
       catch( final IOException t ) {
          t.printStackTrace();

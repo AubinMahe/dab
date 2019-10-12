@@ -26,6 +26,7 @@
       <data  name="etatDuDab" type="struct" userType="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="ejecterLaCarte" />
       <event name="confisquerLaCarte" />
+      <event name="placerLesBilletsDansLaCorbeille" />
       <event name="shutdown" />
    </interface>
 
@@ -50,6 +51,7 @@
       </event>
       <event name="carteRetiree" />
       <event name="billetsRetires" />
+      <event name="annulationDemandeeParLeClient" />
       <event name="shutdown" />
    </interface>
 
@@ -125,6 +127,7 @@
          <transition from="RETRAIT_BILLETS"            event="DELAI_EXPIRE"             futur="EN_SERVICE" />
          <shortcut                                     event="TERMINATE"                futur="HORS_SERVICE" />
          <shortcut                                     event="ANOMALIE_ON"              futur="HORS_SERVICE" />
+         <shortcut                                     event="ANNULATION_CLIENT"        futur="EN_SERVICE" />
          <on-entry state="SAISIE_CODE_1"              action="armerLeTimeoutDeSaisieDuCode" />
          <on-entry state="SAISIE_CODE_2"              action="armerLeTimeoutDeSaisieDuCode" />
          <on-entry state="SAISIE_CODE_3"              action="armerLeTimeoutDeSaisieDuCode" />

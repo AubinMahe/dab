@@ -6,24 +6,30 @@ extern "C" {
 
 #include <util/error_codes.h>
 
-util_error os_error_print( const char * call, const char * file, unsigned line );
+void os_error_print( const char * call, const char * file, unsigned line, const char * func );
 
-#define OS_CHECK(O,F,L) {\
+#define UTIL_PRINT_OS_ERROR( C, E, O )\
+   os_error_print( C, __FILE__, __LINE__-O, __func__ )
+
+#define OS_CHECK(O) {\
    int ret = O;\
    if( ret ) {\
-      return os_error_print( #O, F, L );\
+      os_error_print( #O, __FILE__, __LINE__, __func__ );\
+      return UTIL_OS_ERROR;\
    }\
 }
 
-#define OS_ERROR(O,V,F,L) {\
+#define OS_ERROR_IF(O,V) {\
    if( V == O ) {\
-      return os_error_print( #O, F, L );\
+      os_error_print( #O, __FILE__, __LINE__, __func__ );\
+      return UTIL_OS_ERROR;\
    }\
 }
 
-#define OS_ASSERT(C,A,F,L) {\
+#define OS_ASSERT(C,A,O) {\
    if( ! (A)) {\
-      return os_error_print( C, F, L );\
+      os_error_print( C, __FILE__, __LINE__-O, __func__ );\
+      return UTIL_OS_ERROR;\
    }\
 }
 

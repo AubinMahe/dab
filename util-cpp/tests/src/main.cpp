@@ -70,6 +70,6 @@ int main( int argc, char * argv[] ) {
       fprintf( stderr, "%s\n", x.what());
    }
    fprintf( stderr, "%s\n",
-      util::Runtime( __FILE__, __LINE__, __PRETTY_FUNCTION__, "printing test" ).what());
+      util::Runtime( UTIL_CTXT, "printing test" ).what());
    timeoutTests( perf );
 }

@@ -13,11 +13,13 @@ SRCS =\
  src/util/map.c\
  src/util/timeout.c
 
-CFLAGS  = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -std=c11
-LIB     = util-c
-LIBW32  = $(LIB)-mingw32
-OBJS    = $(SRCS:src/%c=BUILD/%o)
-OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o)
+CFLAGS    = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -std=c11
+WINVER    = 0x06010000
+CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
+LIB       = util-c
+LIBW32    = $(LIB)-mingw32
+OBJS      = $(SRCS:src/%c=BUILD/%o)
+OBJSW32   = $(SRCS:src/%c=BUILD-mingw32/%o)
 
 all: lib/lib$(LIB).a lib/lib$(LIBW32).a
 
@@ -44,7 +46,7 @@ BUILD/%.o: src/%.c
 
 BUILD-mingw32/%.o: src/%.c
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-gcc $(CFLAGS) -c -o $@ $<
+	i686-w64-mingw32-gcc $(CW32FLAGS) -c -o $@ $<
 
 deps: $(SRCS)
 	gcc $(CFLAGS) -MM $(SRCS) | awk '/.*\.o:/ { print "BUILD/"$$0         ; next } { print }'  > $@

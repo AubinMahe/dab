@@ -43,19 +43,19 @@ args( fields ) ::= <<
 
 byteBufferPut( this, fields ) ::= <<
 <fields:{field|
-< if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ), __FILE__, __LINE__ );
-< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <this><field.name; format="cname">, &This->out ), __FILE__, __LINE__ );
+< if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ));
+< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <this><field.name; format="cname">, &This->out ));
 < endif>
 }>
 >>
@@ -130,39 +130,39 @@ structBody( prefix, struct, maxLength, maxStrLength ) ::= <<
 
 util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target ) {
 <struct.field:{field|
-   < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int   ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( &This-><field.name; format="cname">, target ), __FILE__, __LINE__ );
+   < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_put_short ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_put_ushort( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_put_int   ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_put_uint  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_put_long  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_put_ulong ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( &This-><field.name; format="cname">, target ));
    < endif>
 }>   return UTIL_NO_ERROR;
 }
 
 util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * source ) {
 <struct.field:{field|
-   < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( source, &This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
+   < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( source, &This-><field.name; format="cname,width"> ));
+   < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( source, &This-><field.name; format="cname,width"> ));
    < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( source, This-><
-         field.name; format="cname,strWidth">, sizeof( This-><field.name; format="cname,strWidth"> )), __FILE__, __LINE__ );
-   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, (byte *)&This-><field.name; format="cname,width"> ), __FILE__, __LINE__ );
-   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &This-><field.name; format="cname">, source ), __FILE__, __LINE__ );
+         field.name; format="cname,strWidth">, sizeof( This-><field.name; format="cname,strWidth"> )));
+   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( source, (byte *)&This-><field.name; format="cname,width"> ));
+   < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &This-><field.name; format="cname">, source ));
    < endif>
 }>   return UTIL_NO_ERROR;
 }
@@ -239,9 +239,9 @@ if( facet.arguments )><
 else><
     signature( prefix, facet.field )><
 endif> ) {
-   UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<facet.name; format="ID"> ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<facet.name; format="ID"> ));
    < if( facet.arguments )><
         byteBufferPut( "", facet.arguments.field )><
      elseif( facet.type )><
@@ -249,8 +249,8 @@ endif> ) {
      elseif( facet.field )><
         byteBufferPut( "", facet.field )><
      endif>
-   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, &This->target ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
+   UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, &This->target ));
    return UTIL_NO_ERROR;
 \}
 }>
@@ -311,21 +311,21 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isEnum    )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
       < elseif( field.isStruct  )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
       < endif>
-      <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )), __FILE__, __LINE__ );                            
-      < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ), __FILE__, __LINE__ );
-      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ), __FILE__, __LINE__ );
+      <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));                            
+      < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
+      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
       < endif>
-}>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ), __FILE__, __LINE__ );
+}>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ));
       *has_dispatched = true;
       break;
    \}
@@ -372,15 +372,15 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
    byte interface, event;
 
    *has_dispatched = false;
-   UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->in ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_datagram_socket_receive( This->socket, &This->in, &from ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ), __FILE__, __LINE__ );
-   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->in ));
+   UTIL_ERROR_CHECK( io_datagram_socket_receive( This->socket, &This->in, &from ));
+   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ));
+   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ));
+   UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ));
    fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|interface = %d, event = %d\n", interface, event );
    switch( interface ) {
 <ifaces.keys:{ifaceName|
-   case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched ), __FILE__, __LINE__ ); break;
+   case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched )); break;
 }>   default:
       fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
       return UTIL_NOT_APPLICABLE;
@@ -453,7 +453,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
    }
    This->running      = false;
    This->user_context = user_context;
-   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton, This ), __FILE__, __LINE__ );
+   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton, This ));
 < if( requires )>
    struct sockaddr_in < first(requires):{req|<
       first( requires.(req) ):{rt|<rt.interface.name; format="cname">}><
@@ -461,27 +461,27 @@ util_error <prefix>_<component.name; format="cname">_init( <
 < endif>
 < first(instances):{instance|
    if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
          instancesByName.(req.toInstance.name).address>", <
          instancesByName.(req.toInstance.name).port>, &<
-         req.interface.name; format="cname"> ), __FILE__, __LINE__ );
+         req.interface.name; format="cname"> ));
 }>}>< rest(instances):{instance|
   \}
   else if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
          instancesByName.(req.toInstance.name).address>", <
          instancesByName.(req.toInstance.name).port>, &<
-         req.interface.name; format="cname"> ), __FILE__, __LINE__ );
+         req.interface.name; format="cname"> ));
 }>}>   }
    else {
       fprintf( stderr, "unknown deployment name '%s'!\n", name );
       return UTIL_NOT_APPLICABLE;
    }
    < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
-      prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ), __FILE__, __LINE__ );
-}>}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ), __FILE__, __LINE__ );
+      prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ));
+}>}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
    return UTIL_NO_ERROR;
 }
 
@@ -489,9 +489,9 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
    This->running = true;
    while( This->running ) {
       bool has_dispatched;
-      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_dispatch( &This->dispatcher, &has_dispatched ), __FILE__, __LINE__ );
+      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_dispatch( &This->dispatcher, &has_dispatched ));
       if( has_dispatched ) {
-         UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_after_dispatch( This ), __FILE__, __LINE__ );
+         UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_after_dispatch( This ));
       }
    }
    return UTIL_NO_ERROR;
