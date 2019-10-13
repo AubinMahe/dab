@@ -3,7 +3,7 @@
 	<name>util-c-tests</name>
 	<comment></comment>
 	<projects>
-		<project>cutil</project>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

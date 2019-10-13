@@ -23,14 +23,14 @@ static util_error macros_check( int i, void * argument ) {
 }
 
 int main( int argc, char * argv[] ) {
-//   bool perf = ( argc > 1 )&&( 0 == strcmp( argv[1], "--perf=true" ));
+   bool perf = ( argc > 1 )&&( 0 == strcmp( argv[1], "--perf=true" ));
    for( int i = 1; i < 10; ++i ) {
       macros_check( i, NULL );
    }
-//   util_map_tests    ( perf );
-//   util_args_tests   ( perf );
-//   util_timeout_tests( perf );
+   util_map_tests    ( perf );
+   util_args_tests   ( perf );
+   util_timeout_tests( perf );
    return 0;
-   (void)argc;
-   (void)argv;
+//   (void)argc;
+//   (void)argv;
 }

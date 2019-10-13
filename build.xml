@@ -51,7 +51,10 @@
    <target name="show-errors">
       <concat>
          <fileset dir="." includes="*/compile.log">
-             <contains text="error"/>
+             <or>
+                <contains text="error:"   casesensitive="false" />
+                <contains text="warning:" casesensitive="false" />
+             </or>
          </fileset>
       </concat>
    </target>

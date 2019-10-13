@@ -16,7 +16,9 @@ namespace udt {
          _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_MONTANT    , &Controleur::confisquerLaCarte ),
          _timeoutPrendreCarte  ( *this, DELAI_POUR_PRENDRE_LA_CARTE   , &Controleur::confisquerLaCarte ),
          _timeoutPrendreBillets( *this, DELAI_POUR_PRENDRE_LES_BILLETS, &Controleur::placerLesBilletsDansLaCorbeille )
-      {}
+      {
+         _automaton.setSebug( true );
+      }
 
    public:
 

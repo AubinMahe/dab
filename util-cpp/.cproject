@@ -47,7 +47,7 @@
                             							
                             <targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.1990186516" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
                             							
-                            <builder buildPath="${workspace_loc:/osioutil}/Debug" id="cdt.managedbuild.target.gnu.builder.lib.debug.1311684887" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.debug"/>
+                            <builder buildPath="${workspace_loc:/util-cpp}" id="cdt.managedbuild.target.gnu.builder.lib.debug.1311684887" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.debug"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.archiver.lib.debug.1843698126" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.debug"/>
                             							
@@ -165,7 +165,7 @@
                             							
                             <targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.release.1158094391" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.release"/>
                             							
-                            <builder buildPath="${workspace_loc:/osioutil}/Release" id="cdt.managedbuild.target.gnu.builder.lib.release.2013612240" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.release"/>
+                            <builder buildPath="${workspace_loc:/util-cpp}" command="make" id="cdt.managedbuild.target.gnu.builder.lib.release.2013612240" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.release"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.archiver.lib.release.1909559562" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.release"/>
                             							
@@ -273,7 +273,21 @@
     	
     <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
     	
-    <storageModule moduleId="refreshScope"/>
+    <storageModule moduleId="refreshScope" versionNumber="2">
+        		
+        <configuration configurationName="Debug">
+            			
+            <resource resourceType="PROJECT" workspacePath="/util-cpp"/>
+            		
+        </configuration>
+        		
+        <configuration configurationName="Release">
+            			
+            <resource resourceType="PROJECT" workspacePath="/util-cpp"/>
+            		
+        </configuration>
+        	
+    </storageModule>
     	
     <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
     

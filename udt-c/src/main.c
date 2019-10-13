@@ -143,6 +143,7 @@ util_error dab_controleur_get_informations( dab_controleur * This, const dab_car
 
 util_error dab_controleur_code_saisi( dab_controleur * This, const char * code ) {
    business_logic_data * d = This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_code ));
    if( carte_compare_code( &d->carte, code )) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BON_CODE ));
    }
@@ -165,6 +166,7 @@ util_error dab_controleur_code_saisi( dab_controleur * This, const char * code )
 
 util_error dab_controleur_montant_saisi( dab_controleur * This, double montant ) {
    business_logic_data * d = This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_montant ));
    if( montant > This->ihm.etat_du_dab.solde_caisse ) {
       UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
@@ -182,12 +184,23 @@ util_error dab_controleur_montant_saisi( dab_controleur * This, double montant )
 }
 
 util_error dab_controleur_carte_retiree( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_carte ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_RETIREE ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_billets_retires( dab_controleur * This ) {
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BILLETS_RETIRES ));
+   return UTIL_NO_ERROR;
+}
+
+/**
+ * Appelée par l'automate dès qu'on quite l'état DAB_STATE_RETRAIT_BILLETS
+ */
+util_error dab_controleur_annuler_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
+   business_logic_data * d = (business_logic_data *)This->user_context;
+   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_billets ));
    return UTIL_NO_ERROR;
 }
 
@@ -242,28 +255,19 @@ util_error dab_controleur_armer_le_timeout_de_saisie_du_code( dab_controleur * T
 
 util_error dab_controleur_armer_le_timeout_de_saisie_du_montant( dab_controleur * This ) {
    business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_code    ));
-   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_saisir_montant ));
+   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_saisir_montant ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_retrait_de_la_carte( dab_controleur * This ) {
    business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_montant ));
-   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_prendre_carte ));
+   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_prendre_carte ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
    business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_carte   ));
-   UTIL_ERROR_CHECK( util_timeout_start ( &d->timeout_prendre_billets ));
-   return UTIL_NO_ERROR;
-}
-
-util_error dab_controleur_annuler_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_billets ));
+   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_prendre_billets ));
    return UTIL_NO_ERROR;
 }
 
@@ -297,14 +301,15 @@ int main( int argc, char * argv[] ) {
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
    dab_controleur controleur;
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte, &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte, &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte, &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_confisquer_la_carte, &controleur ));
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte                 , &controleur ));
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte                 , &controleur ));
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte                 , &controleur ));
+   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_placer_les_billets_dans_la_corbeille, &controleur ));
    fprintf( stderr, "dab_controleur_init\n" );
    util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {
       fprintf( stderr, "dab_controleur_run\n" );
+      controleur.automaton.debug = true;
       err = dab_controleur_run( &controleur );
    }
    if( UTIL_OS_ERROR == err ) {

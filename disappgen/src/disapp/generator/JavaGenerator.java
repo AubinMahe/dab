@@ -33,17 +33,17 @@ public class JavaGenerator extends BaseGenerator {
       final ST              tmpl = _group.getInstanceOf( "/enum" );
       tmpl.add( "package", _moduleName );
       tmpl.add( "enum"   , enm );
+      setRendererMaxWidth( enm );
       write( name + ".java", tmpl );
    }
 
    @Override
    protected void generateStruct( String name ) throws IOException {
-      final StructType      struct = _model.getStruct( name );
-      final List<FieldType> fields = struct.getField();
-      final ST              tmpl   = _group.getInstanceOf( "/struct" );
+      final StructType struct = _model.getStruct( name );
+      final ST         tmpl   = _group.getInstanceOf( "/struct" );
       tmpl.add( "package", _moduleName );
       tmpl.add( "struct" , struct );
-      setRendererFieldsMaxWidth( fields );
+      setRendererFieldsMaxWidth( struct );
       write( name + ".java", tmpl );
    }
 

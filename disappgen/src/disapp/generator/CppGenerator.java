@@ -10,7 +10,6 @@ import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
-import disapp.generator.model.FieldType;
 import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
@@ -25,37 +24,49 @@ public class CppGenerator extends BaseGenerator {
       super( model, "cpp.stg", new BaseRenderer() );
    }
 
+   private void generateEnumHeader( EnumerationType enm ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/enumHeader" );
+      tmpl.add( "namespace", _moduleName );
+      tmpl.add( "enum"     , enm );
+      setRendererMaxWidth( enm );
+      write( enm.getName() + ".hpp", tmpl );
+   }
+
+   private void generateEnumBody( EnumerationType enm ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/enumBody" );
+      tmpl.add( "namespace", _moduleName );
+      tmpl.add( "enum"     , enm );
+      setRendererMaxWidth( enm );
+      write( enm.getName() + ".cpp", tmpl );
+   }
+
    @Override
    protected void generateEnum( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
-      final ST              tmpl = _group.getInstanceOf( "/enum" );
-      tmpl.add( "namespace", _moduleName );
-      tmpl.add( "enum"     , enm      );
-      write( name + ".hpp", tmpl );
+      generateEnumHeader( enm );
+      generateEnumBody  ( enm );
    }
 
-   private void generateStructHeader( String name ) throws IOException {
-      final StructType struct = _model.getStruct( name );
-      final ST         tmpl   = _group.getInstanceOf( "/structHeader" );
+   private void generateStructHeader( StructType struct ) throws IOException {
+      final ST tmpl = _group.getInstanceOf( "/structHeader" );
       tmpl.add( "namespace", _moduleName );
       tmpl.add( "struct"   , struct   );
-      write( name + ".hpp", tmpl );
+      write( struct.getName() + ".hpp", tmpl );
    }
 
-   private void generateStructBody( String name ) throws IOException {
-      final StructType      struct = _model.getStruct( name );
-      final List<FieldType> fields = struct.getField();
-      final ST              tmpl   = _group.getInstanceOf( "/structBody" );
+   private void generateStructBody( StructType struct ) throws IOException {
+      final ST tmpl   = _group.getInstanceOf( "/structBody" );
       tmpl.add( "namespace", _moduleName );
       tmpl.add( "struct"   , struct   );
-      setRendererFieldsMaxWidth( fields );
-      write( name + ".cpp", tmpl );
+      setRendererFieldsMaxWidth( struct );
+      write( struct.getName() + ".cpp", tmpl );
    }
 
    @Override
    protected void generateStruct( String name ) throws IOException {
-      generateStructHeader( name );
-      generateStructBody  ( name );
+      final StructType struct = _model.getStruct( name );
+      generateStructHeader( struct );
+      generateStructBody  ( struct );
    }
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {

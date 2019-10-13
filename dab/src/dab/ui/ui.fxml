@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.collections.*?> 
 
-<?import dab.ui.*?> 
+<?import dab.ui.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="dab.ui.Controller">
    <stylesheets>
@@ -48,15 +48,17 @@
                <Button text=" 0 " onAction="#key" />
             </HBox>
          </VBox>
-         <VBox fx:id="_maintenanceIHM" disable="false" styleClass="bordered" spacing="8.0">
+         <VBox styleClass="bordered" spacing="4.0">
             <CheckBox fx:id="_maintenance" text="Maintenance" onAction="#maintenance" selected="true" />
-            <HBox spacing="4.0" alignment="CENTER_LEFT">
-               <Label text="Montant :" />
-               <TextField fx:id="_ajouterALaCaisse" text="10000" />
-               <Button text="Recharger la caisse" onAction="#rechargerLaCaisse"/>
-            </HBox>
-            <Button text="Vider la corbeille" onAction="#viderLaCorbeille"/>
-            <Button text="Vider le magasin" onAction="#viderLeMagasin"/>
+            <VBox fx:id="_maintenanceIHM" disable="false" spacing="4.0" alignment="CENTER">
+               <HBox spacing="4.0" alignment="CENTER_LEFT">
+                  <Label text="Montant :" />
+                  <TextField fx:id="_ajouterALaCaisse" text="10000" />
+                  <Button text="Recharger la caisse" onAction="#rechargerLaCaisse"/>
+               </HBox>
+               <Button text="Vider la corbeille" onAction="#viderLaCorbeille"/>
+               <Button text="Vider le magasin" onAction="#viderLeMagasin"/>
+            </VBox>
          </VBox>
       </VBox>
    </left>
@@ -64,14 +66,14 @@
       <VBox fx:id="_right" disable="true">
          <VBox prefWidth="340" styleClass="bordered">
             <TextField fx:id="_carteID" promptText="Identifiant de carte" text="A123" />
-            <Button fx:id="_insererCarte"      text="Insérer une carte"   visible="true"
+            <Button fx:id="_insererCarte"      text="Insérer une carte"
                onAction="#carteInseree" />
-            <Button fx:id="_prendreLaCarte"    text="Prendre la carte"    visible="false"
+            <Button fx:id="_prendreLaCarte"    text="Prendre la carte"    disable="true"
                onAction="#prendreLaCarte" />
          </VBox>
          <VBox prefWidth="340" styleClass="bordered">
             <Label text="Distributeur de billets"/>
-            <Button fx:id="_prendreLesBillets" text="Prendre les billets" visible="false"
+            <Button fx:id="_prendreLesBillets" text="Prendre les billets" disable="true"
                onAction="#prendreLesBillets" />
          </VBox>
          <VBox>

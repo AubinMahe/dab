@@ -89,7 +89,7 @@ enumBody( prefix, enum ) ::= <<
 const char * <prefix>_<enum.name; format="cname">_to_string( <prefix>_<enum.name; format="cname"> value ) {
    switch( value ) {
    <enum.literal:{literal|
-   case <prefix; format="upper">_<enum.name; format="ID">_<literal.name; format="ID">: return "<literal.name; format="ID">";
+   case <prefix; format="upper">_<enum.name; format="ID">_<literal.name; format="ID,width">: return "<literal.name; format="ID">";
 }>   default: return "Etat inconnu !";
    }
 }
@@ -434,7 +434,7 @@ util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <
 
 
 
-componentImplementation( prefix, component, responses, requires, instancesByName, instances, automaton ) ::= <<
+componentImplementation( prefix, component, requires, instancesByName, instances ) ::= <<
 // componentImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
 < if( component.automaton )>#include \<dab/automaton.h>
@@ -453,7 +453,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
    }
    This->running      = false;
    This->user_context = user_context;
-   UTIL_ERROR_CHECK( <prefix>_automaton_init( &This->automaton, This ));
+< if( component.automaton )>   <prefix>_automaton_init( &This->automaton, This );< endif>
 < if( requires )>
    struct sockaddr_in < first(requires):{req|<
       first( requires.(req) ):{rt|<rt.interface.name; format="cname">}><
@@ -506,7 +506,7 @@ automatonHeader( prefix, component ) ::= <<
 #include \<<prefix>/<component.name; format="cname">.h>
 #include \<util/automaton.h>
 
-util_error <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
+void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
 >>
 
 
@@ -521,31 +521,39 @@ static util_transition transitions[] = {
       prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
       prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
       prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
-}>
-};
+}>};
 
 static util_shortcut shortcuts[] = {
    <component.automaton.shortcut:{shortcut|{ <
       prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
       prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
-}>
-};
+}>};
 
-static util_automaton_actions actions[] = {
-   <component.automaton.onEntryOrOnExit:{eoe|{ <
+static util_automaton_state_action on_entry[] = {
+   <component.automaton.onEntryOrOnExit:{eoe|< if( eoe.isOnEntry )>{ <
       prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
       eoe.value.state; format="ID">, (util_automaton_action)&<
       prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
-}>
-};
+< endif>}>};
 
-util_error <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
-   return util_automaton_init(
-      automaton, <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<component.automaton.initial; format="ID">,
-      transitions, sizeof( transitions )/sizeof( transitions[0] ),
-      shortcuts  , sizeof( shortcuts   )/sizeof( shortcuts  [0] ),
-      actor      ,
-      actions    , sizeof( actions     )/sizeof( actions    [0] ) );
+static util_automaton_state_action on_exit[] = {
+   <component.automaton.onEntryOrOnExit:{eoe|< if( eoe.isOnExit )>{ <
+      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
+      eoe.value.state; format="ID">, (util_automaton_action)&<
+      prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
+< endif>}>};
+
+void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
+   automaton->debug           = false;
+   automaton->current         = <prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<component.automaton.initial; format="ID">;
+   automaton->arcs            = transitions;
+   automaton->arcs_count      = sizeof( transitions )/sizeof( transitions[0] );
+   automaton->shortcuts       = shortcuts;
+   automaton->shortcuts_count = sizeof( shortcuts   )/sizeof( shortcuts  [0] );
+   automaton->actor           = actor;
+   automaton->on_entry        = on_entry;
+   automaton->on_entry_count  = sizeof( on_entry    )/sizeof( on_entry   [0] );
+   automaton->on_exit         = on_exit;
+   automaton->on_exit_count   = sizeof( on_exit     )/sizeof( on_exit    [0] );
 }
 >>

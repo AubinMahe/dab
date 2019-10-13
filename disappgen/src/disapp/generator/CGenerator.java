@@ -12,7 +12,6 @@ import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.EnumerationType;
-import disapp.generator.model.FieldType;
 import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
@@ -32,6 +31,7 @@ public class CGenerator extends BaseGenerator {
       final ST              tmpl = _group.getInstanceOf( "/enumHeader" );
       tmpl.add( "prefix", _moduleName );
       tmpl.add( "enum"  , enm      );
+      setRendererMaxWidth( enm );
       write( CRenderer.cname( name ) + ".h", tmpl );
    }
 
@@ -40,6 +40,7 @@ public class CGenerator extends BaseGenerator {
       final ST              tmpl = _group.getInstanceOf( "/enumBody" );
       tmpl.add( "prefix", _moduleName );
       tmpl.add( "enum"  , enm      );
+      setRendererMaxWidth( enm );
       write( CRenderer.cname( name ) + ".c", tmpl );
    }
 
@@ -54,16 +55,16 @@ public class CGenerator extends BaseGenerator {
       final ST         tmpl   = _group.getInstanceOf( "/structHeader" );
       tmpl.add( "prefix", _moduleName );
       tmpl.add( "struct", struct   );
+      setRendererFieldsMaxWidth( struct );
       write( CRenderer.cname( name ) + ".h", tmpl );
    }
 
    private void generateStructBody( String name ) throws IOException {
-      final StructType      struct = _model.getStruct( name );
-      final List<FieldType> fields = struct.getField();
-      final ST              tmpl   = _group.getInstanceOf( "/structBody" );
+      final StructType struct = _model.getStruct( name );
+      final ST         tmpl   = _group.getInstanceOf( "/structBody" );
       tmpl.add( "prefix", _moduleName );
       tmpl.add( "struct", struct   );
-      setRendererFieldsMaxWidth( fields );
+      setRendererFieldsMaxWidth( struct );
       write( CRenderer.cname( name ) + ".c", tmpl );
    }
 

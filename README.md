@@ -65,6 +65,5 @@ En pas-à-pas, pour comprendre :
 
 1. Le code des événements temporisés est exécuté dans un autre thread que le thread principal. Actuellement, le partage des ressources liées à la communication (buffer, socket...) n'est pas géré. Plutôt que d'utiliser des exclusions mutuelles, il faudrait poster un message d'activation du traitement concerné pour retourner au cas général. Ainsi, **tous** les traitements applicatifs serait effectués par le même thread, sans concurrence.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de pauser une exécution et de la reprendre puisque le temps serait simulé.
-1. En C++, ajouter quelques *try/catch/rethrow* pour stocker la pile d'appel dans l'exception ou trouver une approche permettant d'enregistrer la pile d'appel à la construction.
 1. Automate : associer une action au franchissement d'une transition.
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit).

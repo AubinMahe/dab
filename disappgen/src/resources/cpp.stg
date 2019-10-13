@@ -160,7 +160,7 @@ void <struct.name>::get( io::ByteBuffer & source ) {
 
 
 
-enum( namespace, enum ) ::= <<
+enumHeader( namespace, enum ) ::= <<
 #pragma once
 
 namespace <namespace> {
@@ -175,6 +175,25 @@ namespace <namespace> {
 }>
       LAST
    };
+
+   const char * toString( const <enum.name> & enm );
+}
+>>
+
+
+
+enumBody( namespace, enum ) ::= <<
+#include \<<namespace>/<enum.name; format="cname">.hpp>
+
+namespace <namespace> {
+   
+   const char * toString( const <enum.name> & enm ) {
+      switch( enm ) {
+      <enum.literal:{literal|case <enum.name>::<literal.name; format="upper,width">: return "<literal.name; format="upper">";
+}>      case <enum.name>::LAST: return "LAST";
+      }
+      return "???";
+   }
 }
 >>
 
@@ -497,7 +516,7 @@ componentImplementation( namespace, component, responses, requires, instancesByN
 
 #include  \<string.h>
 
-#include  \<stdexcept>
+#include  \<util/Exceptions.hpp>
 
 using namespace <namespace>;
 < first(requires):{req|<requires.(req):{rt|
@@ -518,9 +537,7 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
          requires.(instance.name).(rt).toInstance.port>, address );
    \}
 }>   else {
-      char buffer[200];
-      sprintf( buffer, "%s:%d:'%s' isn't a valid name as defined in XML application file!", __FILE__, __LINE__, name );
-      throw std::invalid_argument( buffer );
+      throw util::NotApplicable( UTIL_CTXT, "'%s' isn't a valid name as defined in XML application file!", name );
    \}
    return address;
 \}}>}>

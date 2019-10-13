@@ -16,12 +16,22 @@ namespace util {
 
    public:
 
+      void push_backtrace(  const char * file, int line, const char * func, const char * fmt ... );
+
       virtual const char * what() const noexcept;
 
    protected:
 
-      char _prefix [1000];
-      char _message[1000];
+      typedef char message_t[1000];
+
+      static message_t _message;
+
+   protected:
+
+      typedef char stackItem_t[500 + sizeof( message_t )];
+
+      stackItem_t _stack[12];
+      size_t      _stackIndex;
    };
 
 #  define EXCEPTION_DEF( NAME )\

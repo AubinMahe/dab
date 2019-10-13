@@ -1,5 +1,6 @@
 SRCS =\
  src/main.cpp\
+ src/exceptionsTests.cpp\
  src/timeoutTests.cpp
 
 CPPFLAGS    = -I ../inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
@@ -28,9 +29,11 @@ $(UTILC)/lib/lib$(LIB).a $(UTILC)/lib/lib$(LIBW32).a:
 	cd .. && make
 
 tests: $(OBJS) $(UTILC)/lib/lib$(LIB).a
+	cd .. && make
 	g++ $(CFLAGS) -o $@ $(OBJS) $(LIBFLAGS)
 
 tests-win32: $(OBJSW32) $(UTILC)/lib/lib$(LIBW32).a
+	cd .. && make
 	i686-w64-mingw32-g++ $(CFLAGS) -o $@ $(OBJSW32) $(LIBW32FLAGS)
 
 .PHONY: run

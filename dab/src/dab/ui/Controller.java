@@ -103,10 +103,10 @@ public class Controller extends Thread implements IIHM {
       _screen           .setDisable(   maintenance );
       _numpad           .setDisable(   maintenance );
       _right            .setDisable(   maintenance );
-      _prendreLaCarte   .setVisible(( _etat == Etat.RETRAIT_CARTE_BILLETS      )
-         ||                         ( _etat == Etat.RETRAIT_CARTE_SOLDE_CAISSE )
-         ||                         ( _etat == Etat.RETRAIT_CARTE_SOLDE_COMPTE ));
-      _prendreLesBillets.setVisible(  _etat == Etat.RETRAIT_BILLETS );
+      _prendreLaCarte   .setDisable(( _etat != Etat.RETRAIT_CARTE_BILLETS      )
+         &&                         ( _etat != Etat.RETRAIT_CARTE_SOLDE_CAISSE )
+         &&                         ( _etat != Etat.RETRAIT_CARTE_SOLDE_COMPTE ));
+      _prendreLesBillets.setDisable(  _etat != Etat.RETRAIT_BILLETS );
    }
 
    private void refreshScreen() {

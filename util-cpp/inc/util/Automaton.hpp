@@ -15,7 +15,8 @@ namespace util {
 
       Automaton( A & actor, S initial ) :
          _actor  ( actor   ),
-         _current( initial )
+         _current( initial ),
+         _debug  ( false   )
       {}
 
    protected:
@@ -98,6 +99,10 @@ namespace util {
          return _current;
       }
 
+      void setSebug( bool dbg ) {
+         _debug = dbg;
+      }
+
       void process( E event ) {
          S futur;
          {
@@ -110,7 +115,7 @@ namespace util {
                Transition   key = { _current, event, S()};
                Transition * tr  = search( _transitions, _trCount, key );
                if( ! tr ) {
-                  throw Unexpected( UTIL_CTXT, "event: %d from state: %d\n", (int)event, (int)_current );
+                  throw Unexpected( UTIL_CTXT, "event: %d from state: %s\n", (int)event, toString( _current ));
                }
                futur = tr->futur;
             }
@@ -119,17 +124,23 @@ namespace util {
             Action   key = { _current, 0 };
             Action * tr  = search( _onExits, _onExCount, key );
             if( tr ) {
+               if( _debug ) {
+                  fprintf( stderr, "%s|on_exit(%s) fired\n", __PRETTY_FUNCTION__, toString( _current ));
+               }
                (_actor.*(tr->action))();
             }
          }
          _current = futur;
-#ifndef NDEBUG
-         fprintf( stderr, "util.Automaton.process|new State: %d\n", (int)_current );
-#endif
+         if( _debug ) {
+            fprintf( stderr, "%s|new State: %s\n", __PRETTY_FUNCTION__, toString( _current ));
+         }
          {
             Action   key = { _current, 0 };
             Action * tr  = search( _onEntries, _onEnCount, key );
             if( tr ) {
+               if( _debug ) {
+                  fprintf( stderr, "%s|on_entry(%s) fired\n", __PRETTY_FUNCTION__, toString( _current ));
+               }
                (_actor.*(tr->action))();
             }
          }
@@ -139,6 +150,7 @@ namespace util {
 
       A &          _actor;
       S            _current;
+      bool         _debug;
       Transition * _transitions;
       unsigned     _trCount;
       Shortcut *   _shortcuts;
