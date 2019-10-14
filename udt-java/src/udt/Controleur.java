@@ -3,6 +3,7 @@ package udt;
 import java.io.IOException;
 
 import dab.ControleurComponent;
+import dab.Etat;
 import dab.Evenement;
 
 public final class Controleur extends ControleurComponent {
@@ -17,6 +18,14 @@ public final class Controleur extends ControleurComponent {
       super( name );
       _iHM.etatDuDab.etat        = _automaton.getCurrentState();
       _iHM.etatDuDab.soldeCaisse = 0.0;
+   }
+
+   public Etat getEtat() {
+      return _automaton.getCurrentState();
+   }
+
+   public double getSoldeCaisse() {
+      return _iHM.etatDuDab.soldeCaisse;
    }
 
    @Override

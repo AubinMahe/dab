@@ -74,6 +74,7 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
+1. L'implémentation actuelle utilise des messages UDP pour connecter les composants qui sont chacun dans un processus. Dans un modèle de déploiement où les composants seraient au sein du même processus, des appels directs seraient plus performants.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de pauser une exécution et de la reprendre puisque le temps serait simulé.
 1. Automate : associer une action au franchissement d'une transition.
-1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche des ces frameworks de test est à développer pour en tirer le maximum de profit.
+1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit.
