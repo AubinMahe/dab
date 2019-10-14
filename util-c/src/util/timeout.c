@@ -18,9 +18,6 @@ static void * util_timeout_waiting( void * arg ) {
    if( status == UTIL_OVERFLOW ) {
       This->action( This->user_context );
    }
-   else if( UTIL_NO_ERROR != status ) {
-      UTIL_PRINT_OS_ERROR( "os_event_wait", status, 5 );
-   }
    return NULL;
 }
 

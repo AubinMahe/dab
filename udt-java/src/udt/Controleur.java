@@ -1,26 +1,16 @@
 package udt;
 
 import java.io.IOException;
-import java.time.Duration;
 
 import dab.ControleurComponent;
 import dab.Evenement;
-import util.Timeout;
 
 public final class Controleur extends ControleurComponent {
 
-   private static final double   RETRAIT_MAX                    = 1000.0;
-   private static final Duration DELAI_DE_SAISIE_DU_CODE        = Duration.ofSeconds( 30 );
-   private static final Duration DELAI_DE_SAISIE_DU_MONTANT     = Duration.ofSeconds( 30 );
-   private static final Duration DELAI_POUR_PRENDRE_LA_CARTE    = Duration.ofSeconds( 10 );
-   private static final Duration DELAI_POUR_PRENDRE_LES_BILLETS = Duration.ofSeconds( 10 );
+   private static final double RETRAIT_MAX = 1000.0;
 
-   private final Carte   _carte                 = new Carte();
-   private final Compte  _compte                = new Compte();
-   private final Timeout _timeoutSaisirCode     = new Timeout( DELAI_DE_SAISIE_DU_CODE       , this::confisquerLaCarte );
-   private final Timeout _timeoutSaisirMontant  = new Timeout( DELAI_DE_SAISIE_DU_MONTANT    , this::confisquerLaCarte );
-   private final Timeout _timeoutPrendreCarte   = new Timeout( DELAI_POUR_PRENDRE_LA_CARTE   , this::confisquerLaCarte );
-   private final Timeout _timeoutPrendreBillets = new Timeout( DELAI_POUR_PRENDRE_LES_BILLETS, this::placerLesBilletsDansLaCorbeille );
+   private final Carte  _carte  = new Carte();
+   private final Compte _compte = new Compte();
 
    public Controleur( String name ) throws IOException {
       super( name );
@@ -155,32 +145,16 @@ public final class Controleur extends ControleurComponent {
       terminate();
    }
 
-   private void publishEtatDuDab() throws IOException {
-      _iHM.etatDuDab.etat = _automaton.getCurrentState();
-      _iHM.publishEtatDuDab();
-   }
-
    @Override
    protected void afterDispatch() throws IOException {
-      publishEtatDuDab();
+      _iHM.etatDuDab.etat = _automaton.getCurrentState();
+      _iHM.publishEtatDuDab();
    }
 
    private void confisquerLaCarte() {
       try {
          _iHM.confisquerLaCarte();
          _automaton.process( Evenement.DELAI_EXPIRE );
-         publishEtatDuDab();
-      }
-      catch( final IOException t ) {
-         t.printStackTrace();
-      }
-   }
-
-   private void placerLesBilletsDansLaCorbeille() {
-      try {
-         _iHM.placerLesBilletsDansLaCorbeille();
-         _automaton.process( Evenement.DELAI_EXPIRE );
-         publishEtatDuDab();
       }
       catch( final IOException t ) {
          t.printStackTrace();
@@ -188,30 +162,29 @@ public final class Controleur extends ControleurComponent {
    }
 
    @Override
-   protected void armerLeTimeoutDeSaisieDuCode() {
-      _timeoutSaisirCode.start();
+   public void saisieDuCodeElapsed() throws IOException {
+      confisquerLaCarte();
    }
 
    @Override
-   protected void armerLeTimeoutDeSaisieDuMontant() {
-      _timeoutSaisirCode   .cancel();
-      _timeoutSaisirMontant.start();
+   public void saisieDuMontantElapsed() throws IOException {
+      confisquerLaCarte();
    }
 
    @Override
-   protected void armerLeTimeoutDeRetraitDeLaCarte() {
-      _timeoutSaisirMontant .cancel();
-      _timeoutPrendreCarte.start();
+   public void retraitDeLaCarteElapsed() throws IOException {
+      confisquerLaCarte();
    }
 
    @Override
-   protected void armerLeTimeoutDeRetraitDesBillets() {
-      _timeoutPrendreCarte   .cancel();
-      _timeoutPrendreBillets.start();
+   public void retraitDesBilletsElapsed() throws IOException {
+      _iHM.placerLesBilletsDansLaCorbeille();
+      _automaton.process( Evenement.DELAI_EXPIRE );
    }
 
-   @Override
-   protected void annulerLeTimeoutDeRetraitDesBillets() {
-      _timeoutPrendreBillets.cancel();
-   }
+   @Override protected void armerLeTimeoutDeSaisieDuCode       () {                              _saisieDuCode     .start(); }
+   @Override protected void armerLeTimeoutDeSaisieDuMontant    () { _saisieDuCode     .cancel(); _saisieDuMontant  .start(); }
+   @Override protected void armerLeTimeoutDeRetraitDeLaCarte   () { _saisieDuMontant  .cancel(); _retraitDeLaCarte .start(); }
+   @Override protected void armerLeTimeoutDeRetraitDesBillets  () { _retraitDeLaCarte .cancel(); _retraitDesBillets.start(); }
+   @Override protected void annulerLeTimeoutDeRetraitDesBillets() { _retraitDesBillets.cancel(); }
 }

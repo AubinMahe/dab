@@ -110,31 +110,29 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateDispatcherInterface( ComponentType component ) throws IOException {
-      final String compName = component.getName();
       final int    rawSize  = _model.getBufferInCapacity( component );
       final ST     tmpl     = _group.getInstanceOf( "/dispatcherInterface" );
-      tmpl.add( "prefix", _moduleName );
-      tmpl.add( "name"   , compName );
-      tmpl.add( "rawSize", rawSize );
+      tmpl.add( "prefix"   , _moduleName );
+      tmpl.add( "component", component );
+      tmpl.add( "rawSize"  , rawSize );
       write( CRenderer.cname( component.getName()) + "_dispatcher.h", tmpl );
    }
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
-      final String                          compName     = component.getName();
       final List<OfferedInterfaceUsageType> ifaces       = component.getOffers();
       final Map<String, Integer>            interfaceIDs = _model.getInterfaceIDs( ifaces );
       final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
       final SortedSet<String>               usedTypes    = _model.getUsedTypesBy( ifaces );
       final int                             rawSize      = _model.getBufferInCapacity( component );
       final ST                              tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "prefix"     , _moduleName );
-      tmpl.add( "compName"   , compName );
-      tmpl.add( "ifaces"     , interfaceIDs );
-      tmpl.add( "events"     , events );
-      tmpl.add( "usedTypes"  , usedTypes );
-      tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "prefix"   , _moduleName );
+      tmpl.add( "component", component );
+      tmpl.add( "ifaces"   , interfaceIDs );
+      tmpl.add( "events"   , events );
+      tmpl.add( "usedTypes", usedTypes );
+      tmpl.add( "rawSize"  , rawSize );
       setRendererInterfaceMaxWidth( "width", ifaces );
-      write( CRenderer.cname( compName ) + "_dispatcher.c", tmpl );
+      write( CRenderer.cname( component.getName()) + "_dispatcher.c", tmpl );
    }
 
    private void generateComponentInterface( ComponentType component ) throws IOException {

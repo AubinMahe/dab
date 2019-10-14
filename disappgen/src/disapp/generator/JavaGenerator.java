@@ -99,7 +99,6 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
-      final String                          compName    = component.getName();
       final List<OfferedInterfaceUsageType> offers      = component.getOffers();
       final Map<String, Integer>            ifaces      = _model.getInterfaceIDs( offers );
       final Map<String, Map<String, Byte>>  eventIDs    = _model.getEventIDs();
@@ -110,7 +109,7 @@ public class JavaGenerator extends BaseGenerator {
       final int                             respRawSize = _model.getBufferResponseCapacity( events );
       final ST                              tmpl        = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "package"    , _moduleName );
-      tmpl.add( "compName"   , compName );
+      tmpl.add( "component"  , component );
       tmpl.add( "ifaces"     , ifaces );
       tmpl.add( "events"     , events );
       tmpl.add( "eventIDs"   , eventIDs );

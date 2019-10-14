@@ -11,11 +11,7 @@ namespace udt {
    public:
 
       Controleur( const char * name ) :
-         dab::ControleurComponent( name ),
-         _timeoutSaisirCode    ( *this, DELAI_DE_SAISIE_DU_CODE       , &Controleur::confisquerLaCarte ),
-         _timeoutSaisirMontant ( *this, DELAI_DE_SAISIE_DU_MONTANT    , &Controleur::confisquerLaCarte ),
-         _timeoutPrendreCarte  ( *this, DELAI_POUR_PRENDRE_LA_CARTE   , &Controleur::confisquerLaCarte ),
-         _timeoutPrendreBillets( *this, DELAI_POUR_PRENDRE_LES_BILLETS, &Controleur::placerLesBilletsDansLaCorbeille )
+         dab::ControleurComponent( name )
       {
          _automaton.setSebug( true );
       }
@@ -138,81 +134,46 @@ namespace udt {
          terminate();
       }
 
-   private:
-
-      void publishEtatDuDab( void ) {
-         _iHM.etatDuDab().etat = _automaton.getCurrentState();
-         _iHM.publishEtatDuDab();
-      }
-
    public:
 
       /**
        * Méthode appelée après réception et traitement d'un événement ou d'une requête.
        */
       virtual void afterDispatch( void ) {
-         publishEtatDuDab();
+         _iHM.etatDuDab().etat = _automaton.getCurrentState();
+         _iHM.publishEtatDuDab();
       }
 
    private:
 
-      /**
-       * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
-       */
       void confisquerLaCarte( void ) {
          fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _iHM.confisquerLaCarte();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
-         publishEtatDuDab();
       }
 
-      /**
-       * Déclenchée par timeout, cette méthode ne peut attendre qu'afterDispatch() publie l'état du DAB
-       */
       void placerLesBilletsDansLaCorbeille( void ) {
          fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _iHM.placerLesBilletsDansLaCorbeille();
          _automaton.process( dab::Evenement::DELAI_EXPIRE );
-         publishEtatDuDab();
       }
 
    public:
 
-      virtual void armerLeTimeoutDeSaisieDuCode( void ) {
-         _timeoutSaisirCode.start();
-      }
+      virtual void armerLeTimeoutDeSaisieDuCode       ( void ) {                              _saisieDuCode     .start(); }
+      virtual void armerLeTimeoutDeSaisieDuMontant    ( void ) { _saisieDuCode     .cancel(); _saisieDuMontant  .start(); }
+      virtual void armerLeTimeoutDeRetraitDeLaCarte   ( void ) { _saisieDuMontant  .cancel(); _retraitDeLaCarte .start(); }
+      virtual void armerLeTimeoutDeRetraitDesBillets  ( void ) { _retraitDeLaCarte .cancel(); _retraitDesBillets.start(); }
+      virtual void annulerLeTimeoutDeRetraitDesBillets( void ) { _retraitDesBillets.cancel(); }
 
-      virtual void armerLeTimeoutDeSaisieDuMontant( void ) {
-         _timeoutSaisirCode   .cancel();
-         _timeoutSaisirMontant.start();
-      }
-
-      virtual void armerLeTimeoutDeRetraitDeLaCarte( void ) {
-         _timeoutSaisirMontant .cancel();
-         _timeoutPrendreCarte.start();
-      }
-
-      virtual void armerLeTimeoutDeRetraitDesBillets( void ) {
-         _timeoutPrendreCarte   .cancel();
-         _timeoutPrendreBillets.start();
-      }
-
-      virtual void annulerLeTimeoutDeRetraitDesBillets( void ) {
-         _timeoutPrendreBillets.cancel();
-      }
+      virtual void saisieDuCodeElapsed     ( void ) { confisquerLaCarte(); }
+      virtual void saisieDuMontantElapsed  ( void ) { confisquerLaCarte(); }
+      virtual void retraitDeLaCarteElapsed ( void ) { confisquerLaCarte(); }
+      virtual void retraitDesBilletsElapsed( void ) { placerLesBilletsDansLaCorbeille(); }
 
    private:
 
-      static const unsigned DELAI_DE_SAISIE_DU_CODE        = 30*1000;// millisecondes
-      static const unsigned DELAI_DE_SAISIE_DU_MONTANT     = 30*1000;// millisecondes
-      static const unsigned DELAI_POUR_PRENDRE_LA_CARTE    = 10*1000;// millisecondes
-      static const unsigned DELAI_POUR_PRENDRE_LES_BILLETS = 10*1000;// millisecondes
-
-      Carte                             _carte;
-      Compte                            _compte;
-      util::TimeoutCallBack<Controleur> _timeoutSaisirCode;
-      util::TimeoutCallBack<Controleur> _timeoutSaisirMontant;
-      util::TimeoutCallBack<Controleur> _timeoutPrendreCarte;
-      util::TimeoutCallBack<Controleur> _timeoutPrendreBillets;
+      Carte  _carte;
+      Compte _compte;
    };
 }

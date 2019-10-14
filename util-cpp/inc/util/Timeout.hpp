@@ -3,6 +3,8 @@
 #include <os/Event.hpp>
 #include <time.h>
 
+#include <functional>
+
 namespace util {
 
    class Timeout {
@@ -48,29 +50,22 @@ namespace util {
       Timeout & operator = ( const Timeout & ) = delete;
    };
 
-   template<class T>
-   class TimeoutCallBack : public util::Timeout {
+   class TimeoutCallback : public util::Timeout {
    public:
 
-      typedef void (T::* method_t )( void );
-
-   private:
-
-      T &      _this;
-      method_t _method;
-
-   public:
-
-      TimeoutCallBack( T & t, unsigned milliseconds, method_t method ) :
+      TimeoutCallback( unsigned milliseconds, std::function<void()> action ) :
          util::Timeout( milliseconds ),
-         _this  ( t      ),
-         _method( method )
+         _action      ( action       )
       {}
 
    public:
 
       virtual void action( void ) {
-         (_this.*_method)();
+         _action();
       }
+
+   private:
+
+      std::function<void()> _action;
    };
 }

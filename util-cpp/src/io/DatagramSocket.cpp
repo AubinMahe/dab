@@ -29,14 +29,13 @@ DatagramSocket:: ~ DatagramSocket( void ) {
 }
 
 DatagramSocket & DatagramSocket::bind( const char * intrfc, unsigned short port ) {
-   sockaddr_in localAddr;
-   ::memset( &localAddr, 0, sizeof( localAddr ));
-   localAddr.sin_family = AF_INET;
-   if( ! ::inet_pton( AF_INET, intrfc, &localAddr.sin_addr.s_addr )) {
+   ::memset( &_localAddress, 0, sizeof( _localAddress ));
+   _localAddress.sin_family = AF_INET;
+   if( ! ::inet_pton( AF_INET, intrfc, &_localAddress.sin_addr.s_addr )) {
       throw util::Runtime( UTIL_CTXT, "inet_pton" );
    }
-   localAddr.sin_port = htons( port );
-   if( ::bind( _socket, (sockaddr *)&localAddr, sizeof( localAddr ))) {
+   _localAddress.sin_port = htons( port );
+   if( ::bind( _socket, (sockaddr *)&_localAddress, sizeof( _localAddress ))) {
       ::closesocket( _socket );
       throw util::Runtime( UTIL_CTXT, "bind" );
    }
@@ -89,10 +88,10 @@ DatagramSocket & DatagramSocket::send( ByteBuffer & bb ) {
    return *this;
 }
 
-DatagramSocket & DatagramSocket::sendTo( ByteBuffer & bb, struct sockaddr_in & target ) {
+DatagramSocket & DatagramSocket::sendTo( ByteBuffer & bb, const sockaddr_in & target ) {
    size_t       len    = bb.limit() - bb.position();
    const char * buffer = (const char *)( bb.array() + bb.position());
-   ssize_t      count  = ::sendto( _socket, buffer, len, 0, (struct sockaddr *)&target, sizeof( struct sockaddr_in ));
+   ssize_t      count  = ::sendto( _socket, buffer, len, 0, (const sockaddr *)&target, sizeof( sockaddr_in ));
    if( count < 0 || ( len != (size_t)count )) {
       throw util::Runtime( UTIL_CTXT, "sendto" );
    }

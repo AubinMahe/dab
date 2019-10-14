@@ -250,7 +250,7 @@ endif> ) {
         byteBufferPut( "", facet.field )><
      endif>
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
-   UTIL_ERROR_CHECK( io_datagram_socket_sendTo( This->socket, &This->out, &This->target ));
+   UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
    return UTIL_NO_ERROR;
 \}
 }>
@@ -258,40 +258,61 @@ endif> ) {
 
 
 
-dispatcherInterface( prefix, name, rawSize ) ::= <<
+dispatcherInterface( prefix, component, rawSize ) ::= <<
 #pragma once
 //dispatcherInterface
 #include \<io/byte_buffer.h>
 #include \<io/datagram_socket.h>
 
-struct <prefix>_<name; format="cname">_s;
-typedef struct <prefix>_<name; format="cname">_s <prefix>_<name; format="cname">;
+struct <prefix>_<component.name; format="cname">_s;
+typedef struct <prefix>_<component.name; format="cname">_s <prefix>_<component.name; format="cname">;
 
-typedef struct <prefix>_<name; format="cname">_dispatcher_s {
+typedef struct <prefix>_<component.name; format="cname">_dispatcher_s {
    SOCKET         socket;
    byte           raw[<rawSize>];
    io_byte_buffer in;
-   <prefix>_<name; format="cname"> * listener;
-} <prefix>_<name; format="cname">_dispatcher;
+   <prefix>_<component.name; format="cname"> * listener;
+} <prefix>_<component.name; format="cname">_dispatcher;
 
-util_error <prefix>_<name; format="cname">_dispatcher_init( <
-   prefix>_<name; format="cname">_dispatcher * This, SOCKET socket, <
-   prefix>_<name; format="cname"> * listener );
-util_error <prefix>_<name; format="cname">_dispatcher_dispatch( <
-   prefix>_<name; format="cname">_dispatcher * This, bool * has_dispatched );
+util_error <prefix>_<component.name; format="cname">_dispatcher_init(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   SOCKET socket,
+   <prefix>_<component.name; format="cname"> * listener );
+
+util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   bool * has_dispatched );
+< if( component.timeout )>
+
+typedef enum <prefix>_<component.name; format="cname">_dispatcher_loopback_event_e {
+   <component.timeout:{to|<prefix; format="ID">_<component.name; format="ID">_LOOPBACK_<to.name; format="ID"> = <i>,
+}>
+} <prefix>_<component.name; format="cname">_dispatcher_loopback_event;
+
+typedef struct <prefix>_<component.name; format="cname">_dispatcher_timeout_arg_s {
+   <prefix>_<component.name; format="cname">_dispatcher *              dispatcher;
+   <prefix>_<component.name; format="cname">_dispatcher_loopback_event event;
+} <prefix>_<component.name; format="cname">_dispatcher_timeout_arg;
+
+util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
+   <prefix>_<component.name; format="cname">_dispatcher_timeout_arg * arg );
+< endif>
 >>
 
 
 
-dispatcherImplOneInterface( prefix, name, ifaceName ) ::= <<
+dispatcherImplOneInterface( prefix, component, ifaceName ) ::= <<
 //dispatcherImplOneInterface
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
    <ifaceName; format="ID">_<event.name; format="ID"> = <i>,
 }>\} <prefix>_<ifaceName; format="cname">_event;
 
-static util_error <prefix>_<ifaceName; format="cname">_dispatch( <
-prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="cname">_event event, bool * has_dispatched ) {
+static util_error <prefix>_<ifaceName; format="cname">_dispatch(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   <prefix>_<ifaceName; format="cname">_event event,
+   bool * has_dispatched )
+{
    *has_dispatched = false;
    switch( event ) {
 <events.(ifaceName):{event|
@@ -321,16 +342,16 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
       < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( &This->in, &<field.name; format="cname"> ));
       < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( &This->in, &<field.name; format="cname"> ));
       < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));                            
+      < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));
       < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
       < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
       < endif>
-}>      UTIL_ERROR_CHECK( <prefix>_<name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ));
+}>      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ));
       *has_dispatched = true;
       break;
    \}
 }>   default:
-      fprintf( stderr, "<prefix>_<name; format="cname">_dispatcher|Ignored message:\n" );
+      fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher|Ignored message:\n" );
       fprintf( stderr, "\tinterface = <ifaceName>\n" );
       fprintf( stderr, "\tevent     = %d\n", event );
       break;
@@ -340,34 +361,59 @@ prefix>_<name; format="cname">_dispatcher * This, <prefix>_<ifaceName; format="c
 
 >>
 
-dispatcherImplementation( prefix, compName, ifaces, events, usedTypes, rawSize ) ::= <<
+dispatcherImplementation( prefix, component, ifaces, events, usedTypes, rawSize ) ::= <<
 //dispatcherImplementation
-#include \<<prefix>/<compName; format="cname">.h>
-#include \<<prefix>/<compName; format="cname">_dispatcher.h>
+#include \<<prefix>/<component.name; format="cname">.h>
+#include \<<prefix>/<component.name; format="cname">_dispatcher.h>
 
 #include \<stdio.h>
 
-typedef enum <prefix>_<compName; format="cname">_dispatcher_interface_e {
+typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
+< if( component.timeout )>
+   LOOPBACK = 0,
+< endif>
 <ifaces.keys:{ifaceName|
    <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
-}>} <prefix>_<compName; format="cname">_dispatcher_interface;
+}>} <prefix>_<component.name; format="cname">_dispatcher_interface;
 
 <ifaces.keys:{ifaceName|
-<dispatcherImplOneInterface( prefix, compName, ifaceName )>
-}>util_error <prefix>_<compName; format="cname">_dispatcher_init(
-   <prefix>_<compName; format="cname">_dispatcher * This,
+<dispatcherImplOneInterface( prefix, component, ifaceName )>
+}>util_error <prefix>_<component.name; format="cname">_dispatcher_init(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
    SOCKET socket,
-   <prefix>_<compName; format="cname"> *            listener )
+   <prefix>_<component.name; format="cname"> * listener )
 {
-   if( socket \<= 0 || NULL == listener ) {
-      return UTIL_NULL_ARG;
-   }
+   UTIL_CHECK_NON_NULL( listener );
+   UTIL_ASSERT( socket > 0 );
    This->socket   = socket;
    This->listener = listener;
-   return io_byte_buffer_wrap( &This->in, <rawSize>, This->raw );
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->in, <rawSize>, This->raw ));
+   return UTIL_NO_ERROR;
+}< if( component.timeout )>
+
+static util_error loopback_dispatch(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   <prefix>_<component.name; format="cname">_dispatcher_loopback_event event,
+   bool * has_dispatched )
+{
+   switch( event ) {
+<component.timeout:{to|
+   case <prefix; format="ID">_<component.name; format="ID">_LOOPBACK_<to.name; format="ID">:
+      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( This->listener ));
+      *has_dispatched = true;
+      break;
+}>   default:
+      fprintf( stderr, "loopback_dispatch|unknown event = %d\n", event );
+      return UTIL_NOT_APPLICABLE;
+   }
+   return UTIL_NO_ERROR;
 }
 
-util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<compName; format="cname">_dispatcher * This, bool * has_dispatched ) {
+< endif>
+util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   bool * has_dispatched )
+{
    struct sockaddr_in from;
    byte interface, event;
 
@@ -377,16 +423,36 @@ util_error <prefix>_<compName; format="cname">_dispatcher_dispatch( <prefix>_<co
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ));
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ));
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ));
-   fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|interface = %d, event = %d\n", interface, event );
+   fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher_dispatch|interface = %d, event = %d\n", interface, event );
    switch( interface ) {
+< if( component.timeout )>
+   case LOOPBACK: UTIL_ERROR_CHECK( loopback_dispatch( This, event, has_dispatched )); break;
+< endif>
 <ifaces.keys:{ifaceName|
    case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched )); break;
 }>   default:
-      fprintf( stderr, "<prefix>_<compName; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
+      fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
       return UTIL_NOT_APPLICABLE;
    }
    return UTIL_NO_ERROR;
 }
+< if( component.timeout )>
+
+util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
+   prefix>_<component.name; format="cname">_dispatcher_timeout_arg * arg ) {
+   UTIL_CHECK_NON_NULL( arg );
+   <prefix>_<component.name; format="cname">_dispatcher *              This  = arg->dispatcher;
+   <prefix>_<component.name; format="cname">_dispatcher_loopback_event event = arg->event;
+   byte raw[2];
+   io_byte_buffer out;
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap    ( &out, sizeof( raw ), raw ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &out, (byte)LOOPBACK ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &out, (byte)event ));
+   UTIL_ERROR_CHECK( io_byte_buffer_flip    ( &out ));
+   UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &out, &This->listener->localAddress ));
+   return UTIL_NO_ERROR;
+}
+< endif>
 >>
 
 
@@ -400,17 +466,23 @@ componentInterface( prefix, component, responses, requires, instancesByName, ins
 }>
 < if( component.automaton )
 >#include \<util/automaton.h>
-<endif>
+< endif>
+< if( component.timeout )
+>#include \<util/timeout.h>
+< endif>
 <usedTypes:{used|
 #include \<<prefix>/<used; format="cname">.h>
 }>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
 
 typedef struct <prefix>_<component.name; format="cname">_s {
-   SOCKET         socket;
-   bool           running;
-< if( component.automaton )>   util_automaton automaton;
-< endif>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
+   SOCKET             socket;
+   struct sockaddr_in localAddress;
+   bool               running;
+< if( component.automaton )>   util_automaton     automaton;
+< endif><component.timeout:{to|
+   util_timeout       <to.name; format="cname">;
+}>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
 < first(requires):{req|<requires.(req):{rt|
    <prefix>_<rt.interface.name; format="cname"> <rt.interface.name; format="cname">;
 }>}>   void * user_context;
@@ -429,6 +501,8 @@ endif> );
 }>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
 <actions:{action|
 util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <prefix>_<component.name; format="cname"> * This );
+}><component.timeout:{to|
+util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( <prefix>_<component.name; format="cname"> * This );
 }>
 >>
 
@@ -461,7 +535,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
 < endif>
 < first(instances):{instance|
    if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ));
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
          instancesByName.(req.toInstance.name).address>", <
          instancesByName.(req.toInstance.name).port>, &<
@@ -469,7 +543,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
 }>}>< rest(instances):{instance|
   \}
   else if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port> ));
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
          instancesByName.(req.toInstance.name).address>", <
          instancesByName.(req.toInstance.name).port>, &<
@@ -482,6 +556,17 @@ util_error <prefix>_<component.name; format="cname">_init( <
    < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
       prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ));
 }>}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
+<component.timeout:{to|
+   static <prefix>_<component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<to.name; format="cname">;
+   timeout_arg_<to.name; format="cname">.dispatcher = &This->dispatcher;
+   timeout_arg_<to.name; format="cname">.event      = <
+      prefix; format="ID">_<component.name; format="ID">_LOOPBACK_<to.name; format="ID">;
+   UTIL_ERROR_CHECK( util_timeout_init(
+      &This-><to.name; format="cname">,
+      <to.duration><to.unit.toCpp>,
+      (util_timeout_action)<prefix>_<component.name; format="cname">_dispatcher_loopback,
+      &timeout_arg_<to.name; format="cname"> ));
+}>
    return UTIL_NO_ERROR;
 }
 

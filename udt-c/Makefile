@@ -57,18 +57,18 @@ BUILD-mingw32/%.o: src-gen/%.c
 	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
 run-1: ../unite_de_traitement
-	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../unite_de_traitement --name=udt1 &
+	xterm -title "UDT-1 C" -geometry 150x30+810-16 -hold -e ../unite_de_traitement --name=udt1 &
 
 run-2: ../unite_de_traitement
-	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e ../unite_de_traitement --name=udt2 &
+	xterm -title "UDT-2 C" -geometry 150x30+0+0 -hold -e ../unite_de_traitement --name=udt2 &
 
 run-win32-1: ../unite_de_traitement-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e wine ../unite_de_traitement-mingw32 --name=udt1
+	xterm -title "UDT-1 C Win32" -geometry 150x30+810-16 -hold -e wine ../unite_de_traitement-mingw32 --name=udt1
 
 run-win32-2: ../unite_de_traitement-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title UDT-2 -geometry 90x30+0+0 -hold -e wine ../unite_de_traitement-mingw32 --name=udt2
+	xterm -title "UDT-2 C Win32" -geometry 150x30+0+0 -hold -e wine ../unite_de_traitement-mingw32 --name=udt2
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

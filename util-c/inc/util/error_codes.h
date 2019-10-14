@@ -49,6 +49,13 @@ extern const char * util_error_messages[UTIL_ERROR_LAST];
    }\
 }
 
+#define UTIL_ASSERT(T) {\
+   if( ! (T)) {\
+      fprintf( stderr, "%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, #T );\
+      return UTIL_NOT_APPLICABLE;\
+   }\
+}
+
 #ifdef __cplusplus
 }
 #endif

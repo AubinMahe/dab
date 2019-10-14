@@ -326,14 +326,14 @@ private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endi
 >      _listener.<eventOrRequestOrData.name>< if( eventOrRequestOrData.type )>Published< endif>(<args( eventOrRequestOrData.field )>);
       < endif>
       return true;\}
-}>      default:
+}>   default:
       System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
       return false;
    }
 }
 >>
 
-dispatcherImplementation( package, compName, ifaces, events, eventIDs, usedTypes, rawSize, respRawSize, requests ) ::= <<
+dispatcherImplementation( package, component, ifaces, events, eventIDs, usedTypes, rawSize, respRawSize, requests ) ::= <<
 package <package>;
 //dispatcherImplementation
 import java.io.IOException;
@@ -343,24 +343,68 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-public class <compName>Dispatcher {
+public class <component.name>Dispatcher {
 
+   < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
+< endif>
    <ifaces.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <ifaces.(ifaceName)>;
 }><ifaces.keys:{ifaceName|
    <dispatcherImplOneInterface()>
 }>
+   < if( component.timeout )>
+   protected static enum LoopbackEvent {
+      <component.timeout:{to|<to.name; format="ID">( <i> ),
+}>      ;
+
+      private final int _value;
+
+      LoopbackEvent( int value ) {
+         _value = value;
+      }
+
+      static LoopbackEvent valueOf( int value ) {
+         for( final LoopbackEvent e : values()) {
+            if( e._value == value ) {
+               return e;
+            }
+         }
+         return null;
+      }
+   }
+
+   private boolean dispatch( LoopbackEvent event ) throws IOException {
+      switch( event ) {
+<component.timeout:{to|
+      case <to.name; format="ID">:{
+         _listener.<to.name; format="argument">Elapsed();
+         return true;\}
+}>      default:
+         System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
+         return false;
+      }
+   }
+
+< endif>
    private final ByteBuffer      _in  = ByteBuffer.allocate( <rawSize> );
 < if( requests )
 >   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
 < endif>   private final DatagramChannel _channel;
-   private final <compName>Component _listener;
+   private final <component.name>Component _listener;
 
-   public <compName>Dispatcher( DatagramChannel channel, <compName>Component listener ) {
+   public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component listener ) {
       _channel  = channel;
       _listener = listener;
    }
 
-   public boolean hasDispatched() throws IOException {
+< if( component.timeout )>   void loopback( LoopbackEvent event ) throws IOException {
+      final ByteBuffer out = ByteBuffer.allocate( 2 );
+      out.put( INTRFC_LOOPBACK );
+      out.put((byte)event._value );
+      out.flip();
+      _channel.send( out, _channel.getLocalAddress());
+   }
+
+< endif>   public boolean hasDispatched() throws IOException {
       _in.clear();
       final SocketAddress from = _channel.receive( _in );
       _in.flip();
@@ -369,7 +413,8 @@ public class <compName>Dispatcher {
       System.err.printf( "%s.run|intrfc = %d, event = %d, %d byte(s) remaining in message\n",
          getClass().getName(), intrfc, event, _in.remaining());
       switch( intrfc ) {
-<ifaces.keys:{ifaceName|
+< if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
+< endif><ifaces.keys:{ifaceName|
       case INTRFC_<ifaceName; format="ID">: return dispatch( < if( requests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
 }>      }
       return false;
@@ -387,19 +432,28 @@ import java.net.InetSocketAddress;
 import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
+< if( component.timeout )>
+import java.time.Duration;
+
+import util.Timeout;
+< endif>
 
 public abstract class <component.name>Component implements Runnable<
 component.offers:          {o|, I<o.interface.name>}><
 responses.(component.name):{r|, I<r.interface.name>}> {
 
-<data:{ifaceName|
+<component.timeout:{to|
+   private static final Duration <to.name; format="ID">_DURATION = Duration.of<to.unit.toJava; format="cap">( <to.duration> );
+}><data:{ifaceName|
    <data.(ifaceName):{d|<data("protected", d)>}>}>
 <first(requires):{req|
    <requires.(req):{rt|protected final <rt.interface.name> _<rt.interface.name; format="argument">;
 }>}><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
 < endif>   protected final <component.name>Dispatcher _dispatcher;
-
+   <component.timeout:{to|protected final Timeout _<to.name> = new Timeout( <to.name; format="ID">_DURATION, () -> loopback( <
+      component.name>Dispatcher.LoopbackEvent.<to.name; format="ID"> ));
+}>
    private DatagramChannel _channel;
    private boolean         _running;
 
@@ -439,13 +493,25 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
    }
 
    protected abstract void afterDispatch() throws IOException;
-<actions:{action|
-   protected abstract void <action>();
+
+   <component.timeout:{to|protected abstract void <to.name>Elapsed() throws IOException;
+}>
+   <actions:{action|protected abstract void <action>();
 }>
    protected void terminate() {
       _running = false;
    }
 
+< if( component.timeout )>
+   protected void loopback( <component.name>Dispatcher.LoopbackEvent event ) {
+      try {
+         _dispatcher.loopback( event );
+      }
+      catch( final IOException t ) {
+         t.printStackTrace();
+      }
+   }
+< endif>
    @Override
    public final void run() {
       _running = true;

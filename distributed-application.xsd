@@ -164,10 +164,31 @@
       <xs:attribute type="xs:NCName" name="initial" use="required" />
    </xs:complexType>
 
+   <xs:simpleType name="durationUnits">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="days" />
+         <xs:enumeration value="hours" />
+         <xs:enumeration value="minutes" />
+         <xs:enumeration value="seconds" />
+         <xs:enumeration value="milliseconds" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="timeoutType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute type="xs:NCName"          name="name"     use="required" />
+            <xs:attribute type="xs:positiveInteger" name="duration" use="required" />
+            <xs:attribute type="durationUnits"      name="unit"     use="optional" default="seconds" />
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   
    <xs:complexType name="componentType">
       <xs:sequence>
          <xs:element type="offeredInterfaceUsageType"  name="offers"         minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="requiredInterfaceUsageType" name="requires"       minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="timeoutType"                name="timeout"        minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="implementationType"         name="implementation" minOccurs="1" maxOccurs="unbounded" />
          <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
       </xs:sequence>

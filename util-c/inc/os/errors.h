@@ -8,7 +8,7 @@ extern "C" {
 
 void os_error_print( const char * call, const char * file, unsigned line, const char * func );
 
-#define UTIL_PRINT_OS_ERROR( C, E, O )\
+#define OS_ERROR_PRINT( C, O )\
    os_error_print( C, __FILE__, __LINE__-O, __func__ )
 
 #define OS_CHECK(O) {\

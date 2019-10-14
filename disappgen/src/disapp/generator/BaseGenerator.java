@@ -16,6 +16,7 @@ import org.stringtemplate.v4.STGroupFile;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DurationUnits;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
@@ -44,6 +45,7 @@ abstract class BaseGenerator {
       _group.registerModelAdaptor( FieldType      .class, new FieldAdaptor());
       _group.registerModelAdaptor( EnumerationType.class, new EnumerationAdaptor());
       _group.registerModelAdaptor( JAXBElement    .class, new ActionAdaptor());
+      _group.registerModelAdaptor( DurationUnits  .class, new DurationUnitAdaptor());
    }
 
    abstract protected void generateEnum  ( String xUser ) throws IOException;

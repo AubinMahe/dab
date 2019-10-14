@@ -38,11 +38,14 @@ namespace io {
 
       DatagramSocket & send( ByteBuffer & buffer );
 
-      DatagramSocket & sendTo( ByteBuffer & buffer, struct sockaddr_in & target );
+      DatagramSocket & sendTo( ByteBuffer & buffer, const sockaddr_in & target );
+
+      sockaddr_in getLocalAddress() const { return _localAddress; }
 
    private:
 
-      SOCKET _socket;
+      sockaddr_in _localAddress;
+      SOCKET      _socket;
 
    private:
       DatagramSocket( const DatagramSocket & ) = delete;

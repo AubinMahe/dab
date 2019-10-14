@@ -85,6 +85,10 @@
       <offers   interface="UniteDeTraitement" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
+      <timeout name="saisieDuCode"      duration="30" unit="seconds" />
+      <timeout name="saisieDuMontant"   duration="30" unit="seconds" />
+      <timeout name="retraitDeLaCarte"  duration="10" unit="seconds" />
+      <timeout name="retraitDesBillets" duration="10" unit="seconds" />
       <implementation language="Java" src-dir="udt-java/src-gen" module-name="dab" />
       <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="dab" />
       <implementation language="C"    src-dir="udt-c/src-gen"    module-name="dab" />

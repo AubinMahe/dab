@@ -7,7 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+/*
+src/io/datagram_socket.c:94:io_datagram_socket_send_to:send:Bad file descriptor
+src-gen/dab/controleur_dispatcher.c:212:dab_controleur_dispatcher_loopback:io_datagram_socket_send_to( This->socket, &out, &This->listener->localAddress ):os error
+*/
 typedef struct date_s {
    byte   month;
    ushort year;
@@ -69,12 +72,8 @@ void compte_invalidate( compte * This ) {
 static const double DAB_RETRAIT_MAX = 1000.0;
 
 typedef struct business_logic_data_s {
-   carte        carte;
-   compte       compte;
-   util_timeout timeout_saisir_code;
-   util_timeout timeout_saisir_montant;
-   util_timeout timeout_prendre_carte;
-   util_timeout timeout_prendre_billets;
+   carte  carte;
+   compte compte;
 } business_logic_data;
 
 util_error dab_controleur_maintenance( dab_controleur * This, bool maintenance ) {
@@ -143,7 +142,7 @@ util_error dab_controleur_get_informations( dab_controleur * This, const dab_car
 
 util_error dab_controleur_code_saisi( dab_controleur * This, const char * code ) {
    business_logic_data * d = This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_code ));
+   UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_code ));
    if( carte_compare_code( &d->carte, code )) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_BON_CODE ));
    }
@@ -166,7 +165,7 @@ util_error dab_controleur_code_saisi( dab_controleur * This, const char * code )
 
 util_error dab_controleur_montant_saisi( dab_controleur * This, double montant ) {
    business_logic_data * d = This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_saisir_montant ));
+   UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_montant ));
    if( montant > This->ihm.etat_du_dab.solde_caisse ) {
       UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
@@ -184,8 +183,7 @@ util_error dab_controleur_montant_saisi( dab_controleur * This, double montant )
 }
 
 util_error dab_controleur_carte_retiree( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_carte ));
+   UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_de_la_carte ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_RETIREE ));
    return UTIL_NO_ERROR;
 }
@@ -199,8 +197,7 @@ util_error dab_controleur_billets_retires( dab_controleur * This ) {
  * Appelée par l'automate dès qu'on quite l'état DAB_STATE_RETRAIT_BILLETS
  */
 util_error dab_controleur_annuler_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_cancel( &d->timeout_prendre_billets ));
+   UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_des_billets ));
    return UTIL_NO_ERROR;
 }
 
@@ -210,7 +207,7 @@ util_error dab_controleur_annulation_demandee_par_le_client( dab_controleur * Th
    return UTIL_NO_ERROR;
 }
 
-util_error dab_controleur_publish_etat_du_dab( dab_controleur * This ) {
+util_error dab_controleur_after_dispatch( dab_controleur * This ) {
    fprintf( stderr, "%s|state = %s, solde caisse : %7.2f\n",
       __func__, dab_etat_to_string( This->automaton.current ), This->ihm.etat_du_dab.solde_caisse );
    This->ihm.etat_du_dab.etat = This->automaton.current;
@@ -218,56 +215,57 @@ util_error dab_controleur_publish_etat_du_dab( dab_controleur * This ) {
    return UTIL_NO_ERROR;
 }
 
-util_error dab_controleur_after_dispatch( dab_controleur * This ) {
-   UTIL_ERROR_CHECK( dab_controleur_publish_etat_du_dab( This ));
-   return UTIL_NO_ERROR;
-}
-
-/**
- * Déclenchée par timeout, cette fonction ne peut attendre qu'afterDispatch() publie l'état du DAB
- */
-util_error dab_controleur_confisquer_la_carte( void * uc ) {
+util_error dab_controleur_confisquer_la_carte( dab_controleur * This ) {
    fprintf( stderr, "%s\n", __func__ );
-   dab_controleur * This = (dab_controleur *)uc;
    UTIL_ERROR_CHECK( dab_ihm_confisquer_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_DELAI_EXPIRE ));
-   UTIL_ERROR_CHECK( dab_controleur_publish_etat_du_dab( This ));
    return UTIL_NO_ERROR;
 }
 
-/**
- * Déclenchée par timeout, cette fonction ne peut attendre qu'afterDispatch() publie l'état du DAB
- */
-util_error dab_controleur_placer_les_billets_dans_la_corbeille( void * uc ) {
+util_error dab_controleur_placer_les_billets_dans_la_corbeille( dab_controleur * This ) {
    fprintf( stderr, "%s\n", __func__ );
-   dab_controleur * This = (dab_controleur *)uc;
    UTIL_ERROR_CHECK( dab_ihm_placer_les_billets_dans_la_corbeille( &This->ihm ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_DELAI_EXPIRE ));
-   UTIL_ERROR_CHECK( dab_controleur_publish_etat_du_dab( This ));
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_saisie_du_code_elapsed( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( dab_controleur_confisquer_la_carte( This ));
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_saisie_du_montant_elapsed( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( dab_controleur_confisquer_la_carte( This ));
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_retrait_de_la_carte_elapsed( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( dab_controleur_confisquer_la_carte( This ));
+   return UTIL_NO_ERROR;
+}
+
+util_error dab_controleur_retrait_des_billets_elapsed( dab_controleur * This ) {
+   UTIL_ERROR_CHECK( dab_controleur_placer_les_billets_dans_la_corbeille( This ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_saisie_du_code( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_saisir_code ));
+   UTIL_ERROR_CHECK( util_timeout_start( &This->saisie_du_code ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_saisie_du_montant( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_saisir_montant ));
+   UTIL_ERROR_CHECK( util_timeout_start( &This->saisie_du_montant ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_retrait_de_la_carte( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_prendre_carte ));
+   UTIL_ERROR_CHECK( util_timeout_start( &This->retrait_de_la_carte ));
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_armer_le_timeout_de_retrait_des_billets( dab_controleur * This ) {
-   business_logic_data * d = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( util_timeout_start( &d->timeout_prendre_billets ));
+   UTIL_ERROR_CHECK( util_timeout_start( &This->retrait_des_billets ));
    return UTIL_NO_ERROR;
 }
 
@@ -284,11 +282,6 @@ static int usage( const char * exename ) {
    return 1;
 }
 
-static const unsigned DELAI_DE_SAISIE_DU_CODE        = 30*1000;// millisecondes
-static const unsigned DELAI_DE_SAISIE_DU_MONTANT     = 30*1000;// millisecondes
-static const unsigned DELAI_POUR_PRENDRE_LA_CARTE    = 10*1000;// millisecondes
-static const unsigned DELAI_POUR_PRENDRE_LES_BILLETS = 10*1000;// millisecondes
-
 int main( int argc, char * argv[] ) {
    util_pair    pairs[argc];
    util_map     map;
@@ -301,10 +294,6 @@ int main( int argc, char * argv[] ) {
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
    dab_controleur controleur;
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_code    , DELAI_DE_SAISIE_DU_CODE       , dab_controleur_confisquer_la_carte                 , &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_saisir_montant , DELAI_DE_SAISIE_DU_MONTANT    , dab_controleur_confisquer_la_carte                 , &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_carte  , DELAI_POUR_PRENDRE_LA_CARTE   , dab_controleur_confisquer_la_carte                 , &controleur ));
-   UTIL_ERROR_CHECK( util_timeout_init( &d.timeout_prendre_billets, DELAI_POUR_PRENDRE_LES_BILLETS, dab_controleur_placer_les_billets_dans_la_corbeille, &controleur ));
    fprintf( stderr, "dab_controleur_init\n" );
    util_error err = dab_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {

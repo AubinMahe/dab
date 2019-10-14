@@ -58,16 +58,18 @@ BUILD-mingw32/%.o: src-gen/%.cpp
 	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
 run-1: ../UniteDeTraitement
-	xterm -title UDT-1 -geometry 90x30+810-16 -hold -e ../UniteDeTraitement --name=udt1 &
+	xterm -title "UDT-1 C++" -geometry 150x30+810-16 -hold -e ../UniteDeTraitement --name=udt1 &
 
 run-2: ../UniteDeTraitement
-	xterm -title UDT-2 -geometry 90x30-0+0 -hold -e ../UniteDeTraitement --name=udt2 &
+	xterm -title "UDT-2 C++" -geometry 150x30-0+0 -hold -e ../UniteDeTraitement --name=udt2 &
 
 run-win32-1: ../UniteDeTraitement-mingw32
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../UniteDeTraitement-mingw32 --name=udt-1
+	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
+	xterm -title "UDT-1 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../UniteDeTraitement-mingw32 --name=udt-1
 
 run-win32-2: ../UniteDeTraitement-mingw32
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ../UniteDeTraitement-mingw32 --name=udt-2
+	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
+	xterm -title "UDT-2 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../UniteDeTraitement-mingw32 --name=udt-2
 
 deps: $(SRCS) $(SRCSGEN)
 	g++ $(CPPFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

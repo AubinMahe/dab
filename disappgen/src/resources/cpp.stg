@@ -341,7 +341,7 @@ endif> ) = 0;
 
 
 
-dispatcherInterface( namespace, compName, ifaces, events, rawSize ) ::= <<
+dispatcherInterface( namespace, component, ifaces, events, rawSize ) ::= <<
 #pragma once
 //dispatcherInterface
 #include \<io/DatagramSocket.hpp>
@@ -349,20 +349,30 @@ dispatcherInterface( namespace, compName, ifaces, events, rawSize ) ::= <<
 
 namespace <namespace> {
 
-   class <compName>Component;
-   class <compName>Dispatcher {
+   class <component.name>Component;
+   class <component.name>Dispatcher {
    public:
 
-      <compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener );
+      <component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener );
 
    public:
 
       bool hasDispatched( void );
+< if( component.timeout )>
+
+      enum class LoopbackEvent : byte {
+<  first( component.timeout):{to|         <to.name; format="ID"> = 1,
+}>< rest( component.timeout):{to|         <to.name; format="ID">,
+}>      \};
+
+      void loopback( const LoopbackEvent & event );
+< endif>
 
    private:
 
       enum class Interface : byte {
-<ifaces.keys:{ifaceName|
+         < if( component.timeout )>LOOPBACK = 0,
+< endif><ifaces.keys:{ifaceName|
          <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
 }>      };
 <ifaces.keys:{ifaceName|
@@ -374,25 +384,30 @@ namespace <namespace> {
 }>      \};
 
       bool dispatch( <ifaceName>Event event );
-}>
+}>< if( component.timeout )>
+      bool dispatch( LoopbackEvent event );
+
+< endif>
+   private:
+
       byte                 _raw[<rawSize>];
       io::DatagramSocket & _socket;
       io::ByteBuffer       _in;
-      <compName>Component & _listener;
+      <component.name>Component & _listener;
    };
 }
 >>
 
 
 
-dispatcherImplementation( namespace, compName, ifaces, events, usedTypes ) ::= <<
+dispatcherImplementation( namespace, component, ifaces, events, usedTypes ) ::= <<
 //dispatcherImplementation
-#include \<<namespace>/<compName>Dispatcher.hpp>
-#include \<<namespace>/<compName>Component.hpp>
+#include \<<namespace>/<component.name>Dispatcher.hpp>
+#include \<<namespace>/<component.name>Component.hpp>
 
 using namespace <namespace>;
 
-<compName>Dispatcher::<compName>Dispatcher( io::DatagramSocket & socket, <compName>Component & listener ) :
+<component.name>Dispatcher::<component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener ) :
    _socket  ( socket ),
    _in      ( _raw, sizeof( _raw )),
    _listener( listener )
@@ -400,7 +415,7 @@ using namespace <namespace>;
 <ifaces.keys:{ifaceName|
 
 
-bool <compName>Dispatcher::dispatch( <ifaceName>Event event ) {
+bool <component.name>Dispatcher::dispatch( <ifaceName>Event event ) {
    switch( event ) {
 <events.(ifaceName):{event|
    case <ifaceName>Event::<event.name; format="ID">:{
@@ -424,26 +439,53 @@ _in.getString( <field.name>, sizeof( <field.name> ));
 }>      _listener.<event.name>( <args( event.field )> );
       break;
       \}
-}>   default: fprintf( stderr, "<compName>Dispatcher.dispatch|Unknown event in <ifaceName>: %d\n", (byte)event );
+}>   default:
+      fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown <ifaceName>'s event: %d\n", (byte)event );
       return false;
    \}
    return true;
 \}
 }>
-bool <compName>Dispatcher::hasDispatched( void ) {
+< if( component.timeout )>
+bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
+   switch( event ) {
+   <component.timeout:{to|case LoopbackEvent::<to.name; format="ID">: _listener.<to.name; format="argument">Elapsed(); break;
+}>   default:
+      fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown timeout's event: %d\n", (byte)event );
+      return false;
+   \}
+   return true;
+\}
+
+< endif>
+bool <component.name>Dispatcher::hasDispatched( void ) {
    _in.clear();
    if( _socket.receive( _in )) {
       _in.flip();
       byte interface = _in.getByte();
       byte event     = _in.getByte();
-      switch( static_cast\<Interface>( interface)) {
+      switch( static_cast\<Interface>( interface)) {< if( component.timeout )>
+      case Interface::LOOPBACK: return dispatch( static_cast\<LoopbackEvent>( event ));
+< endif>
 <ifaces.keys:{ifaceName|
       case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event>( event ));
-}>      default: fprintf( stderr, "<compName>Dispatcher.dispatch|Unknown interface: %d\n", interface );
+}>      default:
+           fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown interface: %d\n", interface );
       }
    }
    return false;
 }
+< if( component.timeout )>
+
+void <component.name>Dispatcher::loopback( const LoopbackEvent & event ) {
+   byte           raw[2];
+   io::ByteBuffer out( raw, sizeof( raw ));
+   out.putByte((byte)Interface::LOOPBACK );
+   out.putByte((byte)event );
+   out.flip();
+   _socket.sendTo( out, _socket.getLocalAddress());
+}
+< endif>
 >>
 
 
@@ -460,8 +502,13 @@ componentInterface( namespace, component, responses, requires, instancesByName, 
 <responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
 }>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
+< if( component.timeout )>
 
-< if( component.automaton )>#include \<<namespace>/Automaton.hpp>< endif>
+#include \<util/Timeout.hpp>
+< endif>< if( component.automaton )>
+
+#include \<<namespace>/Automaton.hpp>
+< endif>
 
 namespace <namespace> {
 
@@ -473,22 +520,26 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
       <component.name>Component( const char * name );
 
-   protected:
+   public:
 
-      virtual void afterDispatch( void ) = 0;
+      void run();
+< if( actions )>
 
    public:
 
 <actions:{action|
       virtual void <action>( void ) = 0;
 }>
+< endif><component.timeout:{to|
+      virtual void <to.name>Elapsed( void ) = 0;
+}>
    protected:
+
+      virtual void afterDispatch( void ) = 0;
 
       void terminate();
 
-   public:
-
-      void run();
+      void loopback( const <component.name>Dispatcher::LoopbackEvent & event );
 
    private:
 
@@ -501,7 +552,8 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
 < if( component.automaton )>      Automaton _automaton;
 < endif>
-< first(requires):{req|<requires.(req):{rt|
+<component.timeout:{to|       util::TimeoutCallback _<to.name>;
+}>< first(requires):{req|<requires.(req):{rt|
       <rt.interface.name> _<rt.interface.name; format="argument">;
 }>}>   };
 }
@@ -545,7 +597,10 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 <component.name>Component::<component.name>Component( const char * name ) :
    _running   ( false ),
    _dispatcher( _socket, *this ),
-   _automaton ( *this )< first(requires):{req|<requires.(req):{rt|,
+   _automaton ( *this )<component.timeout:{to|,
+   _<to.name; format="argument">( <to.duration><to.unit.toCpp>, [this](){ _dispatcher.loopback( <
+      component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> ); \})}><
+   first(requires):{req|<requires.(req):{rt|,
    _<rt; format="argument">( _socket, init<rt>SocketAddress( name ))}>}>
 {
 < first(instances):{instance|
@@ -560,6 +615,10 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 
 void <component.name>Component::terminate() {
    _running = false;
+}
+
+void <component.name>Component::loopback( const <component.name>Dispatcher::LoopbackEvent & event ) {
+   _dispatcher.loopback( event );
 }
 
 void <component.name>Component::run() {
