@@ -41,30 +41,40 @@ Ainsi, la génération de code s'appuie sur un modèle commun et par trois modè
 - Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
 
 **Pour les impatients :**
-Se placer à la racine du projet et entrer :
-- Pour construire les versions Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows : `ant` 
-- Pour exécuter seulement la version Java : `ant run-java` 
-- Pour exécuter les versions Java (sc et dab) et C GNU/Linux (udt-c) et MinGW/Windows (udt-c-win32) : `ant run-c` 
-- Seulement les versions Java (sc et dab) et C++ GNU/Linux (udt-cpp) et MinGW/Windows (udt-cpp-win32) : `ant run-cpp`
+Se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
+
+**Différents déploiement** exécutables :
+- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en java: `ant run-java`
+- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour GNU/Linux : `ant run-c` 
+- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour MinGW/Windows : `ant run-c-win32` 
+- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C++ pour GNU/Linux : `ant run-cpp`
+- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C++ pour MinGW/Windows : `ant run-cpp-win32`
+- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en java : `ant run-java-2`
+- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C pour GNU/Linux : `ant run-c-2` 
+- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2` 
+- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C++ pour GNU/Linux : `ant run-cpp-2`
+- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
+
+Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le routage correct des réponses aux requêtes.
 
 **En pas-à-pas**, pour comprendre :
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
 1. Compiler dans l'ordre :
-    * util-c    : `(cd util-c && make)`
-    * udt-c     : `(cd udt-c && make)`
-    * util-cpp  : `(cd util-cpp && make)`
-    * udt-cpp   : `(cd udt-cpp && make)`
+    * util-c    : `(cd util-c && make)`, produit également `util-c-win32`
+    * udt-c     : `(cd udt-c && make)`, produit également `udt-c-win32`
+    * util-cpp  : `(cd util-cpp && make)`, produit également `util-cpp-win32`
+    * udt-cpp   : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
     * util-java : `(cd util-java && ant)`
     * sc        : `(cd sc && ant)`
     * dab       : `(cd dab && ant)`
 
-**Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque n'est utilisée.
+**Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée.
 
 ## Reste à faire
 
 1. L'écho de l'exécution est non daté, non systématique et non débrayable. Un petit module de trace "user-friendly", sans allocation dynamique de mémoire est à développer.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de pauser une exécution et de la reprendre puisque le temps serait simulé.
 1. Automate : associer une action au franchissement d'une transition.
-1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit).
+1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche des ces frameworks de test est à développer pour en tirer le maximum de profit.
