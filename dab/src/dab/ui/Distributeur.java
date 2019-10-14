@@ -43,16 +43,16 @@ public class Distributeur extends dab.DistributeurComponent {
    }
 
    @Override
-   protected void afterDispatch() throws IOException {
-      /* Nothing to do */
-   }
-
-   @Override
    public void shutdown() throws IOException {
       Platform.runLater(() -> _controller.shutdown());
    }
 
    public IUniteDeTraitement uniteDeTraitement() {
       return _uniteDeTraitement;
+   }
+
+   @Override
+   public void ejecterLesBillets( double montant ) throws IOException {
+      Platform.runLater(() -> _controller.ejecterLesBillets( montant ));
    }
 }

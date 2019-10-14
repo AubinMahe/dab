@@ -58,9 +58,4 @@ public final class Banque extends BanqueComponent {
    public void shutdown() {
       _repository.close();
    }
-
-   @Override
-   protected void afterDispatch() {
-      // Nothing to do
-   }
 }

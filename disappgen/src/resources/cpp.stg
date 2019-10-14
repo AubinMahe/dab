@@ -533,9 +533,10 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 < endif><component.timeout:{to|
       virtual void <to.name>Elapsed( void ) = 0;
 }>
-   protected:
+   protected:< if( component.afterDispatchNeeded )>
 
       virtual void afterDispatch( void ) = 0;
+< endif>
 
       void terminate();
 
@@ -624,8 +625,9 @@ void <component.name>Component::loopback( const <component.name>Dispatcher::Loop
 void <component.name>Component::run() {
    _running = true;
    while( _running ) {
-      if( _dispatcher.hasDispatched()) {
+      if( _dispatcher.hasDispatched()) {< if( component.afterDispatchNeeded )>
          afterDispatch();
+< endif>
       }
    }
 }

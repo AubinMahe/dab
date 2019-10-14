@@ -13,12 +13,13 @@ namespace udt {
       Controleur( const char * name ) :
          dab::ControleurComponent( name )
       {
-         _automaton.setSebug( true );
+         _automaton.setDebug( true );
       }
 
    public:
 
       virtual void maintenance( bool maintenance ) {
+         fprintf( stderr, "%s, maintenance = %s\n", HPMS_FUNCNAME, maintenance ? "true" : "false" );
          if( maintenance ) {
             _automaton.process( dab::Evenement::MAINTENANCE_ON );
          }
@@ -28,6 +29,7 @@ namespace udt {
       }
 
       virtual void rechargerLaCaisse( const double & montant ) {
+         fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
          _iHM.etatDuDab().soldeCaisse += montant;
          if( _iHM.etatDuDab().soldeCaisse < 1000 ) {
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
@@ -35,6 +37,7 @@ namespace udt {
       }
 
       virtual void anomalie( bool anomalie ) {
+         fprintf( stderr, "%s, anomalie = %s\n", HPMS_FUNCNAME, anomalie ? "true" : "false" );
          if( anomalie ) {
             _automaton.process( dab::Evenement::ANOMALIE_ON );
          }
@@ -44,6 +47,7 @@ namespace udt {
       }
 
       virtual void carteInseree( const char * id ) {
+         fprintf( stderr, "%s, id = %s\n", HPMS_FUNCNAME, id );
          _carte .invalidate();
          _compte.invalidate();
          _automaton.process( dab::Evenement::CARTE_INSEREE );
@@ -51,6 +55,7 @@ namespace udt {
       }
 
       virtual void getInformations( const dab::Carte & carte, const dab::Compte & compte ) {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _carte .set( carte );
          _compte.set( compte );
          if( _carte.isValid() && _compte.isValid()) {
@@ -70,12 +75,13 @@ namespace udt {
             }
          }
          else {
-            ::fprintf( stderr, "Carte et/ou compte invalide\n" );
+            ::fprintf( stderr, "%s: Carte et/ou compte invalide\n", HPMS_FUNCNAME );
             _automaton.process( dab::Evenement::CARTE_INVALIDE );
          }
       }
 
       virtual void codeSaisi( const char * code ) {
+         fprintf( stderr, "%s, code = %s\n", HPMS_FUNCNAME, code );
          if( ! _carte.isValid()) {
             _automaton.process( dab::Evenement::CARTE_INVALIDE );
          }
@@ -99,35 +105,43 @@ namespace udt {
       }
 
       virtual void montantSaisi( const double & montant ) {
+         fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
+         _iHM.ejecterLaCarte();
          if( montant > _iHM.etatDuDab().soldeCaisse ) {
-            _iHM.ejecterLaCarte();
             _automaton.process( dab::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
          else if( montant > _compte.getSolde()) {
-            _iHM.ejecterLaCarte();
             _automaton.process( dab::Evenement::SOLDE_COMPTE_INSUFFISANT );
          }
          else {
-            _iHM.etatDuDab().soldeCaisse -= montant;
-            _siteCentral.retrait( _carte.getId(), montant );
+            _montantDeLatransactionEnCours = montant;
             _automaton.process( dab::Evenement::MONTANT_OK );
          }
       }
 
       virtual void carteRetiree( void ) {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
+         _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
+         _iHM.etatDuDab().soldeCaisse -= _montantDeLatransactionEnCours;
+         _montantDeLatransactionEnCours = 0.0;
          _automaton.process( dab::Evenement::CARTE_RETIREE );
       }
 
       virtual void billetsRetires( void ) {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _automaton.process( dab::Evenement::BILLETS_RETIRES );
       }
 
       virtual void annulationDemandeeParLeClient() {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         _montantDeLatransactionEnCours = 0.0;
          _iHM.ejecterLaCarte();
          _automaton.process( dab::Evenement::ANNULATION_CLIENT );
       }
 
       virtual void shutdown( void ) {
+         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _iHM.shutdown();
          _siteCentral.shutdown();
          _automaton.process( dab::Evenement::TERMINATE );
@@ -138,9 +152,11 @@ namespace udt {
 
       /**
        * Méthode appelée après réception et traitement d'un événement ou d'une requête.
+       * L'état de l'automate à sans doute été mis à jour, il faut donc le publier.
        */
       virtual void afterDispatch( void ) {
          _iHM.etatDuDab().etat = _automaton.getCurrentState();
+         fprintf( stderr, "%s, etat = %s\n", HPMS_FUNCNAME, dab::toString( _iHM.etatDuDab().etat ));
          _iHM.publishEtatDuDab();
       }
 
@@ -175,5 +191,6 @@ namespace udt {
 
       Carte  _carte;
       Compte _compte;
+      double _montantDeLatransactionEnCours;
    };
 }

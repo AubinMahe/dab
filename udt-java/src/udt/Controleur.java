@@ -11,6 +11,7 @@ public final class Controleur extends ControleurComponent {
 
    private final Carte  _carte  = new Carte();
    private final Compte _compte = new Compte();
+   private /* */ double _montantDeLatransactionEnCours = 0.0;
 
    public Controleur( String name ) throws IOException {
       super( name );
@@ -106,23 +107,25 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void montantSaisi( double montant ) throws IOException {
+      _iHM.ejecterLaCarte();
       if( montant > _iHM.etatDuDab.soldeCaisse ) {
-         _iHM.ejecterLaCarte();
          _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
       }
       else if( montant > _compte.getSolde()) {
-         _iHM.ejecterLaCarte();
          _automaton.process( Evenement.SOLDE_COMPTE_INSUFFISANT );
       }
       else {
-         _iHM.etatDuDab.soldeCaisse -= montant;
-         _siteCentral.retrait( _carte.getId(), montant );
+         _montantDeLatransactionEnCours = montant;
          _automaton.process( Evenement.MONTANT_OK );
       }
    }
 
    @Override
-   public void carteRetiree() {
+   public void carteRetiree() throws IOException {
+      _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
+      _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
+      _iHM.etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
+      _montantDeLatransactionEnCours = 0.0;
       _automaton.process( Evenement.CARTE_RETIREE );
    }
 
@@ -133,6 +136,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void annulationDemandeeParLeClient() throws IOException {
+      _montantDeLatransactionEnCours = 0.0;
       _iHM.ejecterLaCarte();
       _automaton.process( Evenement.ANNULATION_CLIENT );
    }

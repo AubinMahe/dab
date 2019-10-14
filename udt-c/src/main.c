@@ -7,10 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-/*
-src/io/datagram_socket.c:94:io_datagram_socket_send_to:send:Bad file descriptor
-src-gen/dab/controleur_dispatcher.c:212:dab_controleur_dispatcher_loopback:io_datagram_socket_send_to( This->socket, &out, &This->listener->localAddress ):os error
-*/
+
+static const double DAB_RETRAIT_MAX = 1000.0;
+
 typedef struct date_s {
    byte   month;
    ushort year;
@@ -31,6 +30,12 @@ typedef struct compte_s {
    double solde;
    bool   autorise;
 } compte;
+
+typedef struct business_logic_data_s {
+   carte  carte;
+   compte compte;
+   double montantDeLatransactionEnCours;
+} business_logic_data;
 
 static void date_set( date * This, byte month, ushort year ) {
    This->month= month;
@@ -68,13 +73,6 @@ void compte_invalidate( compte * This ) {
    fprintf( stderr, "compte_invalidate\n" );
    This->is_valid = false;
 }
-
-static const double DAB_RETRAIT_MAX = 1000.0;
-
-typedef struct business_logic_data_s {
-   carte  carte;
-   compte compte;
-} business_logic_data;
 
 util_error dab_controleur_maintenance( dab_controleur * This, bool maintenance ) {
    if( maintenance ) {
@@ -165,24 +163,27 @@ util_error dab_controleur_code_saisi( dab_controleur * This, const char * code )
 
 util_error dab_controleur_montant_saisi( dab_controleur * This, double montant ) {
    business_logic_data * d = This->user_context;
+   UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_montant ));
    if( montant > This->ihm.etat_du_dab.solde_caisse ) {
-      UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
    }
    else if( montant > d->compte.solde ) {
-      UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_SOLDE_COMPTE_INSUFFISANT ));
    }
    else {
-      This->ihm.etat_du_dab.solde_caisse -= montant;
-      UTIL_ERROR_CHECK( dab_site_central_retrait( &This->site_central, d->carte.id, montant ));
+      d->montantDeLatransactionEnCours = montant;
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_MONTANT_OK ));
    }
    return UTIL_NO_ERROR;
 }
 
 util_error dab_controleur_carte_retiree( dab_controleur * This ) {
+   business_logic_data * d = This->user_context;
+   UTIL_ERROR_CHECK( dab_site_central_retrait( &This->site_central, d->carte.id, d->montantDeLatransactionEnCours ));
+   UTIL_ERROR_CHECK( dab_ihm_ejecter_les_billets( &This->ihm, d->montantDeLatransactionEnCours ));
+   This->ihm.etat_du_dab.solde_caisse -= d->montantDeLatransactionEnCours;
+   d->montantDeLatransactionEnCours = 0.0;
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_de_la_carte ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_CARTE_RETIREE ));
    return UTIL_NO_ERROR;
@@ -202,6 +203,8 @@ util_error dab_controleur_annuler_le_timeout_de_retrait_des_billets( dab_control
 }
 
 util_error dab_controleur_annulation_demandee_par_le_client( dab_controleur * This ) {
+   business_logic_data * d = This->user_context;
+   d->montantDeLatransactionEnCours = 0.0;
    UTIL_ERROR_CHECK( dab_ihm_ejecter_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DAB_EVENEMENT_ANNULATION_CLIENT ));
    return UTIL_NO_ERROR;

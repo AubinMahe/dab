@@ -490,9 +490,9 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
       requires.(req):{rt|_<rt.interface.name; format="argument"> = new <
         rt.interface.name>( _channel, <rt.interface.name; format="argument"> );
 }>}>      _dispatcher = new <component.name>Dispatcher( _channel, this );
-   }
+   }< if( component.afterDispatchNeeded )>
 
-   protected abstract void afterDispatch() throws IOException;
+   protected abstract void afterDispatch() throws IOException;< endif>
 
    <component.timeout:{to|protected abstract void <to.name>Elapsed() throws IOException;
 }>
@@ -517,8 +517,9 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
       _running = true;
       while( _running ) {
          try {
-            if( _dispatcher.hasDispatched()) {
+            if( _dispatcher.hasDispatched()) {< if( component.afterDispatchNeeded )>
                afterDispatch();
+< endif>
             }
          }
          catch( final IOException e ) {

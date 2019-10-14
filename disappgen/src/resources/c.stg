@@ -498,8 +498,8 @@ if( facet.arguments )><
 else><
     signature( prefix, facet.field )><
 endif> );
-}>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
-<actions:{action|
+}>< if( component.afterDispatchNeeded )>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
+< endif><actions:{action|
 util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <prefix>_<component.name; format="cname"> * This );
 }><component.timeout:{to|
 util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( <prefix>_<component.name; format="cname"> * This );
@@ -575,9 +575,10 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
    while( This->running ) {
       bool has_dispatched;
       UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_dispatch( &This->dispatcher, &has_dispatched ));
-      if( has_dispatched ) {
+      < if( component.afterDispatchNeeded )>if( has_dispatched ) {
          UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_after_dispatch( This ));
       }
+< endif>
    }
    return UTIL_NO_ERROR;
 }

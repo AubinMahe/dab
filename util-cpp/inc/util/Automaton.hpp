@@ -99,7 +99,7 @@ namespace util {
          return _current;
       }
 
-      void setSebug( bool dbg ) {
+      void setDebug( bool dbg ) {
          _debug = dbg;
       }
 
@@ -125,21 +125,21 @@ namespace util {
             Action * tr  = search( _onExits, _onExCount, key );
             if( tr ) {
                if( _debug ) {
-                  fprintf( stderr, "%s|on_exit(%s) fired\n", __PRETTY_FUNCTION__, toString( _current ));
+                  fprintf( stderr, "%s|on_exit(%s) fired\n", HPMS_FUNCNAME, toString( _current ));
                }
                (_actor.*(tr->action))();
             }
          }
          _current = futur;
          if( _debug ) {
-            fprintf( stderr, "%s|new State: %s\n", __PRETTY_FUNCTION__, toString( _current ));
+            fprintf( stderr, "%s|new State: %s\n", HPMS_FUNCNAME, toString( _current ));
          }
          {
             Action   key = { _current, 0 };
             Action * tr  = search( _onEntries, _onEnCount, key );
             if( tr ) {
                if( _debug ) {
-                  fprintf( stderr, "%s|on_entry(%s) fired\n", __PRETTY_FUNCTION__, toString( _current ));
+                  fprintf( stderr, "%s|on_entry(%s) fired\n", HPMS_FUNCNAME, toString( _current ));
                }
                (_actor.*(tr->action))();
             }

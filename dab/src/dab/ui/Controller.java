@@ -124,6 +124,16 @@ public class Controller extends Thread implements IIHM {
    }
 
    @Override
+   public void ejecterLaCarte() {
+      System.err.println( "Ejection de la carte..." );
+   }
+
+   @Override
+   public void ejecterLesBillets( double montant ) {
+      System.err.println( "Ejection des billets..." );
+   }
+
+   @Override
    public void confisquerLaCarte( ) {
       System.err.println( "Placement de la carte dans le magasin interne." );
       _magasin.getItems().add( "Carte n°" + _carteID.getText());
@@ -136,11 +146,6 @@ public class Controller extends Thread implements IIHM {
          "Placement des billets oubliés dans la corbeille interne : " + _dernierMontantSaisi + ", carte " + _carteID.getText());
       _corbeille.getItems().add( _dernierMontantSaisi + " €, carte n°" + _carteID.getText());
       _carteID.setText( null );
-   }
-
-   @Override
-   public void ejecterLaCarte() {
-      System.err.println( "Ejection de la carte..." );
    }
 
    @Override

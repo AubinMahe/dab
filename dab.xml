@@ -25,6 +25,9 @@
    <interface name="IHM">
       <data  name="etatDuDab" type="struct" userType="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="ejecterLaCarte" />
+      <event name="ejecterLesBillets">
+         <field name="montant"     type="double"  description="Montant à donner à l'utilisateur du DAB" />
+      </event>
       <event name="confisquerLaCarte" />
       <event name="placerLesBilletsDansLaCorbeille" />
       <event name="shutdown" />
@@ -81,7 +84,7 @@
       <implementation language="Java" src-dir="dab/src-gen" module-name="dab" />
    </component>
 
-   <component name="Controleur">
+   <component name="Controleur" after-dispatch-needed="true">
       <offers   interface="UniteDeTraitement" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />

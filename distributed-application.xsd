@@ -193,6 +193,7 @@
          <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />
+      <xs:attribute type="xs:boolean" name="after-dispatch-needed" use="optional" default="false" />
    </xs:complexType>
    
    <xs:simpleType name="portNumberType">

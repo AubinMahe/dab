@@ -74,7 +74,6 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
-1. L'écho de l'exécution est non daté, non systématique et non débrayable. Un petit module de trace "user-friendly", sans allocation dynamique de mémoire est à développer.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de pauser une exécution et de la reprendre puisque le temps serait simulé.
 1. Automate : associer une action au franchissement d'une transition.
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche des ces frameworks de test est à développer pour en tirer le maximum de profit.
