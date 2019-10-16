@@ -16,19 +16,20 @@ Il a été développé quelques bibliothèques de classes (Java et C++) et de fo
 - Rendre homogène le traitement des messages et des événements quel que soit le langage cible.
 - Faciliter le portage entre les OS GNU/Linux et MS-Windows
 
-Sauf pour Java, les librairies n'ont pas recourt à l'allocation dynamique de mémoire. C'est pour cette raison que :
+Sauf pour Java, les librairies n'ont pas recourt à l'allocation dynamique de mémoire. C'est pour cette raison que, en C++ :
 - la classe `std::string` a finalement été remplacée par des chaînes de longueurs fixes et pré allouées (le modèle spécifie les longueurs)
 - les exceptions standard de `stdexcept` ont été remplacées par des exceptions spécifiques dérivées de `std::exception` dotées de fonctionnalités de localisation plus avancées notamment la gestion de la pile d'appel *à la Java*.
 
-Ainsi, la génération de code s'appuie sur un modèle commun et par trois modèles `StringTemplate` spécifiques des trois langages cibles.
+La génération de code, réalisée en Java, s'appuie sur un modèle commun et trois modèles `StringTemplate` spécifiques des trois langages cibles. La liste des sources générée est également produite pour faciliter l'écriture des *makefiles* au moyen d'un quatrième modèle `StringTemplate`.
 
 ## Les projets :
 
-- **sc** pour **Site Central** : une application Java qui montre l'état des comptes bancaires et des cartes de crédit
+- **sc** pour **Site Central** : une application IHM en Java qui montre l'état des comptes bancaires et des cartes de crédit
 - **udt** pour **Unité de Traitement** : l'application où est implémentée la logique du système, hors IHM
-  - Une implantation en C, sans allocation dynamique de mémoire (aucun appel à `malloc`)
-  - Une implantation en C++, assez proche de ce qu'on pourrait faire en Java
-- **dab** pour **Distributeur Automatique de Billets** : une application Java qui permet l'interaction avec l'utilisateur final
+     - Une implantation en C
+     - Une implantation en C++
+     - Une implantation en Java
+- **dab** pour **Distributeur Automatique de Billets** : une application IHM en Java qui permet d'en simuler l'usage par un utilisateur final.
 
 ## Construire et exécuter les projets :
 
@@ -43,7 +44,7 @@ Ainsi, la génération de code s'appuie sur un modèle commun et par trois modè
 **Pour les impatients :**
 Se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
 
-**Différents déploiement** exécutables :
+**Différents déploiements** exécutables :
 - Pour exécuter 1 sc en java, 1 dab en java et 1 udt en java: `ant run-java`
 - Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour GNU/Linux : `ant run-c` 
 - Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour MinGW/Windows : `ant run-c-win32` 
@@ -73,8 +74,17 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée.
 
 ## Reste à faire
+<ol>
+<li>L'implémentation actuelle utilise des messages UDP pour connecter les composants, ce qui couvre les trois cas :<ul>
+<li>composants distribués sur plusieurs machines</li>
+<li>composants distribués sur plusieurs processus (éventuellement plusieurs langages)</li>
+<li>composants regroupés au sein d'un même processus (mono-langage)<br />
+Dans ce dernier cas, <b>des appels directs entre composants seraient plus performants</b>.</li> 
+</ul>
+<li>Automate : associer une action au franchissement d'une transition.</li>
+</ol>
 
-1. L'implémentation actuelle utilise des messages UDP pour connecter les composants qui sont chacun dans un processus. Dans un modèle de déploiement où les composants seraient au sein du même processus, des appels directs seraient plus performants.
-1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de pauser une exécution et de la reprendre puisque le temps serait simulé.
-1. Automate : associer une action au franchissement d'une transition.
-1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit.
+## Boite à idées, à débattre...
+
+1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
+1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...
