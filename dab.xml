@@ -2,25 +2,31 @@
 <distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:noNamespaceSchemaLocation="distributed-application.xsd"
    name="DAB">
+   <types>
 
-   <struct name="Carte">
-      <field name="id"       type="string" length="4" description="Identifiant de la carte" />
-      <field name="code"     type="string" length="4" description="Identifiant de la carte" />
-      <field name="month"    type="byte"              description="Jour de péremption de la carte" />
-      <field name="year"     type="ushort"            description="Année de péremption de la carte" />
-      <field name="nbEssais" type="byte"              description="Nombre d'essais en échec de la carte" />
-   </struct>
+      <struct name="Carte">
+         <field name="id"       type="string" length="4" description="Identifiant de la carte" />
+         <field name="code"     type="string" length="4" description="Identifiant de la carte" />
+         <field name="month"    type="byte"              description="Jour de péremption de la carte" />
+         <field name="year"     type="ushort"            description="Année de péremption de la carte" />
+         <field name="nbEssais" type="byte"              description="Nombre d'essais en échec de la carte" />
+      </struct>
+   
+      <struct name="Compte">
+         <field name="id"       type="string" length="4" description="Identifiant du compte" />
+         <field name="solde"    type="double"            description="Solde du compte" />
+         <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
+      </struct>
+   
+      <struct name="EtatDuDab">
+         <field name="etat" type="enum" userType="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
+         <field name="soldeCaisse" type="double"  description="Montant de la caisse en €" />
+      </struct>
 
-   <struct name="Compte">
-      <field name="id"       type="string" length="4" description="Identifiant du compte" />
-      <field name="solde"    type="double"            description="Solde du compte" />
-      <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
-   </struct>
-
-   <struct name="EtatDuDab">
-      <field name="etat" type="enum" userType="Etat" description="Etat du DAB, tel que décrit par l'énuméré Etat" />
-      <field name="soldeCaisse" type="double"  description="Montant de la caisse en €" />
-   </struct>
+      <implementation language="C"    src-dir="dabtypes-c"    module-name="dabtypes" />
+      <implementation language="C++"  src-dir="dabtypes-cpp"  module-name="dabtypes" />
+      <implementation language="Java" src-dir="dabtypes-java" module-name="dabtypes" />
+   </types>
 
    <interface name="IHM">
       <data  name="etatDuDab" type="struct" userType="EtatDuDab" description="Les données décrivant l'état du DAB" />
@@ -92,9 +98,9 @@
       <timeout name="saisieDuMontant"   duration="30" unit="seconds" />
       <timeout name="retraitDeLaCarte"  duration="10" unit="seconds" />
       <timeout name="retraitDesBillets" duration="10" unit="seconds" />
-      <implementation language="Java" src-dir="udt-java/src-gen" module-name="dab" />
-      <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="dab" />
-      <implementation language="C"    src-dir="udt-c/src-gen"    module-name="dab" />
+      <implementation language="C"    src-dir="udt-c/src-gen"    module-name="udt" />
+      <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="udt" />
+      <implementation language="Java" src-dir="udt-java/src-gen" module-name="udt" />
       <automaton initial="MAINTENANCE">
          <state-enum name="Etat" />
          <event-enum name="Evenement" />
@@ -151,23 +157,75 @@
       <offers interface="SiteCentral" />
       <implementation language="Java" src-dir="sc/src-gen" module-name="sc" />
    </component>
-   
-   <deployment>
-      <instance name="sc"   component="Banque"       address="127.0.0.1" port="2416" />
-      <instance name="udt1" component="Controleur"   address="127.0.0.1" port="2417">
-         <requires interface="SiteCentral" to-instance="sc" />
-         <requires interface="IHM"         to-instance="ihm1" />
-      </instance>
-      <instance name="ihm1" component="Distributeur" address="127.0.0.1" port="2418">
-         <requires interface="UniteDeTraitement" to-instance="udt1" />
-      </instance>
-      <instance name="udt2" component="Controleur"   address="127.0.0.1" port="2419">
-         <requires interface="SiteCentral" to-instance="sc" />
-         <requires interface="IHM"         to-instance="ihm2" />
-      </instance>
-      <instance name="ihm2" component="Distributeur" address="127.0.0.1" port="2420">
-         <requires interface="UniteDeTraitement" to-instance="udt2" />
-      </instance>
+
+   <deployment target-dir=".">
+      <process address="127.0.0.1" port="2416">
+         <instance name="sc" component="Banque" />
+      </process>
+      <process address="127.0.0.1" port="2417">
+         <instance name="udt1" component="Controleur">
+            <requires interface="SiteCentral" to-instance="sc" />
+            <requires interface="IHM"         to-instance="ihm1" />
+         </instance>
+      </process>
+      <process address="127.0.0.1" port="2418">
+         <instance name="ihm1" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="udt1" />
+         </instance>
+      </process>
+      <process address="127.0.0.1" port="2419">
+         <instance name="udt2" component="Controleur">
+            <requires interface="SiteCentral" to-instance="sc" />
+            <requires interface="IHM"         to-instance="ihm2" />
+         </instance>
+      </process>
+      <process address="127.0.0.1" port="2420">
+         <instance name="ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="udt2" />
+         </instance>
+      </process>
+   </deployment>
+
+   <deployment target-dir="full-java-one-process">
+      <process address="127.0.0.1" port="2417">
+         <instance name="fjop-sc"   component="Banque" />
+         <instance name="fjop-udt1" component="Controleur" >
+            <requires interface="SiteCentral" to-instance="fjop-sc" />
+            <requires interface="IHM"         to-instance="fjop-ihm1" />
+         </instance>
+         <instance name="fjop-ihm1" component="Distributeur" >
+            <requires interface="UniteDeTraitement" to-instance="fjop-udt1" />
+         </instance>
+         <instance name="fjop-udt2" component="Controleur">
+            <requires interface="SiteCentral" to-instance="fjop-sc" />
+            <requires interface="IHM"         to-instance="fjop-ihm2" />
+         </instance>
+         <instance name="fjop-ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="fjop-udt2" />
+         </instance>
+      </process>
+   </deployment>
+
+   <deployment target-dir="mixte">
+      <process address="127.0.0.1" port="2416">
+         <instance name="m-sc" component="Banque" />
+      </process>
+      <process address="127.0.0.1" port="2417">
+         <instance name="m-udt1" component="Controleur" >
+            <requires interface="SiteCentral" to-instance="m-sc" />
+            <requires interface="IHM"         to-instance="m-ihm1" />
+         </instance>
+         <instance name="m-ihm1" component="Distributeur" >
+            <requires interface="UniteDeTraitement" to-instance="m-udt1" />
+         </instance>
+         <instance name="m-udt2" component="Controleur">
+            <requires interface="SiteCentral" to-instance="m-sc" />
+            <requires interface="IHM"         to-instance="m-ihm2" />
+         </instance>
+         <instance name="m-ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="m-udt2" />
+         </instance>
+      </process>
    </deployment>
 
 </distributed-application>

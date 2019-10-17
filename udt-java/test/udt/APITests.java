@@ -10,12 +10,17 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import dab.Controleur;
+import dabtypes.Carte;
+import dabtypes.Compte;
+import dabtypes.Etat;
+
 @SuppressWarnings("static-method")
 @TestMethodOrder(OrderAnnotation.class)
 class APITests {
 
-   private static final dab.Carte  carte        = new dab.Carte();
-   private static final dab.Compte compte       = new dab.Compte();
+   private static final Carte      carte        = new Carte();
+   private static final Compte     compte       = new Compte();
    private static /* */ double     soldeCaisse = 10_000.0;
    private static /* */ Controleur ctrl;
 
@@ -32,10 +37,10 @@ class APITests {
       compte.solde    = 3_257.23;
 
       ctrl = new Controleur( "udt1" );
-      assertEquals( ctrl.getEtat(), dab.Etat.MAINTENANCE );
+      assertEquals( ctrl.getEtat(), Etat.MAINTENANCE );
       ctrl.rechargerLaCaisse( soldeCaisse );
       ctrl.maintenance( false );
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       assertEquals( ctrl.getSoldeCaisse(), soldeCaisse );
    }
 
@@ -43,23 +48,23 @@ class APITests {
    @Order(1)
    void nominal() throws IOException {
       final double RETRAIT = 120.00;
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       ctrl.carteInseree( "A123" );
-      assertEquals( ctrl.getEtat(), dab.Etat.LECTURE_CARTE );
+      assertEquals( ctrl.getEtat(), Etat.LECTURE_CARTE );
       ctrl.getInformations( carte, compte );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_CODE_1 );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_CODE_1 );
       ctrl.codeSaisi( "0000" );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_CODE_2 );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_CODE_2 );
       ctrl.codeSaisi( "0000" );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_CODE_3 );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_CODE_3 );
       ctrl.codeSaisi( carte.code );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_MONTANT );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_MONTANT );
       ctrl.montantSaisi( RETRAIT );
-      assertEquals( ctrl.getEtat(), dab.Etat.RETRAIT_CARTE_BILLETS );
+      assertEquals( ctrl.getEtat(), Etat.RETRAIT_CARTE_BILLETS );
       ctrl.carteRetiree();
-      assertEquals( ctrl.getEtat(), dab.Etat.RETRAIT_BILLETS );
+      assertEquals( ctrl.getEtat(), Etat.RETRAIT_BILLETS );
       ctrl.billetsRetires();
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       soldeCaisse -= RETRAIT;
       assertEquals( ctrl.getSoldeCaisse(), soldeCaisse );
    }
@@ -67,34 +72,34 @@ class APITests {
    @Test
    @Order(2)
    void soldeInsuffisant() throws IOException {
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       ctrl.carteInseree( "A123" );
-      assertEquals( ctrl.getEtat(), dab.Etat.LECTURE_CARTE );
+      assertEquals( ctrl.getEtat(), Etat.LECTURE_CARTE );
       ctrl.getInformations( carte, compte );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_CODE_1 );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_CODE_1 );
       ctrl.codeSaisi( carte.code );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_MONTANT );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_MONTANT );
       ctrl.montantSaisi( 5000.00 );
-      assertEquals( ctrl.getEtat(), dab.Etat.RETRAIT_CARTE_SOLDE_COMPTE );
+      assertEquals( ctrl.getEtat(), Etat.RETRAIT_CARTE_SOLDE_COMPTE );
       ctrl.carteRetiree();
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       assertEquals( ctrl.getSoldeCaisse(), soldeCaisse );
    }
 
    @Test
    @Order(3)
    void annulation() throws IOException {
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       ctrl.carteInseree( "A123" );
-      assertEquals( ctrl.getEtat(), dab.Etat.LECTURE_CARTE );
+      assertEquals( ctrl.getEtat(), Etat.LECTURE_CARTE );
       ctrl.getInformations( carte, compte );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_CODE_1 );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_CODE_1 );
       ctrl.codeSaisi( carte.code );
-      assertEquals( ctrl.getEtat(), dab.Etat.SAISIE_MONTANT );
+      assertEquals( ctrl.getEtat(), Etat.SAISIE_MONTANT );
       ctrl.montantSaisi( 200.00 );
-      assertEquals( ctrl.getEtat(), dab.Etat.RETRAIT_CARTE_BILLETS );
+      assertEquals( ctrl.getEtat(), Etat.RETRAIT_CARTE_BILLETS );
       ctrl.annulationDemandeeParLeClient();
-      assertEquals( ctrl.getEtat(), dab.Etat.EN_SERVICE );
+      assertEquals( ctrl.getEtat(), Etat.EN_SERVICE );
       assertEquals( ctrl.getSoldeCaisse(), soldeCaisse );
    }
 }

@@ -31,16 +31,21 @@ import disapp.generator.model.StructType;
 abstract class BaseGenerator {
 
    protected final SortedSet<File> _generatedFiles = new TreeSet<>();
+   protected final SortedSet<File> _generatedTypes = new TreeSet<>();
    protected final Model           _model;
+   protected final String          _deployment;
    protected final STGroup         _group;
    protected final BaseRenderer    _renderer;
    protected /* */ String          _genDir;
    protected /* */ String          _moduleName;
+   protected /* */ String          _genDirTypes;
+   protected /* */ String          _moduleNameTypes;
 
-   protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
-      _model    = model;
-      _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
-      _renderer = renderer;
+   protected BaseGenerator( Model model, String deployment, String templateName, BaseRenderer renderer ) {
+      _model       = model;
+      _deployment  = deployment;
+      _group       = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+      _renderer    = renderer;
       _group.registerRenderer( String.class, _renderer );
       _group.registerModelAdaptor( FieldType      .class, new FieldAdaptor());
       _group.registerModelAdaptor( EnumerationType.class, new EnumerationAdaptor());
@@ -154,20 +159,39 @@ abstract class BaseGenerator {
       _renderer.set( property, intrfcMaxWidth );
    }
 
-   protected void generateMakefileSourcesList( String headerExt, String srcEx ) throws FileNotFoundException {
-      final STGroupFile group = new STGroupFile( getClass().getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
+   protected static void generateMakefileSourcesList(
+      SortedSet<File> files,
+      String          genDir,
+      String          moduleName,
+      String          headerExt,
+      String          srcEx      ) throws FileNotFoundException
+   {
+      final STGroupFile group = new STGroupFile( BaseGenerator.class.getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
       final ST          mk    = group.getInstanceOf( "/mk" );
-      final File   parent = new File( _genDir ).getParentFile();
-      final String subDir = _genDir.substring( parent.getPath().length() + 1 );
-      mk.add( "path"   , subDir + "/" + _moduleName );
-      mk.add( "srcs"   , _generatedFiles.stream().filter( f -> f.getName().endsWith( srcEx     )).toArray());
-      mk.add( "headers", _generatedFiles.stream().filter( f -> f.getName().endsWith( headerExt )).toArray());
+      final File   parent = new File( genDir ).getParentFile();
+      final String subDir = genDir.substring( parent.getPath().length() + 1 );
+      mk.add( "path"   , subDir + "/" + moduleName );
+      mk.add( "srcs"   , files.stream().filter( f -> f.getName().endsWith( srcEx     )).toArray());
+      mk.add( "headers", files.stream().filter( f -> f.getName().endsWith( headerExt )).toArray());
       final File target = new File( parent, "generated-files.mk" );
       target.getParentFile().mkdirs();
       try( final PrintStream ps = new PrintStream( target )) {
          ps.print( mk.render());
       }
       System.out.printf( "%s written\n", target.getPath());
+   }
+
+   protected void writeType( String filename, ST source ) throws IOException {
+      final String folder = (filename.endsWith( ".h" )||filename.endsWith( ".hpp" )) ? "inc-gen" : "src-gen";
+      final File target = new File( _genDirTypes, folder + '/' + _moduleNameTypes + '/' + filename );
+      if( ! _model.isUpToDate( target )) {
+         target.getParentFile().mkdirs();
+         try( final PrintStream ps = new PrintStream( target )) {
+            ps.print( source.render());
+         }
+         System.out.printf( "%s written\n", target.getPath());
+      }
+      _generatedTypes.add( target );
    }
 
    protected void write( String filename, ST source ) throws IOException {

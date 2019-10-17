@@ -20,6 +20,7 @@ import javax.xml.bind.Unmarshaller;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DeploymentType;
 import disapp.generator.model.DisappType;
 import disapp.generator.model.EnumType;
 import disapp.generator.model.EnumerationType;
@@ -30,6 +31,7 @@ import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.LiteralType;
 import disapp.generator.model.OfferedInterfaceUsageType;
+import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
@@ -41,19 +43,20 @@ final class Model {
    private static final String RESPONSES_INTERFACE_SUFFIX = "Responses";
    private static final String RESPONSES_STRUCT_SUFFIX    = "Response";
 
-   private final Map<String, InterfaceType>      _interfaces      = new LinkedHashMap<>();
-   private final Map<String, InterfaceType>      _responses       = new LinkedHashMap<>();
-   private final Map<String, EnumerationType>    _enums           = new LinkedHashMap<>();
-   private final Map<String, StructType>         _structs         = new LinkedHashMap<>();
-   private final Map<String, SortedSet<String>>  _usedTypes       = new LinkedHashMap<>();
-   private final Map<String, List<Object>>       _facetsByName    = new LinkedHashMap<>();
-   private final Map<String, InstanceType>       _instancesByName = new LinkedHashMap<>();
-   private final Map<String, Map<String, Byte>>  _eventIDs        = new LinkedHashMap<>();
-   private final Map<ComponentType, Set<String>> _actions         = new LinkedHashMap<>();
-   private final File                            _source;
-   private final boolean                         _force;
-   private final DisappType                      _application;
-   private final long                            _lastModified;
+   private final Map<String, InterfaceType>             _interfaces        = new LinkedHashMap<>();
+   private final Map<String, InterfaceType>             _responses         = new LinkedHashMap<>();
+   private final Map<String, EnumerationType>           _enums             = new LinkedHashMap<>();
+   private final Map<String, StructType>                _structs           = new LinkedHashMap<>();
+   private final Map<String, SortedSet<String>>         _usedTypes         = new LinkedHashMap<>();
+   private final Map<String, List<Object>>              _facetsByName      = new LinkedHashMap<>();
+   private final Map<String, Map<String, InstanceType>> _instancesByName   = new LinkedHashMap<>();
+   private final Map<InstanceType, ProcessType>         _processByInstance = new LinkedHashMap<>();
+   private final Map<String, Map<String, Byte>>         _eventIDs          = new LinkedHashMap<>();
+   private final Map<ComponentType, Set<String>>        _actions           = new LinkedHashMap<>();
+   private final File                                   _source;
+   private final boolean                                _force;
+   private final DisappType                             _application;
+   private final long                                   _lastModified;
 
    Model( File source, boolean force ) throws JAXBException {
       final JAXBContext             jaxbContext  = JAXBContext.newInstance( "disapp.generator.model" );
@@ -85,7 +88,7 @@ final class Model {
                final StructType struct = new StructType();
                struct.setName( ifaceName + BaseRenderer.cap( request.getName()) + RESPONSES_STRUCT_SUFFIX );
                struct.getField().addAll( request.getResponse().getField());
-               _application.getStruct().add( struct );
+               _application.getTypes().getStruct().add( struct );
                for( final ComponentType component : _application.getComponent()) {
                   for( final RequiredInterfaceUsageType ifaceUsage : component.getRequires()) {
                      final InterfaceType ifaceUsed = (InterfaceType)ifaceUsage.getInterface();
@@ -108,18 +111,25 @@ final class Model {
          }
       }
       _application.getInterface().addAll( responseSet );
-      for( final EnumerationType enm : _application.getEnumeration()) {
+      for( final EnumerationType enm : _application.getTypes().getEnumeration()) {
          _enums.put( enm.getName(), enm );
       }
-      for( final StructType struct : _application.getStruct()) {
+      for( final StructType struct : _application.getTypes().getStruct()) {
          _structs.put( struct.getName(), struct );
       }
       for( final InterfaceType iface : _application.getInterface()) {
          _interfaces.put( iface.getName(), iface );
          _facetsByName.put( iface.getName(), iface.getEventOrRequestOrData());
       }
-      for( final InstanceType instance : _application.getDeployment().getInstance()) {
-         _instancesByName.put( instance.getName(), instance );
+      for( final DeploymentType deployment : _application.getDeployment()) {
+         final Map<String, InstanceType> instancesByName = new LinkedHashMap<>();
+         _instancesByName.put( deployment.getTargetDir(), instancesByName );
+         for( final ProcessType process : deployment.getProcess()) {
+            for( final InstanceType instance : process.getInstance()) {
+               _processByInstance.put( instance, process );
+               instancesByName.put( instance.getName(), instance );
+            }
+         }
       }
       for( final ComponentType component : _application.getComponent()) {
          typesUsedBy( component );
@@ -227,7 +237,7 @@ final class Model {
          else {
             enumeration.setType( EnumType.UINT );
          }
-         _application.getEnumeration().add( enumeration );
+         _application.getTypes().getEnumeration().add( enumeration );
          _enums.put( enumeration.getName(), enumeration );
       }
       final String state = automaton.getStateEnum().getName();
@@ -261,7 +271,7 @@ final class Model {
          else {
             enumeration.setType( EnumType.UINT );
          }
-         _application.getEnumeration().add( enumeration );
+         _application.getTypes().getEnumeration().add( enumeration );
          _enums.put( enumeration.getName(), enumeration );
       }
    }
@@ -561,9 +571,9 @@ final class Model {
       return capacity;
    }
 
-   List<InstanceType> getInstancesOf( ComponentType component ) {
+   List<InstanceType> getInstancesOf( String deployment, ComponentType component ) {
       final List<InstanceType> instances = new LinkedList<>();
-      for( final InstanceType instance : _application.getDeployment().getInstance()) {
+      for( final InstanceType instance : _instancesByName.get( deployment ).values()) {
          if( instance.getComponent() == component ) {
             instances.add( instance );
          }
@@ -571,9 +581,9 @@ final class Model {
       return instances;
    }
 
-   Map<String, List<RequiresType>> getRequiredInstancesOf( ComponentType component ) {
+   Map<String, List<RequiresType>> getRequiredInstancesOf( String deployment, ComponentType component ) {
       final Map<String, List<RequiresType>> instances = new LinkedHashMap<>();
-      for( final InstanceType instance : _application.getDeployment().getInstance()) {
+      for( final InstanceType instance : _instancesByName.get( deployment ).values()) {
          if( instance.getComponent() == component ) {
             final List<RequiresType> requires = instance.getRequires();
             if( ! requires.isEmpty()) {
@@ -584,9 +594,9 @@ final class Model {
       return instances;
    }
 
-   Map<String, Map<String, RequiresType>> getRequiredInstancesMapOf( ComponentType component ) {
+   Map<String, Map<String, RequiresType>> getRequiredInstancesMapOf( String deployment, ComponentType component ) {
       final Map<String, Map<String, RequiresType>> instances = new LinkedHashMap<>();
-      for( final InstanceType instance : _application.getDeployment().getInstance()) {
+      for( final InstanceType instance : _instancesByName.get( deployment ).values()) {
          if( instance.getComponent() == component ) {
             if( ! instance.getRequires().isEmpty()) {
                Map<String, RequiresType> requires = instances.get( instance.getName());
@@ -602,8 +612,16 @@ final class Model {
       return instances;
    }
 
-   Map<String, InstanceType> getInstancesByName() {
-      return _instancesByName;
+   Set<String> getDeployments() {
+      return _instancesByName.keySet();
+   }
+
+   Map<InstanceType, ProcessType> getProcessByInstance() {
+      return _processByInstance;
+   }
+
+   Map<String, InstanceType> getInstancesByName( String deployment ) {
+      return _instancesByName.get( deployment );
    }
 
    public static Map<String, List<FieldType>> getOfferedDataOf( ComponentType component ) {

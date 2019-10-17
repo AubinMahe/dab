@@ -2,9 +2,9 @@
 
 #include <types.hpp>
 
-#include <dab/Compte.hpp>
+#include <dabtypes/Compte.hpp>
 
-namespace udt {
+namespace dab {
 
    class Compte {
    public:
@@ -23,7 +23,7 @@ namespace udt {
          _isValid  = ( _id.length() > 0 );
       }
 
-      void set( const dab::Compte & compte ) {
+      void set( const dabtypes::Compte & compte ) {
          _id       = compte.id;
          _solde    = compte.solde;
          _autorise = compte.autorise;

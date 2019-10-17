@@ -17,7 +17,7 @@ int main( int argc, char * argv[] ) {
       return usage( argv[0] );
    }
    try {
-      udt::Controleur ctrl( name );
+      dab::Controleur ctrl( name );
       try {
          ctrl.run();
       }

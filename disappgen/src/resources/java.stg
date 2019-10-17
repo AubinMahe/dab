@@ -14,8 +14,8 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float  <
   elseif( field.isDouble  )>double <
   elseif( field.isString  )>String <
-  elseif( field.isEnum    )><field.userType.name><
-  elseif( field.isStruct  )><field.userType.name><
+  elseif( field.isEnum    )><typesPackage>.<field.userType.name><
+  elseif( field.isStruct  )><typesPackage>.<field.userType.name><
   endif>
 >>
 
@@ -47,8 +47,8 @@ data( visibility, field ) ::= <<
 < elseif( field.isFloat   )><visibility> float <field.name>;
 < elseif( field.isDouble  )><visibility> double <field.name>;
 < elseif( field.isString  )><visibility> String <field.name>;
-< elseif( field.isEnum    )><visibility> <field.userType.name> <field.name> = <field.userType.name>.values()[0];
-< elseif( field.isStruct  )><visibility> final <field.userType.name> <field.name> = new <field.userType.name>();
+< elseif( field.isEnum    )><visibility> <typesPackage>.<field.userType.name> <field.name> = <typesPackage>.<field.userType.name>.values()[0];
+< elseif( field.isStruct  )><visibility> final <typesPackage>.<field.userType.name> <field.name> = new <typesPackage>.<field.userType.name>();
 < endif>
 >>
 
@@ -155,7 +155,7 @@ public class <struct.name> {
 
 
 
-requiredInterface( package, usedTypes, ifaceName, rawSize, iface ) ::= <<
+requiredInterface( typesPackage, package, usedTypes, ifaceName, rawSize, iface ) ::= <<
 package <package>;
 // requiredInterface
 
@@ -175,7 +175,7 @@ endif>) throws IOException;
 
 
 
-requiredImplementation( package, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( typesPackage, package, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 package <package>;
 //requiredImplementation
 import java.io.IOException;
@@ -187,7 +187,7 @@ import io.ByteBufferHelper;
 
 import <package>.I<ifaceName>;
 
-<usedTypes:{type|import <package>.<type>;
+<usedTypes:{type|import <typesPackage>.<type>;
 }>
 public class <ifaceName> implements I<ifaceName> {
 
@@ -236,7 +236,7 @@ endif>
 
 
 
-offeredInterface( package, name, usedTypes, facets ) ::= <<
+offeredInterface( typesPackage, package, name, usedTypes, facets ) ::= <<
 package <package>;
 // offeredInterface
 
@@ -246,7 +246,7 @@ public interface I<name> {
 
    <facets:{facet|void <facet.name>< if( facet.type )>Published< endif>(<
 if( facet.arguments )><
-    signature( facet.arguments.field )>, <name><facet.name; format="cap">Response reponse<
+    signature( facet.arguments.field )>, <typesPackage>.<name><facet.name; format="cap">Response reponse<
 else><
     signature( facet.field )><
 endif>) throws IOException;
@@ -267,8 +267,8 @@ byteBufferGet( field ) ::= <<
 < elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
 < elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
 < elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
-< elseif( field.isEnum    )>final <field.userType.name> <field.name> = <field.userType.name>.values()[_in.get()];
-< elseif( field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
+< elseif( field.isEnum    )>final <typesPackage>.<field.userType.name> <field.name> = <typesPackage>.<field.userType.name>.values()[_in.get()];
+< elseif( field.isStruct  )>final <typesPackage>.<field.userType.name> <field.name> = new <typesPackage>.<field.userType.name>();
 <field.name>.get( _in );
 < endif>
 >>
@@ -299,7 +299,8 @@ private static enum <ifaceName>Event {
 }
 
 <events.(ifaceName):{eventOrRequestOrData|< if( eventOrRequestOrData.response )>
-private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<eventOrRequestOrData.name; format="ID"> = <eventIDs.(ifaceName).(eventOrRequestOrData.name)>;
+private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<eventOrRequestOrData.name; format="ID"> = <
+                                              eventIDs.(ifaceName).(eventOrRequestOrData.name)>;
 < endif>}>
 private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
@@ -313,7 +314,8 @@ private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endi
          byteBufferGet( field )>}><
       endif><
       if( eventOrRequestOrData.response )
->      final <ifaceName><eventOrRequestOrData.name; format="cap">Response response = new <ifaceName><eventOrRequestOrData.name; format="cap">Response();
+>      final <typesPackage>.<ifaceName><eventOrRequestOrData.name; format="cap">Response response = new <
+              typesPackage>.<ifaceName><eventOrRequestOrData.name; format="cap">Response();
       _listener.<eventOrRequestOrData.name>( <args( eventOrRequestOrData.arguments.field )>, response );
       _out.clear();
       _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
@@ -333,7 +335,7 @@ private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endi
 }
 >>
 
-dispatcherImplementation( package, component, ifaces, events, eventIDs, usedTypes, rawSize, respRawSize, requests ) ::= <<
+dispatcherImplementation( typesPackage, package, component, ifaces, events, eventIDs, usedTypes, rawSize, respRawSize, requests ) ::= <<
 package <package>;
 //dispatcherImplementation
 import java.io.IOException;
@@ -424,7 +426,7 @@ public class <component.name>Dispatcher {
 
 
 
-componentImplementation( package, component, responses, requires, instancesByName, instances, actions, data ) ::= <<
+componentImplementation( typesPackage, package, component, responses, requires, instancesByName, instances, actions, data, processes ) ::= <<
 package <package>;
 //componentImplementation
 import java.io.IOException;
@@ -437,6 +439,7 @@ import java.time.Duration;
 
 import util.Timeout;
 < endif>
+
 
 public abstract class <component.name>Component implements Runnable<
 component.offers:          {o|, I<o.interface.name>}><
@@ -469,19 +472,23 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
          _channel = DatagramChannel
             .open     ( StandardProtocolFamily.INET )
             .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-            .bind     ( new InetSocketAddress( "<instance.address>", <instance.port> ));
+            .bind     ( new InetSocketAddress( "<
+               processes.(instance).address>", <
+               processes.(instance).port> ));
          <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            instancesByName.(req.toInstance.name).address>", <
-            instancesByName.(req.toInstance.name).port> );
+            processes.(instancesByName.(req.toInstance.name)).address>", <
+            processes.(instancesByName.(req.toInstance.name)).port> );
 }>}>      < rest(instances):{instance|\}
       else if( name.equals( "<instance.name>" )) {
          _channel = DatagramChannel
             .open     ( StandardProtocolFamily.INET )
             .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-            .bind     ( new InetSocketAddress( "<instance.address>", <instance.port> ));
+            .bind     ( new InetSocketAddress( "<
+               processes.(instance).address>", <
+               processes.(instance).port> ));
          <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            instancesByName.(req.toInstance.name).address>", <
-            instancesByName.(req.toInstance.name).port> );
+            processes.(instancesByName.(req.toInstance.name)).address>", <
+            processes.(instancesByName.(req.toInstance.name)).port> );
 }>}>      }
       else {
          throw new IllegalArgumentException( "'" + name + "' isn't a valid name defined in XML application file!" );
@@ -533,8 +540,11 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 
 
 
-automaton( package, component ) ::= <<
+automaton( typesPackage, package, component ) ::= <<
 package <package>;
+
+import <typesPackage>.<component.automaton.stateEnum.name>;
+import <typesPackage>.<component.automaton.eventEnum.name>;
 
 public class Automaton extends util.Automaton\<<component.automaton.stateEnum.name>, <component.automaton.eventEnum.name>\> {
 

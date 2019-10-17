@@ -1,4 +1,4 @@
-package udt;
+package dab;
 
 class Carte {
 
@@ -21,7 +21,7 @@ class Carte {
       _isValid  = ( _id.length() > 0 )&&( _code.length() > 0 )&&( _nbEssais < 4 )&& _peremption.isValid() ;
    }
 
-   void set( dab.Carte carte ) {
+   void set( dabtypes.Carte carte ) {
       _id       = carte.id;
       _code     = carte.code;
       _nbEssais = carte.nbEssais;

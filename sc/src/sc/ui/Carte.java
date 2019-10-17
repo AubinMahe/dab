@@ -105,7 +105,7 @@ public class Carte implements ICarte {
    }
 
    @Override
-   public void copyTo( sc.Carte out ) {
+   public void copyTo( dabtypes.Carte out ) {
       out.id       = getId();
       out.code     = getCode();
       out.month    = getExpirationMonth();

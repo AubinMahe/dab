@@ -14,10 +14,10 @@ public class Main {
       _model = new Model( model, force );
    }
 
-   private void generateComponents() throws IOException {
-      final JavaGenerator java = new JavaGenerator( _model );
-      final CGenerator    c    = new CGenerator   ( _model );
-      final CppGenerator  cpp  = new CppGenerator ( _model );
+   private void generateComponents( String deployment ) throws IOException {
+      final JavaGenerator java = new JavaGenerator( _model, deployment );
+      final CGenerator    c    = new CGenerator   ( _model, deployment );
+      final CppGenerator  cpp  = new CppGenerator ( _model, deployment );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final ImplementationType implementation : component.getImplementation()) {
             switch( implementation.getLanguage()) {
@@ -30,13 +30,14 @@ public class Main {
    }
 
    private static void usage() {
-      System.err.println( "usage: disapp.generator.Main --model=<xml system file> [--force=<true|false>]" );
+      System.err.println( "usage: disapp.generator.Main --model=<xml system file> --deployment=<deployment name> [--force=<true|false>]" );
       System.exit(1);
    }
 
    public static void main( String[] args ) throws Throwable {
-      File    modelPath = null;
-      boolean force     = false;
+      File    modelPath  = null;
+      String  deployment = null;
+      boolean force      = false;
       for( final String arg : args ) {
          if( arg.startsWith( "--" )) {
             final int sep = arg.indexOf( '=' );
@@ -48,8 +49,9 @@ public class Main {
                   usage();
                }
                switch( name ) {
-               case "model": modelPath = new File( value ); break;
-               case "force": force = Boolean.parseBoolean( value ); break;
+               case "model"     : modelPath  = new File( value );             break;
+               case "deployment": deployment = value;                         break;
+               case "force"     : force      = Boolean.parseBoolean( value ); break;
                default: usage();
                }
             }
@@ -61,11 +63,11 @@ public class Main {
             usage();
          }
       }
-      if( modelPath == null ) {
+      if( modelPath == null || deployment == null ) {
          usage();
       }
       else {
-         new Main( modelPath, force ).generateComponents();
+         new Main( modelPath, force ).generateComponents( deployment );
          System.exit(0);
       }
    }

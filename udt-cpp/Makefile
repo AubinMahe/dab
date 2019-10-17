@@ -2,7 +2,7 @@ SRCS = src/main.cpp
 
 -include generated-files.mk
 
-CPPFLAGS    = -I ../util-cpp/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+CPPFLAGS    = -I ../util-cpp/inc -I ../dabtypes-cpp/inc-gen -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
 WINVER      = 0x06010000
 CPPW32FLAGS = $(CPPFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 
@@ -13,13 +13,9 @@ all: ../UniteDeTraitement ../UniteDeTraitement-mingw32
 
 clean:
 	rm -f  deps
-	rm -f  generated-files.mk
+	rm -f  compile.log
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
-	rm -fr bin
-	rm -fr Debug
-	rm -fr Release
-	rm -fr src-gen
 
 ../disappgen.jar:
 	cd ../disappgen && ant
@@ -33,13 +29,21 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 ../util-cpp/lib/libutil-cpp-mingw32.a:
 	cd ../util-cpp && make
 
-../UniteDeTraitement: ../util-cpp/lib/libutil-cpp.a $(OBJS)
-	cd ../util-cpp && make
-	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -lpthread -o $@
+../dabtypes-cpp/lib/libdabtypes-cpp.a:
+	cd ../dabtypes-cpp && make
+
+../dabtypes-cpp/lib/libdabtypes-cpp-mingw32.a:
+	cd ../dabtypes-cpp && make
+
+../UniteDeTraitement: ../util-cpp/lib/libutil-cpp.a ../dabtypes-cpp/lib/libdabtypes-cpp.a $(OBJS)
+	cd ../util-cpp     && make
+	cd ../dabtypes-cpp && make
+	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -L../dabtypes-cpp/lib -ldabtypes-cpp -lpthread -o $@
 
 ../UniteDeTraitement-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a $(OBJSW32)
-	cd ../util-cpp && make
-	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -lws2_32 -o $@
+	cd ../util-cpp    && make
+	cd ../dabtypes-cpp && make
+	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -L../dabtypes-cpp/lib -ldabtypes-cpp-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)

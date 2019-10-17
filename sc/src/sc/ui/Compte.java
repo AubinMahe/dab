@@ -59,7 +59,7 @@ public class Compte implements ICompte {
    }
 
    @Override
-   public void copyTo( sc.Compte out ) {
+   public void copyTo( dabtypes.Compte out ) {
       out.id       = getId();
       out.solde    = getSolde();
       out.autorise = getAutorise();

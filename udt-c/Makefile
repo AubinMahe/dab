@@ -2,7 +2,7 @@ SRCS = src/main.c
 
 -include generated-files.mk
 
-CFLAGS    = -I ../util-c/inc -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
+CFLAGS    = -I ../util-c/inc -I ../dabtypes-c/inc-gen -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
 WINVER    = 0x06010000
 CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 
@@ -13,12 +13,9 @@ all: ../unite_de_traitement ../unite_de_traitement-mingw32
 
 clean:
 	rm -f  deps
+	rm -f  compile.log
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
-	rm -fr bin
-	rm -fr Debug
-	rm -fr Release
-	rm -fr src-gen
 
 ../disappgen.jar:
 	cd ../disappgen && ant
@@ -32,13 +29,19 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 ../util-c/lib/libutil-c-mingw32.a:
 	cd ../util-c && make
 
-../unite_de_traitement: ../util-c/lib/libutil-c.a $(OBJS)
-	cd ../util-c && make
-	gcc $(OBJS) -L../util-c/lib -lutil-c -lpthread -o $@
+../dabtypes-c/lib/libdabtypes-c.a:
+	cd ../dabtypes-c && make
 
-../unite_de_traitement-mingw32: ../util-c/lib/libutil-c-mingw32.a $(OBJSW32)
+../dabtypes-c/lib/libdabtypes-c-mingw32.a:
+	cd ../dabtypes-c && make
+
+../unite_de_traitement: ../util-c/lib/libutil-c.a ../dabtypes-c/lib/libdabtypes-c.a $(OBJS)
 	cd ../util-c && make
-	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -lws2_32 -o $@
+	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lpthread -o $@
+
+../unite_de_traitement-mingw32: ../util-c/lib/libutil-c-mingw32.a ../dabtypes-c/lib/libdabtypes-c-mingw32.a $(OBJSW32)
+	cd ../util-c && make
+	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.c
 	@mkdir -p $$(dirname $@)

@@ -20,6 +20,7 @@ all:
 
 .PHONY: clean
 clean:
+	rm -f  deps
 	rm -f  tests
 	rm -f  tests-win32
 	rm -fr BUILD

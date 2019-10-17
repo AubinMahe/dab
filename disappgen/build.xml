@@ -8,6 +8,7 @@
       <delete dir="bin" />
       <delete dir="src-gen" />
       <delete file="${jar}" />
+      <delete file="generated-files.mk" />
    </target>
 
    <target name="javac">

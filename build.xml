@@ -32,21 +32,59 @@
          <classpath location="lib/ST4-4.0.4.jar" />
          <classpath location="disappgen.jar" />
          <arg value="--model=dab.xml" />
+         <arg value="--deployment=." />
       </java>
    </target>
 
-   <target name="util-c"  ><exec dir="util-c"   executable="make" output="util-c/compile.log"   failonerror="true" /></target>
-   <target name="udt-c"   ><exec dir="udt-c"    executable="make" output="udt-c/compile.log"    failonerror="true" /></target>
-   <target name="util-cpp"><exec dir="util-cpp" executable="make" output="util-cpp/compile.log" failonerror="true" /></target>
-   <target name="udt-cpp" ><exec dir="udt-cpp"  executable="make" output="udt-cpp/compile.log"  failonerror="true" /></target>
+   <target name="generate-all-sources-for-full-java-one-process" depends="disappgen">
+      <dependset>
+         <srcfilelist
+            dir  ="."
+            files="disappgen.jar" />
+         <targetfileset
+             dir     ="full-java-one-process/udt-c/src-gen"
+             includes="**/*.h, **/*.c" />
+         <targetfileset
+             dir     ="full-java-one-process/udt-cpp/src-gen"
+             includes="**/*.hpp, **/*.cpp" />
+         <targetfileset
+             dir     ="full-java-one-process/dab/src-gen"
+             includes="**/*.java" />
+         <targetfileset
+             dir     ="full-java-one-process/sc/src-gen"
+             includes="**/*.java" />
+      </dependset>
+      <java fork="true" classname="disapp.generator.Main">
+         <classpath location="lib/antlr-runtime-3.3.jar" />
+         <classpath location="lib/javax.activation-1.2.0.jar" />
+         <classpath location="lib/javax.activation-api-1.2.0.jar" />
+         <classpath location="lib/jaxb-api-2.3.1.jar" />
+         <classpath location="lib/jaxb-core-2.3.0.jar" />
+         <classpath location="lib/jaxb-impl-2.3.2.jar" />
+         <classpath location="lib/ST4-4.0.4.jar" />
+         <classpath location="disappgen.jar" />
+         <arg value="--model=dab.xml" />
+         <arg value="--deployment=full-java-one-process" />
+      </java>
+      <delete dir="full-java-one-process/udt-c" />
+      <delete dir="full-java-one-process/udt-cpp" />
+   </target>
 
-   <target name="util-java"><ant dir="util-java" output="compile.log" /></target>
-   <target name="dab"      ><ant dir="dab"       output="compile.log" /></target>
-   <target name="sc"       ><ant dir="sc"        output="compile.log" /></target>
-   <target name="udt-java" ><ant dir="udt-java"  output="compile.log" /></target>
+   <target name="util-c"        ><exec dir="util-c"         executable="make" output="util-c/compile.log"       failonerror="true" /></target>
+   <target name="dabtypes-c"    ><exec dir="dabtypes-c"     executable="make" output="dabtypes-c/compile.log"   failonerror="true" /></target>
+   <target name="udt-c"         ><exec dir="udt-c"          executable="make" output="udt-c/compile.log"        failonerror="true" /></target>
+   <target name="util-c-tests"  ><exec dir="util-c/tests"   executable="make"                                   failonerror="true" /></target>
+                                                            
+   <target name="util-cpp"      ><exec dir="util-cpp"       executable="make" output="util-cpp/compile.log"     failonerror="true" /></target>
+   <target name="dabtypes-cpp"  ><exec dir="dabtypes-cpp"   executable="make" output="dabtypes-cpp/compile.log" failonerror="true" /></target>
+   <target name="udt-cpp"       ><exec dir="udt-cpp"        executable="make" output="udt-cpp/compile.log"      failonerror="true" /></target>
+   <target name="util-cpp-tests"><exec dir="util-cpp/tests" executable="make"                                   failonerror="true" /></target>
 
-   <target name="util-c-tests"  ><exec dir="util-c/tests"   executable="make" failonerror="true" /></target>
-   <target name="util-cpp-tests"><exec dir="util-cpp/tests" executable="make" failonerror="true" /></target>
+   <target name="util-java"    ><ant dir="util-java"     output="compile.log" /></target>
+   <target name="dabtypes-java"><ant dir="dabtypes-java" output="compile.log" /></target>
+   <target name="dab"          ><ant dir="dab"           output="compile.log" /></target>
+   <target name="sc"           ><ant dir="sc"            output="compile.log" /></target>
+   <target name="udt-java"     ><ant dir="udt-java"      output="compile.log" /></target>
 
    <target name="show-errors">
       <concat>
@@ -59,7 +97,7 @@
       </concat>
    </target>
 
-   <target name="all">
+   <target name="all" description="Produit tout en parallèle">
       <antcall target="generate-all-sources" />
       <echo>
 
@@ -70,16 +108,19 @@
          <sequential>
             <echo message="    -- Compilation C    --" />
             <antcall target="util-c" />
+            <antcall target="dabtypes-c" />
             <antcall target="udt-c" />
          </sequential>
          <sequential>
             <echo message="    -- Compilation C++  --" />
             <antcall target="util-cpp" />
+            <antcall target="dabtypes-cpp" />
             <antcall target="udt-cpp" />
          </sequential>
          <sequential>
             <echo message="    -- Compilation Java --" />
             <antcall target="util-java" />
+            <antcall target="dabtypes-java" />
             <parallel>
                <antcall target="udt-java" />
                <antcall target="dab" />
@@ -166,21 +207,74 @@
    </target>
 
    <target name="clean">
-      <ant  dir="dab"                                 target="clean" />
-      <ant  dir="sc"                                  target="clean" />
-      <exec dir="udt-c"        executable="make" ><arg value="clean" /></exec>
-      <exec dir="udt-cpp"      executable="make" ><arg value="clean" /></exec>
-      <ant  dir="udt-java"                            target="clean" />
-      <exec dir="util-c/tests" executable="make" ><arg value="clean" /></exec>
-      <exec dir="util-c"       executable="make" ><arg value="clean" /></exec>
-      <exec dir="util-cpp"     executable="make" ><arg value="clean" /></exec>
-      <ant  dir="disappgen"                           target="clean" />
-      <ant  dir="util-java"                           target="clean" />
+      <ant  dir="dab"           target="clean" />
+      <ant  dir="sc"            target="clean" />
+      <ant  dir="udt-java"      target="clean" />
+      <ant  dir="dabtypes-java" target="clean" />
+      <ant  dir="util-java"     target="clean" />
+      <ant  dir="disappgen"     target="clean" />
+      
       <delete file="disappgen.jar" />
       <delete file="unite_de_traitement" />
       <delete file="unite_de_traitement-mingw32" />
       <delete file="UniteDeTraitement" />
       <delete file="UniteDeTraitement-mingw32" />
+      
+      <delete dir ="dab/bin" />
+
+      <delete dir ="dabtypes-c/BUILD-mingw32" />
+      <delete dir ="dabtypes-c/BUILD" />
+      <delete file="dabtypes-c/compile.log" />
+      <delete file="dabtypes-c/deps" />
+      <delete file="dabtypes-c/generated-files.mk" />
+      <delete dir ="dabtypes-c/inc-gen" />
+      <delete dir ="dabtypes-c/lib" />
+      <delete dir ="dabtypes-c/src-gen" />
+      
+      <delete dir ="dabtypes-cpp/BUILD-mingw32" />
+      <delete dir ="dabtypes-cpp/BUILD" />
+      <delete file="dabtypes-cpp/compile.log" />
+      <delete file="dabtypes-cpp/deps" />
+      <delete file="dabtypes-cpp/generated-files.mk" />
+      <delete dir ="dabtypes-cpp/inc-gen" />
+      <delete dir ="dabtypes-cpp/lib" />
+      <delete dir ="dabtypes-cpp/src-gen" />
+      
+      <delete file="dabtypes-java/compile.log" />
+      
+      <delete dir ="disappgen/bin" />
+      
+      <delete dir ="sc/bin" />
+
+      <delete dir ="udt-c/BUILD-mingw32" />
+      <delete dir ="udt-c/BUILD" />
+      <delete file="udt-c/compile.log" />
+      <delete file="udt-c/deps" />
+      <delete file="udt-c/generated-files.mk" />
+      <delete dir ="udt-c/src-gen" />
+      
+      <delete dir ="udt-cpp/BUILD-mingw32" />
+      <delete dir ="udt-cpp/BUILD" />
+      <delete file="udt-cpp/compile.log" />
+      <delete file="udt-cpp/deps" />
+      <delete file="udt-cpp/generated-files.mk" />
+      <delete dir ="udt-cpp/src-gen" />
+      
+      <delete dir ="udt-java/bin" />
+      
+      <delete dir ="util-c/BUILD-mingw32" />
+      <delete dir ="util-c/BUILD" />
+      <delete file="util-c/compile.log" />
+      <delete file="util-c/deps" />
+      <delete dir ="util-c/lib" />
+      
+      <delete dir ="util-cpp/BUILD-mingw32" />
+      <delete dir ="util-cpp/BUILD" />
+      <delete file="util-cpp/compile.log" />
+      <delete file="util-cpp/deps" />
+      <delete dir ="util-cpp/lib" />
+      
+      <delete dir ="util-java/bin" />
    </target>
 
 </project>

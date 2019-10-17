@@ -55,7 +55,7 @@ byteBufferPut( this, fields ) ::= <<
 < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( &This->out, <this><field.name; format="cname"> ));
 < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( &This->out, <this><field.name; format="cname"> ));
 < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <this><field.name; format="cname"> ));
-< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( <this><field.name; format="cname">, &This->out ));
+< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <typesPrefix>_<field.userType.name; format="cname">_put( <this><field.name; format="cname">, &This->out ));
 < endif>
 }>
 >>
@@ -170,16 +170,16 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
 
 
 
-requiredInterface( prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
+requiredInterface( typesPrefix, prefix, usedTypes, ifaceName, rawSize, iface ) ::= <<
 #pragma once
 //requiredInterface
 #include \<io/datagram_socket.h>
 
-<usedTypes:{type|#include \<<prefix>/<type; format="cname">.h>
+<usedTypes:{type|#include \<<typesPrefix>/<type; format="cname">.h>
 }>
 <iface.eventOrRequestOrData:{facet|<
 if( facet.arguments )>
-#include \<<prefix>/<ifaceName; format="cname">_<facet.name; format="cname">_response.h>
+#include \<<typesPrefix>/<ifaceName; format="cname">_<facet.name; format="cname">_response.h>
 < endif>
 }>
 typedef struct <prefix>_<ifaceName; format="cname">_s {
@@ -190,7 +190,7 @@ typedef struct <prefix>_<ifaceName; format="cname">_s {
 iface.eventOrRequestOrData:{facet|<
 if( facet.type )>
 
-   <prefix>_<type(facet)> <facet.name; format="cname">;<
+   <typesPrefix>_<type(facet)> <facet.name; format="cname">;<
 endif>}>
 } <prefix>_<ifaceName; format="cname">;
 
@@ -200,16 +200,16 @@ util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; forma
 util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">< if( facet.type )>_publish< endif>( <prefix>_<ifaceName; format="cname"
     > * This<
 if( facet.arguments )><
-    signature( prefix, facet.arguments.field )><
+    signature( typesPrefix, facet.arguments.field )><
 else><
-    signature( prefix, facet.field )><
+    signature( typesPrefix, facet.field )><
 endif> );
 }>
 >>
 
 
 
-requiredImplementation( prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( typesPrefix, prefix, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 //requiredImplementation
 #include \<<prefix>/<iface.name; format="cname">.h>
 #include \<stdio.h>
@@ -235,9 +235,9 @@ util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; for
 util_error <prefix>_<iface.name; format="cname">_<facet.name; format="cname">< if( facet.type )>_publish< endif>( <prefix>_<iface.name; format="cname"
    > * This<
 if( facet.arguments )><
-    signature( prefix, facet.arguments.field )><
+    signature( typesPrefix, facet.arguments.field )><
 else><
-    signature( prefix, facet.field )><
+    signature( typesPrefix, facet.field )><
 endif> ) {
    UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ));
@@ -301,7 +301,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
 
 
 
-dispatcherImplOneInterface( prefix, component, ifaceName ) ::= <<
+dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName ) ::= <<
 //dispatcherImplOneInterface
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
@@ -329,8 +329,8 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
       < elseif( field.isFloat   )>float <field.name; format="cname">;
       < elseif( field.isDouble  )>double <field.name; format="cname">;
       < elseif( field.isString  )>char <field.name; format="cname">[ <field.length> + 1 ];
-      < elseif( field.isEnum    )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
-      < elseif( field.isStruct  )><prefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+      < elseif( field.isEnum    )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+      < elseif( field.isStruct  )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
       < endif>
       <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ));
       < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
@@ -344,7 +344,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
       < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ));
       < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));
       < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
+      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <typesPrefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
       < endif>
 }>      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ));
       *has_dispatched = true;
@@ -361,7 +361,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
 
 >>
 
-dispatcherImplementation( prefix, component, ifaces, events, usedTypes, rawSize ) ::= <<
+dispatcherImplementation( typesPrefix, prefix, component, ifaces, events, usedTypes, rawSize ) ::= <<
 //dispatcherImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
@@ -377,7 +377,7 @@ typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 }>} <prefix>_<component.name; format="cname">_dispatcher_interface;
 
 <ifaces.keys:{ifaceName|
-<dispatcherImplOneInterface( prefix, component, ifaceName )>
+<dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName )>
 }>util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    <prefix>_<component.name; format="cname">_dispatcher * This,
    SOCKET socket,
@@ -457,7 +457,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
 
 
 
-componentInterface( prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests, actions ) ::= <<
+componentInterface( typesPrefix, prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests, actions ) ::= <<
 #pragma once
 //componentInterface
 <component.requires:{required|#include \<<prefix>/<required.interface.name; format="cname">.h>
@@ -471,7 +471,7 @@ componentInterface( prefix, component, responses, requires, instancesByName, ins
 >#include \<util/timeout.h>
 < endif>
 <usedTypes:{used|
-#include \<<prefix>/<used; format="cname">.h>
+#include \<<typesPrefix>/<used; format="cname">.h>
 }>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
 
@@ -494,9 +494,9 @@ util_error <prefix>_<component.name; format="cname">_terminate( <prefix>_<compon
 <eventsOrRequests:{facet|
 util_error <prefix>_<component.name; format="cname">_<facet.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
 if( facet.arguments )><
-    signature( prefix, facet.arguments.field )>, <ifaceName; format="cname">_<facet.name; format="cname">_response * response<
+    signature( typesPrefix, facet.arguments.field )>, <ifaceName; format="cname">_<facet.name; format="cname">_response * response<
 else><
-    signature( prefix, facet.field )><
+    signature( typesPrefix, facet.field )><
 endif> );
 }>< if( component.afterDispatchNeeded )>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
 < endif><actions:{action|
@@ -508,11 +508,11 @@ util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_e
 
 
 
-componentImplementation( prefix, component, requires, instancesByName, instances ) ::= <<
+componentImplementation( typesPrefix, prefix, component, requires, instancesByName, instances, processes ) ::= <<
 // componentImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
-< if( component.automaton )>#include \<dab/automaton.h>
-#include \<<prefix>/<component.automaton.eventEnum.name; format="cname">.h>
+< if( component.automaton )>#include \<<prefix>/automaton.h>
+#include \<<typesPrefix>/<component.automaton.eventEnum.name; format="cname">.h>
 < endif>
 #include \<stdio.h>
 #include \<stdlib.h>
@@ -535,18 +535,22 @@ util_error <prefix>_<component.name; format="cname">_init( <
 < endif>
 < first(instances):{instance|
    if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port>, &This->localAddress ));
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<
+         processes.(instance).address>", <
+         processes.(instance).port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
-         instancesByName.(req.toInstance.name).address>", <
-         instancesByName.(req.toInstance.name).port>, &<
+         processes.(instancesByName.(req.toInstance.name)).address>", <
+         processes.(instancesByName.(req.toInstance.name)).port>, &<
          req.interface.name; format="cname"> ));
 }>}>< rest(instances):{instance|
   \}
   else if( 0 ==  strcmp( name, "<instance.name>" )) {
-      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<instance.address>", <instance.port>, &This->localAddress ));
+      UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<
+         processes.(instance).address>", <
+         processes.(instance).port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
-         instancesByName.(req.toInstance.name).address>", <
-         instancesByName.(req.toInstance.name).port>, &<
+         processes.(instancesByName.(req.toInstance.name)).address>", <
+         processes.(instancesByName.(req.toInstance.name)).port>, &<
          req.interface.name; format="cname"> ));
 }>}>   }
    else {
@@ -597,41 +601,41 @@ void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.na
 
 
 
-automatonBody( prefix, component ) ::= <<
+automatonBody( typesPrefix, prefix, component ) ::= <<
 #include \<<prefix>/automaton.h>
-#include \<<prefix>/<component.automaton.stateEnum.name; format="cname">.h>
-#include \<<prefix>/<component.automaton.eventEnum.name; format="cname">.h>
+#include \<<typesPrefix>/<component.automaton.stateEnum.name; format="cname">.h>
+#include \<<typesPrefix>/<component.automaton.eventEnum.name; format="cname">.h>
 
 static util_transition transitions[] = {
    <component.automaton.transition:{transition|{ <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
-      prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
+      typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.from ; format="ID">, <
+      typesPrefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<transition.event; format="ID">, <
+      typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<transition.futur; format="ID"> \},
 }>};
 
 static util_shortcut shortcuts[] = {
    <component.automaton.shortcut:{shortcut|{ <
-      prefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
+      typesPrefix; format="ID">_<component.automaton.eventEnum.name; format="ID">_<shortcut.event; format="ID">, <
+      typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<shortcut.futur; format="ID"> \},
 }>};
 
 static util_automaton_state_action on_entry[] = {
    <component.automaton.onEntryOrOnExit:{eoe|< if( eoe.isOnEntry )>{ <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
+      typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
       eoe.value.state; format="ID">, (util_automaton_action)&<
       prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
 < endif>}>};
 
 static util_automaton_state_action on_exit[] = {
    <component.automaton.onEntryOrOnExit:{eoe|< if( eoe.isOnExit )>{ <
-      prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
+      typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<
       eoe.value.state; format="ID">, (util_automaton_action)&<
       prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
 < endif>}>};
 
 void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
    automaton->debug           = false;
-   automaton->current         = <prefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<component.automaton.initial; format="ID">;
+   automaton->current         = <typesPrefix; format="ID">_<component.automaton.stateEnum.name; format="ID">_<component.automaton.initial; format="ID">;
    automaton->arcs            = transitions;
    automaton->arcs_count      = sizeof( transitions )/sizeof( transitions[0] );
    automaton->shortcuts       = shortcuts;

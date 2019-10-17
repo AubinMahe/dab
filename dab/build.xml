@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="DAB-UI" default="jar">
 
-   <property file="../application-settings.properties" />
-   <property name="jfx13" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
-   <property name="jutil" value=".." />
-   <property name="jar"   value="../${ant.project.name}.jar" />
+   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" /> 
+   <property name="jutil"    location="../util.jar" />
+   <property name="dabtypes" location="../dabtypes.jar" />
+   <property name="jar"      location="../${ant.project.name}.jar" />
+
+   <path id="jfx">
+      <fileset dir="${jfx-path}" includes="*.jar" />
+   </path>
 
    <target name="clean">
       <delete dir="build" />
       <delete dir="bin" />
       <delete dir="src-gen" />
       <delete file="${jar}" />
+      <delete file="compile.log" />
    </target>
 
    <target name="generate-all-sources">
@@ -22,9 +27,12 @@
       <mkdir dir="build" />
       <javac
          destdir          ="build"
-         modulepath       ="${jfx13}:${jutil}"
          includeantruntime="false">
+         <classpath location="${jutil}" />
+         <classpath location="${dabtypes}" />
+         <classpath refid="jfx" />
          <src path="src" />
+         <src path="src-boot" />
          <src path="src-gen" />
       </javac>
    </target>
@@ -44,8 +52,10 @@
          <arg value="-geometry" /><arg value="90x30+-9+143" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="--module-path" /><arg value="${jfx13}:${jutil}:${jar}" />
-         <arg value="--module" /><arg value="dab/dab.ui.Main" />
+         <arg value="--module-path=${jfx-path}" />
+         <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
+         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="dab.ui.Main" />
          <arg value="--name=ihm1" />
       </exec>
    </target>
@@ -56,8 +66,10 @@
          <arg value="-geometry" /><arg value="90x30--9+143" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="--module-path" /><arg value="${jfx13}:${jutil}:${jar}" />
-         <arg value="--module" /><arg value="dab/dab.ui.Main" />
+         <arg value="--module-path=${jfx-path}" />
+         <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
+         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="dab.ui.Main" />
          <arg value="--name=ihm2" />
       </exec>
    </target>

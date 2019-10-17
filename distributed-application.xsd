@@ -45,6 +45,14 @@
       </xs:restriction>
    </xs:simpleType>
 
+   <xs:simpleType name="languageType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="Java" />
+         <xs:enumeration value="C" />
+         <xs:enumeration value="C++" />
+      </xs:restriction>
+   </xs:simpleType>
+   
    <xs:complexType name="fieldType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
@@ -109,14 +117,6 @@
    <xs:complexType name="requiredInterfaceUsageType">
       <xs:attribute type="xs:IDREF" name="interface" use="required" />
    </xs:complexType>
-   
-   <xs:simpleType name="languageType">
-      <xs:restriction base="xs:string">
-         <xs:enumeration value="Java" />
-         <xs:enumeration value="C" />
-         <xs:enumeration value="C++" />
-      </xs:restriction>
-   </xs:simpleType>
    
    <xs:complexType name="implementationType">
       <xs:attribute type="languageType" name="language"    use="required" />
@@ -218,23 +218,37 @@
       </xs:sequence>
       <xs:attribute type="xs:ID"          name="name"      use="required" />
       <xs:attribute type="xs:IDREF"       name="component" use="required" />
-      <xs:attribute type="xs:string"      name="address"   use="required" />
-      <xs:attribute type="portNumberType" name="port"      use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="processType">
+      <xs:sequence>
+         <xs:element type="instanceType" name="instance" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:string"      name="address"   use="optional" />
+      <xs:attribute type="portNumberType" name="port"      use="optional" />
    </xs:complexType>
 
    <xs:complexType name="deploymentType">
       <xs:sequence>
-         <xs:element type="instanceType" name="instance" minOccurs="2" maxOccurs="unbounded" />
+         <xs:element type="processType" name="process" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:anyURI" name="target-dir" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="typesType">
+      <xs:sequence>
+         <xs:element type="enumerationType"    name="enumeration"    minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="structType"         name="struct"         minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="implementationType" name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
    </xs:complexType>
 
    <xs:complexType name="disappType">
       <xs:sequence>
-         <xs:element type="enumerationType" name="enumeration" minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="structType"      name="struct"      minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="typesType"       name="types"       minOccurs="0" maxOccurs="1" />
          <xs:element type="interfaceType"   name="interface"   minOccurs="1" maxOccurs="unbounded" />
          <xs:element type="componentType"   name="component"   minOccurs="1" maxOccurs="unbounded" />
-         <xs:element type="deploymentType"  name="deployment"  minOccurs="1" maxOccurs="1" />
+         <xs:element type="deploymentType"  name="deployment"  minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" />
    </xs:complexType>

@@ -16,32 +16,33 @@ import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
+import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
 
 public class CGenerator extends BaseGenerator {
 
-   public CGenerator( Model model ) {
-      super( model, "c.stg", new CRenderer());
+   public CGenerator( Model model, String deployment ) {
+      super( model, deployment, "c.stg", new CRenderer());
    }
 
    private void generateEnumHeader( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
       final ST              tmpl = _group.getInstanceOf( "/enumHeader" );
-      tmpl.add( "prefix", _moduleName );
+      tmpl.add( "prefix", _moduleNameTypes );
       tmpl.add( "enum"  , enm      );
       setRendererMaxWidth( enm );
-      write( CRenderer.cname( name ) + ".h", tmpl );
+      writeType( CRenderer.cname( name ) + ".h", tmpl );
    }
 
    private void generateEnumBody( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
       final ST              tmpl = _group.getInstanceOf( "/enumBody" );
-      tmpl.add( "prefix", _moduleName );
+      tmpl.add( "prefix", _moduleNameTypes );
       tmpl.add( "enum"  , enm      );
       setRendererMaxWidth( enm );
-      write( CRenderer.cname( name ) + ".c", tmpl );
+      writeType( CRenderer.cname( name ) + ".c", tmpl );
    }
 
    @Override
@@ -53,19 +54,19 @@ public class CGenerator extends BaseGenerator {
    private void generateStructHeader( String name ) throws IOException {
       final StructType struct = _model.getStruct( name );
       final ST         tmpl   = _group.getInstanceOf( "/structHeader" );
-      tmpl.add( "prefix", _moduleName );
+      tmpl.add( "prefix", _moduleNameTypes );
       tmpl.add( "struct", struct   );
       setRendererFieldsMaxWidth( struct );
-      write( CRenderer.cname( name ) + ".h", tmpl );
+      writeType( CRenderer.cname( name ) + ".h", tmpl );
    }
 
    private void generateStructBody( String name ) throws IOException {
       final StructType struct = _model.getStruct( name );
       final ST         tmpl   = _group.getInstanceOf( "/structBody" );
-      tmpl.add( "prefix", _moduleName );
+      tmpl.add( "prefix", _moduleNameTypes );
       tmpl.add( "struct", struct   );
       setRendererFieldsMaxWidth( struct );
-      write( CRenderer.cname( name ) + ".c", tmpl );
+      writeType( CRenderer.cname( name ) + ".c", tmpl );
    }
 
    @Override
@@ -76,16 +77,17 @@ public class CGenerator extends BaseGenerator {
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
-         final InterfaceType     iface      = (InterfaceType)required.getInterface();
-         final String            ifaceName  = iface.getName();
-         final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferInCapacity( component );
-         final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
-         tmpl.add( "prefix"   , _moduleName   );
-         tmpl.add( "usedTypes", usedTypes  );
-         tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "rawSize"  , rawSize    );
-         tmpl.add( "iface"    , iface      );
+         final InterfaceType     iface     = (InterfaceType)required.getInterface();
+         final String            ifaceName = iface.getName();
+         final SortedSet<String> usedTypes = _model.getUsedTypesBy( ifaceName );
+         final int               rawSize   = _model.getBufferInCapacity( component );
+         final ST                tmpl      = _group.getInstanceOf( "/requiredInterface" );
+         tmpl.add( "typesPrefix", _moduleNameTypes );
+         tmpl.add( "prefix"     , _moduleName );
+         tmpl.add( "usedTypes"  , usedTypes  );
+         tmpl.add( "ifaceName"  , ifaceName );
+         tmpl.add( "rawSize"    , rawSize );
+         tmpl.add( "iface"      , iface );
          write( CRenderer.cname( ifaceName ) + ".h", tmpl );
       }
    }
@@ -98,12 +100,13 @@ public class CGenerator extends BaseGenerator {
          final int               rawSize    = _model.getBufferInCapacity( component );
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
-         tmpl.add( "prefix"   , _moduleName );
-         tmpl.add( "usedTypes", usedTypes );
-         tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "rawSize"  , rawSize );
-         tmpl.add( "iface"    , iface );
-         tmpl.add( "ifaceID"  , ifaceID );
+         tmpl.add( "typesPrefix", _moduleNameTypes );
+         tmpl.add( "prefix"     , _moduleName );
+         tmpl.add( "usedTypes"  , usedTypes );
+         tmpl.add( "ifaceName"  , ifaceName );
+         tmpl.add( "rawSize"    , rawSize );
+         tmpl.add( "iface"      , iface );
+         tmpl.add( "ifaceID"    , ifaceID );
          setRendererFieldsMaxWidth( iface );
          write( CRenderer.cname( ifaceName ) + ".c", tmpl );
       }
@@ -125,12 +128,13 @@ public class CGenerator extends BaseGenerator {
       final SortedSet<String>               usedTypes    = _model.getUsedTypesBy( ifaces );
       final int                             rawSize      = _model.getBufferInCapacity( component );
       final ST                              tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "prefix"   , _moduleName );
-      tmpl.add( "component", component );
-      tmpl.add( "ifaces"   , interfaceIDs );
-      tmpl.add( "events"   , events );
-      tmpl.add( "usedTypes", usedTypes );
-      tmpl.add( "rawSize"  , rawSize );
+      tmpl.add( "typesPrefix", _moduleNameTypes );
+      tmpl.add( "prefix"     , _moduleName );
+      tmpl.add( "component"  , component );
+      tmpl.add( "ifaces"     , interfaceIDs );
+      tmpl.add( "events"     , events );
+      tmpl.add( "usedTypes"  , usedTypes );
+      tmpl.add( "rawSize"    , rawSize );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( CRenderer.cname( component.getName()) + "_dispatcher.c", tmpl );
    }
@@ -151,11 +155,12 @@ public class CGenerator extends BaseGenerator {
          }
       }
       final String                          compName        = component.getName();
-      final List<InstanceType>              instances       = _model.getInstancesOf( component );
-      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
-      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final List<InstanceType>              instances       = _model.getInstancesOf( _deployment, component );
+      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( _deployment, component );
+      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName( _deployment );
       final Set<String>                     actions         = _model.getAutomatonActions( component );
       final ST tmpl = _group.getInstanceOf( "/componentInterface" );
+      tmpl.add( "typesPrefix"     , _moduleNameTypes );
       tmpl.add( "prefix"          , _moduleName );
       tmpl.add( "component"       , component );
       tmpl.add( "requires"        , requires );
@@ -168,16 +173,19 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final String                          compName        = component.getName();
-      final List<InstanceType>              instances       = _model.getInstancesOf( component );
-      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
-      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
+      final String                          compName          = component.getName();
+      final List<InstanceType>              instances         = _model.getInstancesOf( _deployment, component );
+      final Map<String, List<RequiresType>> requires          = _model.getRequiredInstancesOf( _deployment, component );
+      final Map<String, InstanceType>       instancesByName   = _model.getInstancesByName( _deployment );
+      final Map<InstanceType, ProcessType>  processByInstance = _model.getProcessByInstance();
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
+      tmpl.add( "typesPrefix"    , _moduleNameTypes );
       tmpl.add( "prefix"         , _moduleName );
       tmpl.add( "component"      , component );
       tmpl.add( "requires"       , requires );
       tmpl.add( "instancesByName", instancesByName );
       tmpl.add( "instances"      , instances );
+      tmpl.add( "processes"      , processByInstance );
       write( CRenderer.cname( compName ) + ".c", tmpl );
    }
 
@@ -188,15 +196,23 @@ public class CGenerator extends BaseGenerator {
          header.add( "component", component );
          write( "automaton.h", header );
          final ST body = _group.getInstanceOf( "/automatonBody" );
-         body.add( "prefix"   , _moduleName );
-         body.add( "component", component );
+         body.add( "typesPrefix", _moduleNameTypes );
+         body.add( "prefix"     , _moduleName );
+         body.add( "component"  , component );
          write( "automaton.c", body );
       }
    }
 
    void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
-      _genDir     = implementation.getSrcDir();
+      _genDir     = _deployment + "/" + implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
+      for( final ImplementationType impl : _model.getApplication().getTypes().getImplementation()) {
+         if( impl.getLanguage().equals( "C" )) {
+            _genDirTypes     = _deployment + '/' + impl.getSrcDir();
+            _moduleNameTypes = impl.getModuleName();
+            break;
+         }
+      }
       generateTypesUsedBy             ( component );
       generateTypesUsedBy             ( component );
       generateTypesUsedBy             ( component );
@@ -207,6 +223,7 @@ public class CGenerator extends BaseGenerator {
       generateComponentInterface      ( component );
       generateComponentImplementation ( component );
       generateAutomaton               ( component );
-      generateMakefileSourcesList( ".h", ".c" );
+      generateMakefileSourcesList( _generatedFiles, _genDir                  , _moduleName     , ".h", ".c" );
+      generateMakefileSourcesList( _generatedTypes, _genDirTypes + "/src-gen", _moduleNameTypes, ".h", ".c" );
    }
 }

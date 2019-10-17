@@ -2,6 +2,8 @@ package sc;
 
 import java.io.IOException;
 
+import dabtypes.SiteCentralGetInformationsResponse;
+
 public final class Banque extends BanqueComponent {
 
    private final IRepository _repository;

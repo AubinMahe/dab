@@ -63,26 +63,27 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
 1. Compiler dans l'ordre :
-    * util-c    : `(cd util-c && make)`, produit également `util-c-win32`
-    * udt-c     : `(cd udt-c && make)`, produit également `udt-c-win32`
-    * util-cpp  : `(cd util-cpp && make)`, produit également `util-cpp-win32`
-    * udt-cpp   : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
-    * util-java : `(cd util-java && ant)`
-    * sc        : `(cd sc && ant)`
-    * dab       : `(cd dab && ant)`
+    1. util-c    : `(cd util-c && make)`, produit également `util-c-win32`
+    1. udt-c     : `(cd udt-c && make)`, produit également `udt-c-win32`
+    1. util-cpp  : `(cd util-cpp && make)`, produit également `util-cpp-win32`
+    1. udt-cpp   : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
+    1. util-java : `(cd util-java && ant)`
+    1. sc        : `(cd sc && ant)`
+    1. dab       : `(cd dab && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée.
 
 ## Reste à faire
-<ol>
-<li>L'implémentation actuelle utilise des messages UDP pour connecter les composants, ce qui couvre les trois cas :<ul>
-<li>composants distribués sur plusieurs machines</li>
-<li>composants distribués sur plusieurs processus (éventuellement plusieurs langages)</li>
-<li>composants regroupés au sein d'un même processus (mono-langage)<br />
-Dans ce dernier cas, <b>des appels directs entre composants seraient plus performants</b>.</li> 
-</ul>
-<li>Automate : associer une action au franchissement d'une transition.</li>
-</ol>
+
+1. L'implémentation actuelle utilise des messages UDP pour connecter les composants, ce qui couvre les trois cas :
+    * composants distribués sur plusieurs machines
+    * composants distribués sur plusieurs processus (éventuellement plusieurs langages)
+    * composants regroupés au sein d'un même processus (mono-langage)<br />
+      Dans ce dernier cas, **des appels directs entre composants seraient plus performants**. 
+
+1. Faire les IHM en C++ avec [Qt](https://www.qt.io/) et en C avec [ncurses](https://fr.wikipedia.org/wiki/Ncurses) pour valider totalement la génération de code.
+1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
+1. Automate : associer une action au franchissement d'une transition.</li>
 
 ## Boite à idées, à débattre...
 

@@ -38,9 +38,9 @@ enumtype( field ) ::= <<
 pair( field ) ::= <<
 <     if( field.isBoolean )>bool<
   elseif( field.isString  )>const char *<
-  elseif( field.isEnum    )><field.userType.name><
   elseif( field.isDouble  )>const double &<
-  elseif( field.isStruct  )>const <field.userType.name> &<
+  elseif( field.isEnum    )><typesNamespace>::<field.userType.name><
+  elseif( field.isStruct  )>const <typesNamespace>::<field.userType.name> &<
   else                     ><type(field)><
   endif> <field.name>
 >>
@@ -199,15 +199,15 @@ namespace <namespace> {
 
 
 
-requiredInterface( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredInterface( typesNamespace, namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #pragma once
 //requiredInterface
 #include \<io/DatagramSocket.hpp>
 
-<usedTypes:{type|#include \<<namespace>/<type>.hpp>
+<usedTypes:{type|#include \<<typesNamespace>/<type>.hpp>
 }>
 <iface.eventOrRequestOrData:{facet|<if( facet.arguments )>
-#include \<<namespace>/<ifaceName><facet.name; format="cap">Response.hpp>
+#include \<<typesNamespace>/<ifaceName><facet.name; format="cap">Response.hpp>
 <endif>
 }>
 namespace <namespace> {
@@ -221,7 +221,7 @@ namespace <namespace> {
 
 <iface.eventOrRequestOrData:{facet|
 < if( facet.type )>
-      <type(facet)> & <facet.name>( void ) {
+      <typesNamespace>::<type(facet)> & <facet.name>( void ) {
          return _<facet.name>;
       \}
 
@@ -253,7 +253,7 @@ endif> );
       sockaddr_in          _target;
       io::ByteBuffer       _out;
 <iface.eventOrRequestOrData:{facet|< if( facet.type )>
-      <facet.userType.name> _<facet.name>;< endif>}>
+      <typesNamespace>::<facet.userType.name> _<facet.name>;< endif>}>
 
    private:
       <ifaceName>( const <ifaceName> & ) = delete;
@@ -302,13 +302,13 @@ endif>
 
 
 
-offeredInterface( namespace, name, usedTypes, eventsOrRequests ) ::= <<
+offeredInterface( typesNamespace, namespace, name, usedTypes, eventsOrRequests ) ::= <<
 #pragma once
 //offeredInterface
 #include \<types.hpp>
 
 <usedTypes:{used|
-#include \<<namespace>/<used>.hpp>
+#include \<<typesNamespace>/<used>.hpp>
 }>
 namespace <namespace> {
 
@@ -400,7 +400,7 @@ namespace <namespace> {
 
 
 
-dispatcherImplementation( namespace, component, ifaces, events, usedTypes ) ::= <<
+dispatcherImplementation( typesNamespace, namespace, component, ifaces, events, usedTypes ) ::= <<
 //dispatcherImplementation
 #include \<<namespace>/<component.name>Dispatcher.hpp>
 #include \<<namespace>/<component.name>Component.hpp>
@@ -432,8 +432,8 @@ bool <component.name>Dispatcher::dispatch( <ifaceName>Event event ) {
 < elseif( field.isDouble  )>double <field.name> = _in.getDouble();
 < elseif( field.isString  )>char <field.name>[<field.length> + 1];
 _in.getString( <field.name>, sizeof( <field.name> ));
-< elseif( field.isEnum    )><field.userType.name> <field.name> = _in.getByte();
-< elseif( field.isStruct  )><field.userType.name> <field.name>;
+< elseif( field.isEnum    )><typesNamespace>::<field.userType.name> <field.name> = _in.getByte();
+< elseif( field.isStruct  )><typesNamespace>::<field.userType.name> <field.name>;
 <field.name>.get( _in );
 < endif>
 }>      _listener.<event.name>( <args( event.field )> );
@@ -562,7 +562,7 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
 
 
-componentImplementation( namespace, component, responses, requires, instancesByName, instances ) ::= <<
+componentImplementation( namespace, component, responses, requires, instancesByName, instances, processes ) ::= <<
 //componentImplementation
 #include \<<namespace>/<component.name>Component.hpp>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
@@ -580,14 +580,14 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 < first(instances):{instance|
    if( 0 == strcmp( name, "<instance.name>" )) {
       io::DatagramSocket::init( "<
-         requires.(instance.name).(rt).toInstance.address>", <
-         requires.(instance.name).(rt).toInstance.port>, address );
+         processes.(requires.(instance.name).(rt).toInstance).address>", <
+         processes.(requires.(instance.name).(rt).toInstance).port>, address );
 }>< rest(instances):{instance|
    \}
    else if( 0 == strcmp( name, "<instance.name>" )) {
       io::DatagramSocket::init( "<
-         requires.(instance.name).(rt).toInstance.address>", <
-         requires.(instance.name).(rt).toInstance.port>, address );
+         processes.(requires.(instance.name).(rt).toInstance).address>", <
+         processes.(requires.(instance.name).(rt).toInstance).port>, address );
    \}
 }>   else {
       throw util::NotApplicable( UTIL_CTXT, "'%s' isn't a valid name as defined in XML application file!", name );
@@ -606,11 +606,15 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 {
 < first(instances):{instance|
    if( 0 == strcmp( name, "<instance.name>" )) {
-      _socket.bind( "<instance.address>", <instance.port> );
+      _socket.bind( "<
+         processes.(instance).address>", <
+         processes.(instance).port> );
 }>< rest(instances):{instance|
    \}
    else if( 0 == strcmp( name, "<instance.name>" )) {
-      _socket.bind( "<instance.address>", <instance.port> );
+      _socket.bind( "<
+         processes.(instance).address>", <
+         processes.(instance).port> );
 }>   }
 }
 
@@ -635,21 +639,21 @@ void <component.name>Component::run() {
 
 
 
-automatonHeader( namespace, component ) ::= <<
+automatonHeader( typesNamespace, namespace, component ) ::= <<
 #pragma once
 
 #include \<util/Automaton.hpp>
 
-#include \<<namespace>/<component.automaton.stateEnum.name>.hpp>
-#include \<<namespace>/<component.automaton.eventEnum.name>.hpp>
+#include \<<typesNamespace>/<component.automaton.stateEnum.name>.hpp>
+#include \<<typesNamespace>/<component.automaton.eventEnum.name>.hpp>
 
 namespace <namespace> {
 
    class <component.name>Component;
    class Automaton : public util::Automaton\<<
       component.name>Component, <
-      component.automaton.stateEnum.name>, <
-      component.automaton.eventEnum.name>\> {
+      typesNamespace>::<component.automaton.stateEnum.name>, <
+      typesNamespace>::<component.automaton.eventEnum.name>\> {
    public:
 
       Automaton( <component.name>Component & component );
@@ -663,7 +667,7 @@ namespace <namespace> {
 
 
 
-automatonBody( namespace, component ) ::= <<
+automatonBody( typesNamespace, namespace, component ) ::= <<
 #include "Automaton.hpp"
 #include \<<namespace>/<component.name>Component.hpp>
 
@@ -672,33 +676,33 @@ using namespace <namespace>;
 Automaton :: Automaton( <component.name>Component & component ) :
    util::Automaton\<<
       component.name>Component, <
-      component.automaton.stateEnum.name>, <
-      component.automaton.eventEnum.name>\>( component, <
-         component.automaton.stateEnum.name>::<component.automaton.initial> )
+      typesNamespace>::<component.automaton.stateEnum.name>, <
+      typesNamespace>::<component.automaton.eventEnum.name>\>( component, <
+         typesNamespace>::<component.automaton.stateEnum.name>::<component.automaton.initial> )
 {
    static Transition transitions[] = {<component.automaton.transition:{tr|
 
-      { <component.automaton.stateEnum.name>::<tr.from>, <
-         component.automaton.eventEnum.name>::<tr.event>, <
-         component.automaton.stateEnum.name>::<tr.futur> \},
+      { <typesNamespace>::<component.automaton.stateEnum.name>::<tr.from>, <
+         typesNamespace>::<component.automaton.eventEnum.name>::<tr.event>, <
+         typesNamespace>::<component.automaton.stateEnum.name>::<tr.futur> \},
 }>   };
    setTransitions( transitions, sizeof(transitions)/sizeof(transitions[0]));
 
    static Shortcut shortcuts[] = {<component.automaton.shortcut:{shortcut|
 
-      { <component.automaton.eventEnum.name>::<shortcut.event>, <
-         component.automaton.stateEnum.name>::<shortcut.futur> \},
+      { <typesNamespace>::<component.automaton.eventEnum.name>::<shortcut.event>, <
+         typesNamespace>::<component.automaton.stateEnum.name>::<shortcut.futur> \},
 }>   };
    setShortcuts( shortcuts, sizeof(shortcuts)/sizeof(shortcuts[0]));
 
    static Action onEntries[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnEntry )>
-      { <component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
+      { <typesNamespace>::<component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
    };
    setOnEntries( onEntries, sizeof(onEntries)/sizeof(onEntries[0]));
 
    static Action onExits[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnExit )>
-      { <component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
+      { <typesNamespace>::<component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
    };
    setOnExits( onExits, sizeof(onExits)/sizeof(onExits[0]));

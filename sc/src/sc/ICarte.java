@@ -1,5 +1,7 @@
 package sc;
 
+import dabtypes.Carte;
+
 public interface ICarte {
 
    String getId();

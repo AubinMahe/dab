@@ -1,10 +1,10 @@
 #include "Date.hpp"
 
-#include <dab/Carte.hpp>
+#include <dabtypes/Carte.hpp>
 
 #include <string.h>
 
-namespace udt {
+namespace dab {
 
    class Carte {
    public:
@@ -27,7 +27,7 @@ namespace udt {
          _isValid  = ( strlen( _id ) > 0 )&&( strlen( _code ) > 0 )&&( _nbEssais < 4 )&&( _peremption.isValid());
       }
 
-      void set( const dab::Carte & carte ) {
+      void set( const dabtypes::Carte & carte ) {
          set( carte.id, carte.code, carte.month, carte.year, carte.nbEssais );
       }
 

@@ -1,5 +1,7 @@
 package sc;
 
+import dabtypes.Compte;
+
 public interface ICompte {
 
    String  getId();

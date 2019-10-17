@@ -16,6 +16,7 @@ import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
+import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
@@ -23,28 +24,28 @@ import disapp.generator.model.StructType;
 
 public class JavaGenerator extends BaseGenerator {
 
-   public JavaGenerator( Model model ) {
-      super( model, "java.stg", new BaseRenderer());
+   public JavaGenerator( Model model, String deployment ) {
+      super( model, deployment, "java.stg", new BaseRenderer());
    }
 
    @Override
    protected void generateEnum( String name ) throws IOException {
       final EnumerationType enm  = _model.getEnum( name );
       final ST              tmpl = _group.getInstanceOf( "/enum" );
-      tmpl.add( "package", _moduleName );
+      tmpl.add( "package", _moduleNameTypes );
       tmpl.add( "enum"   , enm );
       setRendererMaxWidth( enm );
-      write( name + ".java", tmpl );
+      writeType( name + ".java", tmpl );
    }
 
    @Override
    protected void generateStruct( String name ) throws IOException {
       final StructType struct = _model.getStruct( name );
       final ST         tmpl   = _group.getInstanceOf( "/struct" );
-      tmpl.add( "package", _moduleName );
+      tmpl.add( "package", _moduleNameTypes );
       tmpl.add( "struct" , struct );
       setRendererFieldsMaxWidth( struct );
-      write( name + ".java", tmpl );
+      writeType( name + ".java", tmpl );
    }
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
@@ -55,11 +56,12 @@ public class JavaGenerator extends BaseGenerator {
          final int               rawSize    = _model.getBufferOutCapacity( required );
          _model.getInterface( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
-         tmpl.add( "package"  , _moduleName   );
-         tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "usedTypes", usedTypes );
-         tmpl.add( "rawSize"  , rawSize );
-         tmpl.add( "iface"    , iface );
+         tmpl.add( "typesPackage", _moduleNameTypes );
+         tmpl.add( "package"     , _moduleName );
+         tmpl.add( "ifaceName"   , ifaceName );
+         tmpl.add( "usedTypes"   , usedTypes );
+         tmpl.add( "rawSize"     , rawSize );
+         tmpl.add( "iface"       , iface );
          write( 'I' + ifaceName + ".java", tmpl );
       }
    }
@@ -72,12 +74,13 @@ public class JavaGenerator extends BaseGenerator {
          final int               rawSize    = _model.getBufferOutCapacity( required );
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
-         tmpl.add( "package"  , _moduleName  );
-         tmpl.add( "usedTypes", usedTypes );
-         tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "rawSize"  , rawSize   );
-         tmpl.add( "iface"    , iface     );
-         tmpl.add( "ifaceID"  , ifaceID   );
+         tmpl.add( "typesPackage", _moduleNameTypes );
+         tmpl.add( "package"     , _moduleName );
+         tmpl.add( "usedTypes"   , usedTypes );
+         tmpl.add( "ifaceName"   , ifaceName );
+         tmpl.add( "rawSize"     , rawSize   );
+         tmpl.add( "iface"       , iface     );
+         tmpl.add( "ifaceID"     , ifaceID   );
          setRendererFieldsMaxWidth( iface );
          write( ifaceName + ".java", tmpl );
       }
@@ -90,10 +93,11 @@ public class JavaGenerator extends BaseGenerator {
          final SortedSet<String> usedTypes = _model.getUsedTypesBy( ifaceName );
          final List<Object>      facets    = _model.getFacets().get( ifaceName );
          final ST                tmpl      = _group.getInstanceOf( "/offeredInterface" );
-         tmpl.add( "package"  , _moduleName );
-         tmpl.add( "name"     , ifaceName );
-         tmpl.add( "usedTypes", usedTypes );
-         tmpl.add( "facets"   , facets );
+         tmpl.add( "typesPackage", _moduleNameTypes );
+         tmpl.add( "package"     , _moduleName );
+         tmpl.add( "name"        , ifaceName );
+         tmpl.add( "usedTypes"   , usedTypes );
+         tmpl.add( "facets"      , facets );
          write( 'I' + ifaceName + ".java", tmpl );
       }
    }
@@ -108,26 +112,29 @@ public class JavaGenerator extends BaseGenerator {
       final int                             rawSize     = _model.getBufferInCapacity( component );
       final int                             respRawSize = _model.getBufferResponseCapacity( events );
       final ST                              tmpl        = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "package"    , _moduleName );
-      tmpl.add( "component"  , component );
-      tmpl.add( "ifaces"     , ifaces );
-      tmpl.add( "events"     , events );
-      tmpl.add( "eventIDs"   , eventIDs );
-      tmpl.add( "usedTypes"  , usedTypes );
-      tmpl.add( "rawSize"    , rawSize );
-      tmpl.add( "respRawSize", respRawSize );
-      tmpl.add( "requests"   , requests );
+      tmpl.add( "typesPackage", _moduleNameTypes );
+      tmpl.add( "package"     , _moduleName );
+      tmpl.add( "component"   , component );
+      tmpl.add( "ifaces"      , ifaces );
+      tmpl.add( "events"      , events );
+      tmpl.add( "eventIDs"    , eventIDs );
+      tmpl.add( "usedTypes"   , usedTypes );
+      tmpl.add( "rawSize"     , rawSize );
+      tmpl.add( "respRawSize" , respRawSize );
+      tmpl.add( "requests"    , requests );
       setRendererInterfaceMaxWidth( "width", offers );
       write( component.getName() + "Dispatcher.java", tmpl );
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final List<InstanceType>              instances       = _model.getInstancesOf( component );
-      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( component );
-      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName();
-      final Map<String, List<FieldType>>    data            = Model.getOfferedDataOf( component );
-      final Set<String>                     actions         = _model.getAutomatonActions( component );
-      final ST                              tmpl            = _group.getInstanceOf( "/componentImplementation" );
+      final List<InstanceType>              instances         = _model.getInstancesOf( _deployment, component );
+      final Map<String, List<RequiresType>> requires          = _model.getRequiredInstancesOf( _deployment, component );
+      final Map<String, InstanceType>       instancesByName   = _model.getInstancesByName( _deployment );
+      final Map<String, List<FieldType>>    data              = Model.getOfferedDataOf( component );
+      final Set<String>                     actions           = _model.getAutomatonActions( component );
+      final Map<InstanceType, ProcessType>  processByInstance = _model.getProcessByInstance();
+      final ST                              tmpl              = _group.getInstanceOf( "/componentImplementation" );
+      tmpl.add( "typesPackage"   , _moduleNameTypes );
       tmpl.add( "package"        , _moduleName );
       tmpl.add( "component"      , component );
       tmpl.add( "requires"       , requires );
@@ -135,6 +142,7 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "instances"      , instances );
       tmpl.add( "actions"        , actions );
       tmpl.add( "data"           , data );
+      tmpl.add( "processes"      , processByInstance );
       write( component.getName() + "Component.java", tmpl );
    }
 
@@ -142,15 +150,23 @@ public class JavaGenerator extends BaseGenerator {
       final AutomatonType automaton = component.getAutomaton();
       if( automaton != null ) {
          final ST tmpl = _group.getInstanceOf( "/automaton" );
-         tmpl.add( "package"  , _moduleName );
-         tmpl.add( "component", component );
+         tmpl.add( "typesPackage", _moduleNameTypes );
+         tmpl.add( "package"     , _moduleName );
+         tmpl.add( "component"   , component );
          write( "Automaton.java", tmpl );
       }
    }
 
    void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
-      _genDir     = implementation.getSrcDir();
+      _genDir     = _deployment + '/' + implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
+      for( final ImplementationType impl : _model.getApplication().getTypes().getImplementation()) {
+         if( impl.getLanguage().equals( "Java" )) {
+            _genDirTypes     = _deployment + '/' + impl.getSrcDir();
+            _moduleNameTypes = impl.getModuleName();
+            break;
+         }
+      }
       generateTypesUsedBy             ( component );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );

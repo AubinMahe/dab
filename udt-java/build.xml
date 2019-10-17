@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="UDT" default="jar">
 
-   <property file="../application-settings.properties" />
-   <property name="jutil" value=".." />
-   <property name="jar"   value="../${ant.project.name}.jar" />
+   <property name="jutil"    location="../util.jar" />
+   <property name="dabtypes" location="../dabtypes.jar" />
+   <property name="jar"      location="../${ant.project.name}.jar" />
 
    <target name="clean">
       <delete dir="build" />
+      <delete dir="build-tests" />
       <delete dir="bin" />
       <delete dir="src-gen" />
       <delete file="${jar}" />
+      <delete file="compile.log" />
    </target>
 
    <target name="generate-all-sources">
       <ant dir=".." target="generate-all-sources" />
    </target>
+   
+   <target name="dabtypes">
+      <ant dir="../dabtypes-java" />
+   </target>
 
-   <target name="javac" depends="generate-all-sources">
-      <ant dir="../util-java" target="jar" inheritall="false" />
+   <target name="javac" depends="generate-all-sources,dabtypes">
+      <ant dir="../util-java"     target="jar" inheritall="false" />
+      <ant dir="../dabtypes-java" target="jar" inheritall="false" />
       <mkdir dir="build" />
       <javac
          destdir          ="build"
-         modulepath       ="${jutil}"
-         includeantruntime="false">
+         includeantruntime="false"
+         classpath="${jutil}:${dabtypes}">
          <src path="src" />
+         <src path="src-boot" />
          <src path="src-gen" />
       </javac>
    </target>
@@ -38,8 +46,8 @@
          <arg value="-geometry" /><arg value="90x30+810-16" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="--module-path" /><arg value="${jutil}:${jar}" />
-         <arg value="--module" /><arg value="udt/udt.Main" />
+         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="dab.Main" />
          <arg value="--name=udt1" />
       </exec> 
    </target>  
@@ -50,10 +58,54 @@
          <arg value="-geometry" /><arg value="90x30-0+0" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="--module-path" /><arg value="${jutil}:${jar}" />
-         <arg value="--module" /><arg value="udt/udt.Main" />
+         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="dab.Main" />
          <arg value="--name=udt2" />
       </exec>
    </target>
 
+   <path id="junit.platform.libs.classpath">
+       <fileset dir="../lib/junit-platform/" includes="*.jar" />
+   </path>
+
+   <path id="junit.engine.jupiter.classpath">
+       <fileset dir="../lib/jupiter/" includes="*.jar" />
+   </path>
+
+   <target name="compile-test" description="" depends="javac">
+      <mkdir dir="build-tests" />
+      <javac
+         srcdir           ="test"
+         destdir          ="build-tests"
+         classpath        ="${jutil}"
+         includeantruntime="false">
+         <classpath refid="junit.engine.jupiter.classpath" />
+         <classpath path="build" />
+       </javac>
+   </target>
+   
+   <target name="tests" description="">
+      <taskdef
+         name     ="junitlauncher"
+         classname="org.apache.tools.ant.taskdefs.optional.junitlauncher.JUnitLauncherTask">
+         <classpath>
+            <fileset dir="../lib/junit-platform/" includes="*.jar" />
+         </classpath>
+      </taskdef>
+      <mkdir dir="tests-results" />
+      <junitlauncher>
+         <classpath refid="junit.platform.libs.classpath" />
+         <classpath refid="junit.engine.jupiter.classpath" />
+         <classpath>
+            <pathelement location="build"/>
+            <pathelement location="build-tests"/>
+         </classpath>
+         <testclasses outputdir="tests-results">
+            <fileset dir="build"/>
+            <fileset dir="build-tests"/>
+            <listener type="legacy-brief" sendSysOut="true" />
+            <listener type="legacy-xml"   sendSysOut="true" sendSysErr="true" />
+         </testclasses>
+      </junitlauncher>
+   </target>
 </project>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dabtypes" default="jar">
+
+   <property name="jutil"    location="../util.jar" />
+   <property name="jar"      value="../${ant.project.name}.jar" />
+
+   <target name="clean">
+      <delete dir="build" />
+      <delete dir="bin" />
+      <delete dir="src-gen" />
+      <delete file="${jar}" />
+   </target>
+
+   <target name="javac">
+      <mkdir dir="build" />
+      <javac
+         destdir          ="build"
+         srcdir           ="src-gen"
+         classpath        ="${jutil}"
+         includeantruntime="false" />
+   </target>
+
+   <target name="jar" depends="javac">
+      <jar destfile="${jar}" basedir="build" />
+   </target>
+
+</project>

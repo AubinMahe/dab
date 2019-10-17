@@ -5,8 +5,8 @@ import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import dab.Etat;
 import dab.IIHM;
+import dabtypes.Etat;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

@@ -2,8 +2,8 @@ package dab.ui;
 
 import java.io.IOException;
 
-import dab.EtatDuDab;
 import dab.IUniteDeTraitement;
+import dabtypes.EtatDuDab;
 import javafx.application.Platform;
 
 public class Distributeur extends dab.DistributeurComponent {

@@ -1,10 +1,10 @@
-package udt;
+package dab;
 
 import java.io.IOException;
 
-import dab.ControleurComponent;
-import dab.Etat;
-import dab.Evenement;
+import dabtypes.Etat;
+import dabtypes.Evenement;
+import udt.ControleurComponent;
 
 public final class Controleur extends ControleurComponent {
 
@@ -65,7 +65,7 @@ public final class Controleur extends ControleurComponent {
    }
 
    @Override
-   public void getInformations( dab.Carte carte, dab.Compte compte ) throws IOException {
+   public void getInformations( dabtypes.Carte carte, dabtypes.Compte compte ) throws IOException {
       _carte .set( carte );
       _compte.set( compte );
       if( _carte.isValid() && _compte.isValid()) {
