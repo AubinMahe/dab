@@ -5,8 +5,11 @@ import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import dab.DistributeurComponent;
 import dab.IIHM;
+import dab.IUniteDeTraitementData;
 import dabtypes.Etat;
+import fx.IController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -18,14 +21,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-/**
- * Les informations détenues par le Site Central sont :
- *
- *  Les numéros de cartes connues de la banque.
- *  Le solde du compte correspondant à chaque numéro de carte.
- *  le statut du compte correspondant à chaque numéro de carte (autorisé ou interdit).
- */
-public class Controller extends Thread implements IIHM {
+public class Controller extends Thread implements IIHM, IUniteDeTraitementData, IController {
 
    private Distributeur _component;
    private Etat         _etat   = Etat.HORS_SERVICE;
@@ -165,9 +161,8 @@ public class Controller extends Thread implements IIHM {
       }
    }
 
-   public void init( Stage stage, String instanceName )
-      throws BackingStoreException, IOException
-   {
+   @Override
+   public void init( Stage stage, String instanceName ) throws BackingStoreException, IOException {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
          stage.setX( prefs.getDouble( instanceName + "-x", -4.0 ));
@@ -228,7 +223,8 @@ public class Controller extends Thread implements IIHM {
 
    @FXML
    private void rechargerLaCaisse() throws IOException {
-      _component.uniteDeTraitement().rechargerLaCaisse( Double.parseDouble( _ajouterALaCaisse.getText()));
+      final double montant = Double.parseDouble( _ajouterALaCaisse.getText());
+      _component.uniteDeTraitement().rechargerLaCaisse( montant );
    }
 
    @FXML
@@ -254,5 +250,9 @@ public class Controller extends Thread implements IIHM {
    @FXML
    private void viderLeMagasin() {
       _magasin.getItems().clear();
+   }
+
+   public DistributeurComponent getComponent() {
+      return _component;
    }
 }

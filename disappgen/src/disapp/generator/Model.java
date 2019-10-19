@@ -20,6 +20,7 @@ import javax.xml.bind.Unmarshaller;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DataType;
 import disapp.generator.model.DeploymentType;
 import disapp.generator.model.DisappType;
 import disapp.generator.model.EnumType;
@@ -53,6 +54,12 @@ final class Model {
    private final Map<InstanceType, ProcessType>         _processByInstance = new LinkedHashMap<>();
    private final Map<String, Map<String, Byte>>         _eventIDs          = new LinkedHashMap<>();
    private final Map<ComponentType, Set<String>>        _actions           = new LinkedHashMap<>();
+   private final Map<ComponentType,
+      Map<InterfaceType,
+         List<DataType>>>                               _offeredData       = new LinkedHashMap<>();
+   private final Map<ComponentType,
+      Map<InterfaceType,
+         List<DataType>>>                               _requiredData      = new LinkedHashMap<>();
    private final File                                   _source;
    private final boolean                                _force;
    private final DisappType                             _application;
@@ -148,12 +155,12 @@ final class Model {
                final RequestType request = (RequestType)facet;
                eventIDs.put( request.getName(), ++id );
             }
-            else if( facet instanceof FieldType ) {
-               final FieldType data = (FieldType)facet;
+            else if( facet instanceof DataType ) {
+               final DataType data = (DataType)facet;
                eventIDs.put( data.getName(), ++id );
             }
             else {
-               throw new IllegalStateException();
+               throw new IllegalStateException( "Unexpected class: " + facet.getClass());
             }
          }
       }
@@ -169,6 +176,42 @@ final class Model {
                .map( e -> e.getValue())
                .map( action -> action.getAction())
                .collect( Collectors.toCollection( LinkedHashSet::new )));
+      }
+      for( final ComponentType component : _application.getComponent()) {
+         final Map<InterfaceType, List<DataType>> allData = new LinkedHashMap<>();
+         for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+            final InterfaceType iface = (InterfaceType)offered.getInterface();
+            final List<DataType> data = new LinkedList<>();
+            for( final Object facet : iface.getEventOrRequestOrData()) {
+               if( facet instanceof DataType ) {
+                  data.add((DataType)facet );
+               }
+            }
+            if( ! data.isEmpty()) {
+               allData.put( iface, data );
+            }
+         }
+         if( ! allData.isEmpty()) {
+            _offeredData.put( component, allData );
+         }
+      }
+      for( final ComponentType component : _application.getComponent()) {
+         final Map<InterfaceType, List<DataType>> allData = new LinkedHashMap<>();
+         for( final RequiredInterfaceUsageType required : component.getRequires()) {
+            final InterfaceType iface = (InterfaceType)required.getInterface();
+            final List<DataType> data = new LinkedList<>();
+            for( final Object facet : iface.getEventOrRequestOrData()) {
+               if( facet instanceof DataType ) {
+                  data.add((DataType)facet );
+               }
+            }
+            if( ! data.isEmpty()) {
+               allData.put( iface, data );
+            }
+         }
+         if( ! allData.isEmpty()) {
+            _requiredData.put( component, allData );
+         }
       }
    }
 
@@ -282,31 +325,43 @@ final class Model {
 
    static List<RequestType> getRequestsOf( InterfaceType iface ) {
       final List<RequestType> requests = new ArrayList<>( iface.getEventOrRequestOrData().size());
-      for( final Object element : iface.getEventOrRequestOrData()) {
-         if( element instanceof RequestType ) {
-            requests.add((RequestType)element );
+      for( final Object facet : iface.getEventOrRequestOrData()) {
+         if( facet instanceof RequestType ) {
+            requests.add((RequestType)facet );
          }
       }
       return requests;
    }
 
+   private void typesUsedBy( String ifaceName, String typeName ) {
+      SortedSet<String> types = _usedTypes.get( ifaceName );
+      if( types == null ) {
+         _usedTypes.put( ifaceName, types = new TreeSet<>());
+      }
+      else if( types.contains( typeName )) {
+         return;
+      }
+      types.add( typeName );
+   }
+
    private void typesUsedBy( String ifaceName, FieldType field ) {
       final String typeName = getUserType( field );
       if( typeName != null ) {
-         SortedSet<String> types = _usedTypes.get( ifaceName );
-         if( types == null ) {
-            _usedTypes.put( ifaceName, types = new TreeSet<>());
-         }
-         else if( types.contains( typeName )) {
-            return;
-         }
-         types.add( typeName );
+         typesUsedBy( ifaceName, typeName );
          if( field.getType() == FieldtypeType.STRUCT ) {
             final StructType struct = (StructType)field.getUserType();
             for( final FieldType field2 : struct.getField()) {
                typesUsedBy( ifaceName, field2 );
             }
          }
+      }
+   }
+
+   private void typesUsedBy( String ifaceName, StructType struct ) {
+      final String typeName = struct.getName();
+      typesUsedBy( ifaceName, typeName );
+      for( final FieldType field2 : struct.getField()) {
+         typesUsedBy( ifaceName, field2 );
       }
    }
 
@@ -318,13 +373,13 @@ final class Model {
 
    private void typesUsedBy( InterfaceType iface ) {
       final String ifaceName = iface.getName();
-      for( final Object o : iface.getEventOrRequestOrData()) {
-         if( o instanceof EventType ) {
-            final EventType event = (EventType)o;
+      for( final Object facet : iface.getEventOrRequestOrData()) {
+         if( facet instanceof EventType ) {
+            final EventType event = (EventType)facet;
             typesUsedBy( ifaceName, event.getField());
          }
-         else if( o instanceof RequestType) {
-            final RequestType request = (RequestType)o;
+         else if( facet instanceof RequestType) {
+            final RequestType request = (RequestType)facet;
             typesUsedBy( ifaceName, request.getArguments().getField());
             typesUsedBy( ifaceName, request.getResponse().getField());
             SortedSet<String> types = _usedTypes.get( ifaceName );
@@ -333,12 +388,12 @@ final class Model {
             }
             types.add( ifaceName + BaseRenderer.cap( request.getName()) + RESPONSES_STRUCT_SUFFIX );
          }
-         else if( o instanceof FieldType ) {
-            final FieldType field = (FieldType)o;
-            typesUsedBy( ifaceName, field );
+         else if( facet instanceof DataType ) {
+            final DataType data = (DataType)facet;
+            typesUsedBy( ifaceName, (StructType)data.getType());
          }
          else {
-            throw new IllegalStateException();
+            throw new IllegalStateException( "unexpected class: " + facet.getClass());
          }
       }
       for( final RequestType request : getRequestsOf( iface )) {
@@ -378,14 +433,24 @@ final class Model {
       throw new IllegalStateException( ifaceName + " isn't an interface" );
    }
 
-   Map<String, Integer> getInterfaceIDs( List<OfferedInterfaceUsageType> offers ) {
+   Map<String, Integer> getRequiredInterfaceIDs( List<RequiredInterfaceUsageType> requires ) {
+      final Map<String, Integer> ifaces = new LinkedHashMap<>();
+      for( final RequiredInterfaceUsageType ifaceUsage : requires ) {
+         final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
+         final String        ifaceName = iface.getName();
+         ifaces.put( ifaceName, getInterfaceID( ifaceName ));
+      }
+      return ifaces;
+   }
+
+   Map<String, Integer> getOfferedInterfaceIDs( List<OfferedInterfaceUsageType> offers ) {
       final Map<String, Integer> ifaces = new LinkedHashMap<>();
       for( final OfferedInterfaceUsageType ifaceUsage : offers ) {
          final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
          final String        ifaceName = iface.getName();
          ifaces.put( ifaceName, getInterfaceID( ifaceName ));
-         for( final Object o : iface.getEventOrRequestOrData()) {
-            if( o instanceof RequestType ) {
+         for( final Object facet : iface.getEventOrRequestOrData()) {
+            if( facet instanceof RequestType ) {
                ifaces.put( ifaceName + RESPONSES_INTERFACE_SUFFIX, getInterfaceID( ifaceName + RESPONSES_INTERFACE_SUFFIX ));
             }
          }
@@ -507,9 +572,9 @@ final class Model {
     * @param field the field
     * @return the size, with the header.
     */
-   public int getMessageSize( FieldType field ) {
+   public int getMessageSize( DataType data ) {
       int msgSize = 1 + 1; // INTERFACE + EVENT
-      msgSize += getFieldSize( field );
+      msgSize += getStructSize((StructType)data.getType());
       return msgSize;
    }
 
@@ -528,12 +593,20 @@ final class Model {
                final RequestType request = (RequestType)facet;
                capacity = Math.max( capacity, getMessageSize( request.getArguments().getField()));
             }
-            else if( facet instanceof FieldType) {
-               final FieldType data = (FieldType)facet;
+            else if( facet instanceof DataType) {
+               final DataType data = (DataType)facet;
                capacity = Math.max( capacity, getMessageSize( data ));
             }
             else {
-               throw new IllegalStateException();
+               throw new IllegalStateException( "Unexpected class: " + facet.getClass());
+            }
+         }
+      }
+      final Map<InterfaceType, List<DataType>> allData = getRequiredDataOf( component );
+      if( allData != null ) {
+         for( final List<DataType> dataList : allData.values()) {
+            for( final DataType data : dataList ) {
+               capacity = Math.max( capacity, getMessageSize( data ));
             }
          }
       }
@@ -550,9 +623,15 @@ final class Model {
             final EventType event = (EventType)facet;
             capacity = Math.max( capacity, getMessageSize( event.getField()));
          }
-         else if( facet instanceof FieldType ) {
-            final FieldType data = (FieldType)facet;
-            capacity = Math.max( capacity, getMessageSize( data ));
+         else if( facet instanceof RequestType ) {
+            final RequestType request = (RequestType)facet;
+            capacity = Math.max( capacity, getMessageSize( request.getArguments().getField()));
+         }
+         else if( facet instanceof DataType ) {
+            // Les data sont émises par le publisher et non par le consumer
+         }
+         else {
+            throw new IllegalStateException( "Unexpected class: " + facet.getClass());
          }
       }
       return capacity;
@@ -569,6 +648,14 @@ final class Model {
          }
       }
       return capacity;
+   }
+
+   public int getDataBufferOutCapacity( List<DataType> data ) {
+      int rawSize = 0;
+      for( final DataType d : data ) {
+         rawSize = Math.max( rawSize, getMessageSize( d ));
+      }
+      return rawSize;
    }
 
    List<InstanceType> getInstancesOf( String deployment, ComponentType component ) {
@@ -612,6 +699,49 @@ final class Model {
       return instances;
    }
 
+   private DeploymentType getDeployment( String targetDir ) {
+      for( final DeploymentType deployment : _application.getDeployment()) {
+         if( deployment.getTargetDir().equals( targetDir )) {
+            return deployment;
+         }
+      }
+      return null;
+   }
+
+   // TODO retourner une liste
+   private InstanceType getReaderOf( String targetDir, InstanceType dataWriter ) {
+      final DeploymentType deployment = getDeployment( targetDir );
+      for( final ProcessType process : deployment.getProcess()) {
+         for( final InstanceType dataReader : process.getInstance()) {
+            for( final RequiresType requires : dataReader.getRequires()) {
+               if( requires.getToInstance() == dataWriter ) {
+                  return dataReader;
+               }
+            }
+         }
+      }
+      return null;
+   }
+
+   Map<String, InstanceType> getDataWriterOf( String targetDir, ComponentType component ) {
+      final Map<String, InstanceType> retVal = new LinkedHashMap<>();
+      for( final InstanceType dataWriter : getInstancesOf( targetDir, component )) { // udt1, udt2
+         final String writerName = dataWriter.getName();
+         for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+            final InterfaceType offIface = (InterfaceType)offered.getInterface();
+            final String ifaceName = offIface.getName();
+            for( final Object offFacet : offIface.getEventOrRequestOrData()) {
+               if( offFacet instanceof DataType ) {
+                  final InstanceType dataReader = getReaderOf( targetDir, dataWriter );
+                  final String       readerName = dataReader.getName();
+                  retVal.put( writerName + '/' + ifaceName, getInstancesByName( targetDir ).get( readerName ));
+               }
+            }
+         }
+      }
+      return retVal;
+   }
+
    Set<String> getDeployments() {
       return _instancesByName.keySet();
    }
@@ -624,35 +754,25 @@ final class Model {
       return _instancesByName.get( deployment );
    }
 
-   public static Map<String, List<FieldType>> getOfferedDataOf( ComponentType component ) {
-      final Map<String, List<FieldType>> allData = new LinkedHashMap<>();
-      for( final OfferedInterfaceUsageType offered : component.getOffers()) {
-         final InterfaceType iface     = (InterfaceType)offered.getInterface();
-         final String        ifaceName = iface.getName();
-         for( final Object o : iface.getEventOrRequestOrData()) {
-            if( o instanceof FieldType ) {
-               List<FieldType> data = allData.get( ifaceName );
-               if( data == null ) {
-                  allData.put( ifaceName, data = new LinkedList<>());
-               }
-               data.add((FieldType)o );
-            }
-         }
-      }
-      return allData;
+   public Map<InterfaceType, List<DataType>> getOfferedDataOf( ComponentType component ) {
+      return _offeredData.get( component );
+   }
+
+   public Map<InterfaceType, List<DataType>> getRequiredDataOf( ComponentType component ) {
+      return _requiredData.get( component );
    }
 
    static Map<String, List<RequestType>> getRequestMap( Map<String, List<Object>> eventOrRequestPerInterface ) {
       final Map<String, List<RequestType>> requestsMap = new LinkedHashMap<>();
       for( final Entry<String, List<Object>> e : eventOrRequestPerInterface.entrySet()) {
-         for( final Object eventOrRequest : e.getValue()) {
-            if( eventOrRequest instanceof RequestType ) {
+         for( final Object facet : e.getValue()) {
+            if( facet instanceof RequestType ) {
                final String ifaceName = e.getKey();
                List<RequestType> requests = requestsMap.get( ifaceName );
                if( requests == null ) {
                   requestsMap.put( ifaceName, requests = new LinkedList<>());
                }
-               requests.add((RequestType)eventOrRequest );
+               requests.add((RequestType)facet );
             }
          }
       }

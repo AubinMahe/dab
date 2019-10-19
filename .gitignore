@@ -13,6 +13,7 @@ src-gen/
 *.a
 disappgen.jar
 DAB-UI.jar
+dabtypes.jar
 UDT.jar
 Site-Central.jar
 util.jar

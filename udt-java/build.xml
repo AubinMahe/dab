@@ -43,10 +43,10 @@
    <target name="run-1">
       <exec spawn="true" executable="xterm">
          <arg value="-title" /><arg value="UDT-1" />
-         <arg value="-geometry" /><arg value="90x30+810-16" />
+         <arg value="-geometry" /><arg value="100x30+-9-16" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.Main" />
          <arg value="--name=udt1" />
       </exec> 
@@ -55,10 +55,10 @@
    <target name="run-2">
       <exec spawn="true" executable="xterm">
          <arg value="-title" /><arg value="UDT-2" />
-         <arg value="-geometry" /><arg value="90x30-0+0" />
+         <arg value="-geometry" /><arg value="100x30--9-16" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
-         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.Main" />
          <arg value="--name=udt2" />
       </exec>

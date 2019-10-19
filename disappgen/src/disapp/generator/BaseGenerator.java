@@ -16,6 +16,7 @@ import org.stringtemplate.v4.STGroupFile;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DataType;
 import disapp.generator.model.DurationUnits;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
@@ -103,6 +104,13 @@ abstract class BaseGenerator {
       _renderer.set( "width", maxLength    );
    }
 
+   private void configureRendererWidthCumulative( DataType data ) {
+      int maxLength = (Integer)_renderer.get(    "width" );
+      final String cname = _renderer.name( data.getName());
+      maxLength = Math.max( maxLength, cname.length());
+      _renderer.set( "width", maxLength    );
+   }
+
    protected void setRendererMaxWidth( EnumerationType enm ) {
       _renderer.set( "width"   , 0 );
       _renderer.set( "strWidth", 0 );
@@ -139,12 +147,12 @@ abstract class BaseGenerator {
                configureRendererWidthsCumulative( field );
             }
          }
-         else if( o instanceof FieldType ) {
-            final FieldType data = (FieldType)o;
-            configureRendererWidthsCumulative( data );
+         else if( o instanceof DataType ) {
+            final DataType data = (DataType)o;
+            configureRendererWidthCumulative( data );
          }
          else {
-            throw new IllegalStateException();
+            throw new IllegalStateException( "Unexpected class: " + o.getClass());
          }
       }
    }

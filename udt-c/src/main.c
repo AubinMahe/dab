@@ -85,8 +85,8 @@ util_error udt_controleur_maintenance( udt_controleur * This, bool maintenance )
 }
 
 util_error udt_controleur_recharger_la_caisse( udt_controleur * This, double montant ) {
-   This->ihm.etat_du_dab.solde_caisse += montant;
-   if( This->ihm.etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
+   This->unite_de_traitement.etat_du_dab.solde_caisse += montant;
+   if( This->unite_de_traitement.etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
    }
    return UTIL_NO_ERROR;
@@ -165,7 +165,7 @@ util_error udt_controleur_montant_saisi( udt_controleur * This, double montant )
    business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( udt_ihm_ejecter_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_montant ));
-   if( montant > This->ihm.etat_du_dab.solde_caisse ) {
+   if( montant > This->unite_de_traitement.etat_du_dab.solde_caisse ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
    }
    else if( montant > d->compte.solde ) {
@@ -182,7 +182,7 @@ util_error udt_controleur_carte_retiree( udt_controleur * This ) {
    business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( udt_site_central_retrait( &This->site_central, d->carte.id, d->montantDeLatransactionEnCours ));
    UTIL_ERROR_CHECK( udt_ihm_ejecter_les_billets( &This->ihm, d->montantDeLatransactionEnCours ));
-   This->ihm.etat_du_dab.solde_caisse -= d->montantDeLatransactionEnCours;
+   This->unite_de_traitement.etat_du_dab.solde_caisse -= d->montantDeLatransactionEnCours;
    d->montantDeLatransactionEnCours = 0.0;
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_de_la_carte ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_CARTE_RETIREE ));
@@ -212,9 +212,9 @@ util_error udt_controleur_annulation_demandee_par_le_client( udt_controleur * Th
 
 util_error udt_controleur_after_dispatch( udt_controleur * This ) {
    fprintf( stderr, "%s|state = %s, solde caisse : %7.2f\n",
-      __func__, dabtypes_etat_to_string( This->automaton.current ), This->ihm.etat_du_dab.solde_caisse );
-   This->ihm.etat_du_dab.etat = This->automaton.current;
-   UTIL_ERROR_CHECK( udt_ihm_etat_du_dab_publish( &This->ihm ));
+      __func__, dabtypes_etat_to_string( This->automaton.current ), This->unite_de_traitement.etat_du_dab.solde_caisse );
+   This->unite_de_traitement.etat_du_dab.etat = This->automaton.current;
+   UTIL_ERROR_CHECK( udt_unite_de_traitement_data_publish_etat_du_dab( &This->unite_de_traitement ));
    return UTIL_NO_ERROR;
 }
 

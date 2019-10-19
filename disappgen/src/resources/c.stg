@@ -227,7 +227,8 @@ util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; for
 > * This, SOCKET socket, struct sockaddr_in * target ) {
    This->socket = socket;
    This->target = *target;
-   return io_byte_buffer_wrap( &This->out, <rawSize>, This->raw );
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
+   return UTIL_NO_ERROR;
 }
 <iface.eventOrRequestOrData:{facet|
 
@@ -302,7 +303,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
 
 
 dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName ) ::= <<
-//dispatcherImplOneInterface
+//dispatcherImplOneInterface -- begin
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
    <ifaceName; format="ID">_<event.name; format="ID"> = <i>,
@@ -315,7 +316,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
 {
    *has_dispatched = false;
    switch( event ) {
-<events.(ifaceName):{event|
+<events.(ifaceName):{event|< if( event.type )>< else>
    case <ifaceName; format="ID">_<event.name; format="ID">:{
 <event.field:{field|
       <     if( field.isBoolean )>bool <field.name; format="cname">;
@@ -350,7 +351,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
       *has_dispatched = true;
       break;
    \}
-}>   default:
+< endif>}>   default:
       fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher|Ignored message:\n" );
       fprintf( stderr, "\tinterface = <ifaceName>\n" );
       fprintf( stderr, "\tevent     = %d\n", event );
@@ -358,10 +359,46 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
    \}
    return UTIL_NO_ERROR;
 }
-
+//dispatcherImplOneInterface -- end
 >>
 
-dispatcherImplementation( typesPrefix, prefix, component, ifaces, events, usedTypes, rawSize ) ::= <<
+
+
+dispatcherImplData() ::= <<
+// dispatcherImplData -- begin
+typedef enum <prefix>_<iface; format="cname">_data_e {
+   <data.(iface):{dataType|<dataType.name; format="ID"> = <i>,
+}>
+} <prefix>_<ifaceName; format="cname">_event;
+
+static util_error <prefix>_<iface.name; format="cname">_dispatch(
+   <prefix>_<component.name; format="cname">_dispatcher * This,
+   <prefix>_<iface.name; format="cname">_data event,
+   bool * has_dispatched )
+{
+   *has_dispatched = false;
+   switch( event ) {
+<data.(iface):{dataType|
+   case <dataType.name; format="ID">:{
+      <typesPrefix>_<dataType.name; format="cname"> <dataType.name; format="cname"> = This->listener.<dataType.name; format="cname">;
+      <typesPrefix>_<dataType.name; format="cname">_get( &<dataType.name; format="cname">, &This->in );
+      This->listener.<dataType.name; format="cname">_published();
+      *has_dispatched = true;\}
+      break;
+}>   default:
+      fprintf( stderr, "%s.dispatch|Unexpected event: %d\n", __func__, event );
+      break;
+   }
+   return UTIL_NO_ERROR;
+}
+// dispatcherImplData -- end
+>>
+
+
+
+dispatcherImplementation(
+    typesPrefix, prefix, component, ifaces, events, usedTypes, rawSize, data
+) ::= <<
 //dispatcherImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
@@ -378,6 +415,10 @@ typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 
 <ifaces.keys:{ifaceName|
 <dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName )>
+}><data:{iface|
+
+static const byte <iface.name; format="ID"> = <requires.(iface.name)>;
+<dispatcherImplData()>
 }>util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    <prefix>_<component.name; format="cname">_dispatcher * This,
    SOCKET socket,
@@ -457,14 +498,18 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
 
 
 
-componentInterface( typesPrefix, prefix, component, responses, requires, instancesByName, instances, usedTypes, eventsOrRequests, actions ) ::= <<
+componentInterface(
+    typesPrefix, prefix, component, responses, requires, instancesByName,
+    instances, usedTypes, eventsOrRequests, actions, data
+) ::= <<
 #pragma once
 //componentInterface
 <component.requires:{required|#include \<<prefix>/<required.interface.name; format="cname">.h>
 }>
 <responses.(component.name):{r|#include \<<prefix>/<r.interface.name; format="cname">.h>
 }>
-< if( component.automaton )
+<data:{iface|#include \<<prefix>/<iface.name; format="cname">_data.h>
+}>< if( component.automaton )
 >#include \<util/automaton.h>
 < endif>
 < if( component.timeout )
@@ -479,7 +524,9 @@ typedef struct <prefix>_<component.name; format="cname">_s {
    SOCKET             socket;
    struct sockaddr_in localAddress;
    bool               running;
-< if( component.automaton )>   util_automaton     automaton;
+<data:{iface|
+   <prefix>_<iface.name; format="cname">_data <iface.name; format="cname">;
+}>< if( component.automaton )>   util_automaton     automaton;
 < endif><component.timeout:{to|
    util_timeout       <to.name; format="cname">;
 }>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
@@ -508,7 +555,10 @@ util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_e
 
 
 
-componentImplementation( typesPrefix, prefix, component, requires, instancesByName, instances, processes ) ::= <<
+componentImplementation(
+   typesPrefix, prefix, component, requires, dataWriter, instancesByName,
+   instances, processes, data
+) ::= <<
 // componentImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
 < if( component.automaton )>#include \<<prefix>/automaton.h>
@@ -531,7 +581,8 @@ util_error <prefix>_<component.name; format="cname">_init( <
 < if( requires )>
    struct sockaddr_in < first(requires):{req|<
       first( requires.(req) ):{rt|<rt.interface.name; format="cname">}><
-      rest ( requires.(req) ):{rt|, <rt.interface.name; format="cname">}>}>;
+      rest ( requires.(req) ):{rt|, <rt.interface.name; format="cname">}>}><
+      data:{iface|, <iface.name; format="cname">}>;
 < endif>
 < first(instances):{instance|
    if( 0 ==  strcmp( name, "<instance.name>" )) {
@@ -542,6 +593,10 @@ util_error <prefix>_<component.name; format="cname">_init( <
          processes.(instancesByName.(req.toInstance.name)).address>", <
          processes.(instancesByName.(req.toInstance.name)).port>, &<
          req.interface.name; format="cname"> ));
+}>      <data:{iface|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
+            processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
+            processes.(dataWriter.([instance.name, "/", iface.name])).port>, &<
+            iface.name; format="cname"> ));
 }>}>< rest(instances):{instance|
   \}
   else if( 0 ==  strcmp( name, "<instance.name>" )) {
@@ -552,6 +607,10 @@ util_error <prefix>_<component.name; format="cname">_init( <
          processes.(instancesByName.(req.toInstance.name)).address>", <
          processes.(instancesByName.(req.toInstance.name)).port>, &<
          req.interface.name; format="cname"> ));
+}>      <data:{iface|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
+            processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
+            processes.(dataWriter.([instance.name, "/", iface.name])).port>, &<
+            iface.name; format="cname"> ));
 }>}>   }
    else {
       fprintf( stderr, "unknown deployment name '%s'!\n", name );
@@ -586,6 +645,71 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
    }
    return UTIL_NO_ERROR;
 }
+>>
+
+
+
+dataWriterHeader( typesPrefix, prefix, interface, ifaceID, data, rawSize  ) ::= <<
+#pragma once
+
+// dataWriter
+
+#include \<io/datagram_socket.h>
+
+<data:{dataType|
+#include \<<typesPrefix>/<dataType.name; format="cname">.h>
+}>
+typedef struct <prefix>_<interface.name; format="cname">_data_s {
+   SOCKET             socket;
+   struct sockaddr_in target;
+   byte               raw[<rawSize>];
+   io_byte_buffer     out;
+
+<data:{dataType|
+   <typesPrefix>_<dataType.name; format="cname"> <dataType.name; format="cname">;
+}>
+} <prefix>_<interface.name; format="cname">_data;
+
+util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<interface.name; format="cname">_data * This, SOCKET socket, struct sockaddr_in target );
+<data:{dataType|
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <prefix>_<interface.name; format="cname">_data * This );
+}>
+>>
+
+
+
+dataWriterBody( typesPrefix, prefix, interface, ifaceID, data, dataID, rawSize  ) ::= <<
+#include \<<prefix>/<interface.name; format="cname">_data.h>
+
+#include \<stdio.h>
+
+static const byte <interface.name; format="ID"> = <ifaceID>;
+
+<data:{dataType|static const byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
+}>
+
+util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<interface.name; format="cname">_data * This, SOCKET socket, struct sockaddr_in target ) {
+   This->socket = socket;
+   This->target = target;
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
+   return UTIL_NO_ERROR;
+}
+<data:{dataType|
+
+
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <prefix>_<interface.name; format="cname">_data * This ) {
+   UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->out ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <interface.name; format="ID"> ));
+   UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <dataType.name; format="ID"> ));
+   UTIL_ERROR_CHECK( <typesPrefix>_<dataType.name; format="cname">_put( &This->etat_du_dab, &This->out ));
+   UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
+   size_t size = 0;
+   UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
+   UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
+   fprintf( stderr, "%s|%u byte(s) sent to %s\n", __func__, (unsigned)size, inet_ntoa( This->target.sin_addr ));
+   return UTIL_NO_ERROR;
+\}
+}>
 >>
 
 

@@ -30,8 +30,8 @@ namespace dab {
 
       virtual void rechargerLaCaisse( const double & montant ) {
          fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
-         _iHM.etatDuDab().soldeCaisse += montant;
-         if( _iHM.etatDuDab().soldeCaisse < 1000 ) {
+         _uniteDeTraitement._etatDuDab.soldeCaisse += montant;
+         if( _uniteDeTraitement._etatDuDab.soldeCaisse < 1000 ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
       }
@@ -107,7 +107,7 @@ namespace dab {
       virtual void montantSaisi( const double & montant ) {
          fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
          _iHM.ejecterLaCarte();
-         if( montant > _iHM.etatDuDab().soldeCaisse ) {
+         if( montant > _uniteDeTraitement._etatDuDab.soldeCaisse ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
          }
          else if( montant > _compte.getSolde()) {
@@ -123,7 +123,7 @@ namespace dab {
          fprintf( stderr, "%s\n", HPMS_FUNCNAME );
          _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
          _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
-         _iHM.etatDuDab().soldeCaisse -= _montantDeLatransactionEnCours;
+         _uniteDeTraitement._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
          _montantDeLatransactionEnCours = 0.0;
          _automaton.process( dabtypes::Evenement::CARTE_RETIREE );
       }
@@ -155,9 +155,9 @@ namespace dab {
        * L'état de l'automate à sans doute été mis à jour, il faut donc le publier.
        */
       virtual void afterDispatch( void ) {
-         _iHM.etatDuDab().etat = _automaton.getCurrentState();
-         fprintf( stderr, "%s, etat = %s\n", HPMS_FUNCNAME, dabtypes::toString( _iHM.etatDuDab().etat ));
-         _iHM.publishEtatDuDab();
+         _uniteDeTraitement._etatDuDab.etat = _automaton.getCurrentState();
+         fprintf( stderr, "%s, etat = %s\n", HPMS_FUNCNAME, dabtypes::toString( _uniteDeTraitement._etatDuDab.etat ));
+         _uniteDeTraitement.publishEtatDuDab();
       }
 
    private:

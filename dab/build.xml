@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="DAB-UI" default="jar">
 
-   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" /> 
+   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" />
    <property name="jutil"    location="../util.jar" />
    <property name="dabtypes" location="../dabtypes.jar" />
    <property name="jar"      location="../${ant.project.name}.jar" />
@@ -49,12 +49,12 @@
    <target name="run-1">
       <exec spawn="true" executable="xterm">
          <arg value="-title" /><arg value="IHM-1" />
-         <arg value="-geometry" /><arg value="90x30+-9+143" />
+         <arg value="-geometry" /><arg value="100x30+-9+211" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
          <arg value="--module-path=${jfx-path}" />
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
-         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.ui.Main" />
          <arg value="--name=ihm1" />
       </exec>
@@ -63,12 +63,12 @@
    <target name="run-2">
       <exec spawn="true" executable="xterm">
          <arg value="-title" /><arg value="IHM-2" />
-         <arg value="-geometry" /><arg value="90x30--9+143" />
+         <arg value="-geometry" /><arg value="100x30--9+211" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
          <arg value="--module-path=${jfx-path}" />
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
-         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.ui.Main" />
          <arg value="--name=ihm2" />
       </exec>

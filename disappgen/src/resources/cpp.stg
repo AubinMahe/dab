@@ -320,13 +320,13 @@ namespace <namespace> {
 
    public:
 
-<eventsOrRequests:{facet|
+<eventsOrRequests:{facet|< if(facet.type)>< else>
       virtual void <facet.name>( <
 if( facet.arguments )><
     signature( facet.arguments.field )>, <ifaceName><facet.name; format="cap">Response & response<
 else><
     signature( facet.field )><
-endif> ) = 0;
+endif> ) = 0;< endif>
 }>
    public:
 
@@ -417,7 +417,7 @@ using namespace <namespace>;
 
 bool <component.name>Dispatcher::dispatch( <ifaceName>Event event ) {
    switch( event ) {
-<events.(ifaceName):{event|
+<events.(ifaceName):{event|< if( event.type )>< else>
    case <ifaceName>Event::<event.name; format="ID">:{
       <event.field:{field|
 <     if( field.isBoolean )>bool <field.name> = _in.getBool();
@@ -439,7 +439,7 @@ _in.getString( <field.name>, sizeof( <field.name> ));
 }>      _listener.<event.name>( <args( event.field )> );
       break;
       \}
-}>   default:
+< endif>}>   default:
       fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown <ifaceName>'s event: %d\n", (byte)event );
       return false;
    \}
@@ -490,22 +490,26 @@ void <component.name>Dispatcher::loopback( const LoopbackEvent & event ) {
 
 
 
-componentInterface( namespace, component, responses, requires, instancesByName, instances, actions ) ::= <<
+componentInterface(
+   namespace, component, responses, requires, instancesByName, instances, actions, data
+) ::= <<
 #pragma once
 //componentInterface
 #include \<io/DatagramSocket.hpp>
-
-<component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
-}>
-<component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
-}>
-<responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
-}>
-#include \<<namespace>/<component.name>Dispatcher.hpp>
 < if( component.timeout )>
 
 #include \<util/Timeout.hpp>
-< endif>< if( component.automaton )>
+
+< endif>
+<component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
+}>
+<component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
+}><responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
+}><data:{iface|
+#include \<<namespace>/<iface.name>Data.hpp>
+}>
+#include \<<namespace>/<component.name>Dispatcher.hpp>
+< if( component.automaton )>
 
 #include \<<namespace>/Automaton.hpp>
 < endif>
@@ -554,6 +558,8 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 < if( component.automaton )>      Automaton _automaton;
 < endif>
 <component.timeout:{to|       util::TimeoutCallback _<to.name>;
+}><data:{iface|
+      <iface.name>Data _<iface.name; format="argument">;
 }>< first(requires):{req|<requires.(req):{rt|
       <rt.interface.name> _<rt.interface.name; format="argument">;
 }>}>   };
@@ -562,14 +568,16 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
 
 
-componentImplementation( namespace, component, responses, requires, instancesByName, instances, processes ) ::= <<
+componentImplementation(
+   namespace, component, responses, requires, instancesByName, instances, processes, data
+) ::= <<
 //componentImplementation
 #include \<<namespace>/<component.name>Component.hpp>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
 
-#include  \<string.h>
+#include \<string.h>
 
-#include  \<util/Exceptions.hpp>
+#include \<util/Exceptions.hpp>
 
 using namespace <namespace>;
 < first(requires):{req|<requires.(req):{rt|
@@ -601,6 +609,8 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
    _automaton ( *this )<component.timeout:{to|,
    _<to.name; format="argument">( <to.duration><to.unit.toCpp>, [this](){ _dispatcher.loopback( <
       component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> ); \})}><
+   data:{iface|,
+   _<iface.name; format="argument">( _socket, initIHMSocketAddress( name ))}><
    first(requires):{req|<requires.(req):{rt|,
    _<rt; format="argument">( _socket, init<rt>SocketAddress( name ))}>}>
 {
@@ -635,6 +645,77 @@ void <component.name>Component::run() {
       }
    }
 }
+>>
+
+
+
+dataWriterHeader( typesNamespace, namespace, interface, ifaceID, data, rawSize ) ::= <<
+#pragma once
+
+// dataWriter
+
+#include \<io/DatagramSocket.hpp>
+
+<data:{dataType|
+#include \<<typesNamespace>/<dataType.name; format="cap">.hpp>
+}>
+namespace <namespace> {
+
+   class <interface.name>Data {
+   public:
+
+      <interface.name>Data( io::DatagramSocket & socket, const sockaddr_in & target );
+
+   public:
+
+      <data:{dataType|void publish<dataType.name; format="cap">( void );
+}>
+   public:
+
+      <data:{dataType|<typesNamespace>::<dataType.name; format="cap"> _<dataType.name; format="argument">;
+}>
+   private:
+
+      io::DatagramSocket & _socket;
+      struct sockaddr_in   _target;
+      byte                 _raw[<rawSize>];
+      io::ByteBuffer       _out;
+   };
+}
+>>
+
+
+
+dataWriterBody( typesNamespace, namespace, interface, ifaceID, data, dataID, rawSize ) ::= <<
+#include \<<namespace>/<interface.name>Data.hpp>
+
+#include \<stdio.h>
+
+using namespace <namespace>;
+
+static const byte <interface.name; format="ID"> = <ifaceID>;
+
+<data:{dataType|static const byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
+}>
+<interface.name>Data::<interface.name>Data( io::DatagramSocket & socket, const sockaddr_in & target ) :
+   _socket( socket ),
+   _target( target ),
+   _out   ( _raw, sizeof( _raw ))
+{}
+<data:{dataType|
+
+
+void <interface.name>Data::publish<dataType.name; format="cap">( void ) {
+   _out.clear();
+   _out.putByte( <interface.name; format="ID"> );
+   _out.putByte( <dataType.name; format="ID"> );
+   _<dataType.name; format="argument">.put( _out );
+   _out.flip();
+   unsigned size = (unsigned)_out.remaining();
+   _socket.sendTo( _out, _target );
+   fprintf( stderr, "%s|%u byte(s) sent to %s\n", HPMS_FUNCNAME, size, ::inet_ntoa( _target.sin_addr ));
+\}
+}>
 >>
 
 

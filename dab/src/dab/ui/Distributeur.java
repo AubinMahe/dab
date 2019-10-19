@@ -18,8 +18,8 @@ public class Distributeur extends dab.DistributeurComponent {
       networkThread.start();
    }
 
-   EtatDuDab getEtatDuDab() {
-      return etatDuDab;
+   public EtatDuDab getEtatDuDab() {
+      return _etatDuDab;
    }
 
    @Override
@@ -29,22 +29,22 @@ public class Distributeur extends dab.DistributeurComponent {
 
    @Override
    public void confisquerLaCarte() throws IOException {
-      Platform.runLater(() -> _controller.confisquerLaCarte());
+      Platform.runLater( _controller::confisquerLaCarte );
    }
 
    @Override
    public void placerLesBilletsDansLaCorbeille() throws IOException {
-      Platform.runLater(() -> _controller.placerLesBilletsDansLaCorbeille());
+      Platform.runLater( _controller::placerLesBilletsDansLaCorbeille );
    }
 
    @Override
    public void ejecterLaCarte() throws IOException {
-      Platform.runLater(() -> _controller.ejecterLaCarte());
+      Platform.runLater( _controller::ejecterLaCarte );
    }
 
    @Override
    public void shutdown() throws IOException {
-      Platform.runLater(() -> _controller.shutdown());
+      Platform.runLater( _controller::shutdown );
    }
 
    public IUniteDeTraitement uniteDeTraitement() {

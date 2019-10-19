@@ -75,13 +75,17 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
+1. Faire les IHM en C++ avec [Qt](https://www.qt.io/) et en C avec [ncurses](https://fr.wikipedia.org/wiki/Ncurses) afin de produire tous les rôles dans tous les langages permettrait de valider totalement la génération de code.
+1. Certaines interactions n'ont pas été prévues :
+    * données partagées avec plusieurs écrivains, plusieurs lecteurs
+    * événements consommés par plusieurs composants
+
 1. L'implémentation actuelle utilise des messages UDP pour connecter les composants, ce qui couvre les trois cas :
     * composants distribués sur plusieurs machines
     * composants distribués sur plusieurs processus (éventuellement plusieurs langages)
     * composants regroupés au sein d'un même processus (mono-langage)<br />
       Dans ce dernier cas, **des appels directs entre composants seraient plus performants**. 
 
-1. Faire les IHM en C++ avec [Qt](https://www.qt.io/) et en C avec [ncurses](https://fr.wikipedia.org/wiki/Ncurses) pour valider totalement la génération de code.
 1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
 1. Automate : associer une action au franchissement d'une transition.</li>
 

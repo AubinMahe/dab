@@ -29,7 +29,6 @@
    </types>
 
    <interface name="IHM">
-      <data  name="etatDuDab" type="struct" userType="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="ejecterLaCarte" />
       <event name="ejecterLesBillets">
          <field name="montant"     type="double"  description="Montant à donner à l'utilisateur du DAB" />
@@ -40,6 +39,7 @@
    </interface>
 
    <interface name="UniteDeTraitement">
+      <data  name="etatDuDab" type="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="maintenance">
          <field name="maintenance" type="boolean" description="Maintenance active (true) ou inactive (false)" />
       </event>
@@ -186,27 +186,7 @@
       </process>
    </deployment>
 
-   <deployment target-dir="full-java-one-process">
-      <process address="127.0.0.1" port="2417">
-         <instance name="fjop-sc"   component="Banque" />
-         <instance name="fjop-udt1" component="Controleur" >
-            <requires interface="SiteCentral" to-instance="fjop-sc" />
-            <requires interface="IHM"         to-instance="fjop-ihm1" />
-         </instance>
-         <instance name="fjop-ihm1" component="Distributeur" >
-            <requires interface="UniteDeTraitement" to-instance="fjop-udt1" />
-         </instance>
-         <instance name="fjop-udt2" component="Controleur">
-            <requires interface="SiteCentral" to-instance="fjop-sc" />
-            <requires interface="IHM"         to-instance="fjop-ihm2" />
-         </instance>
-         <instance name="fjop-ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="fjop-udt2" />
-         </instance>
-      </process>
-   </deployment>
-
-   <deployment target-dir="mixte">
+   <deployment target-dir="alt">
       <process address="127.0.0.1" port="2416">
          <instance name="m-sc" component="Banque" />
       </process>
@@ -218,12 +198,14 @@
          <instance name="m-ihm1" component="Distributeur" >
             <requires interface="UniteDeTraitement" to-instance="m-udt1" />
          </instance>
+         <instance name="m-ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="m-udt2" />
+         </instance>
+      </process>
+      <process address="127.0.0.1" port="2419">
          <instance name="m-udt2" component="Controleur">
             <requires interface="SiteCentral" to-instance="m-sc" />
             <requires interface="IHM"         to-instance="m-ihm2" />
-         </instance>
-         <instance name="m-ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="m-udt2" />
          </instance>
       </process>
    </deployment>

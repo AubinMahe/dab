@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import org.stringtemplate.v4.ST;
 
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DataType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
@@ -122,12 +123,13 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
-      final List<OfferedInterfaceUsageType> ifaces       = component.getOffers();
-      final Map<String, Integer>            interfaceIDs = _model.getInterfaceIDs( ifaces );
-      final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
-      final SortedSet<String>               usedTypes    = _model.getUsedTypesBy( ifaces );
-      final int                             rawSize      = _model.getBufferInCapacity( component );
-      final ST                              tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
+      final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
+      final Map<String, Integer>               interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, List<Object>>          events       = _model.getOfferedEventsOrRequests( component );
+      final SortedSet<String>                  usedTypes    = _model.getUsedTypesBy( ifaces );
+      final int                                rawSize      = _model.getBufferInCapacity( component );
+      final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
+      final ST                                 tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "typesPrefix", _moduleNameTypes );
       tmpl.add( "prefix"     , _moduleName );
       tmpl.add( "component"  , component );
@@ -135,6 +137,7 @@ public class CGenerator extends BaseGenerator {
       tmpl.add( "events"     , events );
       tmpl.add( "usedTypes"  , usedTypes );
       tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "data"       , data );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( CRenderer.cname( component.getName()) + "_dispatcher.c", tmpl );
    }
@@ -154,11 +157,12 @@ public class CGenerator extends BaseGenerator {
             eventsOrRequests.addAll( eor );
          }
       }
-      final String                          compName        = component.getName();
-      final List<InstanceType>              instances       = _model.getInstancesOf( _deployment, component );
-      final Map<String, List<RequiresType>> requires        = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>       instancesByName = _model.getInstancesByName( _deployment );
-      final Set<String>                     actions         = _model.getAutomatonActions( component );
+      final String                             compName        = component.getName();
+      final List<InstanceType>                 instances       = _model.getInstancesOf( _deployment, component );
+      final Map<String, List<RequiresType>>    requires        = _model.getRequiredInstancesOf( _deployment, component );
+      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( _deployment );
+      final Set<String>                        actions         = _model.getAutomatonActions( component );
+      final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf( component );
       final ST tmpl = _group.getInstanceOf( "/componentInterface" );
       tmpl.add( "typesPrefix"     , _moduleNameTypes );
       tmpl.add( "prefix"          , _moduleName );
@@ -169,24 +173,61 @@ public class CGenerator extends BaseGenerator {
       tmpl.add( "usedTypes"       , usedTypes );
       tmpl.add( "eventsOrRequests", eventsOrRequests );
       tmpl.add( "actions"         , actions );
+      tmpl.add( "data"            , offData );
       write( CRenderer.cname( compName ) + ".h", tmpl );
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final String                          compName          = component.getName();
-      final List<InstanceType>              instances         = _model.getInstancesOf( _deployment, component );
-      final Map<String, List<RequiresType>> requires          = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>       instancesByName   = _model.getInstancesByName( _deployment );
-      final Map<InstanceType, ProcessType>  processByInstance = _model.getProcessByInstance();
+      final String                             compName          = component.getName();
+      final List<InstanceType>                 instances         = _model.getInstancesOf        ( _deployment, component );
+      final Map<String, List<RequiresType>>    requires          = _model.getRequiredInstancesOf( _deployment, component );
+      final Map<String, InstanceType>          dataWriter        = _model.getDataWriterOf       ( _deployment, component );
+      final Map<String, InstanceType>          instancesByName   = _model.getInstancesByName    ( _deployment );
+      final Map<InterfaceType, List<DataType>> offData           = _model.getOfferedDataOf( component );
+      final Map<InstanceType, ProcessType>     processByInstance = _model.getProcessByInstance();
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "typesPrefix"    , _moduleNameTypes );
       tmpl.add( "prefix"         , _moduleName );
       tmpl.add( "component"      , component );
       tmpl.add( "requires"       , requires );
+      tmpl.add( "dataWriter"     , dataWriter );
       tmpl.add( "instancesByName", instancesByName );
       tmpl.add( "instances"      , instances );
+      tmpl.add( "data"           , offData );
       tmpl.add( "processes"      , processByInstance );
       write( CRenderer.cname( compName ) + ".c", tmpl );
+   }
+
+   private void generateDataWriters( ComponentType component ) throws IOException {
+      final Map<InterfaceType, List<DataType>> compData = _model.getOfferedDataOf( component );
+      if( compData != null ) {
+         for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+            final InterfaceType  iface = (InterfaceType)offered.getInterface();
+            final List<DataType> data  = compData.get( iface );
+            if( data != null ) {
+               final String ifaceName = iface.getName();
+               final int    ID        = _model.getInterfaceID( ifaceName );
+               final int    rawSize   = _model.getDataBufferOutCapacity( data );
+               final ST     header    = _group.getInstanceOf( "/dataWriterHeader" );
+               header.add( "typesPrefix", _moduleNameTypes );
+               header.add( "prefix"     , _moduleName );
+               header.add( "interface"  , offered.getInterface());
+               header.add( "ifaceID"    , ID );
+               header.add( "data"       , data );
+               header.add( "rawSize"    , rawSize );
+               write( CRenderer.cname( ifaceName ) + "_data.h", header );
+               final ST body = _group.getInstanceOf( "/dataWriterBody" );
+               body.add( "typesPrefix", _moduleNameTypes );
+               body.add( "prefix"     , _moduleName );
+               body.add( "interface"  , offered.getInterface());
+               body.add( "ifaceID"    , ID );
+               body.add( "data"       , data );
+               body.add( "dataID"     , _model.getEventIDs().get( ifaceName ));
+               body.add( "rawSize"    , rawSize );
+               write( CRenderer.cname( ifaceName ) + "_data.c", body );
+            }
+         }
+      }
    }
 
    private void generateAutomaton( ComponentType component ) throws IOException {
@@ -222,6 +263,7 @@ public class CGenerator extends BaseGenerator {
       generateDispatcherImplementation( component );
       generateComponentInterface      ( component );
       generateComponentImplementation ( component );
+      generateDataWriters             ( component );
       generateAutomaton               ( component );
       generateMakefileSourcesList( _generatedFiles, _genDir                  , _moduleName     , ".h", ".c" );
       generateMakefileSourcesList( _generatedTypes, _genDirTypes + "/src-gen", _moduleNameTypes, ".h", ".c" );

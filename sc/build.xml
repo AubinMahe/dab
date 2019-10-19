@@ -50,12 +50,12 @@
    <target name="run" depends="jar">
       <exec spawn="true" executable="xterm">
          <arg value="-title" /><arg value="Site-Central" />
-         <arg value="-geometry" /><arg value="90x30-640+0" />
+         <arg value="-geometry" /><arg value="100x30-649-0" />
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
          <arg value="--module-path=${jfx-path}" />
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
-         <arg value="-cp" /><arg value="${jutil}:${jar}" />
+         <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="sc.ui.Main" />
          <arg value="--name=sc" />
       </exec>

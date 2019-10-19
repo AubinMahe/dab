@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="util" default="jar">
 
-   <property name="jar" value="../${ant.project.name}.jar" />
+   <property name="jar"      value="../${ant.project.name}.jar" />
+   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" />
+
+   <path id="jfx">
+      <fileset dir="${jfx-path}" includes="*.jar" />
+   </path>
 
    <target name="clean">
       <delete dir="build" />
@@ -15,7 +20,9 @@
       <javac
          destdir          ="build"
          srcdir           ="src"
-         includeantruntime="false" />
+         includeantruntime="false">
+         <classpath refid="jfx" />
+      </javac>
    </target>
 
    <target name="jar" depends="javac">

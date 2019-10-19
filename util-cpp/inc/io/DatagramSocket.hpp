@@ -4,6 +4,8 @@
 #  include <os/win32.hpp>
 #else
 #  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <arpa/inet.h>
    typedef int SOCKET;
 #endif
 
