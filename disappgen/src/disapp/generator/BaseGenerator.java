@@ -192,7 +192,7 @@ abstract class BaseGenerator {
    protected void writeType( String filename, ST source ) throws IOException {
       final String folder = (filename.endsWith( ".h" )||filename.endsWith( ".hpp" )) ? "inc-gen" : "src-gen";
       final File target = new File( _genDirTypes, folder + '/' + _moduleNameTypes + '/' + filename );
-      if( ! _model.isUpToDate( target )) {
+      if( ! _model.isUpToDate( target ) && ! _generatedTypes.contains( target )) {
          target.getParentFile().mkdirs();
          try( final PrintStream ps = new PrintStream( target )) {
             ps.print( source.render());
@@ -204,7 +204,7 @@ abstract class BaseGenerator {
 
    protected void write( String filename, ST source ) throws IOException {
       final File target = new File( _genDir, _moduleName + '/' + filename );
-      if( ! _model.isUpToDate( target )) {
+      if( ! _model.isUpToDate( target ) && ! _generatedFiles.contains( target )) {
          target.getParentFile().mkdirs();
          try( final PrintStream ps = new PrintStream( target )) {
             ps.print( source.render());

@@ -1,5 +1,5 @@
-EXEC = udt-c
-NAME = UDT-C
+EXEC = distrib-c
+NAME = DAB-C
 SRCS = src/main.c
 
 -include generated-files.mk
@@ -11,7 +11,8 @@ CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVE
 OBJS    = $(SRCS:src/%c=BUILD/%o) $(SRCSGEN:src-gen/%c=BUILD/%o)
 OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
 
-all: ../$(EXEC) ../$(EXEC)-mingw32
+all: ../$(EXEC)
+# ../$(EXEC)-mingw32
 
 clean:
 	rm -f  deps
@@ -39,11 +40,11 @@ generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
 
 ../$(EXEC): ../util-c/lib/libutil-c.a ../dabtypes-c/lib/libdabtypes-c.a $(OBJS)
 	cd ../util-c && make
-	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lpthread -o $@
+	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lncurses -lpthread -o $@
 
 ../$(EXEC)-mingw32: ../util-c/lib/libutil-c-mingw32.a ../dabtypes-c/lib/libdabtypes-c-mingw32.a $(OBJSW32)
 	cd ../util-c && make
-	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lws2_32 -o $@
+	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lncurses -lws2_32 -o $@
 
 BUILD/%.o: src/%.c
 	@mkdir -p $$(dirname $@)

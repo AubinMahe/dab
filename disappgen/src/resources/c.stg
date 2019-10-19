@@ -16,6 +16,8 @@ type( field ) ::= <<
   elseif( field.isString  )>char  <
   elseif( field.isEnum    )><field.userType.name; format="cname"><
   elseif( field.isStruct  )><field.userType.name; format="cname"><
+  else>
+#error Field n'est d'aucun type connu : <field>!<
   endif>
 >>
 
@@ -186,25 +188,19 @@ typedef struct <prefix>_<ifaceName; format="cname">_s {
    SOCKET             socket;
    struct sockaddr_in target;
    byte               raw[<rawSize>];
-   io_byte_buffer     out;<
-iface.eventOrRequestOrData:{facet|<
-if( facet.type )>
-
-   <typesPrefix>_<type(facet)> <facet.name; format="cname">;<
-endif>}>
+   io_byte_buffer     out;
 } <prefix>_<ifaceName; format="cname">;
 
 util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"
 > * This, SOCKET socket, struct sockaddr_in * target );
-<iface.eventOrRequestOrData:{facet|
-util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">< if( facet.type )>_publish< endif>( <prefix>_<ifaceName; format="cname"
-    > * This<
+<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">( <prefix>_<ifaceName; format="cname"> * This<
 if( facet.arguments )><
     signature( typesPrefix, facet.arguments.field )><
 else><
     signature( typesPrefix, facet.field )><
 endif> );
-}>
+< endif>}>
 >>
 
 
@@ -303,7 +299,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
 
 
 dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName ) ::= <<
-//dispatcherImplOneInterface -- begin
+// dispatcherImplOneInterface -- begin
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
 <events.(ifaceName):{event|
    <ifaceName; format="ID">_<event.name; format="ID"> = <i>,
@@ -359,17 +355,16 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
    \}
    return UTIL_NO_ERROR;
 }
-//dispatcherImplOneInterface -- end
+// dispatcherImplOneInterface -- end
 >>
 
 
 
 dispatcherImplData() ::= <<
 // dispatcherImplData -- begin
-typedef enum <prefix>_<iface; format="cname">_data_e {
-   <data.(iface):{dataType|<dataType.name; format="ID"> = <i>,
-}>
-} <prefix>_<ifaceName; format="cname">_event;
+typedef enum <prefix>_<iface.name; format="cname">_data_e {
+   <data.(iface):{dataType|<dataType.name; format="ID"> = <eventIDs.(iface.name).(dataType.name)>,
+}>} <prefix>_<iface.name; format="cname">_data;
 
 static util_error <prefix>_<iface.name; format="cname">_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
@@ -380,9 +375,8 @@ static util_error <prefix>_<iface.name; format="cname">_dispatch(
    switch( event ) {
 <data.(iface):{dataType|
    case <dataType.name; format="ID">:{
-      <typesPrefix>_<dataType.name; format="cname"> <dataType.name; format="cname"> = This->listener.<dataType.name; format="cname">;
-      <typesPrefix>_<dataType.name; format="cname">_get( &<dataType.name; format="cname">, &This->in );
-      This->listener.<dataType.name; format="cname">_published();
+      <typesPrefix>_<dataType.name; format="cname">_get( &This->listener-><dataType.name; format="cname">, &This->in );
+      <prefix>_<component.name; format="cname">_<dataType.name; format="cname">_published( This->listener );
       *has_dispatched = true;\}
       break;
 }>   default:
@@ -397,7 +391,7 @@ static util_error <prefix>_<iface.name; format="cname">_dispatch(
 
 
 dispatcherImplementation(
-    typesPrefix, prefix, component, ifaces, events, usedTypes, rawSize, data
+   typesPrefix, prefix, component, ifaces, requires, events, eventIDs, usedTypes, rawSize, data
 ) ::= <<
 //dispatcherImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
@@ -411,15 +405,17 @@ typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 < endif>
 <ifaces.keys:{ifaceName|
    <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
+}><data:{iface|
+   <iface.name; format="ID,width"> = <requires.(iface.name)>,
 }>} <prefix>_<component.name; format="cname">_dispatcher_interface;
 
 <ifaces.keys:{ifaceName|
 <dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName )>
-}><data:{iface|
-
-static const byte <iface.name; format="ID"> = <requires.(iface.name)>;
+}>
+<data:{iface|
 <dispatcherImplData()>
-}>util_error <prefix>_<component.name; format="cname">_dispatcher_init(
+}>
+util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    <prefix>_<component.name; format="cname">_dispatcher * This,
    SOCKET socket,
    <prefix>_<component.name; format="cname"> * listener )
@@ -430,7 +426,9 @@ static const byte <iface.name; format="ID"> = <requires.(iface.name)>;
    This->listener = listener;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->in, <rawSize>, This->raw ));
    return UTIL_NO_ERROR;
-}< if( component.timeout )>
+}
+
+< if( component.timeout )>
 
 static util_error loopback_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
@@ -449,8 +447,8 @@ static util_error loopback_dispatch(
    }
    return UTIL_NO_ERROR;
 }
-
 < endif>
+
 util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
    bool * has_dispatched )
@@ -471,6 +469,8 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
 < endif>
 <ifaces.keys:{ifaceName|
    case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched )); break;
+}><data:{iface|
+   case <iface.name; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<iface.name; format="cname">_dispatch( This, event, has_dispatched )); break;
 }>   default:
       fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
       return UTIL_NOT_APPLICABLE;
@@ -500,7 +500,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
 
 componentInterface(
     typesPrefix, prefix, component, responses, requires, instancesByName,
-    instances, usedTypes, eventsOrRequests, actions, data
+    instances, usedTypes, eventsOrRequests, actions, data, reqData
 ) ::= <<
 #pragma once
 //componentInterface
@@ -508,8 +508,9 @@ componentInterface(
 }>
 <responses.(component.name):{r|#include \<<prefix>/<r.interface.name; format="cname">.h>
 }>
-<data:{iface|#include \<<prefix>/<iface.name; format="cname">_data.h>
-}>< if( component.automaton )
+<reqData:{iface|<reqData.(iface):{data|
+#include \<<typesPrefix>/<data.name; format="cname">.h>
+}>}>< if( component.automaton )
 >#include \<util/automaton.h>
 < endif>
 < if( component.timeout )
@@ -524,9 +525,9 @@ typedef struct <prefix>_<component.name; format="cname">_s {
    SOCKET             socket;
    struct sockaddr_in localAddress;
    bool               running;
-<data:{iface|
-   <prefix>_<iface.name; format="cname">_data <iface.name; format="cname">;
-}>< if( component.automaton )>   util_automaton     automaton;
+<reqData:{iface|<reqData.(iface):{data|
+   <typesPrefix>_<data.name; format="cname"> <data.name; format="cname">;
+}>}>< if( component.automaton )>   util_automaton     automaton;
 < endif><component.timeout:{to|
    util_timeout       <to.name; format="cname">;
 }>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
@@ -535,10 +536,11 @@ typedef struct <prefix>_<component.name; format="cname">_s {
 }>}>   void * user_context;
 } <prefix>_<component.name; format="cname">;
 
-util_error <prefix>_<component.name; format="cname">_init     ( <prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
-util_error <prefix>_<component.name; format="cname">_run      ( <prefix>_<component.name; format="cname"> * This );
-util_error <prefix>_<component.name; format="cname">_terminate( <prefix>_<component.name; format="cname"> * This );
-<eventsOrRequests:{facet|
+util_error <prefix>_<component.name; format="cname">_init( <prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
+util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.name; format="cname"> * This );
+<reqData:{iface|<reqData.(iface):{data|
+util_error <prefix>_<component.name; format="cname">_<data.name; format="cname">_published( <prefix>_<component.name; format="cname"> * This );
+}>}><eventsOrRequests:{facet|
 util_error <prefix>_<component.name; format="cname">_<facet.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
 if( facet.arguments )><
     signature( typesPrefix, facet.arguments.field )>, <ifaceName; format="cname">_<facet.name; format="cname">_response * response<
