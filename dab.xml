@@ -87,8 +87,9 @@
    <component name="Distributeur">
       <offers   interface="IHM" />
       <requires interface="UniteDeTraitement" />
-      <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="dab" />
       <implementation language="C"    src-dir="distributeur-c/src-gen"    module-name="dab" />
+      <implementation language="C++"  src-dir="distributeur-cpp/src-gen"  module-name="dab" />
+      <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="dab" />
    </component>
 
    <component name="Controleur" after-dispatch-needed="true">
@@ -156,7 +157,9 @@
 
    <component name="Banque">
       <offers interface="SiteCentral" />
-      <implementation language="Java" src-dir="sc/src-gen" module-name="sc" />
+      <implementation language="C"    src-dir="sc-c/src-gen"    module-name="sc" />
+      <implementation language="C++"  src-dir="sc-cpp/src-gen"  module-name="sc" />
+      <implementation language="Java" src-dir="sc-java/src-gen" module-name="sc" />
    </component>
 
    <deployment target-dir=".">

@@ -1,5 +1,6 @@
 SRCS =\
  src/io/byte_buffer.c\
+ src/io/console.c\
  src/io/datagram_socket.c\
  src/io/selector.c\
  src/io/sockets.c\

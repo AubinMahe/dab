@@ -1,4 +1,4 @@
-EXEC = udt-c
+EXEC = unite_de_traitement
 NAME = UDT-C
 SRCS = src/main.c
 
@@ -19,30 +19,10 @@ clean:
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 
-../disappgen.jar:
-	cd ../disappgen && ant
-
-generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
-	cd .. && ant generate-all-sources
-
-../util-c/lib/libutil-c.a:
-	cd ../util-c && make
-
-../util-c/lib/libutil-c-mingw32.a:
-	cd ../util-c && make
-
-../dabtypes-c/lib/libdabtypes-c.a:
-	cd ../dabtypes-c && make
-
-../dabtypes-c/lib/libdabtypes-c-mingw32.a:
-	cd ../dabtypes-c && make
-
 ../$(EXEC): ../util-c/lib/libutil-c.a ../dabtypes-c/lib/libdabtypes-c.a $(OBJS)
-	cd ../util-c && make
 	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lpthread -o $@
 
 ../$(EXEC)-mingw32: ../util-c/lib/libutil-c-mingw32.a ../dabtypes-c/lib/libdabtypes-c-mingw32.a $(OBJSW32)
-	cd ../util-c && make
 	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.c

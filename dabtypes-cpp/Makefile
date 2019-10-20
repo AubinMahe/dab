@@ -15,9 +15,6 @@ clean:
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 
-generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
-	cd .. && ant generate-all-sources
-
 lib/libdabtypes-cpp.a: $(OBJS)
 	@mkdir -p $$(dirname $@)
 	ar crv $@ $(OBJS)

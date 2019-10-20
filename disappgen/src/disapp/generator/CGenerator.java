@@ -1,5 +1,6 @@
 package disapp.generator;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +82,7 @@ public class CGenerator extends BaseGenerator {
          final InterfaceType     iface     = (InterfaceType)required.getInterface();
          final String            ifaceName = iface.getName();
          final SortedSet<String> usedTypes = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize   = _model.getBufferInCapacity( component );
+         final int               rawSize   = _model.getBufferOutCapacity( required );
          final ST                tmpl      = _group.getInstanceOf( "/requiredInterface" );
          tmpl.add( "typesPrefix", _moduleNameTypes );
          tmpl.add( "prefix"     , _moduleName );
@@ -98,7 +99,7 @@ public class CGenerator extends BaseGenerator {
          final InterfaceType     iface      = (InterfaceType)required.getInterface();
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferInCapacity( component );
+         final int               rawSize    = _model.getBufferOutCapacity( required );
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
          tmpl.add( "typesPrefix", _moduleNameTypes );
@@ -271,7 +272,10 @@ public class CGenerator extends BaseGenerator {
       generateComponentImplementation ( component );
       generateDataWriters             ( component );
       generateAutomaton               ( component );
-      generateMakefileSourcesList( _generatedFiles, _genDir                  , _moduleName     , ".h", ".c" );
+      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".h", ".c" );
+   }
+
+   public void generateTypesMakefileSourcesList() throws FileNotFoundException {
       generateMakefileSourcesList( _generatedTypes, _genDirTypes + "/src-gen", _moduleNameTypes, ".h", ".c" );
    }
 }

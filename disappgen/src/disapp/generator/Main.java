@@ -27,6 +27,8 @@ public class Main {
             }
          }
       }
+      c  .generateTypesMakefileSourcesList();
+      cpp.generateTypesMakefileSourcesList();
    }
 
    private static void usage() {

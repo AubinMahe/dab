@@ -1,5 +1,6 @@
 package disapp.generator;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -257,7 +258,10 @@ public class CppGenerator extends BaseGenerator {
       generateComponentImplementation ( component );
       generateDataWriter              ( component );
       generateAutomaton               ( component );
-      generateMakefileSourcesList( _generatedFiles, _genDir                  , _moduleName     , ".hpp", ".cpp" );
+      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".hpp", ".cpp" );
+   }
+
+   public void generateTypesMakefileSourcesList() throws FileNotFoundException {
       generateMakefileSourcesList( _generatedTypes, _genDirTypes + "/src-gen", _moduleNameTypes, ".hpp", ".cpp" );
    }
 }

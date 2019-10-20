@@ -24,7 +24,7 @@ import javafx.stage.Stage;
 public class Controller extends Thread implements IIHM, IUniteDeTraitementData, IController {
 
    private Distributeur _component;
-   private Etat         _etat   = Etat.HORS_SERVICE;
+   private Etat         _etat   = Etat.MAINTENANCE;
    private String       _text   = "";
    private String       _saisie = "";
    private double       _dernierMontantSaisi = 0.0;

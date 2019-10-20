@@ -1,6 +1,8 @@
-EXEC = distrib-c
+EXEC = distributeur
 NAME = DAB-C
-SRCS = src/main.c
+SRCS =\
+ src/distributeur_ui.c\
+ src/main.c
 
 -include generated-files.mk
 
@@ -11,8 +13,7 @@ CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVE
 OBJS    = $(SRCS:src/%c=BUILD/%o) $(SRCSGEN:src-gen/%c=BUILD/%o)
 OBJSW32 = $(SRCS:src/%c=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%c=BUILD-mingw32/%o)
 
-all: ../$(EXEC)
-# ../$(EXEC)-mingw32
+all: ../$(EXEC) ../$(EXEC)-mingw32
 
 clean:
 	rm -f  deps
@@ -20,31 +21,13 @@ clean:
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 
-../disappgen.jar:
-	cd ../disappgen && ant
-
-generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
-	cd .. && ant generate-all-sources
-
-../util-c/lib/libutil-c.a:
-	cd ../util-c && make
-
-../util-c/lib/libutil-c-mingw32.a:
-	cd ../util-c && make
-
-../dabtypes-c/lib/libdabtypes-c.a:
-	cd ../dabtypes-c && make
-
-../dabtypes-c/lib/libdabtypes-c-mingw32.a:
-	cd ../dabtypes-c && make
-
 ../$(EXEC): ../util-c/lib/libutil-c.a ../dabtypes-c/lib/libdabtypes-c.a $(OBJS)
 	cd ../util-c && make
-	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lncurses -lpthread -o $@
+	gcc $(OBJS) -L../util-c/lib -lutil-c -L../dabtypes-c/lib -ldabtypes-c -lpthread -o $@
 
 ../$(EXEC)-mingw32: ../util-c/lib/libutil-c-mingw32.a ../dabtypes-c/lib/libdabtypes-c-mingw32.a $(OBJSW32)
 	cd ../util-c && make
-	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lncurses -lws2_32 -o $@
+	i686-w64-mingw32-gcc $(OBJSW32) -L../util-c/lib -lutil-c-mingw32 -L../dabtypes-c/lib -ldabtypes-c-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.c
 	@mkdir -p $$(dirname $@)
@@ -63,18 +46,18 @@ BUILD-mingw32/%.o: src-gen/%.c
 	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
 run-1: ../$(EXEC)
-	xterm -title "$(NAME)-1 C" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=udt1 &
+	xterm -title "$(NAME)-1 C" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=ihm1 &
 
 run-2: ../$(EXEC)
-	xterm -title "$(NAME)-2 C" -geometry 150x30+0+0 -hold -e ../$(EXEC) --name=udt2 &
+	xterm -title "$(NAME)-2 C" -geometry 150x30+0+0 -hold -e ../$(EXEC) --name=ihm2 &
 
 run-win32-1: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-1 C Win32" -geometry 150x30+810-16 -hold -e wine ../$(EXEC)-mingw32 --name=udt1
+	xterm -title "$(NAME)-1 C Win32" -geometry 150x30+810-16 -hold -e wine ../$(EXEC)-mingw32 --name=ihm1
 
 run-win32-2: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-2 C Win32" -geometry 150x30+0+0 -hold -e wine ../$(EXEC)-mingw32 --name=udt2
+	xterm -title "$(NAME)-2 C Win32" -geometry 150x30+0+0 -hold -e wine ../$(EXEC)-mingw32 --name=ihm2
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

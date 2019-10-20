@@ -24,12 +24,9 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 
 ## Les projets :
 
-- **sc** pour **Site Central** : une application IHM en Java qui montre l'état des comptes bancaires et des cartes de crédit
-- **udt** pour **Unité de Traitement** : l'application où est implémentée la logique du système, hors IHM
-     - Une implantation en C
-     - Une implantation en C++
-     - Une implantation en Java
-- **dab** pour **Distributeur Automatique de Billets** : une application IHM en Java qui permet d'en simuler l'usage par un utilisateur final.
+- **sc** pour **Site Central** : une application IHM en C, C++ ou Java qui montre l'état des comptes bancaires et des cartes de crédit
+- **udt** pour **Unité de Traitement** : l'application où est implémentée la logique du système, hors IHM en C, C++ ou Java
+- **dab** pour **Distributeur Automatique de Billets** : une application IHM en C, C++ ou Java qui permet d'en simuler l'usage par un utilisateur final.
 
 ## Construire et exécuter les projets :
 
@@ -45,37 +42,40 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 Se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
 
 **Différents déploiements** exécutables :
-- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en java: `ant run-java`
-- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour GNU/Linux : `ant run-c` 
-- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C pour MinGW/Windows : `ant run-c-win32` 
-- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C++ pour GNU/Linux : `ant run-cpp`
-- Pour exécuter 1 sc en java, 1 dab en java et 1 udt en C++ pour MinGW/Windows : `ant run-cpp-win32`
-- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en java : `ant run-java-2`
-- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C pour GNU/Linux : `ant run-c-2` 
-- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2` 
-- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C++ pour GNU/Linux : `ant run-cpp-2`
-- Pour exécuter 1 sc en java, 2 dab en java et 2 udt en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
+- Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
+- Pour exécuter 1 sc, 1 dab et 1 udt en C pour GNU/Linux : `ant run-c` 
+- Pour exécuter 1 sc, 1 dab et 1 udt en C pour MinGW/Windows : `ant run-c-win32` 
+- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour GNU/Linux : `ant run-cpp`
+- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour MinGW/Windows : `ant run-cpp-win32`
+- Pour exécuter 1 sc, 2 dab et 2 udt en java : `ant run-java-2`
+- Pour exécuter 1 sc, 2 dab et 2 udt en C pour GNU/Linux : `ant run-c-2` 
+- Pour exécuter 1 sc, 2 dab et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2` 
+- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour GNU/Linux : `ant run-cpp-2`
+- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
 
 Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le routage correct des réponses aux requêtes.
+Il est évidemment possible de panacher les langages : un sc en Java, un udt en C, un dab en C++... Les combinaisons sont nombreuses !
 
 **En pas-à-pas**, pour comprendre :
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
 1. Compiler dans l'ordre :
-    1. util-c    : `(cd util-c && make)`, produit également `util-c-win32`
-    1. udt-c     : `(cd udt-c && make)`, produit également `udt-c-win32`
-    1. util-cpp  : `(cd util-cpp && make)`, produit également `util-cpp-win32`
-    1. udt-cpp   : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
-    1. util-java : `(cd util-java && ant)`
-    1. sc        : `(cd sc && ant)`
-    1. dab       : `(cd dab && ant)`
+    1. util-c        : `(cd util-c && make)`, produit également `util-c-win32`
+    1. dabtypes-c    : `(cd dabtypes-c && make)`, produit également `dabtypes-c-win32`
+    1. udt-c         : `(cd udt-c && make)`, produit également `udt-c-win32`
+    1. util-cpp      : `(cd util-cpp && make)`, produit également `util-cpp-win32`
+    1. dabtypes-cpp  : `(cd dabtypes-cpp && make)`, produit également `dabtypes-cpp-win32`
+    1. udt-cpp       : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
+    1. util-java     : `(cd util-java && ant)`
+    1. dabtypes-java : `(cd dabtypes-java && ant)`
+    1. sc-java       : `(cd sc-java && ant)`
+    1. dab           : `(cd distributeur-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée.
 
 ## Reste à faire
 
-1. Faire les IHM en C++ avec [Qt](https://www.qt.io/) et en C avec [ncurses](https://fr.wikipedia.org/wiki/Ncurses) afin de produire tous les rôles dans tous les langages permettrait de valider totalement la génération de code.
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants

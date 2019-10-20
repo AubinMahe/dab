@@ -10,9 +10,7 @@
 
    <target name="clean">
       <delete dir="build" />
-      <delete dir="bin" />
       <delete file="${jar}" />
-      <delete file="compile.log" />
    </target>
 
    <target name="javac">

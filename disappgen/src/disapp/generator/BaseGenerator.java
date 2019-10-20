@@ -187,6 +187,7 @@ abstract class BaseGenerator {
          ps.print( mk.render());
       }
       System.out.printf( "%s written\n", target.getPath());
+      files.clear();
    }
 
    protected void writeType( String filename, ST source ) throws IOException {

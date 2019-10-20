@@ -3,77 +3,42 @@
 
    <property file="application-settings.properties" />
 
-   <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
-   <target name="generate-all-sources" depends="disappgen">
-      <dependset>
-         <srcfilelist
-            dir  ="."
-            files="disappgen.jar" />
-         <targetfileset
-             dir     ="distributeur-java/src-gen"
-             includes="**/*.java" />
-         <targetfileset
-             dir     ="distributeur-c/src-gen"
-             includes="**/*.h, **/*.c" />
-         <targetfileset
-             dir     ="sc/src-gen"
-             includes="**/*.java" />
-         <targetfileset
-             dir     ="udt-c/src-gen"
-             includes="**/*.h, **/*.c" />
-         <targetfileset
-             dir     ="udt-cpp/src-gen"
-             includes="**/*.hpp, **/*.cpp" />
-      </dependset>
-      <java fork="true" classname="disapp.generator.Main">
-         <classpath location="lib/antlr-runtime-3.3.jar" />
-         <classpath location="lib/javax.activation-1.2.0.jar" />
-         <classpath location="lib/javax.activation-api-1.2.0.jar" />
-         <classpath location="lib/jaxb-api-2.3.1.jar" />
-         <classpath location="lib/jaxb-core-2.3.0.jar" />
-         <classpath location="lib/jaxb-impl-2.3.2.jar" />
-         <classpath location="lib/ST4-4.0.4.jar" />
-         <classpath location="disappgen.jar" />
-         <arg value="--model=dab.xml" />
-         <arg value="--deployment=." />
-      </java>
-   </target>
+   <macrodef name="generate-all-sources">
+      <attribute name="target" />
+      <sequential>
+         <dependset>
+            <srcfilelist   dir="@{target}" files="disappgen.jar" />
+            <targetfileset dir="distributeur-c/src-gen"    includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="distributeur-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="distributeur-java/src-gen" includes="**/*.java" />
+            <targetfileset dir="sc-c/src-gen"              includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="sc-cpp/src-gen"            includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="sc-java/src-gen"           includes="**/*.java" />
+            <targetfileset dir="udt-c/src-gen"             includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="udt-cpp/src-gen"           includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="udt-java/src-gen"          includes="**/*.java" />
+         </dependset>
+         <java fork="true" classname="disapp.generator.Main">
+            <classpath location="lib/antlr-runtime-3.3.jar" />
+            <classpath location="lib/javax.activation-1.2.0.jar" />
+            <classpath location="lib/javax.activation-api-1.2.0.jar" />
+            <classpath location="lib/jaxb-api-2.3.1.jar" />
+            <classpath location="lib/jaxb-core-2.3.0.jar" />
+            <classpath location="lib/jaxb-impl-2.3.2.jar" />
+            <classpath location="lib/ST4-4.0.4.jar" />
+            <classpath location="disappgen.jar" />
+            <arg value="--model=dab.xml" />
+            <arg value="--deployment=@{target}" />
+         </java>
+      </sequential>
+   </macrodef>
 
-   <target name="generate-all-sources-for-full-java-one-process" depends="disappgen">
-      <dependset>
-         <srcfilelist
-            dir  ="."
-            files="disappgen.jar" />
-         <targetfileset
-             dir     ="full-java-one-process/distributeur-java/src-gen"
-             includes="**/*.java" />
-         <targetfileset
-             dir     ="full-java-one-process/distributeur-c/src-gen"
-             includes="**/*.h, **/*.c" />
-         <targetfileset
-             dir     ="full-java-one-process/sc/src-gen"
-             includes="**/*.java" />
-         <targetfileset
-             dir     ="full-java-one-process/udt-c/src-gen"
-             includes="**/*.h, **/*.c" />
-         <targetfileset
-             dir     ="full-java-one-process/udt-cpp/src-gen"
-             includes="**/*.hpp, **/*.cpp" />
-      </dependset>
-      <java fork="true" classname="disapp.generator.Main">
-         <classpath location="lib/antlr-runtime-3.3.jar" />
-         <classpath location="lib/javax.activation-1.2.0.jar" />
-         <classpath location="lib/javax.activation-api-1.2.0.jar" />
-         <classpath location="lib/jaxb-api-2.3.1.jar" />
-         <classpath location="lib/jaxb-core-2.3.0.jar" />
-         <classpath location="lib/jaxb-impl-2.3.2.jar" />
-         <classpath location="lib/ST4-4.0.4.jar" />
-         <classpath location="disappgen.jar" />
-         <arg value="--model=dab.xml" />
-         <arg value="--deployment=full-java-one-process" />
-      </java>
-      <delete dir="full-java-one-process/udt-c" />
-      <delete dir="full-java-one-process/udt-cpp" />
+   <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
+   <target name="generate-one-component-per-process" depends="disappgen">
+      <generate-all-sources target="." />
+   </target>
+   <target name="generate-several-components-per-process" depends="disappgen">
+      <generate-all-sources target="alt" />
    </target>
 
    <target name="util-c"           ><exec dir="util-c"           executable="make" output="util-c/compile.log"           failonerror="true" /></target>
@@ -90,7 +55,7 @@
    <target name="util-java"        ><ant dir="util-java"         output="compile.log" /></target>
    <target name="dabtypes-java"    ><ant dir="dabtypes-java"     output="compile.log" /></target>
    <target name="distributeur-java"><ant dir="distributeur-java" output="compile.log" /></target>
-   <target name="sc"               ><ant dir="sc"                output="compile.log" /></target>
+   <target name="sc-java"          ><ant dir="sc-java"           output="compile.log" /></target>
    <target name="udt-java"         ><ant dir="udt-java"          output="compile.log" /></target>
 
    <target name="show-errors">
@@ -106,7 +71,7 @@
    </target>
 
    <target name="all" description="Produit tout en parallèle">
-      <antcall target="generate-all-sources" />
+      <antcall target="generate-one-component-per-process" />
       <echo>
 
          Les fichiers de log de compilations sont nommés compile.log dans leur dossier respectif.
@@ -117,14 +82,18 @@
             <echo message="    -- Compilation C    --" />
             <antcall target="util-c" />
             <antcall target="dabtypes-c" />
-            <antcall target="distributeur-c" />
-            <antcall target="udt-c" />
+            <parallel>
+               <antcall target="distributeur-c" />
+               <antcall target="udt-c" />
+            </parallel>
          </sequential>
          <sequential>
             <echo message="    -- Compilation C++  --" />
             <antcall target="util-cpp" />
             <antcall target="dabtypes-cpp" />
-            <antcall target="udt-cpp" />
+            <parallel>
+               <antcall target="udt-cpp" />
+            </parallel>
          </sequential>
          <sequential>
             <echo message="    -- Compilation Java --" />
@@ -133,7 +102,7 @@
             <parallel>
                <antcall target="distributeur-java" />
                <antcall target="udt-java" />
-               <antcall target="sc" />
+               <antcall target="sc-java" />
             </parallel>
          </sequential>
       </parallel>
@@ -145,79 +114,103 @@
       <antcall target="show-errors" />
    </target>
 
+   <target name="all-debug-build" description="Produit tout en série pour debugger la production">
+      
+      <echo message="    -- Génération des sources C, C++ et Java      --" />
+      <antcall target="generate-one-component-per-process" />
+      
+      <echo message="    -- Compilation C    --" />
+      <antcall target="util-c" />
+      <antcall target="dabtypes-c" />
+      <antcall target="distributeur-c" />
+      <antcall target="udt-c" />
+
+      <echo message="    -- Compilation C++  --" />
+      <antcall target="util-cpp" />
+      <antcall target="dabtypes-cpp" />
+      <antcall target="udt-cpp" />
+
+      <echo message="    -- Compilation Java --" />
+      <antcall target="util-java" />
+      <antcall target="dabtypes-java" />
+      <antcall target="distributeur-java" />
+      <antcall target="udt-java" />
+      <antcall target="sc-java" />
+   </target>
+
    <target name="run-c" depends="util-c,udt-c">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-c"    target="run-1" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-1" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <exec executable="make" dir="distributeur-c"><arg value="run-1" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-1" /></exec>
    </target>
 
    <target name="run-c-win32" depends="util-c,udt-c">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-c"    target="run-win32-1" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-win32-1" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <exec executable="make" dir="distributeur-c"><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-win32-1" /></exec>
    </target>
 
    <target name="run-c-2" depends="util-c,udt-c">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-c"    target="run-1" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-1" /></exec>
-      <ant                    dir="distributeur-c"    target="run-2" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-2" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <exec executable="make" dir="distributeur-c"><arg value="run-1" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-1" /></exec>
+      <exec executable="make" dir="distributeur-c"><arg value="run-2" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-2" /></exec>
    </target>
 
    <target name="run-c-win32-2" depends="util-c,udt-c">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-c"    target="run-win32-1" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-win32-1" /></exec>
-      <ant                    dir="distributeur-c"    target="run-win32-2" />
-      <exec executable="make" dir="udt-c"        ><arg value="run-win32-2" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <exec executable="make" dir="distributeur-c"><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="distributeur-c"><arg value="run-win32-2" /></exec>
+      <exec executable="make" dir="udt-c"         ><arg value="run-win32-2" /></exec>
    </target>
 
    <target name="run-cpp" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-java" target="run-1" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-1" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-1" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-1" /></exec>
    </target>
 
    <target name="run-cpp-win32" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-java" target="run-win32-1" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-win32-1" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-win32-1" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-1" /></exec>
    </target>
 
    <target name="run-cpp-2" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-java" target="run-1" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-1" /></exec>
-      <ant                    dir="distributeur-java" target="run-2" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-2" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-1" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-1" /></exec>
+      <ant                    dir="distributeur-java"  target="run-2" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-2" /></exec>
    </target>
 
    <target name="run-cpp-win32-2" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc"                target="run" />
-      <ant                    dir="distributeur-java" target="run-1" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-win32-1" /></exec>
-      <ant                    dir="distributeur-java" target="run-2" />
-      <exec executable="make" dir="udt-cpp"      ><arg value="run-win32-2" /></exec>
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-1" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-1" /></exec>
+      <ant                    dir="distributeur-java"  target="run-2" />
+      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-2" /></exec>
    </target>
 
    <target name="run-java" depends="util-java,udt-java">
-      <ant                    dir="sc"                target="run"   />
-      <ant                    dir="distributeur-java" target="run-1" />
-      <ant                    dir="udt-java"          target="run-1" />
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-1" />
+      <ant                    dir="udt-java"           target="run-1" />
    </target>
 
    <target name="run-java-2" depends="util-java,udt-java">
-      <ant                    dir="sc"                target="run"   />
-      <ant                    dir="distributeur-java" target="run-1" />
-      <ant                    dir="udt-java"          target="run-1" />
-      <ant                    dir="distributeur-java" target="run-2" />
-      <ant                    dir="udt-java"          target="run-2" />
+      <ant                    dir="sc-java"            target="run" />
+      <ant                    dir="distributeur-java"  target="run-1" />
+      <ant                    dir="udt-java"           target="run-1" />
+      <ant                    dir="distributeur-java"  target="run-2" />
+      <ant                    dir="udt-java"           target="run-2" />
    </target>
 
    <target name="clean">
       <ant  dir="distributeur-java" target="clean" />
-      <ant  dir="sc"                target="clean" />
+      <ant  dir="sc-java"           target="clean" />
       <ant  dir="udt-java"          target="clean" />
       <ant  dir="dabtypes-java"     target="clean" />
       <ant  dir="util-java"         target="clean" />

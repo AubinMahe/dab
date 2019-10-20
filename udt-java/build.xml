@@ -8,23 +8,10 @@
    <target name="clean">
       <delete dir="build" />
       <delete dir="build-tests" />
-      <delete dir="bin" />
-      <delete dir="src-gen" />
       <delete file="${jar}" />
-      <delete file="compile.log" />
    </target>
 
-   <target name="generate-all-sources">
-      <ant dir=".." target="generate-all-sources" />
-   </target>
-   
-   <target name="dabtypes">
-      <ant dir="../dabtypes-java" />
-   </target>
-
-   <target name="javac" depends="generate-all-sources,dabtypes">
-      <ant dir="../util-java"     target="jar" inheritall="false" />
-      <ant dir="../dabtypes-java" target="jar" inheritall="false" />
+   <target name="javac">
       <mkdir dir="build" />
       <javac
          destdir          ="build"

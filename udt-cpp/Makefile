@@ -17,32 +17,10 @@ clean:
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 
-../disappgen.jar:
-	cd ../disappgen && ant
-
-generated-files.mk $(SRCSGEN) $(HEADERSGEN): ../dab.xml ../disappgen.jar
-	cd .. && ant generate-all-sources
-
-../util-cpp/lib/libutil-cpp.a:
-	cd ../util-cpp && make
-
-../util-cpp/lib/libutil-cpp-mingw32.a:
-	cd ../util-cpp && make
-
-../dabtypes-cpp/lib/libdabtypes-cpp.a:
-	cd ../dabtypes-cpp && make
-
-../dabtypes-cpp/lib/libdabtypes-cpp-mingw32.a:
-	cd ../dabtypes-cpp && make
-
 ../UniteDeTraitement: ../util-cpp/lib/libutil-cpp.a ../dabtypes-cpp/lib/libdabtypes-cpp.a $(OBJS)
-	cd ../util-cpp     && make
-	cd ../dabtypes-cpp && make
 	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -L../dabtypes-cpp/lib -ldabtypes-cpp -lpthread -o $@
 
 ../UniteDeTraitement-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a $(OBJSW32)
-	cd ../util-cpp    && make
-	cd ../dabtypes-cpp && make
 	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -L../dabtypes-cpp/lib -ldabtypes-cpp-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.cpp

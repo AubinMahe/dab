@@ -192,7 +192,7 @@ typedef struct <prefix>_<ifaceName; format="cname">_s {
 } <prefix>_<ifaceName; format="cname">;
 
 util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"
-> * This, SOCKET socket, struct sockaddr_in * target );
+> * This, SOCKET socket, const struct sockaddr_in * target );
 <iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
 util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">( <prefix>_<ifaceName; format="cname"> * This<
 if( facet.arguments )><
@@ -220,7 +220,7 @@ enum <prefix>_event_id {
 static const byte <iface.name; format="ID">_ID = <ifaceID>;
 
 util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; format="cname"
-> * This, SOCKET socket, struct sockaddr_in * target ) {
+> * This, SOCKET socket, const struct sockaddr_in * target ) {
    This->socket = socket;
    This->target = *target;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
@@ -516,7 +516,9 @@ componentInterface(
 < if( component.timeout )
 >#include \<util/timeout.h>
 < endif>
-<usedTypes:{used|
+<data:{iface|
+#include \<<prefix>/<iface.name; format="cname">_data.h>
+}><usedTypes:{used|
 #include \<<typesPrefix>/<used; format="cname">.h>
 }>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
@@ -531,7 +533,9 @@ typedef struct <prefix>_<component.name; format="cname">_s {
 < endif><component.timeout:{to|
    util_timeout       <to.name; format="cname">;
 }>   <prefix>_<component.name; format="cname">_dispatcher dispatcher;
-< first(requires):{req|<requires.(req):{rt|
+<data:{iface|
+   <prefix>_<iface.name; format="cname">_data <iface.name; format="cname">;
+}>< first(requires):{req|<requires.(req):{rt|
    <prefix>_<rt.interface.name; format="cname"> <rt.interface.name; format="cname">;
 }>}>   void * user_context;
 } <prefix>_<component.name; format="cname">;
@@ -620,7 +624,9 @@ util_error <prefix>_<component.name; format="cname">_init( <
    }
    < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
       prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ));
-}>}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
+}>}>   <data:{iface|UTIL_ERROR_CHECK( <
+      prefix>_<iface.name; format="cname">_data_init( &This-><iface.name; format="cname">, This->socket, &<iface.name; format="cname"> ));
+}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
 <component.timeout:{to|
    static <prefix>_<component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<to.name; format="cname">;
    timeout_arg_<to.name; format="cname">.dispatcher = &This->dispatcher;
@@ -672,9 +678,11 @@ typedef struct <prefix>_<interface.name; format="cname">_data_s {
 }>
 } <prefix>_<interface.name; format="cname">_data;
 
-util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<interface.name; format="cname">_data * This, SOCKET socket, struct sockaddr_in target );
+util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<
+   interface.name; format="cname">_data * This, SOCKET socket, const struct sockaddr_in * target );
 <data:{dataType|
-util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <prefix>_<interface.name; format="cname">_data * This );
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <
+   prefix>_<interface.name; format="cname">_data * This );
 }>
 >>
 
@@ -690,16 +698,18 @@ static const byte <interface.name; format="ID"> = <ifaceID>;
 <data:{dataType|static const byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
 }>
 
-util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<interface.name; format="cname">_data * This, SOCKET socket, struct sockaddr_in target ) {
+util_error <prefix>_<interface.name; format="cname">_data_init( <
+   prefix>_<interface.name; format="cname">_data * This, SOCKET socket, const struct sockaddr_in * target ) {
    This->socket = socket;
-   This->target = target;
+   This->target = *target;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
    return UTIL_NO_ERROR;
 }
 <data:{dataType|
 
 
-util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <prefix>_<interface.name; format="cname">_data * This ) {
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <
+   prefix>_<interface.name; format="cname">_data * This ) {
    UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->out ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <interface.name; format="ID"> ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <dataType.name; format="ID"> ));
