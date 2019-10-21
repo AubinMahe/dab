@@ -2,6 +2,12 @@ group Java;
 
 
 
+concat(a,b) ::= <<
+<a><b>
+>>
+
+
+
 type( field ) ::= <<
 < if(     field.isBoolean )>boolean<
   elseif( field.isByte    )>byte   <
@@ -154,7 +160,7 @@ public class <struct.name> {
 
 
 
-requiredInterface( typesPackage, package, usedTypes, ifaceName, rawSize, iface ) ::= <<
+requiredInterface( typesPackage, package, ifaceName, iface ) ::= <<
 package <package>;
 // requiredInterface
 
@@ -377,7 +383,8 @@ private boolean dispatch( <iface.name>Data event ) throws IOException {
 
 
 dispatcherImplementation(
-   typesPackage, package, component, offers, requires, events, eventIDs, usedTypes, rawSize, respRawSize, requests, data
+   typesPackage, package, component, offers, requires, events, eventIDs,
+   ifacesIDs, usedTypes, rawSize, respRawSize, requests, data
 ) ::= <<
 package <package>;
 //dispatcherImplementation
@@ -392,7 +399,11 @@ public class <component.name>Dispatcher {
 
    < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
 < endif>
-   <offers.keys:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
+<offers.keys:{ifaceName|
+   private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
+   < if( requests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
+      ifacesIDs.( concat( ifaceName, "Responses" ))>;
+< endif>
 }><offers.keys:{ifaceName|
    <dispatcherImplOneInterface()>
 }><data:{iface|
@@ -465,7 +476,8 @@ public class <component.name>Dispatcher {
       switch( intrfc ) {
 < if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
 < endif><offers.keys:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">: return dispatch( < if( requests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
+      case INTRFC_<ifaceName; format="ID">: return dispatch( <
+         if( requests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
 }><data:{iface|
       case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ));
 }>      }
@@ -477,8 +489,8 @@ public class <component.name>Dispatcher {
 
 
 componentImplementation(
-    typesPackage, package, component, responses, requires, dataWriter, instancesByName,
-    instances, actions, data, reqData, processes, dataConsumer
+    typesPackage, package, component, requires, dataWriter, instancesByName,
+    instances, actions, data, reqData, processes, dataConsumer, responses
 ) ::= <<
 package <package>;
 //componentImplementation
@@ -496,7 +508,7 @@ import util.Timeout;
 
 public abstract class <component.name>Component implements Runnable<
 component.offers:          {o|, I<o.interface.name>}><
-responses.(component.name):{r|, I<r.interface.name>}><
+responses:{ifaceName|, I<ifaceName>}><
 reqData:{iface|, I<iface.name>Data}> {
 
 <component.timeout:{to|

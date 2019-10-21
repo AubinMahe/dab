@@ -17,6 +17,7 @@ import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.ProcessType;
+import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
@@ -77,7 +78,7 @@ public class CppGenerator extends BaseGenerator {
          final InterfaceType     iface      = (InterfaceType)required.getInterface();
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferOutCapacity( required );
+         final int               rawSize    = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
          tmpl.add( "typesNamespace", _moduleNameTypes );
@@ -96,15 +97,16 @@ public class CppGenerator extends BaseGenerator {
          final InterfaceType     iface      = (InterfaceType)required.getInterface();
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferOutCapacity( required );
+         final int               rawSize    = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
-         tmpl.add( "namespace", _moduleName  );
-         tmpl.add( "usedTypes", usedTypes );
-         tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "rawSize"  , rawSize   );
-         tmpl.add( "iface"    , iface     );
-         tmpl.add( "ifaceID"  , ifaceID   );
+         tmpl.add( "typesNamespace", _moduleNameTypes );
+         tmpl.add( "namespace"     , _moduleName  );
+         tmpl.add( "usedTypes"     , usedTypes );
+         tmpl.add( "ifaceName"     , ifaceName );
+         tmpl.add( "rawSize"       , rawSize );
+         tmpl.add( "iface"         , iface );
+         tmpl.add( "ifaceID"       , ifaceID );
          setRendererFieldsMaxWidth( iface );
          write( ifaceName + ".cpp", tmpl );
       }
@@ -128,31 +130,48 @@ public class CppGenerator extends BaseGenerator {
 
    private void generateDispatcherInterface( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType> ifaces       = component.getOffers();
-      final Map<String, Integer>            interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>               interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>               ifacesIDs    = _model.getInterfacesID();
+      final Map<String, Byte>               required     = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
       final int                             rawSize      = _model.getBufferInCapacity( component );
+      final int                             respRawSize  = _model.getBufferResponseCapacity( events );
+      final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
+      final Map<String, List<RequestType>>     requests     = Model.getRequestMap( events );
       final ST                              tmpl         = _group.getInstanceOf( "/dispatcherInterface" );
-      tmpl.add( "namespace", _moduleName );
-      tmpl.add( "component", component );
-      tmpl.add( "ifaces"   , interfaceIDs );
-      tmpl.add( "events"   , events );
-      tmpl.add( "rawSize"  , rawSize );
+      tmpl.add( "namespace"  , _moduleName );
+      tmpl.add( "component"  , component );
+      tmpl.add( "ifaces"     , interfaceIDs );
+      tmpl.add( "ifacesIDs"  , ifacesIDs );
+      tmpl.add( "requires"   , required );
+      tmpl.add( "events"     , events );
+      tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "hasResponse", respRawSize > 0 );
+      tmpl.add( "respRawSize", respRawSize );
+      tmpl.add( "data"       , data );
+      tmpl.add( "requests"   , requests );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( component.getName() + "Dispatcher.hpp", tmpl );
    }
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType> ifaces       = component.getOffers();
-      final Map<String, Integer>            interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>               interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
       final Map<String, List<Object>>       events       = _model.getOfferedEventsOrRequests( component );
+      final Map<String, Map<String, Byte>>  eventIDs     = _model.getEventIDs();
       final SortedSet<String>               usedTypes    = _model.getUsedTypesBy( ifaces );
+      final Map<String, List<RequestType>>  requests     = Model.getRequestMap( events );
+      final int                             respRawSize  = _model.getBufferResponseCapacity( events );
       final ST                              tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "typesNamespace", _moduleNameTypes );
       tmpl.add( "namespace"     , _moduleName );
       tmpl.add( "component"     , component );
       tmpl.add( "ifaces"        , interfaceIDs );
       tmpl.add( "events"        , events );
+      tmpl.add( "eventIDs"      , eventIDs );
       tmpl.add( "usedTypes"     , usedTypes );
+      tmpl.add( "requests"      , requests );
+      tmpl.add( "hasResponse"   , respRawSize > 0 );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( component.getName() + "Dispatcher.cpp", tmpl );
    }

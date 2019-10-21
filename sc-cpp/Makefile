@@ -1,5 +1,5 @@
-EXEC = UniteDeTraitement
-NAME = UDT
+EXEC = SiteCentral
+NAME = Site-Central
 SRCS = src/main.cpp
 
 -include generated-files.mk

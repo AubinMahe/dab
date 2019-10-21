@@ -52,6 +52,7 @@ final class Model {
    private final Map<String, List<Object>>              _facetsByName      = new LinkedHashMap<>();
    private final Map<String, Map<String, InstanceType>> _instancesByName   = new LinkedHashMap<>();
    private final Map<InstanceType, ProcessType>         _processByInstance = new LinkedHashMap<>();
+   private final Map<String, Byte>                      _interfacesID      = new LinkedHashMap<>();
    private final Map<String, Map<String, Byte>>         _eventIDs          = new LinkedHashMap<>();
    private final Map<ComponentType, Set<String>>        _actions           = new LinkedHashMap<>();
    private final Map<ComponentType,
@@ -66,13 +67,13 @@ final class Model {
    private final long                                   _lastModified;
 
    Model( File source, boolean force ) throws JAXBException {
-      final JAXBContext             jaxbContext  = JAXBContext.newInstance( "disapp.generator.model" );
-      final Unmarshaller            unmarshaller = jaxbContext.createUnmarshaller();
+      final JAXBContext jaxbContext = JAXBContext.newInstance( "disapp.generator.model" );
+      final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
       @SuppressWarnings("unchecked")
       final JAXBElement<DisappType> elt = (JAXBElement<DisappType>)unmarshaller.unmarshal( source );
-      _source      = source;
-      _force       = force;
-      _application = elt.getValue();
+      _source       = source;
+      _force        = force;
+      _application  = elt.getValue();
       _lastModified = _source.lastModified();
       final Set<InterfaceType> responseSet = new LinkedHashSet<>();
       for( final InterfaceType iface : _application.getInterface()) {
@@ -96,24 +97,6 @@ final class Model {
                struct.setName( ifaceName + BaseRenderer.cap( request.getName()) + RESPONSES_STRUCT_SUFFIX );
                struct.getField().addAll( request.getResponse().getField());
                _application.getTypes().getStruct().add( struct );
-               for( final ComponentType component : _application.getComponent()) {
-                  for( final RequiredInterfaceUsageType ifaceUsage : component.getRequires()) {
-                     final InterfaceType ifaceUsed = (InterfaceType)ifaceUsage.getInterface();
-                     if( ifaceUsed == iface ) {
-                        final OfferedInterfaceUsageType offered = new OfferedInterfaceUsageType();
-                        offered.setInterface( responses );
-                        component.getOffers().add( offered );
-                     }
-                  }
-                  for( final OfferedInterfaceUsageType ifaceUsage : component.getOffers()) {
-                     final InterfaceType ifaceUsed = (InterfaceType)ifaceUsage.getInterface();
-                     if( ifaceUsed == iface ) {
-                        final RequiredInterfaceUsageType required = new RequiredInterfaceUsageType();
-                        required.setInterface( responses );
-                        component.getRequires().add( required );
-                     }
-                  }
-               }
             }
          }
       }
@@ -212,6 +195,10 @@ final class Model {
          if( ! allData.isEmpty()) {
             _requiredData.put( component, allData );
          }
+      }
+      byte ifaceID = 0;
+      for( final String name : _interfaces.keySet()) {
+         _interfacesID.put( name, ++ifaceID );
       }
    }
 
@@ -422,19 +409,20 @@ final class Model {
       return _interfaces.get( name );
    }
 
-   int getInterfaceID( String ifaceName ) {
-      int ifaceID = 1;
-      for( final String name : _interfaces.keySet()) {
-         if( name.equals( ifaceName )) {
-            return ifaceID;
-         }
-         ++ifaceID;
-      }
-      throw new IllegalStateException( ifaceName + " isn't an interface" );
+   Map<String, Byte> getInterfacesID() {
+      return _interfacesID;
    }
 
-   Map<String, Integer> getRequiredInterfaceIDs( List<RequiredInterfaceUsageType> requires ) {
-      final Map<String, Integer> ifaces = new LinkedHashMap<>();
+   byte getInterfaceID( String ifaceName ) {
+      final Byte id = _interfacesID.get( ifaceName );
+      if( id == null ) {
+         throw new IllegalStateException( ifaceName + " isn't an interface" );
+      }
+      return id.byteValue();
+   }
+
+   Map<String, Byte> getRequiredInterfaceIDs( List<RequiredInterfaceUsageType> requires ) {
+      final Map<String, Byte> ifaces = new LinkedHashMap<>();
       for( final RequiredInterfaceUsageType ifaceUsage : requires ) {
          final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
          final String        ifaceName = iface.getName();
@@ -443,17 +431,12 @@ final class Model {
       return ifaces;
    }
 
-   Map<String, Integer> getOfferedInterfaceIDs( List<OfferedInterfaceUsageType> offers ) {
-      final Map<String, Integer> ifaces = new LinkedHashMap<>();
+   Map<String, Byte> getOfferedInterfaceIDs( List<OfferedInterfaceUsageType> offers ) {
+      final Map<String, Byte> ifaces = new LinkedHashMap<>();
       for( final OfferedInterfaceUsageType ifaceUsage : offers ) {
          final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
          final String        ifaceName = iface.getName();
          ifaces.put( ifaceName, getInterfaceID( ifaceName ));
-         for( final Object facet : iface.getEventOrRequestOrData()) {
-            if( facet instanceof RequestType ) {
-               ifaces.put( ifaceName + RESPONSES_INTERFACE_SUFFIX, getInterfaceID( ifaceName + RESPONSES_INTERFACE_SUFFIX ));
-            }
-         }
       }
       return ifaces;
    }
@@ -613,10 +596,9 @@ final class Model {
       return capacity;
    }
 
-   public int getBufferOutCapacity( RequiredInterfaceUsageType required ) {
+   public int getBufferOutCapacity( InterfaceType required ) {
       int capacity = 0;
-      final InterfaceType iface     = (InterfaceType)required.getInterface();
-      final String        ifaceName = iface.getName();
+      final String        ifaceName = required.getName();
       final List<Object> facets    = _facetsByName.get( ifaceName );
       for( final Object facet : facets ) {
          if( facet instanceof EventType ) {
@@ -666,6 +648,23 @@ final class Model {
          }
       }
       return instances;
+   }
+
+   static Set<String> getReponses( ComponentType component ) {
+      final Set<String> retVal = new LinkedHashSet<>();
+      for( final RequiredInterfaceUsageType riut : component.getRequires()) {
+         final InterfaceType req = (InterfaceType)riut.getInterface();
+         for( final Object facet : req.getEventOrRequestOrData()) {
+            if( facet instanceof RequestType ) {
+               final RequestType rt = (RequestType)facet;
+               if( rt.getResponse() != null ) {
+                  retVal.add( req.getName() + RESPONSES_INTERFACE_SUFFIX );
+                  break;
+               }
+            }
+         }
+      }
+      return retVal;
    }
 
    Map<String, List<RequiresType>> getRequiredInstancesOf( String deployment, ComponentType component ) {

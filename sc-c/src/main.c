@@ -1,5 +1,5 @@
-#include <dab/distributeur.h>
-#include <dab/distributeur_ui.h>
+#include <sc/repository.h>
+#include <sc/banque_ui.h>
 
 #include <dabtypes/evenement.h>
 
@@ -12,45 +12,36 @@
 #include <stdlib.h>
 #include <string.h>
 
-util_error dab_distributeur_etat_du_dab_published( dab_distributeur * This ) {
+util_error sc_banque_get_informations( sc_banque * This, const char * carte_id, dabtypes_site_central_get_informations_response * response ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->etat_du_dab_published = true;
+   UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &response->carte  ));
+   UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &response->compte ));
    return UTIL_NO_ERROR;
 }
 
-util_error dab_distributeur_ejecter_la_carte( dab_distributeur * This ) {
+util_error sc_banque_incr_nb_essais( sc_banque * This, const char * carte_id ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Ejecter la carte";
+   dabtypes_carte carte;
+   UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &carte ));
+   ++carte.nb_essais;
+   bl->refresh_needed = true;
    return UTIL_NO_ERROR;
 }
 
-util_error dab_distributeur_ejecter_les_billets( dab_distributeur * This, double montant ) {
+util_error sc_banque_retrait( sc_banque * This, const char * carte_id, double montant ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action  = "Ejecter les billets";
-   bl->montant = montant;
+   dabtypes_compte compte;
+   UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &compte ));
+   compte.solde -= montant;
+   bl->refresh_needed = true;
    return UTIL_NO_ERROR;
 }
 
-util_error dab_distributeur_confisquer_la_carte( dab_distributeur * This ) {
+util_error sc_banque_shutdown( sc_banque * This ) {
    fprintf( stderr, "%s\n", __func__ );
-   business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Confisquer la carte";
-   return UTIL_NO_ERROR;
-}
-
-util_error dab_distributeur_placer_les_billets_dans_la_corbeille( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
-   business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Placer les billets dans la corbeille";
-   return UTIL_NO_ERROR;
-}
-
-util_error dab_distributeur_shutdown( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
-   This->running = false;
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->shutdown = true;
    return UTIL_NO_ERROR;
@@ -62,14 +53,14 @@ static int usage( const char * exename ) {
 }
 
 typedef struct background_thread_context_s {
-   dab_distributeur distributeur;
-   util_error       err;
+   sc_banque  banque;
+   util_error err;
 } background_thread_context;
 
 static void * background_thread_routine( void * ctxt ) {
    background_thread_context * context = (background_thread_context *)ctxt;
-   fprintf( stderr, "dab_distributeur_run\n" );
-   context->err = dab_distributeur_run( &context->distributeur );
+   fprintf( stderr, "sc_banque_run\n" );
+   context->err = sc_banque_run( &context->banque );
    return NULL;
 }
 
@@ -84,15 +75,15 @@ int main( int argc, char * argv[] ) {
    io_winsock_init();
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
+   sc_repository_init( &d.repository );
    background_thread_context context;
-   fprintf( stderr, "dab_distributeur_init\n" );
-   context.err = dab_distributeur_init( &context.distributeur, name, &d );
-   context.distributeur.etat_du_dab.etat = DABTYPES_ETAT_MAINTENANCE;
+   fprintf( stderr, "sc_banque_init\n" );
+   context.err = sc_banque_init( &context.banque, name, &d );
    if( UTIL_NO_ERROR == context.err ) {
       os_thread thread;
       context.err = os_thread_create( &thread, background_thread_routine, &context );
       if( context.err == UTIL_NO_ERROR ) {
-         dab_distributeur_create_ui( &context.distributeur );
+//         sc_banque_create_ui( &context.banque );
       }
       else {
          OS_ERROR_PRINT( "os_thread_create", 6 );
@@ -105,7 +96,7 @@ int main( int argc, char * argv[] ) {
    else if( UTIL_NO_ERROR != context.err ) {
       fprintf( stderr, "%s\n", util_error_messages[context.err] );
    }
-   dab_distributeur_shutdown( &context.distributeur );
+   sc_banque_shutdown( &context.banque );
    fprintf( stderr, "end of main\n" );
    return 0;
 }

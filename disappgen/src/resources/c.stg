@@ -2,6 +2,12 @@ group C;
 
 
 
+concat(a,b) ::= <<
+<a><b>
+>>
+
+
+
 type( field ) ::= <<
 < if(     field.isBoolean )>bool  <
   elseif( field.isByte    )>byte  <
@@ -255,7 +261,7 @@ endif> ) {
 
 
 
-dispatcherInterface( prefix, component, rawSize ) ::= <<
+dispatcherInterface( prefix, component, rawSize, hasResponse, respRawSize ) ::= <<
 #pragma once
 //dispatcherInterface
 #include \<io/byte_buffer.h>
@@ -266,8 +272,12 @@ typedef struct <prefix>_<component.name; format="cname">_s <prefix>_<component.n
 
 typedef struct <prefix>_<component.name; format="cname">_dispatcher_s {
    SOCKET         socket;
-   byte           raw[<rawSize>];
+   byte           in_raw [<rawSize>];
    io_byte_buffer in;
+< if( hasResponse )>
+   byte           out_raw[<respRawSize>];
+   io_byte_buffer out;
+< endif>
    <prefix>_<component.name; format="cname"> * listener;
 } <prefix>_<component.name; format="cname">_dispatcher;
 
@@ -298,57 +308,87 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
 
 
 
+byteBufferGet( fields ) ::= <<
+<fields:{field|
+<     if( field.isBoolean )>bool <field.name; format="cname">;
+< elseif( field.isByte    )>byte <field.name; format="cname">;
+< elseif( field.isShort   )>short <field.name; format="cname">;
+< elseif( field.isUshort  )>ushort <field.name; format="cname">;
+< elseif( field.isInt     )>int <field.name; format="cname">;
+< elseif( field.isUint    )>uint <field.name; format="cname">;
+< elseif( field.isLong    )>long <field.name; format="cname">;
+< elseif( field.isUlong   )>ulong <field.name; format="cname">;
+< elseif( field.isFloat   )>float <field.name; format="cname">;
+< elseif( field.isDouble  )>double <field.name; format="cname">;
+< elseif( field.isString  )>char <field.name; format="cname">[ <field.length> + 1 ];
+< elseif( field.isEnum    )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+< elseif( field.isStruct  )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+< endif>
+<     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));
+< elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
+< elseif( field.isStruct  )>UTIL_ERROR_CHECK( <typesPrefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
+< endif>
+}>
+>>
+
+
+
 dispatcherImplOneInterface( typesPrefix, prefix, component, ifaceName ) ::= <<
 // dispatcherImplOneInterface -- begin
 typedef enum <prefix>_<ifaceName; format="cname">_event_e {
-<events.(ifaceName):{event|
-   <ifaceName; format="ID">_<event.name; format="ID"> = <i>,
-}>\} <prefix>_<ifaceName; format="cname">_event;
+<events.(ifaceName):{facet|
+   <ifaceName; format="ID">_<facet.name; format="ID"> = <i>,
+}>\}
+<prefix>_<ifaceName; format="cname">_event;
 
+<events.(ifaceName):{facet|< if( facet.response )>
+static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
+< endif>}>
 static util_error <prefix>_<ifaceName; format="cname">_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
+   < if( requests.(ifaceName))>struct sockaddr_in * from,< endif>
    <prefix>_<ifaceName; format="cname">_event event,
    bool * has_dispatched )
 {
    *has_dispatched = false;
    switch( event ) {
-<events.(ifaceName):{event|< if( event.type )>< else>
-   case <ifaceName; format="ID">_<event.name; format="ID">:{
-<event.field:{field|
-      <     if( field.isBoolean )>bool <field.name; format="cname">;
-      < elseif( field.isByte    )>byte <field.name; format="cname">;
-      < elseif( field.isShort   )>short <field.name; format="cname">;
-      < elseif( field.isUshort  )>ushort <field.name; format="cname">;
-      < elseif( field.isInt     )>int <field.name; format="cname">;
-      < elseif( field.isUint    )>uint <field.name; format="cname">;
-      < elseif( field.isLong    )>long <field.name; format="cname">;
-      < elseif( field.isUlong   )>ulong <field.name; format="cname">;
-      < elseif( field.isFloat   )>float <field.name; format="cname">;
-      < elseif( field.isDouble  )>double <field.name; format="cname">;
-      < elseif( field.isString  )>char <field.name; format="cname">[ <field.length> + 1 ];
-      < elseif( field.isEnum    )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
-      < elseif( field.isStruct  )><typesPrefix>_<field.userType.name; format="cname"> <field.name; format="cname">;
+<events.(ifaceName):{facet|< if( facet.type )>< else>
+   case <ifaceName; format="ID">_<facet.name; format="ID">:{
+      < if( facet.arguments )><facet.arguments.field:{field|<
+         byteBufferGet( field )>}>< 
+      elseif( facet.field )><facet.field:{field|<
+         byteBufferGet( field )>}><
+      endif><
+      if( facet.response )
+>      <typesPrefix>_<ifaceName; format="cname">_<facet.name; format="cname">_response response;
+      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<
+         facet.name; format="cname">( This->listener<args( facet.arguments.field )>, &response ));
+      UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ));
+      UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <ifaceName; format="ID">_RESPONSES ));
+      UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> ));
+      UTIL_ERROR_CHECK( <typesPrefix>_<ifaceName; format="cname">_<facet.name; format="cname">_response_put( &response, &This->out ));
+      UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
+      UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, from ));
+      fprintf( stderr, "%s|response sent to %s\n", __func__, inet_ntoa( from->sin_addr ));
+      < else
+>      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<
+          facet.name; format="cname">( This->listener<args( facet.field )> ));
       < endif>
-      <     if( field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_get_bool  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isShort   )>UTIL_ERROR_CHECK( io_byte_buffer_get_short ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isUshort  )>UTIL_ERROR_CHECK( io_byte_buffer_get_ushort( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isInt     )>UTIL_ERROR_CHECK( io_byte_buffer_get_int   ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isUint    )>UTIL_ERROR_CHECK( io_byte_buffer_get_uint  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isLong    )>UTIL_ERROR_CHECK( io_byte_buffer_get_long  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isUlong   )>UTIL_ERROR_CHECK( io_byte_buffer_get_ulong ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_get_float ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_get_double( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_get_string( &This->in, <field.name; format="cname">, sizeof( <field.name; format="cname"> )));
-      < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_get_byte  ( &This->in, &<field.name; format="cname"> ));
-      < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <typesPrefix>_<field.userType.name; format="cname">_get( &<field.name; format="cname">, &This->in ));
-      < endif>
-}>      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<event.name; format="cname">( This->listener<args( event.field )> ));
       *has_dispatched = true;
       break;
    \}
 < endif>}>   default:
-      fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher|Ignored message:\n" );
+      fprintf( stderr, "%s|Ignored message:\n", __func__ );
       fprintf( stderr, "\tinterface = <ifaceName>\n" );
       fprintf( stderr, "\tevent     = %d\n", event );
       break;
@@ -391,7 +431,8 @@ static util_error <prefix>_<iface.name; format="cname">_dispatch(
 
 
 dispatcherImplementation(
-   typesPrefix, prefix, component, ifaces, requires, events, eventIDs, usedTypes, rawSize, data
+   typesPrefix, prefix, component, ifaces, ifacesIDs, requires, events, eventIDs,
+   usedTypes, rawSize, hasResponse, respRawSize, data, requests
 ) ::= <<
 //dispatcherImplementation
 #include \<<prefix>/<component.name; format="cname">.h>
@@ -405,6 +446,9 @@ typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 < endif>
 <ifaces.keys:{ifaceName|
    <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
+< if( requests.(ifaceName))>
+   <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
+< endif>
 }><data:{iface|
    <iface.name; format="ID,width"> = <requires.(iface.name)>,
 }>} <prefix>_<component.name; format="cname">_dispatcher_interface;
@@ -424,7 +468,10 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    UTIL_ASSERT( socket > 0 );
    This->socket   = socket;
    This->listener = listener;
-   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->in, <rawSize>, This->raw ));
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->in , <rawSize>, This->in_raw ));
+< if( hasResponse )>
+   UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <respRawSize>, This->out_raw ));
+< endif>
    return UTIL_NO_ERROR;
 }
 
@@ -468,7 +515,10 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    case LOOPBACK: UTIL_ERROR_CHECK( loopback_dispatch( This, event, has_dispatched )); break;
 < endif>
 <ifaces.keys:{ifaceName|
-   case <ifaceName; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched )); break;
+   case <ifaceName; format="ID,width">: < if( requests.(ifaceName))
+   >UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, &from, event, has_dispatched )); break;< else
+   >UTIL_ERROR_CHECK( <prefix>_<ifaceName; format="cname">_dispatch( This, event, has_dispatched )); break;
+< endif>
 }><data:{iface|
    case <iface.name; format="ID,width">: UTIL_ERROR_CHECK( <prefix>_<iface.name; format="cname">_dispatch( This, event, has_dispatched )); break;
 }>   default:
@@ -540,22 +590,29 @@ typedef struct <prefix>_<component.name; format="cname">_s {
 }>}>   void * user_context;
 } <prefix>_<component.name; format="cname">;
 
-util_error <prefix>_<component.name; format="cname">_init( <prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
+util_error <prefix>_<component.name; format="cname">_init( <
+   prefix>_<component.name; format="cname"> * This, const char * name, void * user_context );
 util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.name; format="cname"> * This );
 <reqData:{iface|<reqData.(iface):{data|
-util_error <prefix>_<component.name; format="cname">_<data.name; format="cname">_published( <prefix>_<component.name; format="cname"> * This );
-}>}><eventsOrRequests:{facet|
-util_error <prefix>_<component.name; format="cname">_<facet.name; format="cname">( <prefix>_<component.name; format="cname"> * This<
+util_error <prefix>_<component.name; format="cname">_<data.name; format="cname">_published( <
+   prefix>_<component.name; format="cname"> * This );
+}>}><eventsOrRequests:{ifaceName|<eventsOrRequests.(ifaceName):{facet|
+util_error <prefix>_<component.name; format="cname">_<facet.name; format="cname">( <
+   prefix>_<component.name; format="cname"> * This<
 if( facet.arguments )><
-    signature( typesPrefix, facet.arguments.field )>, <ifaceName; format="cname">_<facet.name; format="cname">_response * response<
+   signature( typesPrefix, facet.arguments.field )>, <
+      typesPrefix>_<ifaceName; format="cname">_<facet.name; format="cname">_response * response<
 else><
-    signature( typesPrefix, facet.field )><
+   signature( typesPrefix, facet.field )><
 endif> );
-}>< if( component.afterDispatchNeeded )>util_error <prefix>_<component.name; format="cname">_after_dispatch( <prefix>_<component.name; format="cname"> * This );
+}>}>< if( component.afterDispatchNeeded )>util_error <prefix>_<component.name; format="cname">_after_dispatch( <
+   prefix>_<component.name; format="cname"> * This );
 < endif><actions:{action|
-util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <prefix>_<component.name; format="cname"> * This );
+util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <
+   prefix>_<component.name; format="cname"> * This );
 }><component.timeout:{to|
-util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( <prefix>_<component.name; format="cname"> * This );
+util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( <
+   prefix>_<component.name; format="cname"> * This );
 }>
 >>
 

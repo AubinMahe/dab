@@ -44,18 +44,21 @@
    <target name="util-c"           ><exec dir="util-c"           executable="make" output="util-c/compile.log"           failonerror="true" /></target>
    <target name="dabtypes-c"       ><exec dir="dabtypes-c"       executable="make" output="dabtypes-c/compile.log"       failonerror="true" /></target>
    <target name="distributeur-c"   ><exec dir="distributeur-c"   executable="make" output="distributeur-c/compile.log"   failonerror="true" /></target>
+   <target name="site-central-c"   ><exec dir="sc-c"             executable="make" output="sc-c/compile.log"             failonerror="true" /></target>
    <target name="udt-c"            ><exec dir="udt-c"            executable="make" output="udt-c/compile.log"            failonerror="true" /></target>
    <target name="util-c-tests"     ><exec dir="util-c/tests"     executable="make"                                       failonerror="true" /></target>
                                                             
    <target name="util-cpp"         ><exec dir="util-cpp"         executable="make" output="util-cpp/compile.log"         failonerror="true" /></target>
    <target name="dabtypes-cpp"     ><exec dir="dabtypes-cpp"     executable="make" output="dabtypes-cpp/compile.log"     failonerror="true" /></target>
+   <target name="distributeur-cpp" ><exec dir="distributeur-c"   executable="make" output="distributeur-c/compile.log"   failonerror="true" /></target>
+   <target name="site-central-cpp" ><exec dir="sc-cpp"           executable="make" output="sc-cpp/compile.log"           failonerror="true" /></target>
    <target name="udt-cpp"          ><exec dir="udt-cpp"          executable="make" output="udt-cpp/compile.log"          failonerror="true" /></target>
    <target name="util-cpp-tests"   ><exec dir="util-cpp/tests"   executable="make"                                       failonerror="true" /></target>
 
    <target name="util-java"        ><ant dir="util-java"         output="compile.log" /></target>
    <target name="dabtypes-java"    ><ant dir="dabtypes-java"     output="compile.log" /></target>
    <target name="distributeur-java"><ant dir="distributeur-java" output="compile.log" /></target>
-   <target name="sc-java"          ><ant dir="sc-java"           output="compile.log" /></target>
+   <target name="site-central-java"><ant dir="sc-java"           output="compile.log" /></target>
    <target name="udt-java"         ><ant dir="udt-java"          output="compile.log" /></target>
 
    <target name="show-errors">
@@ -84,6 +87,7 @@
             <antcall target="dabtypes-c" />
             <parallel>
                <antcall target="distributeur-c" />
+               <antcall target="site-central-c" />
                <antcall target="udt-c" />
             </parallel>
          </sequential>
@@ -92,6 +96,8 @@
             <antcall target="util-cpp" />
             <antcall target="dabtypes-cpp" />
             <parallel>
+               <antcall target="distributeur-cpp" />
+               <antcall target="site-central-cpp" />
                <antcall target="udt-cpp" />
             </parallel>
          </sequential>
@@ -101,8 +107,8 @@
             <antcall target="dabtypes-java" />
             <parallel>
                <antcall target="distributeur-java" />
+               <antcall target="site-central-java" />
                <antcall target="udt-java" />
-               <antcall target="sc-java" />
             </parallel>
          </sequential>
       </parallel>
@@ -123,89 +129,92 @@
       <antcall target="util-c" />
       <antcall target="dabtypes-c" />
       <antcall target="distributeur-c" />
+      <antcall target="site-central-c" />
       <antcall target="udt-c" />
 
       <echo message="    -- Compilation C++  --" />
       <antcall target="util-cpp" />
       <antcall target="dabtypes-cpp" />
+      <antcall target="distributeur-cpp" />
+      <antcall target="site-central-cpp" />
       <antcall target="udt-cpp" />
 
       <echo message="    -- Compilation Java --" />
       <antcall target="util-java" />
       <antcall target="dabtypes-java" />
       <antcall target="distributeur-java" />
+      <antcall target="site-central-java" />
       <antcall target="udt-java" />
-      <antcall target="sc-java" />
    </target>
 
    <target name="run-c" depends="util-c,udt-c">
-      <ant                    dir="sc-java"            target="run" />
-      <exec executable="make" dir="distributeur-c"><arg value="run-1" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-1" /></exec>
+      <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-1"       /></exec>
    </target>
 
    <target name="run-c-win32" depends="util-c,udt-c">
-      <ant                    dir="sc-java"            target="run" />
-      <exec executable="make" dir="distributeur-c"><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="sc-c"            ><arg value="run-win32"   /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-win32-1" /></exec>
    </target>
 
    <target name="run-c-2" depends="util-c,udt-c">
-      <ant                    dir="sc-java"            target="run" />
-      <exec executable="make" dir="distributeur-c"><arg value="run-1" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-1" /></exec>
-      <exec executable="make" dir="distributeur-c"><arg value="run-2" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-2" /></exec>
+      <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-1"       /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-2"       /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-2"       /></exec>
    </target>
 
    <target name="run-c-win32-2" depends="util-c,udt-c">
-      <ant                    dir="sc-java"            target="run" />
-      <exec executable="make" dir="distributeur-c"><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="distributeur-c"><arg value="run-win32-2" /></exec>
-      <exec executable="make" dir="udt-c"         ><arg value="run-win32-2" /></exec>
+      <exec executable="make" dir="sc-c"            ><arg value="run-win32"   /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-2" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-win32-2" /></exec>
    </target>
 
    <target name="run-cpp" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-1" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-1" /></exec>
+      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-1"       /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-1"       /></exec>
    </target>
 
    <target name="run-cpp-win32" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-win32-1" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="sc-cpp"          ><arg value="run-win32"   /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
    </target>
 
    <target name="run-cpp-2" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-1" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-1" /></exec>
-      <ant                    dir="distributeur-java"  target="run-2" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-2" /></exec>
+      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-1"       /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-1"       /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-2"       /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-2"       /></exec>
    </target>
 
    <target name="run-cpp-win32-2" depends="util-cpp,udt-cpp">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-1" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-1" /></exec>
-      <ant                    dir="distributeur-java"  target="run-2" />
-      <exec executable="make" dir="udt-cpp"       ><arg value="run-win32-2" /></exec>
+      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-2" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-2" /></exec>
    </target>
 
    <target name="run-java" depends="util-java,udt-java">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-1" />
-      <ant                    dir="udt-java"           target="run-1" />
+      <ant                    dir="sc-java"              target="run"   />
+      <ant                    dir="distributeur-java"    target="run-1" />
+      <ant                    dir="udt-java"             target="run-1" />
    </target>
 
    <target name="run-java-2" depends="util-java,udt-java">
-      <ant                    dir="sc-java"            target="run" />
-      <ant                    dir="distributeur-java"  target="run-1" />
-      <ant                    dir="udt-java"           target="run-1" />
-      <ant                    dir="distributeur-java"  target="run-2" />
-      <ant                    dir="udt-java"           target="run-2" />
+      <ant                    dir="sc-java"              target="run"   />
+      <ant                    dir="distributeur-java"    target="run-1" />
+      <ant                    dir="udt-java"             target="run-1" />
+      <ant                    dir="distributeur-java"    target="run-2" />
+      <ant                    dir="udt-java"             target="run-2" />
    </target>
 
    <target name="clean">

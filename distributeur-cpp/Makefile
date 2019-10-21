@@ -1,5 +1,5 @@
-EXEC = UniteDeTraitement
-NAME = UDT
+EXEC = Distributeur
+NAME = DAB
 SRCS = src/main.cpp
 
 -include generated-files.mk

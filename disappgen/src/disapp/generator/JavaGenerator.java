@@ -50,17 +50,21 @@ public class JavaGenerator extends BaseGenerator {
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
-         final InterfaceType     iface      = (InterfaceType)required.getInterface();
-         final String            ifaceName  = iface.getName();
-         final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferOutCapacity( required );
-         _model.getInterface( ifaceName );
-         final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
+         final InterfaceType iface     = (InterfaceType)required.getInterface();
+         final String        ifaceName = iface.getName();
+         final ST            tmpl      = _group.getInstanceOf( "/requiredInterface" );
          tmpl.add( "typesPackage", _moduleNameTypes );
          tmpl.add( "package"     , _moduleName );
          tmpl.add( "ifaceName"   , ifaceName );
-         tmpl.add( "usedTypes"   , usedTypes );
-         tmpl.add( "rawSize"     , rawSize );
+         tmpl.add( "iface"       , iface );
+         write( 'I' + ifaceName + ".java", tmpl );
+      }
+      for( final String ifaceName : Model.getReponses( component )) {
+         final InterfaceType iface = _model.getInterface( ifaceName );
+         final ST            tmpl  = _group.getInstanceOf( "/requiredInterface" );
+         tmpl.add( "typesPackage", _moduleNameTypes );
+         tmpl.add( "package"     , _moduleName );
+         tmpl.add( "ifaceName"   , ifaceName );
          tmpl.add( "iface"       , iface );
          write( 'I' + ifaceName + ".java", tmpl );
       }
@@ -71,7 +75,7 @@ public class JavaGenerator extends BaseGenerator {
          final InterfaceType     iface      = (InterfaceType)required.getInterface();
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferOutCapacity( required );
+         final int               rawSize    = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
          final int               ifaceID    = _model.getInterfaceID( ifaceName );
          final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
          tmpl.add( "typesPackage", _moduleNameTypes );
@@ -104,10 +108,11 @@ public class JavaGenerator extends BaseGenerator {
 
    private void generateDispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    offers      = component.getOffers();
-      final Map<String, Integer>               offered     = _model.getOfferedInterfaceIDs( offers );
-      final Map<String, Integer>               required    = _model.getRequiredInterfaceIDs( component.getRequires());
+      final Map<String, Byte>                  offered     = _model.getOfferedInterfaceIDs( offers );
+      final Map<String, Byte>                  required    = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, Map<String, Byte>>     eventIDs    = _model.getEventIDs();
       final Map<String, List<Object>>          events      = _model.getOfferedEventsOrRequests( component );
+      final Map<String, Byte>                  ifacesIDs   = _model.getInterfacesID();
       final SortedSet<String>                  usedTypes   = _model.getUsedTypesBy( offers );
       final Map<String, List<RequestType>>     requests    = Model.getRequestMap( events );
       final int                                rawSize     = _model.getBufferInCapacity( component );
@@ -121,6 +126,7 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "requires"     , required );
       tmpl.add( "events"       , events );
       tmpl.add( "eventIDs"     , eventIDs );
+      tmpl.add( "ifacesIDs"    , ifacesIDs );
       tmpl.add( "usedTypes"    , usedTypes );
       tmpl.add( "rawSize"      , rawSize );
       tmpl.add( "respRawSize"  , respRawSize );
@@ -139,6 +145,7 @@ public class JavaGenerator extends BaseGenerator {
       final Map<InterfaceType, List<DataType>> offData           = _model.getOfferedDataOf   ( component );
       final Map<InterfaceType, List<DataType>> reqData           = _model.getRequiredDataOf  ( component );
       final Map<InstanceType, ProcessType>     processByInstance = _model.getProcessByInstance();
+      final Set<String>                        responses         = Model.getReponses( component );
       final ST                                 tmpl              = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "typesPackage"   , _moduleNameTypes );
       tmpl.add( "package"        , _moduleName );
@@ -151,6 +158,7 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "data"           , offData );
       tmpl.add( "reqData"        , reqData );
       tmpl.add( "processes"      , processByInstance );
+      tmpl.add( "responses"       , responses );
       write( component.getName() + "Component.java", tmpl );
    }
 

@@ -2,6 +2,12 @@ group CPP;
 
 
 
+concat(a,b) ::= <<
+<a><b>
+>>
+
+
+
 type( field ) ::= <<
 < if(     field.isBoolean )>bool<
   elseif( field.isByte    )>byte<
@@ -264,7 +270,7 @@ endif> );
 
 
 
-requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( typesNamespace, namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
 #include \<<namespace>/<iface.name>.hpp>
 //requiredImplementation
 using namespace <namespace>;
@@ -323,7 +329,7 @@ namespace <namespace> {
 <eventsOrRequests:{facet|< if(facet.type)>< else>
       virtual void <facet.name>( <
 if( facet.arguments )><
-    signature( facet.arguments.field )>, <ifaceName><facet.name; format="cap">Response & response<
+    signature( facet.arguments.field )>, <typesNamespace>::<name><facet.name; format="cap">Response & response<
 else><
     signature( facet.field )><
 endif> ) = 0;< endif>
@@ -341,7 +347,9 @@ endif> ) = 0;< endif>
 
 
 
-dispatcherInterface( namespace, component, ifaces, events, rawSize ) ::= <<
+dispatcherInterface(
+   namespace, component, ifaces, ifacesIDs, requires, events, rawSize, hasResponse, respRawSize, data, requests
+) ::= <<
 #pragma once
 //dispatcherInterface
 #include \<io/DatagramSocket.hpp>
@@ -368,13 +376,19 @@ namespace <namespace> {
       void loopback( const LoopbackEvent & event );
 < endif>
 
+
    private:
 
       enum class Interface : byte {
-         < if( component.timeout )>LOOPBACK = 0,
-< endif><ifaces.keys:{ifaceName|
+         < if( component.timeout )>LOOPBACK = 0,< endif>
+<ifaces.keys:{ifaceName|
          <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
-}>      };
+< if( requests.(ifaceName))>
+         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
+< endif>
+<data:{iface|
+         <iface.name; format="ID,width"> = <requires.(iface.name)>,
+}>}>      };
 <ifaces.keys:{ifaceName|
 
 
@@ -383,16 +397,21 @@ namespace <namespace> {
 }>< rest( events.(ifaceName)):{event|         <event.name; format="ID">,
 }>      \};
 
-      bool dispatch( <ifaceName>Event event );
+      bool dispatch( < if( requests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event );
 }>< if( component.timeout )>
       bool dispatch( LoopbackEvent event );
 
 < endif>
+
    private:
 
-      byte                 _raw[<rawSize>];
       io::DatagramSocket & _socket;
+      byte                 _raw[<rawSize>];
       io::ByteBuffer       _in;
+< if( hasResponse )>
+      byte                 _outRaw[<respRawSize>];
+      io::ByteBuffer       _out;
+< endif>
       <component.name>Component & _listener;
    };
 }
@@ -400,26 +419,8 @@ namespace <namespace> {
 
 
 
-dispatcherImplementation( typesNamespace, namespace, component, ifaces, events, usedTypes ) ::= <<
-//dispatcherImplementation
-#include \<<namespace>/<component.name>Dispatcher.hpp>
-#include \<<namespace>/<component.name>Component.hpp>
-
-using namespace <namespace>;
-
-<component.name>Dispatcher::<component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener ) :
-   _socket  ( socket ),
-   _in      ( _raw, sizeof( _raw )),
-   _listener( listener )
-{}
-<ifaces.keys:{ifaceName|
-
-
-bool <component.name>Dispatcher::dispatch( <ifaceName>Event event ) {
-   switch( event ) {
-<events.(ifaceName):{event|< if( event.type )>< else>
-   case <ifaceName>Event::<event.name; format="ID">:{
-      <event.field:{field|
+byteBufferGet( fields ) ::= <<
+<fields:{field|
 <     if( field.isBoolean )>bool <field.name> = _in.getBool();
 < elseif( field.isByte    )>byte <field.name> = _in.getByte();
 < elseif( field.isShort   )>short <field.name> = _in.getShort();
@@ -436,11 +437,62 @@ _in.getString( <field.name>, sizeof( <field.name> ));
 < elseif( field.isStruct  )><typesNamespace>::<field.userType.name> <field.name>;
 <field.name>.get( _in );
 < endif>
-}>      _listener.<event.name>( <args( event.field )> );
+}>
+>>
+
+
+
+dispatcherImplementation(
+    typesNamespace, namespace, component, ifaces, events, eventIDs, usedTypes, requests, hasResponse
+) ::= <<
+//dispatcherImplementation
+#include \<<namespace>/<component.name>Dispatcher.hpp>
+#include \<<namespace>/<component.name>Component.hpp>
+
+#include \<stdio.h>
+
+using namespace <namespace>;
+
+<component.name>Dispatcher::<component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener ) :
+   _socket  ( socket ),
+   _in      ( _raw, sizeof( _raw )),
+< if( hasResponse )>
+   _out     ( _outRaw, sizeof( _outRaw )),
+< endif>
+   _listener( listener )
+{}
+<ifaces.keys:{ifaceName|
+
+
+<events.(ifaceName):{facet|< if( facet.response )>
+static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
+< endif>}>
+bool <component.name>Dispatcher::dispatch( < if( requests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event ) {
+   switch( event ) {
+<events.(ifaceName):{facet|< if( facet.type )>< else>
+   case <ifaceName>Event::<facet.name; format="ID">:{
+      < if( facet.arguments )><facet.arguments.field:{field|<
+         byteBufferGet( field )>}>< 
+      elseif( facet.field )><facet.field:{field|<
+         byteBufferGet( field )>}><
+      endif><
+      if( facet.response )
+>      <typesNamespace>::<ifaceName><facet.name; format="cap">Response response;
+      _listener.<facet.name>( <args( facet.arguments.field )>, response );
+      _out.clear();
+      _out.putByte((byte)Interface::<ifaceName; format="ID">_RESPONSES );
+      _out.putByte( EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> );
+      response.put( _out );
+      _out.flip();
+      _socket.sendTo( _out, from );
+      fprintf( stderr, "%s|response sent to %s\n", HPMS_FUNCNAME, inet_ntoa( from.sin_addr ));
+      < else
+>      _listener.<facet.name>( <args( facet.field )> );
+      < endif>
       break;
       \}
 < endif>}>   default:
-      fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown <ifaceName>'s event: %d\n", (byte)event );
+      fprintf( stderr, "%s|Unknown <ifaceName>'s event: %d\n", HPMS_FUNCNAME, (byte)event );
       return false;
    \}
    return true;
@@ -451,7 +503,7 @@ bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
    switch( event ) {
    <component.timeout:{to|case LoopbackEvent::<to.name; format="ID">: _listener.<to.name; format="argument">Elapsed(); break;
 }>   default:
-      fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown timeout's event: %d\n", (byte)event );
+      fprintf( stderr, "%s|Unknown timeout's event: %d\n", HPMS_FUNCNAME, (byte)event );
       return false;
    \}
    return true;
@@ -460,17 +512,20 @@ bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
 < endif>
 bool <component.name>Dispatcher::hasDispatched( void ) {
    _in.clear();
-   if( _socket.receive( _in )) {
+   sockaddr_in from;
+   if( _socket.receive( _in, from )) {
       _in.flip();
       byte interface = _in.getByte();
       byte event     = _in.getByte();
-      switch( static_cast\<Interface>( interface)) {< if( component.timeout )>
+      switch( static_cast\<Interface>( interface)) {
+< if( component.timeout )>
       case Interface::LOOPBACK: return dispatch( static_cast\<LoopbackEvent>( event ));
 < endif>
 <ifaces.keys:{ifaceName|
-      case Interface::<ifaceName; format="ID,width">: return dispatch( static_cast\<<ifaceName>Event>( event ));
-}>      default:
-           fprintf( stderr, "<component.name>Dispatcher.dispatch|Unknown interface: %d\n", interface );
+
+      case Interface::<ifaceName; format="ID,width">: return dispatch( <
+        if( requests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ));
+}>      default: fprintf( stderr, "%s|Unknown interface: %d\n", HPMS_FUNCNAME, interface );
       }
    }
    return false;
@@ -527,6 +582,7 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
    public:
 
       void run();
+
 < if( actions )>
 
    public:
@@ -542,9 +598,12 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
       virtual void afterDispatch( void ) = 0;
 < endif>
 
+
       void terminate();
 
+< if( component.timeout )>
       void loopback( const <component.name>Dispatcher::LoopbackEvent & event );
+< endif>
 
    private:
 
@@ -605,8 +664,10 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 
 <component.name>Component::<component.name>Component( const char * name ) :
    _running   ( false ),
-   _dispatcher( _socket, *this ),
-   _automaton ( *this )<component.timeout:{to|,
+   _dispatcher( _socket, *this )< if( component.automaton )>,
+   _automaton ( *this )
+   < endif>
+   <component.timeout:{to|,
    _<to.name; format="argument">( <to.duration><to.unit.toCpp>, [this](){ _dispatcher.loopback( <
       component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> ); \})}><
    data:{iface|,
@@ -632,9 +693,12 @@ void <component.name>Component::terminate() {
    _running = false;
 }
 
+< if( component.timeout )>
 void <component.name>Component::loopback( const <component.name>Dispatcher::LoopbackEvent & event ) {
    _dispatcher.loopback( event );
 }
+
+< endif>
 
 void <component.name>Component::run() {
    _running = true;

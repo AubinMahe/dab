@@ -1,7 +1,8 @@
-EXEC = distributeur
-NAME = DAB-C
+EXEC = site_central
+NAME = Site-Central
 SRCS =\
- src/dab/distributeur_ui.c\
+ src/sc/banque_ui.c\
+ src/sc/repository.c\
  src/main.c
 
 -include generated-files.mk
@@ -45,19 +46,12 @@ BUILD-mingw32/%.o: src-gen/%.c
 	@mkdir -p $$(dirname $@)
 	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
-run-1: ../$(EXEC)
-	xterm -title "$(NAME)-1 C" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=ihm1 &
+run: ../$(EXEC)
+	xterm -title "$(NAME) C" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=sc &
 
-run-2: ../$(EXEC)
-	xterm -title "$(NAME)-2 C" -geometry 150x30+0+0 -hold -e ../$(EXEC) --name=ihm2 &
-
-run-win32-1: ../$(EXEC)-mingw32
+run-win32: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-1 C Win32" -geometry 150x30+810-16 -hold -e wine ../$(EXEC)-mingw32 --name=ihm1
-
-run-win32-2: ../$(EXEC)-mingw32
-	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-2 C Win32" -geometry 150x30+0+0 -hold -e wine ../$(EXEC)-mingw32 --name=ihm2
+	xterm -title "$(NAME) C Win32" -geometry 150x30+810-16 -hold -e wine ../$(EXEC)-mingw32 --name=sc
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
