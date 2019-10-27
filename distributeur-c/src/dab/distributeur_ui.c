@@ -2,11 +2,13 @@
 
 #include <io/console.h>
 #include <os/sleep.h>
+#include <util/log.h>
 
 #include <time.h>
 #include <ctype.h>
 
 util_error dab_distributeur_create_ui( dab_distributeur * This ) {
+   UTIL_LOG_HERE();
    io_console_init();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    int c = 0;
@@ -47,6 +49,7 @@ util_error dab_distributeur_create_ui( dab_distributeur * This ) {
       }
       if( io_console_kbhit()) {
          c = toupper( io_console_getch());
+         UTIL_LOG_ARGS( "Command = %c", (char)c );
          switch( c ) {
          case '0': UTIL_ERROR_CHECK( dab_unite_de_traitement_maintenance                      ( &This->unite_de_traitement, true   )); break;
          case '1': UTIL_ERROR_CHECK( dab_unite_de_traitement_maintenance                      ( &This->unite_de_traitement, false  )); break;
@@ -68,6 +71,7 @@ util_error dab_distributeur_create_ui( dab_distributeur * This ) {
          }
       }
    }
+   UTIL_LOG_MSG( "sending 'shutdown' to unite_de_traitement" );
    dab_unite_de_traitement_shutdown( &This->unite_de_traitement );
    return UTIL_NO_ERROR;
 }

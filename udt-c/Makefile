@@ -5,7 +5,10 @@ SRCS = src/main.c
 
 -include generated-files.mk
 
-CFLAGS    = -I ../util-c/inc -I ../dabtypes-c/inc-gen -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
+DEBUG_FLAGS   = -O0 -g3
+RELEASE_FLAGS = -O3 -g0
+INCLUDES  = -I ../util-c/inc -I ../dabtypes-c/inc-gen -I inc -I src-gen
+CFLAGS    = $(DEBUG_FLAGS) $(INCLUDES) -std=c11 -pedantic -W -Wall -Wextra -Wconversion -c 
 WINVER    = 0x06010000
 CW32FLAGS = $(CFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 

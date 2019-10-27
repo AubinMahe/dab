@@ -5,6 +5,7 @@
 
 #include <util/args.h>
 #include <util/timeout.h>
+#include <util/log.h>
 #include <os/thread.h>
 #include <os/errors.h>
 
@@ -13,14 +14,14 @@
 #include <string.h>
 
 util_error dab_distributeur_etat_du_dab_published( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_ejecter_la_carte( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->refresh = true;
    return UTIL_NO_ERROR;
@@ -28,7 +29,7 @@ util_error dab_distributeur_ejecter_la_carte( dab_distributeur * This ) {
 }
 
 util_error dab_distributeur_ejecter_les_billets( dab_distributeur * This, double montant ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_ARGS( "montant = %7.2f", montant );
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->montant = montant;
    bl->refresh = true;
@@ -36,21 +37,21 @@ util_error dab_distributeur_ejecter_les_billets( dab_distributeur * This, double
 }
 
 util_error dab_distributeur_confisquer_la_carte( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_placer_les_billets_dans_la_corbeille( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_shutdown( dab_distributeur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    This->running = false;
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->shutdown = true;
@@ -69,13 +70,14 @@ typedef struct background_thread_context_s {
 
 static void * background_thread_routine( void * ctxt ) {
    background_thread_context * context = (background_thread_context *)ctxt;
-   fprintf( stderr, "dab_distributeur_run\n" );
+   UTIL_LOG_HERE();
    context->err = dab_distributeur_run( &context->distributeur );
    return NULL;
 }
 
 int main( int argc, char * argv[] ) {
    fprintf( stderr, "\n" );
+   UTIL_LOG_HERE();
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;
@@ -87,7 +89,6 @@ int main( int argc, char * argv[] ) {
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
    background_thread_context context;
-   fprintf( stderr, "dab_distributeur_init\n" );
    context.err = dab_distributeur_init( &context.distributeur, name, &d );
    context.distributeur.etat_du_dab.etat = DABTYPES_ETAT_MAINTENANCE;
    if( UTIL_NO_ERROR == context.err ) {
@@ -108,6 +109,6 @@ int main( int argc, char * argv[] ) {
       fprintf( stderr, "%s\n", util_error_messages[context.err] );
    }
    dab_distributeur_shutdown( &context.distributeur );
-   fprintf( stderr, "end of main\n" );
+   UTIL_LOG_MSG( "end of main" );
    return 0;
 }

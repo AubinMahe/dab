@@ -3,6 +3,7 @@
 
 #include <util/args.h>
 #include <util/timeout.h>
+#include <util/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,11 +71,11 @@ void compte_set( compte * This, const dabtypes_compte * source ) {
 }
 
 void compte_invalidate( compte * This ) {
-   fprintf( stderr, "compte_invalidate\n" );
    This->is_valid = false;
 }
 
 util_error udt_controleur_maintenance( udt_controleur * This, bool maintenance ) {
+   UTIL_LOG_ARGS( "maintenance = %s", maintenance ? "true" : "false" );
    if( maintenance ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_MAINTENANCE_ON ));
    }
@@ -85,6 +86,7 @@ util_error udt_controleur_maintenance( udt_controleur * This, bool maintenance )
 }
 
 util_error udt_controleur_recharger_la_caisse( udt_controleur * This, double montant ) {
+   UTIL_LOG_ARGS( "montant = %7.2f", montant );
    This->unite_de_traitement.etat_du_dab.solde_caisse += montant;
    if( This->unite_de_traitement.etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
@@ -93,6 +95,7 @@ util_error udt_controleur_recharger_la_caisse( udt_controleur * This, double mon
 }
 
 util_error udt_controleur_anomalie( udt_controleur * This, bool anomalie ) {
+   UTIL_LOG_ARGS( "anomalie = %s", anomalie ? "true" : "false" );
    if( anomalie ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_ANOMALIE_ON ));
    }
@@ -103,6 +106,7 @@ util_error udt_controleur_anomalie( udt_controleur * This, bool anomalie ) {
 }
 
 util_error udt_controleur_carte_inseree( udt_controleur * This, const char * id ) {
+   UTIL_LOG_ARGS( "id = %s", id );
    business_logic_data * d = This->user_context;
    d->carte.is_valid = false;
    d->compte.is_valid = false;
@@ -112,6 +116,8 @@ util_error udt_controleur_carte_inseree( udt_controleur * This, const char * id 
 }
 
 util_error udt_controleur_site_central_response_get_informations( udt_controleur * This, const dabtypes_carte * carte, const dabtypes_compte * compte ) {
+   UTIL_LOG_ARGS( "carte.id = %s, carte.nb_essais = %d, compte.autorise = %s, compte.solde = %7.2f",
+      carte->id, carte->nb_essais, compte->autorise ? "true" : "false", compte->solde );
    business_logic_data * d = This->user_context;
    carte_set( &d->carte, carte );
    compte_set( &d->compte, compte );
@@ -132,13 +138,14 @@ util_error udt_controleur_site_central_response_get_informations( udt_controleur
       }
    }
    else {
-      fprintf( stderr, "Carte et/ou compte invalide\n" );
+      UTIL_LOG_MSG( "Carte et/ou compte invalide" );
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_CARTE_INVALIDE ));
    }
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_code_saisi( udt_controleur * This, const char * code ) {
+   UTIL_LOG_ARGS( "code = %s", code );
    business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_code ));
    if( carte_compare_code( &d->carte, code )) {
@@ -162,6 +169,7 @@ util_error udt_controleur_code_saisi( udt_controleur * This, const char * code )
 }
 
 util_error udt_controleur_montant_saisi( udt_controleur * This, double montant ) {
+   UTIL_LOG_ARGS( "montant = %7.2f", montant );
    business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( udt_ihm_ejecter_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_montant ));
@@ -179,6 +187,7 @@ util_error udt_controleur_montant_saisi( udt_controleur * This, double montant )
 }
 
 util_error udt_controleur_carte_retiree( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( udt_site_central_retrait( &This->site_central, d->carte.id, d->montantDeLatransactionEnCours ));
    UTIL_ERROR_CHECK( udt_ihm_ejecter_les_billets( &This->ihm, d->montantDeLatransactionEnCours ));
@@ -190,6 +199,7 @@ util_error udt_controleur_carte_retiree( udt_controleur * This ) {
 }
 
 util_error udt_controleur_billets_retires( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_BILLETS_RETIRES ));
    return UTIL_NO_ERROR;
 }
@@ -198,11 +208,13 @@ util_error udt_controleur_billets_retires( udt_controleur * This ) {
  * Appelée par l'automate dès qu'on quite l'état UDT_STATE_RETRAIT_BILLETS
  */
 util_error udt_controleur_annuler_le_timeout_de_retrait_des_billets( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_des_billets ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_annulation_demandee_par_le_client( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    business_logic_data * d = This->user_context;
    d->montantDeLatransactionEnCours = 0.0;
    UTIL_ERROR_CHECK( udt_ihm_ejecter_la_carte( &This->ihm ));
@@ -211,82 +223,94 @@ util_error udt_controleur_annulation_demandee_par_le_client( udt_controleur * Th
 }
 
 util_error udt_controleur_after_dispatch( udt_controleur * This ) {
-   fprintf( stderr, "%s|state = %s, solde caisse : %7.2f\n",
-      __func__, dabtypes_etat_to_string( This->automaton.current ), This->unite_de_traitement.etat_du_dab.solde_caisse );
+   UTIL_LOG_ARGS( "state = %s, solde caisse : %7.2f",
+      dabtypes_etat_to_string( This->automaton.current ), This->unite_de_traitement.etat_du_dab.solde_caisse );
    This->unite_de_traitement.etat_du_dab.etat = This->automaton.current;
    UTIL_ERROR_CHECK( udt_unite_de_traitement_data_publish_etat_du_dab( &This->unite_de_traitement ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_confisquer_la_carte( udt_controleur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_ihm_confisquer_la_carte( &This->ihm ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_DELAI_EXPIRE ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_placer_les_billets_dans_la_corbeille( udt_controleur * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_ihm_placer_les_billets_dans_la_corbeille( &This->ihm ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_DELAI_EXPIRE ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_saisie_du_code_elapsed( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_controleur_confisquer_la_carte( This ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_saisie_du_montant_elapsed( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_controleur_confisquer_la_carte( This ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_retrait_de_la_carte_elapsed( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_controleur_confisquer_la_carte( This ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_retrait_des_billets_elapsed( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( udt_controleur_placer_les_billets_dans_la_corbeille( This ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_armer_le_timeout_de_saisie_du_code( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_timeout_start( &This->saisie_du_code ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_armer_le_timeout_de_saisie_du_montant( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_timeout_start( &This->saisie_du_montant ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_armer_le_timeout_de_retrait_de_la_carte( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_timeout_start( &This->retrait_de_la_carte ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_armer_le_timeout_de_retrait_des_billets( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( util_timeout_start( &This->retrait_des_billets ));
    return UTIL_NO_ERROR;
 }
 
 util_error udt_controleur_shutdown( udt_controleur * This ) {
+   UTIL_LOG_HERE();
    This->running = false;
    UTIL_ERROR_CHECK( udt_ihm_shutdown( &This->ihm ));
    UTIL_ERROR_CHECK( udt_site_central_shutdown( &This->site_central ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_TERMINATE ));
+   UTIL_LOG_MSG( "done" );
    return UTIL_NO_ERROR;
 }
 
 static int usage( const char * exename ) {
+   fprintf( stdout, "\nusage: %s --name=<name as defined in XML application file>\n\n", exename );
    fprintf( stderr, "\nusage: %s --name=<name as defined in XML application file>\n\n", exename );
    return 1;
 }
 
 int main( int argc, char * argv[] ) {
    fprintf( stderr, "\n" );
+   UTIL_LOG_HERE();
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;
@@ -298,20 +322,19 @@ int main( int argc, char * argv[] ) {
    business_logic_data d;
    memset( &d, 0, sizeof( d ));
    udt_controleur controleur;
-   fprintf( stderr, "udt_controleur_init\n" );
    util_error err = udt_controleur_init( &controleur, name, &d );
    if( UTIL_NO_ERROR == err ) {
-      fprintf( stderr, "udt_controleur_run\n" );
       controleur.automaton.debug = true;
       err = udt_controleur_run( &controleur );
    }
    if( UTIL_OS_ERROR == err ) {
+      fprintf( stderr, "%s:%s:", util_timestamp_now(), __func__ );
       perror( util_error_messages[err] );
    }
    else if( UTIL_NO_ERROR != err ) {
-      fprintf( stderr, "%s\n", util_error_messages[err] );
+      UTIL_LOG_MSG( util_error_messages[err] );
    }
    udt_controleur_shutdown( &controleur );
-   fprintf( stderr, "end of main\n" );
+   UTIL_LOG_MSG( "done" );
    return 0;
 }

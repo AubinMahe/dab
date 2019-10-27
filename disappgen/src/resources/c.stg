@@ -215,6 +215,7 @@ requiredImplementation( typesPrefix, prefix, usedTypes, ifaceName, rawSize, ifac
 //requiredImplementation
 #include \<<prefix>/<iface.name; format="cname">.h>
 #include \<stdio.h>
+#include \<util/log.h>
 
 enum <prefix>_event_id {
 < first(iface.eventOrRequestOrData):{facet|
@@ -227,6 +228,7 @@ static const byte <iface.name; format="ID">_ID = <ifaceID>;
 
 util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; format="cname"
 > * This, SOCKET socket, const struct sockaddr_in * target ) {
+   UTIL_LOG_HERE();
    This->socket = socket;
    This->target = *target;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
@@ -241,6 +243,7 @@ if( facet.arguments )><
 else><
     signature( typesPrefix, facet.field )><
 endif> ) {
+   UTIL_LOG_HERE();
    UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <iface.name; format="ID">_ID ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<facet.name; format="ID"> ));
@@ -253,6 +256,7 @@ endif> ) {
      endif>
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
    UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
+   UTIL_LOG_MSG( "done" );
    return UTIL_NO_ERROR;
 \}
 < endif>
@@ -471,6 +475,7 @@ dispatcherImplementation(
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
 
 #include \<stdio.h>
+#include \<util/log.h>
 
 typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 < if( component.timeout )>
@@ -501,6 +506,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    SOCKET socket,
    <prefix>_<component.name; format="cname"> * listener )
 {
+   UTIL_LOG_HERE();
    UTIL_CHECK_NON_NULL( listener );
    UTIL_ASSERT( socket > 0 );
    This->socket   = socket;
@@ -519,6 +525,7 @@ static util_error loopback_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher_loopback_event event,
    bool * has_dispatched )
 {
+   UTIL_LOG_HERE();
    switch( event ) {
 <component.timeout:{to|
    case <prefix; format="ID">_<component.name; format="ID">_LOOPBACK_<to.name; format="ID">:
@@ -526,7 +533,7 @@ static util_error loopback_dispatch(
       *has_dispatched = true;
       break;
 }>   default:
-      fprintf( stderr, "loopback_dispatch|unknown event = %d\n", event );
+      UTIL_LOG_ARGS( "unknown event = %d\n", event );
       return UTIL_NOT_APPLICABLE;
    }
    return UTIL_NO_ERROR;
@@ -537,6 +544,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
    bool * has_dispatched )
 {
+   UTIL_LOG_HERE();
    struct sockaddr_in from;
    byte interface, event;
 
@@ -546,7 +554,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->in ));
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &interface ));
    UTIL_ERROR_CHECK( io_byte_buffer_get_byte( &This->in, &event ));
-   fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher_dispatch|interface = %d, event = %d\n", interface, event );
+   UTIL_LOG_ARGS( "interface = %d, event = %d", interface, event );
    switch( interface ) {
 < if( component.timeout )>
    case LOOPBACK: UTIL_ERROR_CHECK( loopback_dispatch( This, event, has_dispatched )); break;
@@ -561,15 +569,17 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
 }><data:{iface|
    case <iface.name; format="ID">: UTIL_ERROR_CHECK( <prefix>_<iface.name; format="cname">_dispatch( This, event, has_dispatched )); break;
 }>   default:
-      fprintf( stderr, "<prefix>_<component.name; format="cname">_dispatcher_dispatch|unknown interface %d\n", interface );
+      UTIL_LOG_ARGS( "unknown interface %d\n", interface );
       return UTIL_NOT_APPLICABLE;
    }
+   UTIL_LOG_ARGS( "has_dispatched = %s", has_dispatched ? "true" : "false" );
    return UTIL_NO_ERROR;
 }
 < if( component.timeout )>
 
 util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
    prefix>_<component.name; format="cname">_dispatcher_timeout_arg * arg ) {
+   UTIL_LOG_HERE();
    UTIL_CHECK_NON_NULL( arg );
    <prefix>_<component.name; format="cname">_dispatcher *              This  = arg->dispatcher;
    <prefix>_<component.name; format="cname">_dispatcher_loopback_event event = arg->event;
@@ -580,6 +590,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &out, (byte)event ));
    UTIL_ERROR_CHECK( io_byte_buffer_flip    ( &out ));
    UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &out, &This->listener->localAddress ));
+   UTIL_LOG_MSG( "done" );
    return UTIL_NO_ERROR;
 }
 < endif>
@@ -674,9 +685,11 @@ componentImplementation(
 #include \<stdio.h>
 #include \<stdlib.h>
 #include \<string.h>
+#include \<util/log.h>
 
 util_error <prefix>_<component.name; format="cname">_init( <
    prefix>_<component.name; format="cname"> * This, const char * name, void * user_context ) {
+   UTIL_LOG_HERE();
    memset( This, 0, sizeof( <prefix>_<component.name; format="cname"> ));
    This->socket = socket( AF_INET, SOCK_DGRAM, 0 );
    if( This->socket == INVALID_SOCKET ) {
@@ -704,9 +717,8 @@ util_error <prefix>_<component.name; format="cname">_init( <
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
             processes.(dataWriter.([instance.name, "/", iface.name])).port>, &<
             iface.name; format="cname"> ));
-}>}>< rest(instances):{instance|
-  \}
-  else if( 0 ==  strcmp( name, "<instance.name>" )) {
+}>}>< rest(instances):{instance|\}
+   else if( 0 ==  strcmp( name, "<instance.name>" )) {
       UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<
          processes.(instance).address>", <
          processes.(instance).port>, &This->localAddress ));
@@ -718,16 +730,16 @@ util_error <prefix>_<component.name; format="cname">_init( <
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
             processes.(dataWriter.([instance.name, "/", iface.name])).port>, &<
             iface.name; format="cname"> ));
-}>}>   }
+}>}>}
    else {
-      fprintf( stderr, "unknown deployment name '%s'!\n", name );
+      UTIL_LOG_ARGS( "unknown deployment name '%s'!", name );
       return UTIL_NOT_APPLICABLE;
    }
    < first(requires):{req|<requires.(req):{rt|UTIL_ERROR_CHECK( <
       prefix>_<rt.interface.name; format="cname">_init( &This-><rt.interface.name; format="cname">, This->socket, &<rt.interface.name; format="cname"> ));
 }>}>   <data:{iface|UTIL_ERROR_CHECK( <
       prefix>_<iface.name; format="cname">_data_init( &This-><iface.name; format="cname">, This->socket, &<iface.name; format="cname"> ));
-}>   UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
+}>UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_dispatcher_init( &This->dispatcher, This->socket, This ));
 <component.timeout:{to|
    static <prefix>_<component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<to.name; format="cname">;
    timeout_arg_<to.name; format="cname">.dispatcher = &This->dispatcher;
@@ -739,10 +751,12 @@ util_error <prefix>_<component.name; format="cname">_init( <
       (util_timeout_action)<prefix>_<component.name; format="cname">_dispatcher_loopback,
       &timeout_arg_<to.name; format="cname"> ));
 }>
+   UTIL_LOG_MSG( "done" );
    return UTIL_NO_ERROR;
 }
 
 util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.name; format="cname"> * This ) {
+   UTIL_LOG_HERE();
    This->running = true;
    while( This->running ) {
       bool has_dispatched;
@@ -752,6 +766,7 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
       }
 < endif>
    }
+   UTIL_LOG_MSG( "done" );
    return UTIL_NO_ERROR;
 }
 >>
