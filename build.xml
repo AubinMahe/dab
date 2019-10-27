@@ -229,17 +229,46 @@
       <ant  dir="dabtypes-java"     target="clean" />
       <ant  dir="util-java"         target="clean" />
       <ant  dir="disappgen"         target="clean" />
-      
       <delete file="disappgen.jar" />
-      <delete file="unite_de_traitement" />
-      <delete file="unite_de_traitement-mingw32" />
-      <delete file="UniteDeTraitement" />
-      <delete file="UniteDeTraitement-mingw32" />
+      <delete dir ="disappgen/bin" />
       
-      <delete dir ="dab/bin" />
+      <!-- util -->
+      
+      <delete dir ="util.jar" />
+      <delete file="util-java/compile.log" />
+      <delete dir ="util-java/bin" />
 
+      <delete dir ="util-c/BUILD-mingw32" />
+      <delete dir ="util-c/BUILD" />
+      <delete dir ="util-c/Debug" />
+      <delete dir ="util-c/mingw32/Debug" />
+      <delete dir ="util-c/mingw32/Release" />
+      <delete dir ="util-c/Release" />
+      <delete file="util-c/compile.log" />
+      <delete file="util-c/deps" />
+      <delete dir ="util-c/lib" />
+      
+      <delete dir ="util-cpp/BUILD-mingw32" />
+      <delete dir ="util-cpp/BUILD" />
+      <delete dir ="util-cpp/Debug" />
+      <delete dir ="util-cpp/Release" />
+      <delete dir ="util-cpp/mingw32/Debug" />
+      <delete dir ="util-cpp/mingw32/Release" />
+      <delete file="util-cpp/compile.log" />
+      <delete file="util-cpp/deps" />
+      <delete dir ="util-cpp/lib" />
+      
+      <!-- dabtypes -->
+      
+      <delete file="dabtypes.jar" />
+      <delete file="dabtypes-java/compile.log" />
+      <delete dir ="dabtypes-java/bin" />
+      <delete dir ="dabtypes-java/src-gen" />
+      
       <delete dir ="dabtypes-c/BUILD-mingw32" />
       <delete dir ="dabtypes-c/BUILD" />
+      <delete dir ="dabtypes-c/Debug" />
+      <delete dir ="dabtypes-c/Release" />
       <delete file="dabtypes-c/compile.log" />
       <delete file="dabtypes-c/deps" />
       <delete file="dabtypes-c/generated-files.mk" />
@@ -249,48 +278,102 @@
       
       <delete dir ="dabtypes-cpp/BUILD-mingw32" />
       <delete dir ="dabtypes-cpp/BUILD" />
+      <delete dir ="dabtypes-cpp/Debug" />
+      <delete dir ="dabtypes-cpp/Release" />
       <delete file="dabtypes-cpp/compile.log" />
       <delete file="dabtypes-cpp/deps" />
       <delete file="dabtypes-cpp/generated-files.mk" />
       <delete dir ="dabtypes-cpp/inc-gen" />
       <delete dir ="dabtypes-cpp/lib" />
       <delete dir ="dabtypes-cpp/src-gen" />
-      
-      <delete file="dabtypes-java/compile.log" />
-      
-      <delete dir ="disappgen/bin" />
-      
-      <delete dir ="sc/bin" />
 
+      <!-- Distributeur -->
+
+      <delete file="DAB-UI.jar" />
+      <delete dir ="distributeur-java/bin" />
+      <delete dir ="distributeur-java/src-gen" />
+      <delete file="distributeur-java/compile.log" />
+
+
+      <delete file="distributeur" />
+      <delete file="distributeur-mingw32" />
+      <delete dir ="distributeur-c/BUILD-mingw32" />
+      <delete dir ="distributeur-c/BUILD" />
+      <delete dir ="distributeur-c/Debug" />
+      <delete dir ="distributeur-c/Release" />
+      <delete file="distributeur-c/compile.log" />
+      <delete file="distributeur-c/deps" />
+      <delete file="distributeur-c/generated-files.mk" />
+      <delete dir ="distributeur-c/src-gen" />
+
+      <delete file="Distributeur" />
+      <delete file="Distributeur-mingw32" />
+      <delete dir ="distributeur-cpp/BUILD-mingw32" />
+      <delete dir ="distributeur-cpp/BUILD" />
+      <delete dir ="distributeur-cpp/Debug" />
+      <delete dir ="distributeur-cpp/Release" />
+      <delete file="distributeur-cpp/compile.log" />
+      <delete file="distributeur-cpp/deps" />
+      <delete file="distributeur-cpp/generated-files.mk" />
+      <delete dir ="distributeur-cpp/src-gen" />
+
+      <!-- Unite de traitement -->
+      
+      <delete file="UDT.jar" />
+      <delete dir ="udt-java/bin" />
+      <delete dir ="udt-java/src-gen" />
+      <delete file="udt-java/compile.log" />
+
+      <delete file="unite_de_traitement" />
+      <delete file="unite_de_traitement-mingw32" />
       <delete dir ="udt-c/BUILD-mingw32" />
       <delete dir ="udt-c/BUILD" />
+      <delete dir ="udt-c/Debug" />
+      <delete dir ="udt-c/Release" />
       <delete file="udt-c/compile.log" />
       <delete file="udt-c/deps" />
       <delete file="udt-c/generated-files.mk" />
       <delete dir ="udt-c/src-gen" />
       
+      <delete file="UniteDeTraitement" />
+      <delete file="UniteDeTraitement-mingw32" />
       <delete dir ="udt-cpp/BUILD-mingw32" />
       <delete dir ="udt-cpp/BUILD" />
+      <delete dir ="udt-cpp/Debug" />
+      <delete dir ="udt-cpp/Release" />
       <delete file="udt-cpp/compile.log" />
       <delete file="udt-cpp/deps" />
       <delete file="udt-cpp/generated-files.mk" />
       <delete dir ="udt-cpp/src-gen" />
       
-      <delete dir ="udt-java/bin" />
-      
-      <delete dir ="util-c/BUILD-mingw32" />
-      <delete dir ="util-c/BUILD" />
-      <delete file="util-c/compile.log" />
-      <delete file="util-c/deps" />
-      <delete dir ="util-c/lib" />
-      
-      <delete dir ="util-cpp/BUILD-mingw32" />
-      <delete dir ="util-cpp/BUILD" />
-      <delete file="util-cpp/compile.log" />
-      <delete file="util-cpp/deps" />
-      <delete dir ="util-cpp/lib" />
-      
-      <delete dir ="util-java/bin" />
+      <!-- Site central -->
+
+      <delete file="Site-Central.jar" />
+      <delete dir ="sc-java/bin" />
+      <delete dir ="sc-java/src-gen" />
+      <delete file="sc-java/compile.log" />
+
+      <delete file="site_central" />
+      <delete file="site_central-mingw32" />
+      <delete dir ="sc-c/BUILD-mingw32" />
+      <delete dir ="sc-c/BUILD" />
+      <delete dir ="sc-c/Debug" />
+      <delete dir ="sc-c/Release" />
+      <delete file="sc-c/compile.log" />
+      <delete file="sc-c/deps" />
+      <delete file="sc-c/generated-files.mk" />
+      <delete dir ="sc-c/src-gen" />
+
+      <delete file="SiteCentral" />
+      <delete file="SiteCentral-mingw32" />
+      <delete dir ="sc-cpp/BUILD-mingw32" />
+      <delete dir ="sc-cpp/BUILD" />
+      <delete dir ="sc-cpp/Debug" />
+      <delete dir ="sc-cpp/Release" />
+      <delete file="sc-cpp/compile.log" />
+      <delete file="sc-cpp/deps" />
+      <delete file="sc-cpp/generated-files.mk" />
+      <delete dir ="sc-cpp/src-gen" />
    </target>
 
 </project>
