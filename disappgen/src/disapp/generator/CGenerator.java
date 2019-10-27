@@ -116,10 +116,11 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void generateDispatcherInterface( ComponentType component ) throws IOException {
-      final int                       rawSize     = _model.getBufferInCapacity( component );
-      final Map<String, List<Object>> events      = _model.getOfferedEventsOrRequests( component );
-      final int                       respRawSize = _model.getBufferResponseCapacity( events );
-      final ST                        tmpl        = _group.getInstanceOf( "/dispatcherInterface" );
+      final Map<String, List<Object>>      reqEvents   = _model.getRequiredEventsOrRequests( component );
+      final int rawSize = Math.max( _model.getBufferInCapacity( component ), _model.getBufferResponseCapacity( reqEvents ));
+      final Map<String, List<Object>>      events      = _model.getOfferedEventsOrRequests( component );
+      final int                            respRawSize = _model.getBufferResponseCapacity( events );
+      final ST                             tmpl        = _group.getInstanceOf( "/dispatcherInterface" );
       tmpl.add( "prefix"     , _moduleName );
       tmpl.add( "component"  , component );
       tmpl.add( "rawSize"    , rawSize );
@@ -133,13 +134,13 @@ public class CGenerator extends BaseGenerator {
       final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
-      final Map<String, List<Object>>          events       = _model.getOfferedEventsOrRequests( component );
+      final Map<String, List<Object>>          offEvents    = _model.getOfferedEventsOrRequests( component );
+      final Map<String, List<Object>>          reqEvents    = _model.getRequiredEventsOrRequests( component );
       final Map<String, Map<String, Byte>>     eventIDs     = _model.getEventIDs();
       final SortedSet<String>                  usedTypes    = _model.getUsedTypesBy( ifaces );
-      final int                                rawSize      = _model.getBufferInCapacity( component );
-      final int                                respRawSize  = _model.getBufferResponseCapacity( events );
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
-      final Map<String, List<RequestType>>     requests     = Model.getRequestMap( events );
+      final Map<String, List<RequestType>>     offRequests  = Model.getRequestMap( offEvents );
+      final Map<String, List<RequestType>>     reqRequests  = Model.getRequestMap( reqEvents );
       final ST                                 tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "typesPrefix", _moduleNameTypes );
       tmpl.add( "prefix"     , _moduleName );
@@ -147,14 +148,13 @@ public class CGenerator extends BaseGenerator {
       tmpl.add( "ifaces"     , interfaceIDs );
       tmpl.add( "ifacesIDs"  , ifacesIDs );
       tmpl.add( "requires"   , required );
-      tmpl.add( "events"     , events );
+      tmpl.add( "events"     , offEvents );
       tmpl.add( "eventIDs"   , eventIDs );
       tmpl.add( "usedTypes"  , usedTypes );
-      tmpl.add( "rawSize"    , rawSize );
-      tmpl.add( "hasResponse", respRawSize > 0 );
-      tmpl.add( "respRawSize", respRawSize );
+      tmpl.add( "hasResponse", ! offRequests.isEmpty());
+      tmpl.add( "offRequests", offRequests );
+      tmpl.add( "reqRequests", reqRequests );
       tmpl.add( "data"       , data );
-      tmpl.add( "requests"   , requests );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( CRenderer.cname( component.getName()) + "_dispatcher.c", tmpl );
    }
@@ -179,6 +179,8 @@ public class CGenerator extends BaseGenerator {
       final List<InstanceType>                 instances       = _model.getInstancesOf( _deployment, component );
       final Map<String, List<RequiresType>>    requires        = _model.getRequiredInstancesOf( _deployment, component );
       final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( _deployment );
+      final Map<String, List<Object>>          reqEvents       = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<RequestType>>     reqRequests     = Model.getRequestMap( reqEvents );
       final Set<String>                        actions         = _model.getAutomatonActions( component );
       final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf   ( component );
       final Map<InterfaceType, List<DataType>> reqData         = _model.getRequiredDataOf  ( component );
@@ -191,6 +193,7 @@ public class CGenerator extends BaseGenerator {
       tmpl.add( "instances"       , instances );
       tmpl.add( "usedTypes"       , usedTypes );
       tmpl.add( "eventsOrRequests", eventsOrRequests );
+      tmpl.add( "reqRequests"     , reqRequests );
       tmpl.add( "actions"         , actions );
       tmpl.add( "data"            , offData );
       tmpl.add( "reqData"         , reqData );

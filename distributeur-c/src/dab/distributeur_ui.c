@@ -1,21 +1,13 @@
 #include <dab/distributeur_ui.h>
 
 #include <io/console.h>
+#include <os/sleep.h>
 
 #include <time.h>
 #include <ctype.h>
 
-#ifndef _WIN32
-extern int nanosleep( const struct timespec * requested_time, struct timespec * remaining );
-#endif
-
 util_error dab_distributeur_create_ui( dab_distributeur * This ) {
-   console_init();
-#ifdef _WIN32
-   const DWORD period = 20UL;
-#else
-   const struct timespec period = { 0, 20*1000000 };
-#endif
+   io_console_init();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    int c = 0;
    while( c != 'Q' && ! bl->shutdown ) {
@@ -23,7 +15,7 @@ util_error dab_distributeur_create_ui( dab_distributeur * This ) {
       printf( "+-------------------------------------------\n\r\r" );
       printf( "| Etat du controlleur : %s\n\r\r", dabtypes_etat_to_string( This->etat_du_dab.etat ));
       printf( "| Solde caisse        : %7.2f\n\r\r", This->etat_du_dab.solde_caisse );
-      bl->etat_du_dab_published = false;
+      bl->refresh = false;
       printf( "+-------------------------------------------\n\r\r" );
       printf( "|\n\r\r" );
       printf( "|                   MENU\n\r\r" );
@@ -50,15 +42,11 @@ util_error dab_distributeur_create_ui( dab_distributeur * This ) {
       printf( "+-------------------------------------------\n\r" );
       printf( "                Votre choix : " );
       fflush( stdout );
-      while( ! console_kbhit() && ! bl->etat_du_dab_published ) {
-#ifdef _WIN32
-         Sleep( period );
-#else
-         nanosleep( &period, NULL );
-#endif
+      while( ! io_console_kbhit() && ! bl->refresh ) {
+         os_sleep( 20 );
       }
-      if( console_kbhit()) {
-         c = toupper( console_getch());
+      if( io_console_kbhit()) {
+         c = toupper( io_console_getch());
          switch( c ) {
          case '0': UTIL_ERROR_CHECK( dab_unite_de_traitement_maintenance                      ( &This->unite_de_traitement, true   )); break;
          case '1': UTIL_ERROR_CHECK( dab_unite_de_traitement_maintenance                      ( &This->unite_de_traitement, false  )); break;

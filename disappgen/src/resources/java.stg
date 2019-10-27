@@ -304,7 +304,7 @@ private static enum <ifaceName>Event {
 private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <
                                               eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
-private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event ) throws IOException {
+private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.type )>< else>
@@ -339,6 +339,47 @@ private boolean dispatch( < if( requests.(ifaceName))>SocketAddress from, < endi
 
 
 
+dispatcherImplResponse() ::= <<
+// dispatcherImplResponse -- begin
+private static enum <ifaceName>Response {
+
+   <reqRequests.(ifaceName):{req|<req.name; format="ID">( <i> ),
+}>   ;
+
+   private final int _value;
+
+   <ifaceName>Response( int value ) {
+      _value = value;
+   }
+
+   static <ifaceName>Response valueOf( int value ) {
+      for( final <ifaceName>Response e : values()) {
+         if( e._value == value ) {
+            return e;
+         }
+      }
+      return null;
+   }
+}
+
+private boolean dispatch( <ifaceName>Response event ) throws IOException {
+   System.err.println( getClass().getName() + "|event = " + event );
+   switch( event ) {
+<reqRequests.(ifaceName):{req|
+   case <req.name; format="ID">:{
+      <req.response.field:{field|<byteBufferGet( field )>}
+>      _listener.<req.name>(<args( req.response.field )>);
+      return true;\}
+}>   default:
+      System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
+      return false;
+   }
+}
+// dispatcherImplResponse -- end
+>>
+
+
+
 dispatcherImplData() ::= <<
 // dispatcherImplData -- begin
 private static enum <iface.name>Data {
@@ -367,9 +408,7 @@ private boolean dispatch( <iface.name>Data event ) throws IOException {
    switch( event ) {
 <data.(iface):{dataType|
    case <dataType.name; format="ID">:{
-      final <typesPackage>.<dataType.name; format="cap"> <
-         dataType.name; format="argument"> = _listener._<dataType.name; format="argument">;
-      <dataType.name; format="argument">.get( _in );
+      _listener._<dataType.name; format="argument">.get( _in );
       _listener.<dataType.name; format="argument">Published();
       return true;\}
 }>   default:
@@ -384,7 +423,7 @@ private boolean dispatch( <iface.name>Data event ) throws IOException {
 
 dispatcherImplementation(
    typesPackage, package, component, offers, requires, events, eventIDs,
-   ifacesIDs, usedTypes, rawSize, respRawSize, requests, data
+   ifacesIDs, usedTypes, rawSize, respRawSize, offRequests, reqRequests, data
 ) ::= <<
 package <package>;
 //dispatcherImplementation
@@ -401,12 +440,19 @@ public class <component.name>Dispatcher {
 < endif>
 <offers.keys:{ifaceName|
    private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
-   < if( requests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
+   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
       ifacesIDs.( concat( ifaceName, "Responses" ))>;
 < endif>
-}><offers.keys:{ifaceName|
+}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
+        ifacesIDs.( concat( ifaceName, "Responses" ))>;
+}>
+<offers.keys:{ifaceName|
    <dispatcherImplOneInterface()>
-}><data:{iface|
+}>
+<reqRequests:{ifaceName|
+   <dispatcherImplResponse()>
+}>
+<data:{iface|
 
    private static final byte INTRFC_<iface.name; format="ID"> = <requires.(iface.name)>;
    <dispatcherImplData()>
@@ -445,7 +491,7 @@ public class <component.name>Dispatcher {
 
 < endif>
    private final ByteBuffer      _in  = ByteBuffer.allocate( <rawSize> );
-< if( requests )
+< if( offRequests )
 >   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
 < endif>   private final DatagramChannel _channel;
 <data:{iface|<data.(iface):{field|
@@ -477,7 +523,9 @@ public class <component.name>Dispatcher {
 < if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
 < endif><offers.keys:{ifaceName|
       case INTRFC_<ifaceName; format="ID">: return dispatch( <
-         if( requests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
+         if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
+}><reqRequests:{ifaceName|
+      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ));
 }><data:{iface|
       case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ));
 }>      }

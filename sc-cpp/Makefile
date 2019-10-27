@@ -1,6 +1,11 @@
 EXEC = SiteCentral
 NAME = Site-Central
-SRCS = src/main.cpp
+XTERM_SIZE_POSX= 45x30-0
+SRCS =\
+ src/sc/Banque.cpp\
+ src/sc/BanqueUI.cpp\
+ src/sc/Repository.cpp\
+ src/main.cpp
 
 -include generated-files.mk
 
@@ -41,19 +46,12 @@ BUILD-mingw32/%.o: src-gen/%.cpp
 	@mkdir -p $$(dirname $@)
 	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
-run-1: ../$(EXEC)
-	xterm -title "$(NAME)-1 C++" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=udt1 &
+run: ../$(EXEC)
+	xterm -title "$(NAME)-1 C++" -geometry $(XTERM_SIZE_POSX)-16 -e '(../$(EXEC) --name=sc 2>/dev/pts/2)' &
 
-run-2: ../$(EXEC)
-	xterm -title "$(NAME)-2 C++" -geometry 150x30-0+0 -hold -e ../$(EXEC) --name=udt2 &
-
-run-win32-1: ../$(EXEC)-mingw32
+run-win32: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-1 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../$(EXEC)-mingw32 --name=udt-1
-
-run-win32-2: ../$(EXEC)-mingw32
-	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-2 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../$(EXEC)-mingw32 --name=udt-2
+	xterm -title "$(NAME)-1 C++ Win32" -geometry $(XTERM_SIZE_POSX)-16 -hold -e wine ../$(EXEC)-mingw32 --name=sc
 
 deps: $(SRCS) $(SRCSGEN)
 	g++ $(CPPFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@

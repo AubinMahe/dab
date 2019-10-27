@@ -147,6 +147,11 @@
       <antcall target="udt-java" />
    </target>
 
+   <target name="start-ttys">
+      <exec executable="xterm" spawn="true"><arg line="-geometry 159x40+0+40" /></exec>
+      <exec executable="xterm" spawn="true"><arg line="-geometry 159x40-0+40" /></exec>
+   </target>
+
    <target name="run-c" depends="util-c,udt-c">
       <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
       <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>

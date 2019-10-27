@@ -4,9 +4,9 @@
 extern "C" {
 #endif
 
-void console_init( void );
-int  console_kbhit( void );
-int  console_getch( void );
+void io_console_init( void );
+int  io_console_kbhit( void );
+int  io_console_getch( void );
 
 #define IO_CSI     "\033["
 #define IO_ED      IO_CSI"2J"

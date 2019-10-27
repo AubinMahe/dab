@@ -4,6 +4,7 @@
 #include "Compte.hpp"
 
 #include <util/Timeout.hpp>
+#include <util/Time.hpp>
 
 namespace dab {
 
@@ -13,13 +14,14 @@ namespace dab {
       Controleur( const char * name ) :
          udt::ControleurComponent( name )
       {
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _automaton.setDebug( true );
       }
 
    public:
 
       virtual void maintenance( bool maintenance ) {
-         fprintf( stderr, "%s, maintenance = %s\n", HPMS_FUNCNAME, maintenance ? "true" : "false" );
+         fprintf( stderr, "%s:%s, maintenance = %s\n", util::Time::now(), HPMS_FUNCNAME, maintenance ? "true" : "false" );
          if( maintenance ) {
             _automaton.process( dabtypes::Evenement::MAINTENANCE_ON );
          }
@@ -29,7 +31,7 @@ namespace dab {
       }
 
       virtual void rechargerLaCaisse( const double & montant ) {
-         fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
+         fprintf( stderr, "%s:%s, montant = %7.2f €\n", util::Time::now(), HPMS_FUNCNAME, montant );
          _uniteDeTraitement._etatDuDab.soldeCaisse += montant;
          if( _uniteDeTraitement._etatDuDab.soldeCaisse < 1000 ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
@@ -37,7 +39,7 @@ namespace dab {
       }
 
       virtual void anomalie( bool anomalie ) {
-         fprintf( stderr, "%s, anomalie = %s\n", HPMS_FUNCNAME, anomalie ? "true" : "false" );
+         fprintf( stderr, "%s:%s, anomalie = %s\n", util::Time::now(), HPMS_FUNCNAME, anomalie ? "true" : "false" );
          if( anomalie ) {
             _automaton.process( dabtypes::Evenement::ANOMALIE_ON );
          }
@@ -47,7 +49,7 @@ namespace dab {
       }
 
       virtual void carteInseree( const char * id ) {
-         fprintf( stderr, "%s, id = %s\n", HPMS_FUNCNAME, id );
+         fprintf( stderr, "%s:%s, id = %s\n", util::Time::now(), HPMS_FUNCNAME, id );
          _carte .invalidate();
          _compte.invalidate();
          _automaton.process( dabtypes::Evenement::CARTE_INSEREE );
@@ -55,7 +57,7 @@ namespace dab {
       }
 
       virtual void getInformations( const dabtypes::Carte & carte, const dabtypes::Compte & compte ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _carte .set( carte );
          _compte.set( compte );
          if( _carte.isValid() && _compte.isValid()) {
@@ -75,13 +77,15 @@ namespace dab {
             }
          }
          else {
-            ::fprintf( stderr, "%s: Carte et/ou compte invalide\n", HPMS_FUNCNAME );
+            ::fprintf( stderr, "%s:%s: Carte et/ou compte invalide\n", util::Time::now(), HPMS_FUNCNAME );
+            _carte .dump();
+            _compte.dump();
             _automaton.process( dabtypes::Evenement::CARTE_INVALIDE );
          }
       }
 
       virtual void codeSaisi( const char * code ) {
-         fprintf( stderr, "%s, code = %s\n", HPMS_FUNCNAME, code );
+         fprintf( stderr, "%s:%s, code = %s\n", util::Time::now(), HPMS_FUNCNAME, code );
          if( ! _carte.isValid()) {
             _automaton.process( dabtypes::Evenement::CARTE_INVALIDE );
          }
@@ -105,7 +109,7 @@ namespace dab {
       }
 
       virtual void montantSaisi( const double & montant ) {
-         fprintf( stderr, "%s, montant = %7.2f €\n", HPMS_FUNCNAME, montant );
+         fprintf( stderr, "%s:%s, montant = %7.2f €\n", util::Time::now(), HPMS_FUNCNAME, montant );
          _iHM.ejecterLaCarte();
          if( montant > _uniteDeTraitement._etatDuDab.soldeCaisse ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
@@ -120,7 +124,7 @@ namespace dab {
       }
 
       virtual void carteRetiree( void ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
          _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
          _uniteDeTraitement._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
@@ -129,19 +133,19 @@ namespace dab {
       }
 
       virtual void billetsRetires( void ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _automaton.process( dabtypes::Evenement::BILLETS_RETIRES );
       }
 
       virtual void annulationDemandeeParLeClient() {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _montantDeLatransactionEnCours = 0.0;
          _iHM.ejecterLaCarte();
          _automaton.process( dabtypes::Evenement::ANNULATION_CLIENT );
       }
 
       virtual void shutdown( void ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _iHM.shutdown();
          _siteCentral.shutdown();
          _automaton.process( dabtypes::Evenement::TERMINATE );
@@ -156,20 +160,20 @@ namespace dab {
        */
       virtual void afterDispatch( void ) {
          _uniteDeTraitement._etatDuDab.etat = _automaton.getCurrentState();
-         fprintf( stderr, "%s, etat = %s\n", HPMS_FUNCNAME, dabtypes::toString( _uniteDeTraitement._etatDuDab.etat ));
+         fprintf( stderr, "%s:%s, etat = %s\n", util::Time::now(), HPMS_FUNCNAME, dabtypes::toString( _uniteDeTraitement._etatDuDab.etat ));
          _uniteDeTraitement.publishEtatDuDab();
       }
 
    private:
 
       void confisquerLaCarte( void ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _iHM.confisquerLaCarte();
          _automaton.process( dabtypes::Evenement::DELAI_EXPIRE );
       }
 
       void placerLesBilletsDansLaCorbeille( void ) {
-         fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
          _iHM.placerLesBilletsDansLaCorbeille();
          _automaton.process( dabtypes::Evenement::DELAI_EXPIRE );
       }

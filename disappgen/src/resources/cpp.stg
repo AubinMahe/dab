@@ -225,20 +225,14 @@ namespace <namespace> {
 
    public:
 
-<iface.eventOrRequestOrData:{facet|
-< if( facet.type )>
-      <typesNamespace>::<type(facet)> & <facet.name>( void ) {
-         return _<facet.name>;
-      \}
-
-< endif>
-      void < if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+      void <facet.name>( <
 if( facet.arguments )><
          signature( facet.arguments.field )><
 else><
          signature( facet.field )><
 endif> );
-}>
+< endif>}>
    private:
 
       enum EventID {
@@ -258,8 +252,6 @@ endif> );
       io::DatagramSocket & _socket;
       sockaddr_in          _target;
       io::ByteBuffer       _out;
-<iface.eventOrRequestOrData:{facet|< if( facet.type )>
-      <typesNamespace>::<facet.userType.name> _<facet.name>;< endif>}>
 
    private:
       <ifaceName>( const <ifaceName> & ) = delete;
@@ -280,10 +272,9 @@ using namespace <namespace>;
    _target( target ),
    _out   ( _raw, <rawSize> )
 {}
-<iface.eventOrRequestOrData:{facet|
+<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
 
-
-void <iface.name>::< if( facet.type )>publish<facet.name; format="cap">< else><facet.name>< endif>( <
+void <iface.name>::<facet.name>( <
 if( facet.arguments )><
     signature( facet.arguments.field )><
 else><
@@ -303,6 +294,7 @@ endif>
    _out.flip();
    _socket.sendTo( _out, _target );
 \}
+< endif>
 }>
 >>
 
@@ -348,7 +340,7 @@ endif> ) = 0;< endif>
 
 
 dispatcherInterface(
-   namespace, component, ifaces, ifacesIDs, requires, events, rawSize, hasResponse, respRawSize, data, requests
+   namespace, component, ifaces, ifacesIDs, requires, events, rawSize, hasResponse, respRawSize, data, offRequests, reqRequests
 ) ::= <<
 #pragma once
 //dispatcherInterface
@@ -383,12 +375,14 @@ namespace <namespace> {
          < if( component.timeout )>LOOPBACK = 0,< endif>
 <ifaces.keys:{ifaceName|
          <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
-< if( requests.(ifaceName))>
+< if( offRequests.(ifaceName))>
          <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
 < endif>
 <data:{iface|
          <iface.name; format="ID,width"> = <requires.(iface.name)>,
-}>}>      };
+}>}><reqRequests:{ifaceName|
+         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
+}>      };
 <ifaces.keys:{ifaceName|
 
 
@@ -397,10 +391,26 @@ namespace <namespace> {
 }>< rest( events.(ifaceName)):{event|         <event.name; format="ID">,
 }>      \};
 
-      bool dispatch( < if( requests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event );
+      bool dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event );
+}><data:{iface|
+
+
+      enum class <iface.name>Data : byte {
+<  first( data.(iface)):{dataType|         <dataType.name; format="ID"> = 1,
+}>< rest( data.(iface)):{dataType|         <dataType.name; format="ID">,
+}>      \};
+
+      bool dispatch( <iface.name>Data event );
+}><reqRequests:{ifaceName|
+
+      enum class <ifaceName>Response : byte {
+<  first( reqRequests.(ifaceName)):{req|         <req.name; format="ID"> = 1,
+}>< rest( reqRequests.(ifaceName)):{req|         <req.name; format="ID">,
+}>      \};
+
+      bool dispatch( <ifaceName>Response event );
 }>< if( component.timeout )>
       bool dispatch( LoopbackEvent event );
-
 < endif>
 
    private:
@@ -442,8 +452,51 @@ _in.getString( <field.name>, sizeof( <field.name> ));
 
 
 
+dispatcherImplResponse() ::= <<
+// dispatcherImplResponse -- begin
+      enum class Interface : byte {
+         <reqRequests.(ifaceName):{req|<req.name; format="ID">( <i> ),
+}>      };
+
+bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
+   fprintf( stderr, "%s|event = %d\n", HPMS_FUNCNAME, event );
+   switch( event ) {
+<reqRequests.(ifaceName):{req|
+   case <req.name; format="ID">:{
+      <req.response.field:{field|<byteBufferGet( field )>}
+>      _listener.<req.name>(<args( req.response.field )>);
+      return true;\}
+}>   default:
+      fprintf( stderr, "%s.dispatch|Unexpected event: %s\n", HPMS_FUNCNAME, (byte)event );
+      return false;
+   }
+}
+// dispatcherImplResponse -- end
+>>
+
+
+
+dispatcherImplData() ::= <<
+// dispatcherImplData -- begin
+bool <component.name>Dispatcher::dispatch( <iface.name>Data event ) {
+   switch( event ) {
+<data.(iface):{dataType|
+   case <iface.name>Data::<dataType.name; format="ID">:{
+      _listener.update<dataType.name; format="cap">( _in );
+      _listener.<dataType.name>Published();
+      return true;\}
+}>   default:
+      fprintf( stderr, "%s|Unexpected event: %d\n", HPMS_FUNCNAME, (byte)event );
+      return false;
+   }
+}
+// dispatcherImplData -- end
+>>
+
+
+
 dispatcherImplementation(
-    typesNamespace, namespace, component, ifaces, events, eventIDs, usedTypes, requests, hasResponse
+    typesNamespace, namespace, component, ifaces, events, eventIDs, usedTypes, offRequests, reqRequests, hasResponse, data
 ) ::= <<
 //dispatcherImplementation
 #include \<<namespace>/<component.name>Dispatcher.hpp>
@@ -467,7 +520,7 @@ using namespace <namespace>;
 <events.(ifaceName):{facet|< if( facet.response )>
 static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
-bool <component.name>Dispatcher::dispatch( < if( requests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event ) {
+bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event ) {
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.type )>< else>
    case <ifaceName>Event::<facet.name; format="ID">:{
@@ -492,6 +545,27 @@ bool <component.name>Dispatcher::dispatch( < if( requests.(ifaceName))>struct so
       break;
       \}
 < endif>}>   default:
+      fprintf( stderr, "%s|Unknown <ifaceName>'s event: %d\n", HPMS_FUNCNAME, (byte)event );
+      return false;
+   \}
+   return true;
+\}
+}>
+<data:{iface|
+<dispatcherImplData()>
+}>
+<reqRequests:{ifaceName|
+
+
+bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
+   switch( event ) {
+<reqRequests.(ifaceName):{facet|
+   case <ifaceName>Response::<facet.name; format="ID">:{
+      <facet.response.field:{field|<byteBufferGet( field )>}
+>      _listener.<facet.name>( <args( facet.response.field )> );
+      break;
+      \}
+}>   default:
       fprintf( stderr, "%s|Unknown <ifaceName>'s event: %d\n", HPMS_FUNCNAME, (byte)event );
       return false;
    \}
@@ -523,8 +597,12 @@ bool <component.name>Dispatcher::hasDispatched( void ) {
 < endif>
 <ifaces.keys:{ifaceName|
 
-      case Interface::<ifaceName; format="ID,width">: return dispatch( <
-        if( requests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ));
+      case Interface::<ifaceName; format="ID">: return dispatch( <
+        if( offRequests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ));
+}><reqRequests:{ifaceName|
+      case Interface::<ifaceName; format="ID">_RESPONSES: return dispatch( static_cast\<<ifaceName>Response>( event ));
+}><data:{iface|
+      case Interface::<iface.name; format="ID">: return dispatch( static_cast\<<iface.name>Data>( event ));
 }>      default: fprintf( stderr, "%s|Unknown interface: %d\n", HPMS_FUNCNAME, interface );
       }
    }
@@ -546,7 +624,7 @@ void <component.name>Dispatcher::loopback( const LoopbackEvent & event ) {
 
 
 componentInterface(
-   namespace, component, responses, requires, instancesByName, instances, actions, data
+   typesNamespace, namespace, component, responses, requires, instancesByName, instances, actions, data, reqData
 ) ::= <<
 #pragma once
 //componentInterface
@@ -559,9 +637,11 @@ componentInterface(
 <component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
 }>
 <component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
-}><responses.(component.name):{r|#include \<<namespace>/<r.interface.name>.hpp>
+}><responses:{ifaceName|#include \<<namespace>/I<ifaceName>.hpp>
 }><data:{iface|
 #include \<<namespace>/<iface.name>Data.hpp>
+}><reqData:{iface|
+#include \<<namespace>/I<iface.name>Data.hpp>
 }>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
 < if( component.automaton )>
@@ -569,12 +649,15 @@ componentInterface(
 #include \<<namespace>/Automaton.hpp>
 < endif>
 
+#include \<os/Thread.hpp>
+
 namespace <namespace> {
 
    class <component.name>Component : <
 first(component.offers):{ offered  |public I<offered.interface.name>}><
 rest (component.offers):{ offered|, public I<offered.interface.name>}><
-responses.(component.name):{r    |, public I<r.interface.name>}> {
+reqData:{iface|, public I<iface.name>Data}><
+responses:{ifaceName|, public I<ifaceName>}> {
    public:
 
       <component.name>Component( const char * name );
@@ -582,6 +665,12 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
    public:
 
       void run();
+
+      bool isRunning( void ) const {
+         return _running;
+      }
+
+      void terminate( void );
 
 < if( actions )>
 
@@ -597,19 +686,24 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
       virtual void afterDispatch( void ) = 0;
 < endif>
-
-
-      void terminate();
-
 < if( component.timeout )>
+
       void loopback( const <component.name>Dispatcher::LoopbackEvent & event );
 < endif>
+<reqData:{iface|<reqData.(iface):{data|
 
-   private:
+
+      <typesNamespace>::<data.name; format="cap"> _<data.name; format="args">;
+
+   public:
+   
+      void update<data.name; format="cap">( io::ByteBuffer & in );
+
+}>}>   private:
 
       io::DatagramSocket _socket;
-      bool               _running;
-
+      volatile bool      _running;
+      ThreadType         _self;
       <component.name>Dispatcher _dispatcher;
 
    protected:
@@ -628,12 +722,13 @@ responses.(component.name):{r    |, public I<r.interface.name>}> {
 
 
 componentImplementation(
-   namespace, component, responses, requires, instancesByName, instances, processes, data
+   namespace, component, responses, requires, instancesByName, instances, processes, data, reqData
 ) ::= <<
 //componentImplementation
 #include \<<namespace>/<component.name>Component.hpp>
 #include \<<namespace>/<component.name>Dispatcher.hpp>
 
+#include \<stdio.h>
 #include \<string.h>
 
 #include \<util/Exceptions.hpp>
@@ -664,6 +759,7 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 
 <component.name>Component::<component.name>Component( const char * name ) :
    _running   ( false ),
+   _self      ( 0 ),
    _dispatcher( _socket, *this )< if( component.automaton )>,
    _automaton ( *this )
    < endif>
@@ -687,10 +783,17 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
          processes.(instance).address>", <
          processes.(instance).port> );
 }>   }
-}
+}<reqData:{iface|<reqData.(iface):{data|
+
+
+void <component.name>Component::update<data.name; format="cap">( io::ByteBuffer & in ) {
+   _<data.name>.get( in );
+\}
+}>}>
 
 void <component.name>Component::terminate() {
    _running = false;
+   os::Thread::cancel( _self );
 }
 
 < if( component.timeout )>
@@ -701,6 +804,8 @@ void <component.name>Component::loopback( const <component.name>Dispatcher::Loop
 < endif>
 
 void <component.name>Component::run() {
+   fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+   _self    = os::Thread::self();
    _running = true;
    while( _running ) {
       if( _dispatcher.hasDispatched()) {< if( component.afterDispatchNeeded )>
@@ -708,6 +813,7 @@ void <component.name>Component::run() {
 < endif>
       }
    }
+   fprintf( stderr, "%s|ended\n", HPMS_FUNCNAME );
 }
 >>
 
@@ -780,6 +886,30 @@ void <interface.name>Data::publish<dataType.name; format="cap">( void ) {
    fprintf( stderr, "%s|%u byte(s) sent to %s\n", HPMS_FUNCNAME, size, ::inet_ntoa( _target.sin_addr ));
 \}
 }>
+>>
+
+
+
+dataReader( namespace, interface, data  ) ::= <<
+#pragma once
+
+// dataReader
+
+namespace <namespace> {
+
+   class I<interface.name>Data {
+   public:
+
+      I<interface.name>Data( void ) = default;
+      virtual ~ I<interface.name>Data( void ) = default;
+
+   public:
+
+<data:{dataType|
+      virtual void <dataType.name; format="argument">Published( void ) = 0;
+}>
+   };
+}
 >>
 
 

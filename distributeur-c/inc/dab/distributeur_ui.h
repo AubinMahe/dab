@@ -3,8 +3,7 @@
 #include <dab/distributeur.h>
 
 typedef struct business_logic_data_s {
-   bool         etat_du_dab_published;
-   const char * action;
+   bool         refresh;
    double       montant;
    bool         shutdown;
 } business_logic_data;

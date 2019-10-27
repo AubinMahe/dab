@@ -1,13 +1,16 @@
 SRCS =\
  src/io/ByteBuffer.cpp\
+ src/io/Console.cpp\
  src/io/DatagramSocket.cpp\
  src/io/Selector.cpp\
  src/io/sockets.cpp\
  src/os/Event.cpp\
  src/os/Mutex.cpp\
+ src/os/sleep.cpp\
  src/os/Thread.cpp\
  src/util/Args.cpp\
  src/util/Exceptions.cpp\
+ src/util/Time.cpp\
  src/util/Timeout.cpp
 
 CPPFLAGS    = -I inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17

@@ -111,7 +111,7 @@ util_error udt_controleur_carte_inseree( udt_controleur * This, const char * id 
    return UTIL_NO_ERROR;
 }
 
-util_error udt_controleur_get_informations( udt_controleur * This, const dabtypes_carte * carte, const dabtypes_compte * compte ) {
+util_error udt_controleur_site_central_response_get_informations( udt_controleur * This, const dabtypes_carte * carte, const dabtypes_compte * compte ) {
    business_logic_data * d = This->user_context;
    carte_set( &d->carte, carte );
    compte_set( &d->compte, compte );
@@ -286,6 +286,7 @@ static int usage( const char * exename ) {
 }
 
 int main( int argc, char * argv[] ) {
+   fprintf( stderr, "\n" );
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;

@@ -15,36 +15,37 @@
 util_error dab_distributeur_etat_du_dab_published( dab_distributeur * This ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->etat_du_dab_published = true;
+   bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_ejecter_la_carte( dab_distributeur * This ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Ejecter la carte";
+   bl->refresh = true;
    return UTIL_NO_ERROR;
+   (void)This;
 }
 
 util_error dab_distributeur_ejecter_les_billets( dab_distributeur * This, double montant ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action  = "Ejecter les billets";
    bl->montant = montant;
+   bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_confisquer_la_carte( dab_distributeur * This ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Confisquer la carte";
+   bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
 util_error dab_distributeur_placer_les_billets_dans_la_corbeille( dab_distributeur * This ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   bl->action = "Placer les billets dans la corbeille";
+   bl->refresh = true;
    return UTIL_NO_ERROR;
 }
 
@@ -74,6 +75,7 @@ static void * background_thread_routine( void * ctxt ) {
 }
 
 int main( int argc, char * argv[] ) {
+   fprintf( stderr, "\n" );
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;

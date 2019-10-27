@@ -10,6 +10,7 @@ static int usage( const char * exename ) {
 }
 
 int main( int argc, char * argv[] ) {
+   fprintf( stderr, "\n" );
    util::Args  args( argc, argv );
    const char * name;
    bool ok = args.getString( "name", name );

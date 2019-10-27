@@ -497,6 +497,17 @@ final class Model {
       return eventsOrRequestsForOneComponent;
    }
 
+   public Map<String, List<Object>> getRequiredEventsOrRequests( ComponentType component ) {
+      final Map<String, List<Object>> eventsOrRequestsForOneComponent = new LinkedHashMap<>();
+      for( final RequiredInterfaceUsageType required : component.getRequires()) {
+         final InterfaceType iface            = (InterfaceType)required.getInterface();
+         final String        ifaceName        = iface.getName();
+         final List<Object>  eventsOrRequests = _facetsByName.get( ifaceName );
+         eventsOrRequestsForOneComponent.put( ifaceName, eventsOrRequests );
+      }
+      return eventsOrRequestsForOneComponent;
+   }
+
    private static int getEnumSize( EnumerationType enm ) {
       switch( enm.getType()) {
       case BOOLEAN  : return 1;

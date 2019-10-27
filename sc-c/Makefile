@@ -1,5 +1,6 @@
 EXEC = site_central
 NAME = Site-Central
+XTERM_SIZE_POSX= 45x30-0
 SRCS =\
  src/sc/banque_ui.c\
  src/sc/repository.c\
@@ -47,15 +48,14 @@ BUILD-mingw32/%.o: src-gen/%.c
 	i686-w64-mingw32-gcc $(CW32FLAGS) -o $@ $<
 
 run: ../$(EXEC)
-	xterm -title "$(NAME) C" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=sc &
+	xterm -title "$(NAME) C" -geometry $(XTERM_SIZE_POSX)-16 -e '(../$(EXEC) --name=sc 2>/dev/pts/2)' &
 
 run-win32: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME) C Win32" -geometry 150x30+810-16 -hold -e wine ../$(EXEC)-mingw32 --name=sc
+	xterm -title "$(NAME) C Win32" -geometry $(XTERM_SIZE_POSX)-16 -hold -e wine ../$(EXEC)-mingw32 --name=sc
 
 deps: $(SRCS) $(SRCSGEN)
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
 	gcc $(CFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
 
 -include deps
-

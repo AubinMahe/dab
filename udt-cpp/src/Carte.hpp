@@ -1,8 +1,11 @@
-#include "Date.hpp"
-
 #include <dabtypes/Carte.hpp>
 
+#include "Date.hpp"
+
+#include <stdio.h>
 #include <string.h>
+
+#include <util/Time.hpp>
 
 namespace dab {
 
@@ -10,8 +13,12 @@ namespace dab {
    public:
 
       Carte() :
-         _isValid( false )
-      {}
+         _isValid( false ),
+         _nbEssais(0 )
+      {
+         _id  [0] = '\0';
+         _code[0] = '\0';
+      }
 
       void set(
          const char *   carteID,
@@ -42,6 +49,14 @@ namespace dab {
       inline bool compareCode( const char * code ) const { return 0 == strcmp( _code, code ); }
 
       inline byte getNbEssais( void ) const { return _nbEssais; }
+
+      void dump() {
+         ::fprintf( stderr, "%s:%s: isValid   : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _isValid ? "true" : "false" );
+         ::fprintf( stderr, "%s:%s: id        : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _id );
+         ::fprintf( stderr, "%s:%s: code      : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _code );
+         ::fprintf( stderr, "%s:%s: peremption: %d:%d\n", util::Time::now(), HPMS_FUNCNAME, _peremption._year, _peremption._month );
+         ::fprintf( stderr, "%s:%s: nbEssais  : %d\n"   , util::Time::now(), HPMS_FUNCNAME, _nbEssais );
+      }
 
    private:
 

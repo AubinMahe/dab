@@ -15,17 +15,21 @@
 util_error sc_banque_get_informations( sc_banque * This, const char * carte_id, dabtypes_site_central_get_informations_response * response ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &response->carte  ));
-   UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &response->compte ));
+   dabtypes_carte * carte = NULL;
+   UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &carte  ));
+   response->carte = *carte;
+   dabtypes_compte * compte = NULL;
+   UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &compte ));
+   response->compte = *compte;
    return UTIL_NO_ERROR;
 }
 
 util_error sc_banque_incr_nb_essais( sc_banque * This, const char * carte_id ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   dabtypes_carte carte;
+   dabtypes_carte * carte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &carte ));
-   ++carte.nb_essais;
+   ++(carte->nb_essais);
    bl->refresh_needed = true;
    return UTIL_NO_ERROR;
 }
@@ -33,9 +37,9 @@ util_error sc_banque_incr_nb_essais( sc_banque * This, const char * carte_id ) {
 util_error sc_banque_retrait( sc_banque * This, const char * carte_id, double montant ) {
    fprintf( stderr, "%s\n", __func__ );
    business_logic_data * bl = (business_logic_data *)This->user_context;
-   dabtypes_compte compte;
+   dabtypes_compte * compte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &compte ));
-   compte.solde -= montant;
+   compte->solde -= montant;
    bl->refresh_needed = true;
    return UTIL_NO_ERROR;
 }
@@ -65,6 +69,7 @@ static void * background_thread_routine( void * ctxt ) {
 }
 
 int main( int argc, char * argv[] ) {
+   fprintf( stderr, "\n" );
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;
@@ -83,7 +88,7 @@ int main( int argc, char * argv[] ) {
       os_thread thread;
       context.err = os_thread_create( &thread, background_thread_routine, &context );
       if( context.err == UTIL_NO_ERROR ) {
-//         sc_banque_create_ui( &context.banque );
+         sc_banque_create_ui( &context.banque );
       }
       else {
          OS_ERROR_PRINT( "os_thread_create", 6 );

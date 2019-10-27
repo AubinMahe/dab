@@ -7,6 +7,7 @@ SRCS =\
  src/os/errors.c\
  src/os/event.c\
  src/os/mutex.c\
+ src/os/sleep.c\
  src/os/thread.c\
  src/util/args.c\
  src/util/automaton.c\

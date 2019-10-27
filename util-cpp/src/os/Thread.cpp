@@ -5,6 +5,22 @@
 
 using namespace os;
 
+ThreadType Thread::self( void ) {
+#ifdef _WIN32
+   return GetCurrentThread();
+#else
+   return pthread_self();
+#endif
+}
+
+void Thread::cancel( ThreadType thread ) {
+#ifdef _WIN32
+   ExitThread( GetThreadId( thread ));
+#else
+   pthread_cancel( thread );
+#endif
+}
+
 Thread::Thread( thread_entry_t entry, void * user_context ) {
 #ifdef _WIN32
    _thread = CreateThread( 0, 0, (LPTHREAD_START_ROUTINE)entry, user_context, 0, 0 );
@@ -23,6 +39,14 @@ Thread::~Thread() {
    if( ! CloseHandle( _thread )) {
       fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
    }
+#endif
+}
+
+void Thread::cancel() {
+#ifdef _WIN32
+   ExitThread( 0 );
+#else
+   pthread_cancel( pthread_self());
 #endif
 }
 

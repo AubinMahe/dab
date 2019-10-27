@@ -1,8 +1,9 @@
-#include <string>
-
-#include <types.hpp>
-
 #include <dabtypes/Compte.hpp>
+
+#include <stdio.h>
+#include <string.h>
+
+#include <util/Time.hpp>
 
 namespace dab {
 
@@ -11,38 +12,43 @@ namespace dab {
 
       Compte() :
          _isValid ( false ),
-         _id      ( ""    ),
          _solde   ( 0.0   ),
          _autorise( false )
-      {}
+      {
+         _id[0] = '\0';
+      }
 
-      void set( const std::string id, const double & solde, bool autorise ) {
-         _id       = id;
+      void set( const char * id, const double & solde, bool autorise ) {
+         strncpy( _id, id, sizeof( _id )); _id[sizeof( _id )-1] = '\0';
          _solde    = solde;
          _autorise = autorise;
-         _isValid  = ( _id.length() > 0 );
+         _isValid  = ( 4 == strlen( _id ));
       }
 
       void set( const dabtypes::Compte & compte ) {
-         _id       = compte.id;
-         _solde    = compte.solde;
-         _autorise = compte.autorise;
-         _isValid  = ( _id.length() > 0 );
+         set( compte.id, compte.solde, compte.autorise );
       }
 
       void invalidate() { _isValid = false; }
 
       bool isValid( void ) const { return _isValid; }
 
-      const std::string & getId( void ) const { return _id; }
+      const char * getId( void ) const { return _id; }
 
       const double & getSolde( void ) const { return _solde; }
 
+      void dump( void ) {
+         ::fprintf( stderr, "%s:%s: isValid : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _isValid ? "true" : "false" );
+         ::fprintf( stderr, "%s:%s: id      : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _id );
+         ::fprintf( stderr, "%s:%s: solde   : %7.2f\n", util::Time::now(), HPMS_FUNCNAME, _solde );
+         ::fprintf( stderr, "%s:%s: autorise: %s\n"   , util::Time::now(), HPMS_FUNCNAME, _autorise ? "true" : "false" );
+      }
+
    private:
 
-      bool        _isValid;
-      std::string _id;
-      double      _solde;
-      bool        _autorise;
+      bool   _isValid;
+      char   _id[5];
+      double _solde;
+      bool   _autorise;
    };
 }

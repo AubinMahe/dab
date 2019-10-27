@@ -3,18 +3,21 @@
 #ifdef _WIN32
 #include <conio.h>
 
-void console_init( void ) {
+void io_console_init( void ) {
    /**/
 }
 
-int console_kbhit( void ) {
+int io_console_kbhit( void ) {
    return kbhit();
 }
 
-int console_getch( void ) {
+int io_console_getch( void ) {
    return getch();
 }
+
 #else
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
@@ -30,7 +33,7 @@ static void reset_terminal_mode( void ) {
    tcsetattr( 0, TCSANOW, &orig_termios );
 }
 
-void console_init( void ) {
+void io_console_init( void ) {
    static struct termios new_termios;
 
    /* take two copies - one for now, one for later */
@@ -43,19 +46,24 @@ void console_init( void ) {
    tcsetattr( 0, TCSANOW, &new_termios );
 }
 
-int console_kbhit( void ) {
+int io_console_kbhit( void ) {
    struct timeval tv = { 0L, 0L };
    fd_set fds;
-   FD_ZERO(&fds);
-   FD_SET(0, &fds);
-   return select(1, &fds, NULL, NULL, &tv);
+   FD_ZERO( &fds );
+   FD_SET( 0, &fds );
+   int status = select( 1, &fds, NULL, NULL, &tv );
+   if( status < 0 ) {
+      perror( "select" );
+   }
+   return status;
 }
 
-int console_getch( void ) {
-   ssize_t       r;
+int io_console_getch( void ) {
    unsigned char c;
-   if(( r = read( 0, &c, sizeof( c ))) < 0 ) {
-      return (int)r;
+   ssize_t status = read( 0, &c, sizeof( c ));
+   if( status < 0 ) {
+      perror( "read" );
+      return 0;
    }
    return c;
 }

@@ -58,23 +58,22 @@ util_error sc_repository_init( sc_repository * This ) {
    return UTIL_NOT_FOUND;
 }
 
-util_error sc_repository_get_carte( sc_repository * This, const char * carte_id, dabtypes_carte * target ) {
+util_error sc_repository_get_carte( sc_repository * This, const char * carte_id, dabtypes_carte ** target ) {
    fprintf( stderr, "%s|id = %s\n", __func__, carte_id );
    for( unsigned row = 0, count = sizeof( This->cartes )/sizeof( This->cartes[0] ); row < count; ++row ) {
       if( 0 == strncmp( This->cartes[row].id, carte_id, 4 )) {
-         *target = This->cartes[row];
+         *target = This->cartes + row;
          return UTIL_NO_ERROR;
       }
    }
    return UTIL_NOT_FOUND;
 }
 
-util_error sc_repository_get_compte( sc_repository * This, const char * carte_id, dabtypes_compte * target ) {
+util_error sc_repository_get_compte( sc_repository * This, const char * carte_id, dabtypes_compte ** target ) {
    fprintf( stderr, "%s|id = %s\n", __func__, carte_id );
-   dabtypes_carte carte;
    for( unsigned row = 0, count = sizeof( This->cartes_compte )/sizeof( This->cartes_compte[0] ); row < count; ++row ) {
-      if( 0 == strncmp( This->cartes_compte[row].carte->id, carte.id, 4 )) {
-         *target = *(This->cartes_compte[row].compte);
+      if( 0 == strncmp( This->cartes_compte[row].carte->id, carte_id, 4 )) {
+         *target = This->cartes_compte[row].compte;
          return UTIL_NO_ERROR;
       }
    }

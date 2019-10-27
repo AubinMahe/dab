@@ -1,18 +1,26 @@
 EXEC = Distributeur
 NAME = DAB
-SRCS = src/main.cpp
+XTERM_SIZE_POSX = 45x30+0
+SRCS =\
+ src/dab/Distributeur.cpp\
+ src/dab/DistributeurUI.cpp\
+ src/main.cpp
 
 -include generated-files.mk
 
-CPPFLAGS    = -I ../util-cpp/inc -I ../dabtypes-cpp/inc-gen -I inc -I src-gen -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+RELFLAGS    = -O3 -g0
+DBGFLAGS    = -O0 -g3
+CPPFLAGS    = $(DBGFLAGS) -I ../util-cpp/inc -I ../dabtypes-cpp/inc-gen -I inc -I src-gen -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
 WINVER      = 0x06010000
 CPPW32FLAGS = $(CPPFLAGS) -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 
 OBJS    = $(SRCS:src/%cpp=BUILD/%o) $(SRCSGEN:src-gen/%cpp=BUILD/%o)
 OBJSW32 = $(SRCS:src/%cpp=BUILD-mingw32/%o) $(SRCSGEN:src-gen/%cpp=BUILD-mingw32/%o)
 
+.PHONY: all
 all: ../$(EXEC) ../$(EXEC)-mingw32
 
+.PHONY: clean
 clean:
 	rm -f  deps
 	rm -f  compile.log
@@ -42,18 +50,18 @@ BUILD-mingw32/%.o: src-gen/%.cpp
 	i686-w64-mingw32-g++ $(CPPW32FLAGS) -o $@ $<
 
 run-1: ../$(EXEC)
-	xterm -title "$(NAME)-1 C++" -geometry 150x30+810-16 -hold -e ../$(EXEC) --name=udt1 &
+	xterm -title "$(NAME)-1 C++" -geometry $(XTERM_SIZE_POSX)-16 -e '(../$(EXEC) --name=ihm1 2>/dev/pts/1)' &
 
 run-2: ../$(EXEC)
-	xterm -title "$(NAME)-2 C++" -geometry 150x30-0+0 -hold -e ../$(EXEC) --name=udt2 &
+	xterm -title "$(NAME)-2 C++" -geometry $(XTERM_SIZE_POSX)-200 -hold -e ../$(EXEC) --name=ihm2 &
 
 run-win32-1: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-1 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../$(EXEC)-mingw32 --name=udt-1
+	xterm -title "$(NAME)-1 C++ Win32" -geometry $(XTERM_SIZE_POSX)-16  -hold -e wine ../$(EXEC)-mingw32 --name=ihm1
 
 run-win32-2: ../$(EXEC)-mingw32
 	@export WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32
-	xterm -title "$(NAME)-2 C++ Win32" -geometry 150x30-0+0 -hold -e wine ../$(EXEC)-mingw32 --name=udt-2
+	xterm -title "$(NAME)-2 C++ Win32" -geometry $(XTERM_SIZE_POSX)-200 -hold -e wine ../$(EXEC)-mingw32 --name=ihm2
 
 deps: $(SRCS) $(SRCSGEN)
 	g++ $(CPPFLAGS) -MM $(SRCS) $(SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
