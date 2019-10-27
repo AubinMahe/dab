@@ -23,7 +23,7 @@ clean:
 ../$(EXEC): ../util-cpp/lib/libutil-cpp.a ../dabtypes-cpp/lib/libdabtypes-cpp.a $(OBJS)
 	g++ $(OBJS) -L../util-cpp/lib -lutil-cpp -L../dabtypes-cpp/lib -ldabtypes-cpp -lpthread -o $@
 
-../$(EXEC)-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a $(OBJSW32)
+../$(EXEC)-mingw32: ../util-cpp/lib/libutil-cpp-mingw32.a ../dabtypes-cpp/lib/libdabtypes-cpp-mingw32.a $(OBJSW32)
 	i686-w64-mingw32-g++ $(OBJSW32) -L../util-cpp/lib -lutil-cpp-mingw32 -L../dabtypes-cpp/lib -ldabtypes-cpp-mingw32 -lws2_32 -o $@
 
 BUILD/%.o: src/%.cpp

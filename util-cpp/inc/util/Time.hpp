@@ -11,9 +11,10 @@ namespace util {
       static const char * now( void );
 
       /**
-       * Return a string conformant to ISO8601 : 2019-10-27T15:04:59Z.
+       * Return a string conformant to ISO8601 : 2019-10-27T15:04:59[+0100].
+       * The last part is optional, see boolean withTimeZone argument.
        */
-      static const char * toString( const tm & time );
+      static const char * toString( const tm & time, bool withTimeZone = false );
 
    private:
       Time( void ) = delete;

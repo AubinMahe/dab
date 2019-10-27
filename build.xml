@@ -50,7 +50,7 @@
                                                             
    <target name="util-cpp"         ><exec dir="util-cpp"         executable="make" output="util-cpp/compile.log"         failonerror="true" /></target>
    <target name="dabtypes-cpp"     ><exec dir="dabtypes-cpp"     executable="make" output="dabtypes-cpp/compile.log"     failonerror="true" /></target>
-   <target name="distributeur-cpp" ><exec dir="distributeur-c"   executable="make" output="distributeur-c/compile.log"   failonerror="true" /></target>
+   <target name="distributeur-cpp" ><exec dir="distributeur-cpp" executable="make" output="distributeur-cpp/compile.log" failonerror="true" /></target>
    <target name="site-central-cpp" ><exec dir="sc-cpp"           executable="make" output="sc-cpp/compile.log"           failonerror="true" /></target>
    <target name="udt-cpp"          ><exec dir="udt-cpp"          executable="make" output="udt-cpp/compile.log"          failonerror="true" /></target>
    <target name="util-cpp-tests"   ><exec dir="util-cpp/tests"   executable="make"                                       failonerror="true" /></target>
