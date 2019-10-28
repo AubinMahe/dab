@@ -1,7 +1,9 @@
 #include <sc/Banque.hpp>
 
 #include <os/Thread.hpp>
+#include <os/sleep.hpp>
 #include <util/Time.hpp>
+#include <util/Log.hpp>
 
 #include <stdio.h>
 
@@ -17,12 +19,12 @@ Banque::Banque( const char * name ) :
    BanqueComponent( name ),
    _ui( *this )
 {
-   fprintf( stderr, "%s:%s|launching UI\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_MSG( "launching UI" );
    os::Thread( launchUI, &_ui );
 }
 
 void Banque::getInformations( const char * carteID, dabtypes::SiteCentralGetInformationsResponse & response ) {
-   fprintf( stderr, "%s:%s|carteID = %s\n", util::Time::now(), HPMS_FUNCNAME, carteID );
+   UTIL_LOG_ARGS( "carteID = %s", carteID );
    dabtypes::Carte * carte = _repository.getCarte( carteID );
    if( carte ) {
       dabtypes::Compte * compte = _repository.getCompte( carteID );
@@ -31,39 +33,41 @@ void Banque::getInformations( const char * carteID, dabtypes::SiteCentralGetInfo
          response.compte = *compte;
       }
       else {
-         fprintf( stderr, "%s:%s|unknown!\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_MSG( "unknown!" );
       }
    }
    else {
-      fprintf( stderr, "%s:%s|unknown!\n", util::Time::now(), HPMS_FUNCNAME );
+      UTIL_LOG_MSG( "unknown!" );
    }
+   os::sleep( 3000 );
+   UTIL_LOG_DONE();
 }
 
 void Banque::incrNbEssais( const char * carteID ) {
-   fprintf( stderr, "%s:%s|carteID = %s\n", util::Time::now(), HPMS_FUNCNAME, carteID );
+   UTIL_LOG_ARGS( "carteID = %s\n", carteID );
    dabtypes::Carte * carte = _repository.getCarte( carteID );
    if( carte ) {
       carte->nbEssais++;
    }
    else {
-      fprintf( stderr, "%s:%s|unknown!\n", util::Time::now(), HPMS_FUNCNAME );
+      UTIL_LOG_MSG( "unknown!" );
    }
    _ui.refresh();
 }
 
 void Banque::retrait( const char * carteID, const double & montant ) {
-   fprintf( stderr, "%s:%s|carteID = %s, montant = %7.2f\n", util::Time::now(), HPMS_FUNCNAME, carteID, montant );
+   UTIL_LOG_ARGS( "carteID = %s, montant = %7.2f", carteID, montant );
    dabtypes::Compte * compte = _repository.getCompte( carteID );
    if( compte ) {
       compte->solde -= montant;
    }
    else {
-      fprintf( stderr, "%s:%s|unknown!\n", util::Time::now(), HPMS_FUNCNAME );
+      UTIL_LOG_MSG( "unknown!" );
    }
    _ui.refresh();
 }
 
 void Banque::shutdown( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    terminate();
 }

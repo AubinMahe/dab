@@ -459,7 +459,7 @@ dispatcherImplResponse() ::= <<
 }>      };
 
 bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
-   fprintf( stderr, "%s|event = %d\n", HPMS_FUNCNAME, event );
+   UTIL_LOG_ARGS( "event = %d", event );
    switch( event ) {
 <reqRequests.(ifaceName):{req|
    case <req.name; format="ID">:{
@@ -467,7 +467,7 @@ bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
 >      _listener.<req.name>(<args( req.response.field )>);
       return true;\}
 }>   default:
-      fprintf( stderr, "%s.dispatch|Unexpected event: %s\n", HPMS_FUNCNAME, (byte)event );
+      UTIL_LOG_ARGS( "Unexpected event: %s", (byte)event );
       return false;
    }
 }
@@ -486,7 +486,7 @@ bool <component.name>Dispatcher::dispatch( <iface.name>Data event ) {
       _listener.<dataType.name>Published();
       return true;\}
 }>   default:
-      fprintf( stderr, "%s|Unexpected event: %d\n", HPMS_FUNCNAME, (byte)event );
+      UTIL_LOG_ARGS( "Unexpected event: %d", (byte)event );
       return false;
    }
 }
@@ -501,6 +501,8 @@ dispatcherImplementation(
 //dispatcherImplementation
 #include \<<namespace>/<component.name>Dispatcher.hpp>
 #include \<<namespace>/<component.name>Component.hpp>
+
+#include \<util/Log.hpp>
 
 #include \<stdio.h>
 
@@ -538,14 +540,14 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
       response.put( _out );
       _out.flip();
       _socket.sendTo( _out, from );
-      fprintf( stderr, "%s|response sent to %s\n", HPMS_FUNCNAME, inet_ntoa( from.sin_addr ));
+      UTIL_LOG_ARGS( "response sent to %s", inet_ntoa( from.sin_addr ));
       < else
 >      _listener.<facet.name>( <args( facet.field )> );
       < endif>
       break;
       \}
 < endif>}>   default:
-      fprintf( stderr, "%s|Unknown <ifaceName>'s event: %d\n", HPMS_FUNCNAME, (byte)event );
+      UTIL_LOG_ARGS( "Unknown <ifaceName>'s event: %d", (byte)event );
       return false;
    \}
    return true;
@@ -566,7 +568,7 @@ bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
       break;
       \}
 }>   default:
-      fprintf( stderr, "%s|Unknown <ifaceName>'s event: %d\n", HPMS_FUNCNAME, (byte)event );
+      UTIL_LOG_ARGS( "Unknown <ifaceName>'s event: %d", (byte)event );
       return false;
    \}
    return true;
@@ -577,7 +579,7 @@ bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
    switch( event ) {
    <component.timeout:{to|case LoopbackEvent::<to.name; format="ID">: _listener.<to.name; format="argument">Elapsed(); break;
 }>   default:
-      fprintf( stderr, "%s|Unknown timeout's event: %d\n", HPMS_FUNCNAME, (byte)event );
+      UTIL_LOG_ARGS( "Unknown timeout's event: %d", (byte)event );
       return false;
    \}
    return true;
@@ -603,7 +605,9 @@ bool <component.name>Dispatcher::hasDispatched( void ) {
       case Interface::<ifaceName; format="ID">_RESPONSES: return dispatch( static_cast\<<ifaceName>Response>( event ));
 }><data:{iface|
       case Interface::<iface.name; format="ID">: return dispatch( static_cast\<<iface.name>Data>( event ));
-}>      default: fprintf( stderr, "%s|Unknown interface: %d\n", HPMS_FUNCNAME, interface );
+}>      default:
+         UTIL_LOG_ARGS( "Unknown interface: %d\n", interface );
+         break;
       }
    }
    return false;
@@ -732,6 +736,7 @@ componentImplementation(
 #include \<string.h>
 
 #include \<util/Exceptions.hpp>
+#include \<util/Log.hpp>
 
 using namespace <namespace>;
 < first(requires):{req|<requires.(req):{rt|
@@ -804,7 +809,7 @@ void <component.name>Component::loopback( const <component.name>Dispatcher::Loop
 < endif>
 
 void <component.name>Component::run() {
-   fprintf( stderr, "%s\n", HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _self    = os::Thread::self();
    _running = true;
    while( _running ) {
@@ -813,7 +818,7 @@ void <component.name>Component::run() {
 < endif>
       }
    }
-   fprintf( stderr, "%s|ended\n", HPMS_FUNCNAME );
+   UTIL_LOG_DONE();
 }
 >>
 
@@ -859,6 +864,8 @@ namespace <namespace> {
 dataWriterBody( typesNamespace, namespace, interface, ifaceID, data, dataID, rawSize ) ::= <<
 #include \<<namespace>/<interface.name>Data.hpp>
 
+#include \<util/Log.hpp>
+
 #include \<stdio.h>
 
 using namespace <namespace>;
@@ -883,7 +890,7 @@ void <interface.name>Data::publish<dataType.name; format="cap">( void ) {
    _out.flip();
    unsigned size = (unsigned)_out.remaining();
    _socket.sendTo( _out, _target );
-   fprintf( stderr, "%s|%u byte(s) sent to %s\n", HPMS_FUNCNAME, size, ::inet_ntoa( _target.sin_addr ));
+   UTIL_LOG_ARGS( "%u byte(s) sent to %s", size, ::inet_ntoa( _target.sin_addr ));
 \}
 }>
 >>

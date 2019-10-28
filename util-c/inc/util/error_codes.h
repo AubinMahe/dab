@@ -7,6 +7,8 @@ extern "C" {
 #include <stdio.h>
 #include <errno.h>
 
+#include "log.h"
+
 typedef enum util_error_e {
    UTIL_ERROR_FIRST,
 
@@ -30,28 +32,28 @@ extern const char * util_error_messages[UTIL_ERROR_LAST];
 #define UTIL_ERROR_CHECK(O) {\
    util_error err = O;\
    if( UTIL_NO_ERROR != err ) {\
-      fprintf( stderr, "%s:%d:%s:%s:%s\n", __FILE__,__LINE__, __func__, #O, util_error_messages[err] );\
+      fprintf( stderr, "%s:%s:%d:%s:%s:%s\n", util_timestamp_now(), __FILE__,__LINE__, __func__, #O, util_error_messages[err] );\
       return err;\
    }\
 }
 
 #define UTIL_RETURN_ERROR(err) {\
    if( UTIL_NO_ERROR != err ) {\
-      fprintf( stderr, "%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, util_error_messages[err] );\
+      fprintf( stderr, "%s:%s:%d:%s:%s\n", util_timestamp_now(), __FILE__, __LINE__, __func__, util_error_messages[err] );\
       return err;\
    }\
 }
 
 #define UTIL_CHECK_NON_NULL(A) {\
    if( NULL == (A)) {\
-      fprintf( stderr, "%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, util_error_messages[UTIL_NULL_ARG] );\
+      fprintf( stderr, "%s:%s:%d:%s:%s\n", util_timestamp_now(), __FILE__, __LINE__, __func__, util_error_messages[UTIL_NULL_ARG] );\
       return UTIL_NULL_ARG;\
    }\
 }
 
 #define UTIL_ASSERT(T) {\
    if( ! (T)) {\
-      fprintf( stderr, "%s:%d:%s:%s\n", __FILE__, __LINE__, __func__, #T );\
+      fprintf( stderr, "%s:%s:%d:%s:%s\n", util_timestamp_now(), __FILE__, __LINE__, __func__, #T );\
       return UTIL_NOT_APPLICABLE;\
    }\
 }

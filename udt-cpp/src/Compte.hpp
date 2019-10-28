@@ -38,10 +38,10 @@ namespace dab {
       const double & getSolde( void ) const { return _solde; }
 
       void dump( void ) {
-         ::fprintf( stderr, "%s:%s: isValid : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _isValid ? "true" : "false" );
-         ::fprintf( stderr, "%s:%s: id      : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _id );
-         ::fprintf( stderr, "%s:%s: solde   : %7.2f\n", util::Time::now(), HPMS_FUNCNAME, _solde );
-         ::fprintf( stderr, "%s:%s: autorise: %s\n"   , util::Time::now(), HPMS_FUNCNAME, _autorise ? "true" : "false" );
+         UTIL_LOG_ARGS( "isValid : %s"   , _isValid ? "true" : "false" );
+         UTIL_LOG_ARGS( "id      : %s"   , _id );
+         UTIL_LOG_ARGS( "solde   : %7.2f", _solde );
+         UTIL_LOG_ARGS( "autorise: %s"   , _autorise ? "true" : "false" );
       }
 
    private:

@@ -256,7 +256,7 @@ endif> ) {
      endif>
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
    UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 \}
 < endif>
@@ -383,7 +383,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
       UTIL_ERROR_CHECK( <typesPrefix>_<ifaceName; format="cname">_<facet.name; format="cname">_response_put( &response, &This->out ));
       UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
       UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, from ));
-      fprintf( stderr, "%s|response sent to %s\n", __func__, inet_ntoa( from->sin_addr ));
+      UTIL_LOG_ARGS( "response sent to %s", inet_ntoa( from->sin_addr ));
       < else
 >      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<
           facet.name; format="cname">( This->listener<args( facet.field )> ));
@@ -392,9 +392,7 @@ static util_error <prefix>_<ifaceName; format="cname">_dispatch(
       break;
    \}
 < endif>}>   default:
-      fprintf( stderr, "%s|Ignored message:\n", __func__ );
-      fprintf( stderr, "\tinterface = <ifaceName>\n" );
-      fprintf( stderr, "\tevent     = %d\n", event );
+      UTIL_LOG_ARGS( "Ignored message: interface = <ifaceName>, event = %d", event );
       break;
    \}
    return UTIL_NO_ERROR;
@@ -426,7 +424,7 @@ static util_error <prefix>_<ifaceName; format="cname">_responses_dispatch(
       *has_dispatched = true;\}
       break;
 }>   default:
-      fprintf( stderr, "%s.dispatch|Unexpected event: %d\n", __func__, event );
+      UTIL_LOG_ARGS( "Unexpected event: %d", event );
       break;
    }
    return UTIL_NO_ERROR;
@@ -456,7 +454,7 @@ static util_error <prefix>_<iface.name; format="cname">_dispatch(
       *has_dispatched = true;\}
       break;
 }>   default:
-      fprintf( stderr, "%s.dispatch|Unexpected event: %d\n", __func__, event );
+      UTIL_LOG_ARGS( "Unexpected event: %d", event );
       break;
    }
    return UTIL_NO_ERROR;
@@ -590,7 +588,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &out, (byte)event ));
    UTIL_ERROR_CHECK( io_byte_buffer_flip    ( &out ));
    UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &out, &This->listener->localAddress ));
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
 < endif>
@@ -751,7 +749,7 @@ util_error <prefix>_<component.name; format="cname">_init( <
       (util_timeout_action)<prefix>_<component.name; format="cname">_dispatcher_loopback,
       &timeout_arg_<to.name; format="cname"> ));
 }>
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
 
@@ -766,7 +764,7 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
       }
 < endif>
    }
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
 >>
@@ -807,6 +805,8 @@ util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name
 dataWriterBody( typesPrefix, prefix, interface, ifaceID, data, dataID, rawSize  ) ::= <<
 #include \<<prefix>/<interface.name; format="cname">_data.h>
 
+#include \<util/log.h>
+
 #include \<stdio.h>
 
 static const byte <interface.name; format="ID"> = <ifaceID>;
@@ -834,7 +834,7 @@ util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name
    size_t size = 0;
    UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
    UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
-   fprintf( stderr, "%s|%u byte(s) sent to %s\n", __func__, (unsigned)size, inet_ntoa( This->target.sin_addr ));
+   UTIL_LOG_ARGS( "%u byte(s) sent to %s", (unsigned)size, inet_ntoa( This->target.sin_addr ));
    return UTIL_NO_ERROR;
 \}
 }>

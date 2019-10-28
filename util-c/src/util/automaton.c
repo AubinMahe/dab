@@ -1,4 +1,6 @@
 #include <util/automaton.h>
+#include <util/log.h>
+
 #include <stdio.h>
 
 static util_error fire_action( util_automaton * This, const util_automaton_state_action * actions, size_t count ) {
@@ -34,6 +36,6 @@ util_error util_automaton_process( util_automaton * This, int event ) {
          return UTIL_NO_ERROR;
       }
    }
-   fprintf( stderr, "util_automaton_process|ignored event %d\n", event );
+   UTIL_LOG_ARGS( "ignored event %d", event );
    return UTIL_NOT_FOUND;
 }

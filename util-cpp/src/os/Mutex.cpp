@@ -1,5 +1,6 @@
 #include <os/Mutex.hpp>
 #include <util/Exceptions.hpp>
+#include <util/Log.hpp>
 
 #include <stdio.h>
 
@@ -27,25 +28,21 @@ Mutex:: ~ Mutex( void ) {
 #ifdef _WIN32
    if( _synchronizedBlock ) {
       if( ! ::ReleaseMutex( _mutex )) {
-         fprintf( stderr, "%s\n",
-            util::Runtime( UTIL_CTXT, "ReleaseMutex" ).what());
+         UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "ReleaseMutex" ).what());
       }
    }
    if( ! ::CloseHandle( _mutex )) {
-      fprintf( stderr, "%s\n",
-         util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
    }
 #else
    if( _synchronizedBlock ) {
       if( ::pthread_mutex_unlock( &_mutex )) {
-         fprintf( stderr, "%s\n",
-            util::Runtime( UTIL_CTXT, "pthread_mutex_unlock" ).what());
+         UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "pthread_mutex_unlock" ).what());
       }
    }
    if( ::pthread_mutex_destroy( &_mutex )) {
       // a destructor is tagged noexcept by default
-      fprintf( stderr, "%s\n",
-         util::Runtime( UTIL_CTXT, "pthread_mutex_destroy" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "pthread_mutex_destroy" ).what());
    }
 #endif
 }

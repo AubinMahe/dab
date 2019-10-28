@@ -1,9 +1,7 @@
 #include <dab/Distributeur.hpp>
-#include <dab/DistributeurUI.hpp>
-
-#include <dabtypes/Evenement.hpp>
 
 #include <util/Args.hpp>
+#include <util/Log.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,12 +14,13 @@ static int usage( const char * exename ) {
 
 int main( int argc, char * argv[] ) {
    fprintf( stderr, "\n" );
+   UTIL_LOG_HERE();
    util::Args args( argc, argv );
    const char * name = nullptr;
    if( ! args.getString( "name", name )) {
       return usage( argv[0] );
    }
    dab::Distributeur( name ).run();
-   fprintf( stderr, "end of main\n" );
+   UTIL_LOG_DONE();
    return 0;
 }

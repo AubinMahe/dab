@@ -4,6 +4,7 @@
 #include <os/sleep.hpp>
 #include <io/Console.hpp>
 #include <util/Time.hpp>
+#include <util/Log.hpp>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -17,13 +18,13 @@ DistributeurUI::DistributeurUI( Distributeur & distributeur ) :
 
 void DistributeurUI::run( void ) {
    const io::Console & console( io::Console::getConsole());
-   fprintf( stderr, "%s:%s|waiting for core\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_MSG( "waiting for core" );
    while( ! _distributeur.isRunning()) {
       os::sleep( 100 );
    }
    int c = 0;
    while( c != 'Q' && _distributeur.isRunning()) {
-      fprintf( stderr, "%s:%s|printing UI\n", util::Time::now(), HPMS_FUNCNAME );
+      UTIL_LOG_MSG( "printing UI" );
       printf( IO_ED IO_HOME );
       printf( "+-------------------------------------------\n\r" );
       printf( "| Etat du controlleur : %s\n\r"   , dabtypes::toString( _distributeur.getEtatDuDab().etat ));
@@ -81,12 +82,13 @@ void DistributeurUI::run( void ) {
          }
       }
    }
-   fprintf( stderr, "%s:%s|sending shutdown to UniteDeTraitement\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_MSG( "sending shutdown to UniteDeTraitement" );
    _distributeur.udt().shutdown();
    _distributeur.terminate();
-   fprintf( stderr, "%s:%s|UI thread terminated\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_DONE();
 }
 
 void DistributeurUI::refresh( void ) {
+   UTIL_LOG_HERE();
    _refresh = true;
 }

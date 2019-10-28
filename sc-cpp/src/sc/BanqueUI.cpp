@@ -4,6 +4,7 @@
 #include <os/sleep.hpp>
 #include <io/Console.hpp>
 #include <util/Time.hpp>
+#include <util/Log.hpp>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -17,13 +18,13 @@ BanqueUI::BanqueUI( Banque & banque ) :
 
 void BanqueUI::run( void ) {
    const io::Console & console( io::Console::getConsole());
-   fprintf( stderr, "%s:%s|waiting for core\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_MSG( "waiting for core" );
    while( ! _banque.isRunning()) {
       os::sleep( 100 );
    }
    int c = 0;
    while( c != 'Q' && _banque.isRunning()) {
-      fprintf( stderr, "%s:%s|printing UI\n", util::Time::now(), HPMS_FUNCNAME );
+      UTIL_LOG_MSG( "printing UI" );
       _refresh = false;
       printf( IO_ED IO_HOME );
       printf( "+------------------------------------------+\r\n" );
@@ -50,7 +51,6 @@ void BanqueUI::run( void ) {
       printf( "+------+---------+----------+\r\n" );
       unsigned comptesCount = 0;
       const dabtypes::Compte * comptes = _banque.getRepository().getComptes( comptesCount );
-      fprintf( stderr, "%s:%s|comptesCount = %d\n", util::Time::now(), HPMS_FUNCNAME, comptesCount );
       for( unsigned i = 0; i < comptesCount; ++i ) {
          printf( "| %4s | %7.2f | %8s |\r\n",
             comptes[i].id,
@@ -65,15 +65,14 @@ void BanqueUI::run( void ) {
          os::sleep( 20 );
       }
       if( console.kbhit() && _banque.isRunning()) {
-         fprintf( stderr, "%s:%s|console.getch()\n", util::Time::now(), HPMS_FUNCNAME );
          c = toupper( console.getch());
-         fprintf( stderr, "%s:%s|executing command '%c'\n", util::Time::now(), HPMS_FUNCNAME, (char)c );
       }
    }
    _banque.terminate();
-   fprintf( stderr, "%s:%s|UI thread terminated\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_DONE();
 }
 
 void BanqueUI::refresh( void ) {
+   UTIL_LOG_HERE();
    _refresh = true;
 }

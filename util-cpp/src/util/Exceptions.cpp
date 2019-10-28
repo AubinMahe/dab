@@ -10,6 +10,7 @@
 #  include <windows.h>
 #  include <winsock2.h>
 #  include <iostream>
+#  include <util/Log.hpp>
 #elif __linux__
 #  include <errno.h>
 #  include <string.h>
@@ -84,7 +85,7 @@ static const char * getSystemErrorMessage() {
       err = (DWORD)WSAGetLastError();
    }
    if( 0 == ::FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, 0, err, 0, systMsg, sizeof( systMsg ), 0 )) {
-      fprintf( stderr, "Unable to format error #%lu\n", err );
+      UTIL_LOG_ARGS( "Unable to format error #%lu\n", err );
    }
    return systMsg;
 #elif __linux__

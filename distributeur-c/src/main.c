@@ -106,9 +106,9 @@ int main( int argc, char * argv[] ) {
       perror( util_error_messages[context.err] );
    }
    else if( UTIL_NO_ERROR != context.err ) {
-      fprintf( stderr, "%s\n", util_error_messages[context.err] );
+      UTIL_LOG_MSG( util_error_messages[context.err] );
    }
    dab_distributeur_shutdown( &context.distributeur );
-   UTIL_LOG_MSG( "end of main" );
+   UTIL_LOG_DONE();
    return 0;
 }

@@ -2,6 +2,7 @@
 
 #include <os/Thread.hpp>
 #include <util/Time.hpp>
+#include <util/Log.hpp>
 
 #include <stdio.h>
 
@@ -17,38 +18,38 @@ Distributeur::Distributeur( const char * name ) :
    DistributeurComponent( name ),
    _ui( *this )
 {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _etatDuDab.etat = dabtypes::Etat::MAINTENANCE;
    _etatDuDab.soldeCaisse = 0.0;
    os::Thread( launchUI, &_ui );
 }
 
 void Distributeur::etatDuDabPublished( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _ui.refresh();
 }
 
 void Distributeur::ejecterLaCarte( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _ui.refresh();
 }
 
 void Distributeur::ejecterLesBillets( const double & montant ) {
-   fprintf( stderr, "%s:%s( montant = %7.2f )\n", util::Time::now(), HPMS_FUNCNAME, montant );
+	UTIL_LOG_ARGS( "montant = %7.2f", montant );
    _ui.refresh();
 }
 
 void Distributeur::confisquerLaCarte( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _ui.refresh();
 }
 
 void Distributeur::placerLesBilletsDansLaCorbeille( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _ui.refresh();
 }
 
 void Distributeur::shutdown( void ) {
-   fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+   UTIL_LOG_HERE();
    _ui.refresh();
 }

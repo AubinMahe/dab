@@ -298,7 +298,7 @@ util_error udt_controleur_shutdown( udt_controleur * This ) {
    UTIL_ERROR_CHECK( udt_ihm_shutdown( &This->ihm ));
    UTIL_ERROR_CHECK( udt_site_central_shutdown( &This->site_central ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DABTYPES_EVENEMENT_TERMINATE ));
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
 
@@ -328,13 +328,12 @@ int main( int argc, char * argv[] ) {
       err = udt_controleur_run( &controleur );
    }
    if( UTIL_OS_ERROR == err ) {
-      fprintf( stderr, "%s:%s:", util_timestamp_now(), __func__ );
       perror( util_error_messages[err] );
    }
    else if( UTIL_NO_ERROR != err ) {
       UTIL_LOG_MSG( util_error_messages[err] );
    }
    udt_controleur_shutdown( &controleur );
-   UTIL_LOG_MSG( "done" );
+   UTIL_LOG_DONE();
    return 0;
 }

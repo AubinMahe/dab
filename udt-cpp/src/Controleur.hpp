@@ -5,6 +5,7 @@
 
 #include <util/Timeout.hpp>
 #include <util/Time.hpp>
+#include <util/Log.hpp>
 
 namespace dab {
 
@@ -14,14 +15,14 @@ namespace dab {
       Controleur( const char * name ) :
          udt::ControleurComponent( name )
       {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _automaton.setDebug( true );
       }
 
    public:
 
       virtual void maintenance( bool maintenance ) {
-         fprintf( stderr, "%s:%s, maintenance = %s\n", util::Time::now(), HPMS_FUNCNAME, maintenance ? "true" : "false" );
+         UTIL_LOG_ARGS( "maintenance = %s", maintenance ? "true" : "false" );
          if( maintenance ) {
             _automaton.process( dabtypes::Evenement::MAINTENANCE_ON );
          }
@@ -31,7 +32,7 @@ namespace dab {
       }
 
       virtual void rechargerLaCaisse( const double & montant ) {
-         fprintf( stderr, "%s:%s, montant = %7.2f €\n", util::Time::now(), HPMS_FUNCNAME, montant );
+         UTIL_LOG_ARGS( "montant = %7.2f €", montant );
          _uniteDeTraitement._etatDuDab.soldeCaisse += montant;
          if( _uniteDeTraitement._etatDuDab.soldeCaisse < 1000 ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
@@ -39,7 +40,7 @@ namespace dab {
       }
 
       virtual void anomalie( bool anomalie ) {
-         fprintf( stderr, "%s:%s, anomalie = %s\n", util::Time::now(), HPMS_FUNCNAME, anomalie ? "true" : "false" );
+         UTIL_LOG_ARGS( "anomalie = %s", anomalie ? "true" : "false" );
          if( anomalie ) {
             _automaton.process( dabtypes::Evenement::ANOMALIE_ON );
          }
@@ -49,7 +50,7 @@ namespace dab {
       }
 
       virtual void carteInseree( const char * id ) {
-         fprintf( stderr, "%s:%s, id = %s\n", util::Time::now(), HPMS_FUNCNAME, id );
+         UTIL_LOG_ARGS( "id = %s", id );
          _carte .invalidate();
          _compte.invalidate();
          _automaton.process( dabtypes::Evenement::CARTE_INSEREE );
@@ -57,7 +58,7 @@ namespace dab {
       }
 
       virtual void getInformations( const dabtypes::Carte & carte, const dabtypes::Compte & compte ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _carte .set( carte );
          _compte.set( compte );
          if( _carte.isValid() && _compte.isValid()) {
@@ -77,7 +78,7 @@ namespace dab {
             }
          }
          else {
-            ::fprintf( stderr, "%s:%s: Carte et/ou compte invalide\n", util::Time::now(), HPMS_FUNCNAME );
+            UTIL_LOG_MSG( "Carte et/ou compte invalide" );
             _carte .dump();
             _compte.dump();
             _automaton.process( dabtypes::Evenement::CARTE_INVALIDE );
@@ -85,7 +86,7 @@ namespace dab {
       }
 
       virtual void codeSaisi( const char * code ) {
-         fprintf( stderr, "%s:%s, code = %s\n", util::Time::now(), HPMS_FUNCNAME, code );
+         UTIL_LOG_ARGS( "code = %s", code );
          if( ! _carte.isValid()) {
             _automaton.process( dabtypes::Evenement::CARTE_INVALIDE );
          }
@@ -109,7 +110,7 @@ namespace dab {
       }
 
       virtual void montantSaisi( const double & montant ) {
-         fprintf( stderr, "%s:%s, montant = %7.2f €\n", util::Time::now(), HPMS_FUNCNAME, montant );
+         UTIL_LOG_ARGS( "montant = %7.2f €", montant );
          _iHM.ejecterLaCarte();
          if( montant > _uniteDeTraitement._etatDuDab.soldeCaisse ) {
             _automaton.process( dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
@@ -124,7 +125,7 @@ namespace dab {
       }
 
       virtual void carteRetiree( void ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
          _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
          _uniteDeTraitement._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
@@ -133,19 +134,19 @@ namespace dab {
       }
 
       virtual void billetsRetires( void ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _automaton.process( dabtypes::Evenement::BILLETS_RETIRES );
       }
 
       virtual void annulationDemandeeParLeClient() {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _montantDeLatransactionEnCours = 0.0;
          _iHM.ejecterLaCarte();
          _automaton.process( dabtypes::Evenement::ANNULATION_CLIENT );
       }
 
       virtual void shutdown( void ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _iHM.shutdown();
          _siteCentral.shutdown();
          _automaton.process( dabtypes::Evenement::TERMINATE );
@@ -160,36 +161,36 @@ namespace dab {
        */
       virtual void afterDispatch( void ) {
          _uniteDeTraitement._etatDuDab.etat = _automaton.getCurrentState();
-         fprintf( stderr, "%s:%s, etat = %s\n", util::Time::now(), HPMS_FUNCNAME, dabtypes::toString( _uniteDeTraitement._etatDuDab.etat ));
+         UTIL_LOG_ARGS( "etat = %s", dabtypes::toString( _uniteDeTraitement._etatDuDab.etat ));
          _uniteDeTraitement.publishEtatDuDab();
       }
 
    private:
 
       void confisquerLaCarte( void ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _iHM.confisquerLaCarte();
          _automaton.process( dabtypes::Evenement::DELAI_EXPIRE );
       }
 
       void placerLesBilletsDansLaCorbeille( void ) {
-         fprintf( stderr, "%s:%s\n", util::Time::now(), HPMS_FUNCNAME );
+         UTIL_LOG_HERE();
          _iHM.placerLesBilletsDansLaCorbeille();
          _automaton.process( dabtypes::Evenement::DELAI_EXPIRE );
       }
 
    public:
 
-      virtual void armerLeTimeoutDeSaisieDuCode       ( void ) {                              _saisieDuCode     .start(); }
-      virtual void armerLeTimeoutDeSaisieDuMontant    ( void ) { _saisieDuCode     .cancel(); _saisieDuMontant  .start(); }
-      virtual void armerLeTimeoutDeRetraitDeLaCarte   ( void ) { _saisieDuMontant  .cancel(); _retraitDeLaCarte .start(); }
-      virtual void armerLeTimeoutDeRetraitDesBillets  ( void ) { _retraitDeLaCarte .cancel(); _retraitDesBillets.start(); }
-      virtual void annulerLeTimeoutDeRetraitDesBillets( void ) { _retraitDesBillets.cancel(); }
+      virtual void armerLeTimeoutDeSaisieDuCode       ( void ) { UTIL_LOG_HERE();                              _saisieDuCode     .start(); }
+      virtual void armerLeTimeoutDeSaisieDuMontant    ( void ) { UTIL_LOG_HERE(); _saisieDuCode     .cancel(); _saisieDuMontant  .start(); }
+      virtual void armerLeTimeoutDeRetraitDeLaCarte   ( void ) { UTIL_LOG_HERE(); _saisieDuMontant  .cancel(); _retraitDeLaCarte .start(); }
+      virtual void armerLeTimeoutDeRetraitDesBillets  ( void ) { UTIL_LOG_HERE(); _retraitDeLaCarte .cancel(); _retraitDesBillets.start(); }
+      virtual void annulerLeTimeoutDeRetraitDesBillets( void ) { UTIL_LOG_HERE(); _retraitDesBillets.cancel(); }
 
-      virtual void saisieDuCodeElapsed     ( void ) { confisquerLaCarte(); }
-      virtual void saisieDuMontantElapsed  ( void ) { confisquerLaCarte(); }
-      virtual void retraitDeLaCarteElapsed ( void ) { confisquerLaCarte(); }
-      virtual void retraitDesBilletsElapsed( void ) { placerLesBilletsDansLaCorbeille(); }
+      virtual void saisieDuCodeElapsed     ( void ) { UTIL_LOG_HERE(); confisquerLaCarte(); }
+      virtual void saisieDuMontantElapsed  ( void ) { UTIL_LOG_HERE(); confisquerLaCarte(); }
+      virtual void retraitDeLaCarteElapsed ( void ) { UTIL_LOG_HERE(); confisquerLaCarte(); }
+      virtual void retraitDesBilletsElapsed( void ) { UTIL_LOG_HERE(); placerLesBilletsDansLaCorbeille(); }
 
    private:
 

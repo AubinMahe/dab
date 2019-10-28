@@ -51,11 +51,11 @@ namespace dab {
       inline byte getNbEssais( void ) const { return _nbEssais; }
 
       void dump() {
-         ::fprintf( stderr, "%s:%s: isValid   : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _isValid ? "true" : "false" );
-         ::fprintf( stderr, "%s:%s: id        : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _id );
-         ::fprintf( stderr, "%s:%s: code      : %s\n"   , util::Time::now(), HPMS_FUNCNAME, _code );
-         ::fprintf( stderr, "%s:%s: peremption: %d:%d\n", util::Time::now(), HPMS_FUNCNAME, _peremption._year, _peremption._month );
-         ::fprintf( stderr, "%s:%s: nbEssais  : %d\n"   , util::Time::now(), HPMS_FUNCNAME, _nbEssais );
+         UTIL_LOG_ARGS( "isValid   : %s"   , _isValid ? "true" : "false" );
+         UTIL_LOG_ARGS( "id        : %s"   , _id );
+         UTIL_LOG_ARGS( "code      : %s"   , _code );
+         UTIL_LOG_ARGS( "peremption: %d:%d", _peremption._year, _peremption._month );
+         UTIL_LOG_ARGS( "nbEssais  : %d"   , _nbEssais );
       }
 
    private:

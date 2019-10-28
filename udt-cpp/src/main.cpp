@@ -23,13 +23,13 @@ int main( int argc, char * argv[] ) {
          ctrl.run();
       }
       catch( const std::exception & err ) {
-         fprintf( stderr, "\n%s\n", err.what());
+         UTIL_LOG_ARGS( "%s", err.what());
          ctrl.shutdown();
          return 5;
       }
    }
    catch( const std::exception & err ) {
-      fprintf( stderr, "\n%s\n", err.what());
+      UTIL_LOG_ARGS( "%s", err.what());
       return 6;
    }
    return 0;

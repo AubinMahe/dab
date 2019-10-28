@@ -1,5 +1,7 @@
 #include <os/Thread.hpp>
+
 #include <util/Exceptions.hpp>
+#include <util/Log.hpp>
 
 #include <stdio.h>
 
@@ -37,7 +39,7 @@ Thread::Thread( thread_entry_t entry, void * user_context ) {
 Thread::~Thread() {
 #ifdef _WIN32
    if( ! CloseHandle( _thread )) {
-      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
    }
 #endif
 }

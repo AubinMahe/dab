@@ -1,5 +1,7 @@
 #include <sc/Repository.hpp>
 
+#include <util/Log.hpp>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -47,23 +49,24 @@ Repository::Repository( void ) {
 }
 
 dabtypes::Carte * Repository::getCarte( const char * carte_id ) {
+   UTIL_LOG_ARGS( "id = %s", carte_id );
    for( unsigned row = 0, count = sizeof( _cartes )/sizeof( _cartes[0] ); row < count; ++row ) {
       if( 0 == strncmp( _cartes[row].id, carte_id, 4 )) {
          return _cartes + row;
       }
    }
-   fprintf( stderr, "%s|id = %s not found\n", HPMS_FUNCNAME, carte_id );
+   UTIL_LOG_ARGS( "id = %s not found", carte_id );
    return nullptr;
 }
 
 dabtypes::Compte * Repository::getCompte( const char * carte_id ) {
-   fprintf( stderr, "%s|id = %s\n", __func__, carte_id );
+   UTIL_LOG_ARGS( "id = %s", carte_id );
    for( unsigned row = 0, count = sizeof( _cartes_compte )/sizeof( _cartes_compte[0] ); row < count; ++row ) {
       if( 0 == strncmp( _cartes_compte[row].carte->id, carte_id, 4 )) {
          return _cartes_compte[row].compte;
       }
    }
-   fprintf( stderr, "%s|id = %s not found\n", HPMS_FUNCNAME, carte_id );
+   UTIL_LOG_ARGS( "id = %s not found", carte_id );
    return nullptr;
 }
 

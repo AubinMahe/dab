@@ -4,16 +4,18 @@
 #include <dabtypes/evenement.h>
 
 #include <util/args.h>
+#include <util/log.h>
 #include <util/timeout.h>
 #include <os/thread.h>
 #include <os/errors.h>
+#include <os/sleep.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 util_error sc_banque_get_informations( sc_banque * This, const char * carte_id, dabtypes_site_central_get_informations_response * response ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    dabtypes_carte * carte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &carte  ));
@@ -21,11 +23,12 @@ util_error sc_banque_get_informations( sc_banque * This, const char * carte_id, 
    dabtypes_compte * compte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &compte ));
    response->compte = *compte;
+   os_sleep( 3000 );
    return UTIL_NO_ERROR;
 }
 
 util_error sc_banque_incr_nb_essais( sc_banque * This, const char * carte_id ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_ARGS( "carte_id = %s", carte_id );
    business_logic_data * bl = (business_logic_data *)This->user_context;
    dabtypes_carte * carte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_carte ( &bl->repository, carte_id, &carte ));
@@ -35,7 +38,7 @@ util_error sc_banque_incr_nb_essais( sc_banque * This, const char * carte_id ) {
 }
 
 util_error sc_banque_retrait( sc_banque * This, const char * carte_id, double montant ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_ARGS( "carte_id = %s, montant = %7.2f", carte_id, montant );
    business_logic_data * bl = (business_logic_data *)This->user_context;
    dabtypes_compte * compte = NULL;
    UTIL_ERROR_CHECK( sc_repository_get_compte( &bl->repository, carte_id, &compte ));
@@ -45,7 +48,7 @@ util_error sc_banque_retrait( sc_banque * This, const char * carte_id, double mo
 }
 
 util_error sc_banque_shutdown( sc_banque * This ) {
-   fprintf( stderr, "%s\n", __func__ );
+   UTIL_LOG_HERE();
    business_logic_data * bl = (business_logic_data *)This->user_context;
    bl->shutdown = true;
    return UTIL_NO_ERROR;
@@ -63,13 +66,14 @@ typedef struct background_thread_context_s {
 
 static void * background_thread_routine( void * ctxt ) {
    background_thread_context * context = (background_thread_context *)ctxt;
-   fprintf( stderr, "sc_banque_run\n" );
+   UTIL_LOG_HERE();
    context->err = sc_banque_run( &context->banque );
    return NULL;
 }
 
 int main( int argc, char * argv[] ) {
    fprintf( stderr, "\n" );
+   UTIL_LOG_HERE();
    util_pair    pairs[argc];
    util_map     map;
    const char * name = NULL;
@@ -82,7 +86,6 @@ int main( int argc, char * argv[] ) {
    memset( &d, 0, sizeof( d ));
    sc_repository_init( &d.repository );
    background_thread_context context;
-   fprintf( stderr, "sc_banque_init\n" );
    context.err = sc_banque_init( &context.banque, name, &d );
    if( UTIL_NO_ERROR == context.err ) {
       os_thread thread;
@@ -99,9 +102,9 @@ int main( int argc, char * argv[] ) {
       perror( util_error_messages[context.err] );
    }
    else if( UTIL_NO_ERROR != context.err ) {
-      fprintf( stderr, "%s\n", util_error_messages[context.err] );
+      UTIL_LOG_MSG( util_error_messages[context.err] );
    }
    sc_banque_shutdown( &context.banque );
-   fprintf( stderr, "end of main\n" );
+   UTIL_LOG_DONE();
    return 0;
 }

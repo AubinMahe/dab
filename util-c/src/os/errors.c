@@ -6,6 +6,7 @@
 #endif
 
 #include <os/errors.h>
+#include <util/timestamp.h>
 
 void os_error_print( const char * call, const char * file, unsigned line, const char * func ) {
    if( ! call ) {
@@ -24,11 +25,11 @@ void os_error_print( const char * call, const char * file, unsigned line, const 
       err = (DWORD)WSAGetLastError();
    }
    if( 0 == FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, 0, err, 0, systMsg, sizeof( systMsg ), 0 )) {
-      fprintf( stderr, "%s:%d:%s:unable to format message for error %lu\n", file, line, call, err );
+      fprintf( stderr, "%s:%s:%d:%s:unable to format message for error %lu\n", util_timestamp_now(), file, line, call, err );
       return;
    }
 #elif __linux__
    strncpy( systMsg, strerror( errno ), sizeof( systMsg ));
 #endif
-   fprintf( stderr, "%s:%d:%s:%s:%s\n", file, line, func, call, systMsg );
+   fprintf( stderr, "%s:%s:%d:%s:%s:%s\n", util_timestamp_now(), file, line, func, call, systMsg );
 }

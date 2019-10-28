@@ -1,5 +1,6 @@
 #include <os/Event.hpp>
 #include <util/Exceptions.hpp>
+#include <util/Log.hpp>
 #include <types.hpp>
 
 #include <sys/time.h>
@@ -27,14 +28,14 @@ Event::Event( void ) {
 Event:: ~ Event( void ) {
 #ifdef _WIN32
    if( ! ::CloseHandle( _event )) {
-      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "CloseHandle" ).what());
    }
 #else
    if( ::pthread_mutex_destroy( &_condLock )) {
-      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "pthread_mutex_destroy" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "pthread_mutex_destroy" ).what());
    }
    if( ::pthread_cond_destroy( &_condition )) {
-      fprintf( stderr, "%s\n", util::Runtime( UTIL_CTXT, "pthread_cond_destroy" ).what());
+      UTIL_LOG_MSG( util::Runtime( UTIL_CTXT, "pthread_cond_destroy" ).what());
    }
 #endif
 }

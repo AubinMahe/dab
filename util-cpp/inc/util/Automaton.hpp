@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "Exceptions.hpp"
+#include "Log.hpp"
 
 namespace util {
 
@@ -125,21 +126,21 @@ namespace util {
             Action * tr  = search( _onExits, _onExCount, key );
             if( tr ) {
                if( _debug ) {
-                  fprintf( stderr, "%s|on_exit(%s) fired\n", HPMS_FUNCNAME, toString( _current ));
+                  UTIL_LOG_ARGS( "on_exit(%s) fired", toString( _current ));
                }
                (_actor.*(tr->action))();
             }
          }
          _current = futur;
          if( _debug ) {
-            fprintf( stderr, "%s|new State: %s\n", HPMS_FUNCNAME, toString( _current ));
+            UTIL_LOG_ARGS( "new State: %s", toString( _current ));
          }
          {
             Action   key = { _current, 0 };
             Action * tr  = search( _onEntries, _onEnCount, key );
             if( tr ) {
                if( _debug ) {
-                  fprintf( stderr, "%s|on_entry(%s) fired\n", HPMS_FUNCNAME, toString( _current ));
+                  UTIL_LOG_ARGS( "on_entry(%s) fired", toString( _current ));
                }
                (_actor.*(tr->action))();
             }

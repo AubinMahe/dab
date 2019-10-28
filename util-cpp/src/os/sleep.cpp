@@ -10,7 +10,9 @@ void os::sleep( unsigned milliseconds ) {
 #ifdef _WIN32
    Sleep((DWORD)milliseconds );
 #else
-   const struct timespec period = { 0, milliseconds*1000000 };
+   struct timespec period = { 0, 0 };
+   period.tv_sec  = milliseconds / 1000;
+   period.tv_nsec = ( milliseconds % 1000 )*1000000;
    nanosleep( &period, NULL );
 #endif
 }
