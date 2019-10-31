@@ -43,6 +43,10 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 ** Les traces d'exécution** sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
 Pour lancer ces terminaux, taper `start-ttys`. 
 
+** Traces d'exécution **
+les traces d'exécution sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
+Pour lancer ces terminaux, taper `start-ttys`. 
+
 **Différents déploiements** exécutables :
 - Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
 - Pour exécuter 1 sc, 1 dab et 1 udt en C pour GNU/Linux : `ant run-c` 
