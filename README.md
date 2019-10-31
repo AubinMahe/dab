@@ -38,8 +38,10 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 - De l'outil de production **[GNU Make](https://www.gnu.org/software/make/)** qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install make`
 - Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
 
-**Pour les impatients :**
-Se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
+**Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
+
+** Les traces d'exécution** sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
+Pour lancer ces terminaux, taper `start-ttys`. 
 
 **Différents déploiements** exécutables :
 - Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
