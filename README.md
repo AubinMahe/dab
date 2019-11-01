@@ -93,5 +93,6 @@ Il est évidemment possible de panacher les langages : un sc en Java, un udt en 
 
 ## Boite à idées, à débattre...
 
+1. Proposer une surcouche au format XML d'entrée sous forme d'un [langage dédié ou DSL](https://fr.wikipedia.org/wiki/Langage_d%C3%A9di%C3%A9). Un [essai](./dab.dal) a été créé dans ce sens.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...

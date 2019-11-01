@@ -1,0 +1,152 @@
+class Carte
+   id       string[4] 'Identifiant de la carte'
+   code     string[4] 'Identifiant de la carte'
+   month    byte      'Jour de péremption de la carte'
+   year     ushort    'Année de péremption de la carte'
+   nbEssais byte      'Nombre d'essais en échec de la carte'
+   
+class Compte
+   id       string[4] 'Identifiant du compte'
+   solde    double    'Solde du compte'
+   autorise boolean   'Le compte est-il autorisé ?'
+   
+class EtatDuDab
+   etat        Etat   'Etat du DAB, tel que décrit par l'énuméré Etat'
+   soldeCaisse double 'Montant de la caisse en €'
+
+interface IHM
+   event ejecterLaCarte
+   event ejecterLesBillets
+      montant double 'Montant à donner à l'utilisateur du DAB'
+   event confisquerLaCarte
+   event placerLesBilletsDansLaCorbeille
+   event shutdown
+
+interface UniteDeTraitement
+   data etatDuDab         'EtatDuDab Les données décrivant l'état du DAB'
+   event maintenance
+      maintenance boolean 'Maintenance active (true) ou inactive (false)'
+   event rechargerLaCaisse
+      montant double      'Montant à rajouter dans la caisse'
+   event anomalie
+      anomalie boolean    'Anomalie active (true) ou inactive (false)'
+   event carteInseree
+      carteID string[4]   'Identifiant de la carte'
+   event codeSaisi
+      code string[4]      'Code de la carte'
+   event montantSaisi
+      montant double      'Montant du retrait en €'
+   event carteRetiree
+   event billetsRetires
+   event annulationDemandeeParLeClient
+   event shutdown
+
+interface SiteCentral
+   request getInformations
+         carteID string[4] 'Identifiant de la carte'
+      response
+         carte  Carte      'Données de la carte'
+         compte Compte     'Données du compte'
+   event incrNbEssais
+      carteID string[4]    'Identifiant de la carte'
+   retrait
+      carteID string[4]    'Identifiant de la carte'
+      montant double       'Montant du retrait en €'
+   event shutdown
+
+component Distributeur 
+   offers   IHM
+   requires UniteDeTraitement
+
+component Controleur after-dispatch-needed
+   offers   UniteDeTraitement
+   requires IHM
+   requires SiteCentral
+   timeout saisieDuCode      30 seconds
+   timeout saisieDuMontant   30 seconds
+   timeout retraitDeLaCarte  10 seconds
+   timeout retraitDesBillets 10 seconds
+   automaton MAINTENANCE state-enum Etat event-enum Evenement
+      transition MAINTENANCE                MAINTENANCE_OFF          EN_SERVICE
+      transition MAINTENANCE                SOLDE_CAISSE_INSUFFISANT MAINTENANCE
+      transition EN_SERVICE                 MAINTENANCE_ON           MAINTENANCE
+      transition HORS_SERVICE               ANOMALIE_OFF             MAINTENANCE
+      transition HORS_SERVICE               MAINTENANCE_ON           MAINTENANCE
+      transition EN_SERVICE                 SOLDE_CAISSE_INSUFFISANT HORS_SERVICE
+      transition EN_SERVICE                 CARTE_INSEREE            LECTURE_CARTE
+      transition LECTURE_CARTE              CARTE_LUE_0              SAISIE_CODE_1
+      transition LECTURE_CARTE              CARTE_LUE_1              SAISIE_CODE_2
+      transition LECTURE_CARTE              CARTE_LUE_2              SAISIE_CODE_3
+      transition LECTURE_CARTE              CARTE_INVALIDE           EN_SERVICE
+      transition LECTURE_CARTE              CARTE_CONFISQUEE         EN_SERVICE
+      transition SAISIE_CODE_1              BON_CODE                 SAISIE_MONTANT
+      transition SAISIE_CODE_1              MAUVAIS_CODE_1           SAISIE_CODE_2
+      transition SAISIE_CODE_1              DELAI_EXPIRE             EN_SERVICE
+      transition SAISIE_CODE_2              BON_CODE                 SAISIE_MONTANT
+      transition SAISIE_CODE_2              MAUVAIS_CODE_2           SAISIE_CODE_3
+      transition SAISIE_CODE_2              DELAI_EXPIRE             EN_SERVICE
+      transition SAISIE_CODE_3              BON_CODE                 SAISIE_MONTANT
+      transition SAISIE_CODE_3              MAUVAIS_CODE_3           EN_SERVICE
+      transition SAISIE_CODE_3              DELAI_EXPIRE             EN_SERVICE
+      transition SAISIE_MONTANT             MONTANT_OK               RETRAIT_CARTE_BILLETS
+      transition SAISIE_MONTANT             DELAI_EXPIRE             EN_SERVICE
+      transition SAISIE_MONTANT             SOLDE_CAISSE_INSUFFISANT RETRAIT_CARTE_SOLDE_CAISSE
+      transition SAISIE_MONTANT             SOLDE_COMPTE_INSUFFISANT RETRAIT_CARTE_SOLDE_COMPTE
+      transition SAISIE_MONTANT             MONTANT_EXCESSIF         RETRAIT_CARTE_SOLDE_COMPTE
+      transition RETRAIT_CARTE_SOLDE_CAISSE CARTE_RETIREE            EN_SERVICE
+      transition RETRAIT_CARTE_SOLDE_CAISSE DELAI_EXPIRE             EN_SERVICE
+      transition RETRAIT_CARTE_SOLDE_COMPTE CARTE_RETIREE            EN_SERVICE
+      transition RETRAIT_CARTE_SOLDE_COMPTE DELAI_EXPIRE             EN_SERVICE
+      transition RETRAIT_CARTE_BILLETS      CARTE_RETIREE            RETRAIT_BILLETS
+      transition RETRAIT_CARTE_BILLETS      DELAI_EXPIRE             EN_SERVICE
+      transition RETRAIT_BILLETS            BILLETS_RETIRES          EN_SERVICE
+      transition RETRAIT_BILLETS            DELAI_EXPIRE             EN_SERVICE
+      shortcut                              TERMINATE                HORS_SERVICE
+      shortcut                              ANOMALIE_ON              HORS_SERVICE
+      shortcut                              ANNULATION_CLIENT        EN_SERVICE
+      on-entry SAISIE_CODE_1              armerLeTimeoutDeSaisieDuCode
+      on-entry SAISIE_CODE_2              armerLeTimeoutDeSaisieDuCode
+      on-entry SAISIE_CODE_3              armerLeTimeoutDeSaisieDuCode
+      on-entry SAISIE_MONTANT             armerLeTimeoutDeSaisieDuMontant
+      on-entry RETRAIT_CARTE_SOLDE_CAISSE armerLeTimeoutDeRetraitDeLaCarte
+      on-entry RETRAIT_CARTE_SOLDE_COMPTE armerLeTimeoutDeRetraitDeLaCarte
+      on-entry RETRAIT_CARTE_BILLETS      armerLeTimeoutDeRetraitDeLaCarte
+      on-entry RETRAIT_BILLETS            armerLeTimeoutDeRetraitDesBillets
+      on-exit  RETRAIT_BILLETS            annulerLeTimeoutDeRetraitDesBillets
+
+component Banque
+   offers SiteCentral
+
+deployment '.'
+   process 127.0.0.1:2416
+      sc Banque
+   process 127.0.0.1:2417
+      udt1 Controleur
+         requires SiteCentral sc
+         requires IHM         ihm1
+   process 127.0.0.1:2418
+      ihm1 Distributeur
+         requires UniteDeTraitement udt1
+   process 127.0.0.1:2419
+      udt2 Controleur
+         requires SiteCentral sc
+         requires IHM         ihm2
+   process 127.0.0.1:2420
+      ihm2 Distributeur
+         requires UniteDeTraitement udt2
+
+deployment 'alt'
+   process 127.0.0.1:2416
+      m-sc Banque
+   process 127.0.0.1:2417
+      m-udt1 Controleur
+         requires SiteCentral m-sc
+         requires IHM         m-ihm1
+      m-ihm1 Distributeur
+         requires UniteDeTraitement m-udt1
+      m-ihm2 Distributeur
+         requires UniteDeTraitement m-udt2
+   process 127.0.0.1:2419
+      m-udt2 Controleur
+         requires SiteCentral m-sc
+         requires IHM         m-ihm2
