@@ -199,8 +199,8 @@
          <xs:element type="offeredInterfaceUsageType"  name="offers"         minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="requiredInterfaceUsageType" name="requires"       minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="timeoutType"                name="timeout"        minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="implementationType"         name="implementation" minOccurs="1" maxOccurs="unbounded" />
          <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
+         <xs:element type="implementationType"         name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />
       <xs:attribute type="xs:boolean" name="after-dispatch-needed" use="optional" default="false" />

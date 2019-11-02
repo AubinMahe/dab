@@ -1,18 +1,24 @@
-class Carte
-   id       string[4] 'Identifiant de la carte'
-   code     string[4] 'Identifiant de la carte'
-   month    byte      'Jour de péremption de la carte'
-   year     ushort    'Année de péremption de la carte'
-   nbEssais byte      'Nombre d'essais en échec de la carte'
-   
-class Compte
-   id       string[4] 'Identifiant du compte'
-   solde    double    'Solde du compte'
-   autorise boolean   'Le compte est-il autorisé ?'
-   
-class EtatDuDab
-   etat        Etat   'Etat du DAB, tel que décrit par l'énuméré Etat'
-   soldeCaisse double 'Montant de la caisse en €'
+types
+   class Carte
+      id       string[4] 'Identifiant de la carte'
+      code     string[4] 'Identifiant de la carte'
+      month    byte      'Jour de péremption de la carte'
+      year     ushort    'Année de péremption de la carte'
+      nbEssais byte      'Nombre d'essais en échec de la carte'
+      
+   class Compte
+      id       string[4] 'Identifiant du compte'
+      solde    double    'Solde du compte'
+      autorise boolean   'Le compte est-il autorisé ?'
+      
+   class EtatDuDab
+      etat        Etat   'Etat du DAB, tel que décrit par l'énuméré Etat'
+      soldeCaisse double 'Montant de la caisse en €'
+
+   generation
+      language C    module dabtypes sources dabtypes-c
+      language C++  module dabtypes sources dabtypes-cpp
+      language Java module dabtypes sources dabtypes-java
 
 interface IHM
    event ejecterLaCarte
@@ -57,6 +63,10 @@ interface SiteCentral
 component Distributeur 
    offers   IHM
    requires UniteDeTraitement
+   generation
+      language C    module dab sources 'distributeur-c/src-gen'
+      language C++  module dab sources 'distributeur-cpp/src-gen'
+      language Java module dab sources 'distributeur-java/src-gen'
 
 component Controleur after-dispatch-needed
    offers   UniteDeTraitement
@@ -113,9 +123,17 @@ component Controleur after-dispatch-needed
       on-entry RETRAIT_CARTE_BILLETS      armerLeTimeoutDeRetraitDeLaCarte
       on-entry RETRAIT_BILLETS            armerLeTimeoutDeRetraitDesBillets
       on-exit  RETRAIT_BILLETS            annulerLeTimeoutDeRetraitDesBillets
+   generation
+      language C    module udt sources 'udt-c/src-gen'
+      language C++  module udt sources 'udt-cpp/src-gen'
+      language Java module udt sources 'udt-java/src-gen'
 
 component Banque
    offers SiteCentral
+   generation
+      language C    module sc sources 'sc-c/src-gen'
+      language C++  module sc sources 'sc-cpp/src-gen'
+      language Java module sc sources 'sc-java/src-gen'
 
 deployment '.'
    process 127.0.0.1:2416
