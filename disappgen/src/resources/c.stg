@@ -87,6 +87,7 @@ typedef enum <prefix>_<enum.name; format="cname">_e {
 } <prefix>_<enum.name; format="cname">;
 
 const char * <prefix>_<enum.name; format="cname">_to_string( <prefix>_<enum.name; format="cname"> value ); 
+
 >>
 
 
@@ -101,6 +102,7 @@ const char * <prefix>_<enum.name; format="cname">_to_string( <prefix>_<enum.name
 }>   default: return "Etat inconnu !";
    }
 }
+
 >>
 
 
@@ -128,6 +130,7 @@ endif>}>
 
 util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target );
 util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * source );
+
 >>
 
 
@@ -149,7 +152,7 @@ util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; fo
    < elseif( field.isFloat   )>UTIL_ERROR_CHECK( io_byte_buffer_put_float ( target, This-><field.name; format="cname,width"> ));
    < elseif( field.isDouble  )>UTIL_ERROR_CHECK( io_byte_buffer_put_double( target, This-><field.name; format="cname,width"> ));
    < elseif( field.isString  )>UTIL_ERROR_CHECK( io_byte_buffer_put_string( target, This-><field.name; format="cname,width"> ));
-   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ));
+   < elseif( field.isEnum    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, (byte)This-><field.name; format="cname,width"> ));
    < elseif( field.isStruct  )>UTIL_ERROR_CHECK( <prefix>_<field.userType.name; format="cname">_put( &This-><field.name; format="cname">, target ));
    < endif>
 }>   return UTIL_NO_ERROR;
@@ -174,6 +177,7 @@ util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; fo
    < endif>
 }>   return UTIL_NO_ERROR;
 }
+
 >>
 
 
@@ -207,6 +211,7 @@ else><
     signature( typesPrefix, facet.field )><
 endif> );
 < endif>}>
+
 >>
 
 
@@ -261,6 +266,7 @@ endif> ) {
 \}
 < endif>
 }>
+
 >>
 
 
@@ -308,6 +314,7 @@ typedef struct <prefix>_<component.name; format="cname">_dispatcher_timeout_arg_
 util_error <prefix>_<component.name; format="cname">_dispatcher_loopback(
    <prefix>_<component.name; format="cname">_dispatcher_timeout_arg * arg );
 < endif>
+
 >>
 
 
@@ -592,6 +599,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
    return UTIL_NO_ERROR;
 }
 < endif>
+
 >>
 
 
@@ -667,6 +675,7 @@ util_error <prefix>_<component.name; format="cname">_<action; format="cname">( <
 util_error <prefix>_<component.name; format="cname">_<to.name; format="cname">_elapsed( <
    prefix>_<component.name; format="cname"> * This );
 }>
+
 >>
 
 
@@ -767,6 +776,7 @@ util_error <prefix>_<component.name; format="cname">_run( <prefix>_<component.na
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
+
 >>
 
 
@@ -798,6 +808,7 @@ util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<
 util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <
    prefix>_<interface.name; format="cname">_data * This );
 }>
+
 >>
 
 
@@ -838,6 +849,7 @@ util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name
    return UTIL_NO_ERROR;
 \}
 }>
+
 >>
 
 
@@ -849,6 +861,7 @@ automatonHeader( prefix, component ) ::= <<
 #include \<util/automaton.h>
 
 void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
+
 >>
 
 
@@ -898,4 +911,5 @@ void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.na
    automaton->on_exit         = on_exit;
    automaton->on_exit_count   = sizeof( on_exit     )/sizeof( on_exit    [0] );
 }
+
 >>

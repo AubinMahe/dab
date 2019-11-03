@@ -224,8 +224,8 @@ util_error udt_controleur_annulation_demandee_par_le_client( udt_controleur * Th
 
 util_error udt_controleur_after_dispatch( udt_controleur * This ) {
    UTIL_LOG_ARGS( "state = %s, solde caisse : %7.2f",
-      dabtypes_etat_to_string( This->automaton.current ), This->unite_de_traitement.etat_du_dab.solde_caisse );
-   This->unite_de_traitement.etat_du_dab.etat = This->automaton.current;
+      dabtypes_etat_to_string((dabtypes_etat)This->automaton.current ), This->unite_de_traitement.etat_du_dab.solde_caisse );
+   This->unite_de_traitement.etat_du_dab.etat = (dabtypes_etat)This->automaton.current;
    UTIL_ERROR_CHECK( udt_unite_de_traitement_data_publish_etat_du_dab( &This->unite_de_traitement ));
    return UTIL_NO_ERROR;
 }

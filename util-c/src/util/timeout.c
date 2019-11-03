@@ -14,7 +14,7 @@
 
 static void * util_timeout_waiting( void * arg ) {
    util_timeout * This = (util_timeout *)arg;
-   int status = os_event_wait( &This->event, &This->deadline );
+   util_error status = os_event_wait( &This->event, &This->deadline );
    if( status == UTIL_OVERFLOW ) {
       This->action( This->user_context );
    }
@@ -39,7 +39,9 @@ util_error util_timeout_destroy( util_timeout * This ) {
 
 util_error util_timeout_start( util_timeout * This ) {
    struct timeval tv;
-   UTIL_ERROR_CHECK( gettimeofday( &tv, NULL ));
+   if( gettimeofday( &tv, NULL )) {
+      return UTIL_OS_ERROR;
+   }
    UTIL_CHECK_NON_NULL( This );
    This->deadline.tv_sec   = tv.tv_sec + (long)This->delay_sec;
    This->deadline.tv_nsec  = MICROS_PER_NANO * ( tv.tv_usec + (long)( MICROS_PER_MILLI * This->delay_ms ));

@@ -34,5 +34,8 @@ util_error io_selector_select( fd_set * set, unsigned timeoutValue ) {
 }
 
 util_error io_selector_is_set( fd_set * set, SOCKET sckt ) {
-   return FD_ISSET( sckt, set );
+   if( FD_ISSET( sckt, set )) {
+      return UTIL_OS_ERROR;
+   }
+   return UTIL_NO_ERROR;
 }

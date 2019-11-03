@@ -12,7 +12,10 @@ Args::Args( int argc, char * argv[] ) {
    if( argc > max ) {
       throw Overflow( UTIL_CTXT, "Too many arguments %d > %d", argc, max );
    }
-   _count = argc - 1;
+   if( argc < 1 ) {
+      throw Unexpected( UTIL_CTXT, "argc should not be < 1" );
+   }
+   _count = (unsigned)( argc - 1 );
    for( int i = 1; i < argc; ++i ) {
       const char * arg = argv[i];
       if(( arg[0] == '-' )&&( arg[1] == '-' )) {
@@ -177,10 +180,10 @@ bool Args::getDouble( const char * key, double & target ) const {
 
 int Args::NVP::comparator( const Args::NVP * left, const Args::NVP * right ) {
    const char * eq = strchr( left ->name, '=' );
-   long         le = eq ? ( eq - left ->name ) : strlen( left ->name );
+   long         le = eq ? ( eq - left ->name ) : (long)strlen( left ->name );
    /*         */eq = strchr( right->name, '=' );
-   long         re = eq ? ( eq - right->name ) : strlen( right->name );
-   return strncmp( left->name, right->name, (le < re) ? le : re );
+   long         re = eq ? ( eq - right->name ) : (long)strlen( right->name );
+   return strncmp( left->name, right->name, (size_t)((le < re) ? le : re ));
 }
 
 typedef int ( * comparator_t )( const void *, const void * );

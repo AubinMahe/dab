@@ -12,6 +12,7 @@ disappgen.jar
 
 BUILD/
 BUILD-mingw32/
+BUILD-o64/
 build/
 bin/
 Debug/
@@ -27,18 +28,24 @@ dabtypes.jar
 
 distributeur
 distributeur-mingw32
+distributeur-o64
 Distributeur
 Distributeur-mingw32
+Distributeur-o64
 DAB-UI.jar
 
 site_central
 site_central-mingw32
+site_central-o64
 SiteCentral
 SiteCentral-mingw32
+SiteCentral-o64
 Site-Central.jar
 
 unite_de_traitement
 unite_de_traitement-mingw32
+unite_de_traitement-o64
 UniteDeTraitement
 UniteDeTraitement-mingw32
+UniteDeTraitement-o64
 UDT.jar

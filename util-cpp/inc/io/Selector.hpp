@@ -13,7 +13,7 @@ namespace io {
 
    public:
 
-      bool select( unsigned timeout = -1 );
+      bool select( unsigned timeout = -1U );
 
       bool isSet( SOCKET socket );
 

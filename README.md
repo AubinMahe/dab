@@ -34,6 +34,8 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 - **Java**, dont la version doit être supérieure ou égale à 8, [OpenJDK](https://adoptopenjdk.net/) *latest* est vivement recommandé.
 - Du compilateur **[JAXB](https://javaee.github.io/jaxb-v2/)** `xjc`, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install xjc` 
 - Du compilateur **[C11 et C++17](https://gcc.gnu.org/)** pour GNU/Linux et compilateur croisé, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc gcc-mingw-w64`
+- Du [compilateur croisé Linux/Mac OS X](https://github.com/tpoechtrager/osxcross)
+- De [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires MS-Windows et de son équivalent pour macOS X : [DarlingHQ](https://www.darlinghq.org/)
 - De l'outil de production **[Apache Ant](https://ant.apache.org/)**, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install ant`
 - De l'outil de production **[GNU Make](https://www.gnu.org/software/make/)** qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install make`
 - Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
@@ -45,36 +47,40 @@ Pour lancer ces terminaux, taper `start-ttys`.
 
 **Différents déploiements** exécutables :
 - Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C pour GNU/Linux : `ant run-c` 
-- Pour exécuter 1 sc, 1 dab et 1 udt en C pour MinGW/Windows : `ant run-c-win32` 
+- Pour exécuter 1 sc, 1 dab et 1 udt en C pour GNU/Linux : `ant run-c`
+- Pour exécuter 1 sc, 1 dab et 1 udt en C pour MinGW/Windows : `ant run-c-win32`
+- Pour exécuter 1 sc, 1 dab et 1 udt en C pour macOS X/Darling : `ant run-c-o64`
 - Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour GNU/Linux : `ant run-cpp`
 - Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour MinGW/Windows : `ant run-cpp-win32`
+- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour macOS X/Darling : `ant run-cpp-o64`
 - Pour exécuter 1 sc, 2 dab et 2 udt en java : `ant run-java-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C pour GNU/Linux : `ant run-c-2` 
-- Pour exécuter 1 sc, 2 dab et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2` 
+- Pour exécuter 1 sc, 2 dab et 2 udt en C pour GNU/Linux : `ant run-c-2`
+- Pour exécuter 1 sc, 2 dab et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2`
+- Pour exécuter 1 sc, 2 dab et 2 udt en C pour macOS X/Darling : `ant run-c-o64-2`
 - Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour GNU/Linux : `ant run-cpp-2`
 - Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
+- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour macOS X/Darling : `ant run-cpp-o64-2`
 
 Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le routage correct des réponses aux requêtes.
-Il est évidemment possible de panacher les langages : un sc en Java, un udt en C, un dab en C++... Les combinaisons sont nombreuses !
+**Il est évidemment possible de panacher les langages** : un sc en Java, un udt en C, un dab en C++... Les combinaisons sont nombreuses !
 
 **En pas-à-pas**, pour comprendre :
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
 1. Compiler dans l'ordre :
-    1. util-c        : `(cd util-c && make)`, produit également `util-c-win32`
-    1. dabtypes-c    : `(cd dabtypes-c && make)`, produit également `dabtypes-c-win32`
-    1. udt-c         : `(cd udt-c && make)`, produit également `udt-c-win32`
-    1. util-cpp      : `(cd util-cpp && make)`, produit également `util-cpp-win32`
-    1. dabtypes-cpp  : `(cd dabtypes-cpp && make)`, produit également `dabtypes-cpp-win32`
-    1. udt-cpp       : `(cd udt-cpp && make)`, produit également `udt-cpp-win32`
+    1. util-c        : `(cd util-c && make)`, produit également `util-c-win32` et `util-c-o64`
+    1. dabtypes-c    : `(cd dabtypes-c && make)`, produit également `dabtypes-c-win32` et `dabtypes-c-o64`
+    1. udt-c         : `(cd udt-c && make)`, produit également `udt-c-win32` et `udt-c-o64`
+    1. util-cpp      : `(cd util-cpp && make)`, produit également `util-cpp-win32` et `util-cpp-o64`
+    1. dabtypes-cpp  : `(cd dabtypes-cpp && make)`, produit également `dabtypes-cpp-win32` et `dabtypes-cpp-o64`
+    1. udt-cpp       : `(cd udt-cpp && make)`, produit également `udt-cpp-win32` et `udt-cpp-o64`
     1. util-java     : `(cd util-java && ant)`
     1. dabtypes-java : `(cd dabtypes-java && ant)`
     1. sc-java       : `(cd sc-java && ant)`
     1. dab           : `(cd distributeur-java && ant)`
 
-**Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée.
+**Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
 
 ## Reste à faire
 

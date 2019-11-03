@@ -11,7 +11,7 @@
 #  include <winsock2.h>
 #  include <iostream>
 #  include <util/Log.hpp>
-#elif __linux__
+#else
 #  include <errno.h>
 #  include <string.h>
 #  include <execinfo.h>
@@ -49,13 +49,13 @@ const char * demangleClassname( const char * name ) {
    while( index < len ) {
       size_t size = 0;
       while( isdigit( name[index] )) {
-         size *= 10;
-         size += name[index++] - '0';
+         size *= 10U;
+         size += (size_t)( name[index++] - '0');
       }
       strncat( demangled, name+index, size );
       index += size;
       if( name[index] != 'E' ) {
-         strncat( demangled, "::", sizeof( demangled ));
+         strncat( demangled, "::", 3 );
       }
       else {
          ++index;
@@ -68,11 +68,11 @@ const char * Exception::what( void ) const noexcept {
    static char buffer[ 100 + sizeof( _stack )];
    buffer[0] = '\0';
    strncat( buffer, demangleClassname( typeid(*this).name()), sizeof( buffer )-1);
-   strncat( buffer, ":\n", sizeof( buffer ));
+   strncat( buffer, ":\n", 3 );
    for( size_t i = 0; i < _stackIndex; ++i ) {
-      strncat( buffer, "\t"     , sizeof( buffer ));
+      strncat( buffer, "\t"     , 3 );
       strncat( buffer, _stack[i], sizeof( buffer )-1);
-      strncat( buffer, "\n"     , sizeof( buffer ));
+      strncat( buffer, "\n"     , 2 );
    }
    return buffer;
 }
@@ -88,7 +88,7 @@ static const char * getSystemErrorMessage() {
       UTIL_LOG_ARGS( "Unable to format error #%lu\n", err );
    }
    return systMsg;
-#elif __linux__
+#else
    return ::strerror( errno );
 #endif
 }

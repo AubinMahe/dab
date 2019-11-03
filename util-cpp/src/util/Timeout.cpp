@@ -32,7 +32,7 @@ void Timeout::start( void ) {
    unsigned sec = _delayMs / 1000U;
    unsigned ms  = _delayMs % 1000U;
    _deadline.tv_sec  = tv.tv_sec + sec;
-   _deadline.tv_nsec = 1000 * ( tv.tv_usec + 1000 * ms );
+   _deadline.tv_nsec = 1000U * ((unsigned)tv.tv_usec + 1000U * ms );
    _deadline.tv_sec  += _deadline.tv_nsec / 1000000000;
    _deadline.tv_nsec %= 1000000000;
    os::Thread( waiting, this ).detach();

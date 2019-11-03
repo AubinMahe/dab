@@ -164,6 +164,12 @@
       <exec executable="make" dir="udt-c"           ><arg value="run-win32-1" /></exec>
    </target>
 
+   <target name="run-c-darwin" depends="util-c,udt-c">
+      <exec executable="make" dir="sc-c"            ><arg value="run-darwin"   /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-1" /></exec>
+   </target>
+
    <target name="run-c-2" depends="util-c,udt-c">
       <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
       <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>
@@ -180,6 +186,14 @@
       <exec executable="make" dir="udt-c"           ><arg value="run-win32-2" /></exec>
    </target>
 
+   <target name="run-c-darwin-2" depends="util-c,udt-c">
+      <exec executable="make" dir="sc-c"            ><arg value="run-darwin"   /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-2" /></exec>
+      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-2" /></exec>
+   </target>
+
    <target name="run-cpp" depends="util-cpp,udt-cpp">
       <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
       <exec executable="make" dir="distributeur-cpp"><arg value="run-1"       /></exec>
@@ -190,6 +204,12 @@
       <exec executable="make" dir="sc-cpp"          ><arg value="run-win32"   /></exec>
       <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-1" /></exec>
       <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
+   </target>
+
+   <target name="run-cpp-darwin" depends="util-cpp,udt-cpp">
+      <exec executable="make" dir="sc-cpp"          ><arg value="run-darwin"   /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-1" /></exec>
    </target>
 
    <target name="run-cpp-2" depends="util-cpp,udt-cpp">
@@ -206,6 +226,14 @@
       <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
       <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-2" /></exec>
       <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-2" /></exec>
+   </target>
+
+   <target name="run-cpp-darwin-2" depends="util-cpp,udt-cpp">
+      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-1" /></exec>
+      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-2" /></exec>
+      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-2" /></exec>
    </target>
 
    <target name="run-java" depends="util-java,udt-java">
