@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<automaton xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:noNamespaceSchemaLocation="distributed-application-automaton.xsd"
+   initial="MAINTENANCE">
+
+   <state-enum name="Etat" />
+   <event-enum name="Evenement" />
+
+   <transition from="MAINTENANCE"                event="MAINTENANCE_OFF"          futur="EN_SERVICE" />
+   <transition from="MAINTENANCE"                event="SOLDE_CAISSE_INSUFFISANT" futur="MAINTENANCE" />
+   <transition from="EN_SERVICE"                 event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+   <transition from="HORS_SERVICE"               event="ANOMALIE_OFF"             futur="MAINTENANCE" />
+   <transition from="HORS_SERVICE"               event="MAINTENANCE_ON"           futur="MAINTENANCE" />
+   <transition from="EN_SERVICE"                 event="SOLDE_CAISSE_INSUFFISANT" futur="HORS_SERVICE" />
+   <transition from="EN_SERVICE"                 event="CARTE_INSEREE"            futur="LECTURE_CARTE" />
+   <transition from="LECTURE_CARTE"              event="CARTE_LUE_0"              futur="SAISIE_CODE_1" />
+   <transition from="LECTURE_CARTE"              event="CARTE_LUE_1"              futur="SAISIE_CODE_2" />
+   <transition from="LECTURE_CARTE"              event="CARTE_LUE_2"              futur="SAISIE_CODE_3" />
+   <transition from="LECTURE_CARTE"              event="CARTE_INVALIDE"           futur="EN_SERVICE" />
+   <transition from="LECTURE_CARTE"              event="CARTE_CONFISQUEE"         futur="EN_SERVICE" />
+   <transition from="SAISIE_CODE_1"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+   <transition from="SAISIE_CODE_1"              event="MAUVAIS_CODE_1"           futur="SAISIE_CODE_2" />
+   <transition from="SAISIE_CODE_1"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="SAISIE_CODE_2"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+   <transition from="SAISIE_CODE_2"              event="MAUVAIS_CODE_2"           futur="SAISIE_CODE_3" />
+   <transition from="SAISIE_CODE_2"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="SAISIE_CODE_3"              event="BON_CODE"                 futur="SAISIE_MONTANT" />
+   <transition from="SAISIE_CODE_3"              event="MAUVAIS_CODE_3"           futur="EN_SERVICE" />
+   <transition from="SAISIE_CODE_3"              event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="SAISIE_MONTANT"             event="MONTANT_OK"               futur="RETRAIT_CARTE_BILLETS" />
+   <transition from="SAISIE_MONTANT"             event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="SAISIE_MONTANT"             event="SOLDE_CAISSE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_CAISSE" />
+   <transition from="SAISIE_MONTANT"             event="SOLDE_COMPTE_INSUFFISANT" futur="RETRAIT_CARTE_SOLDE_COMPTE" />
+   <transition from="SAISIE_MONTANT"             event="MONTANT_EXCESSIF"         futur="RETRAIT_CARTE_SOLDE_COMPTE" />
+   <transition from="RETRAIT_CARTE_SOLDE_CAISSE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+   <transition from="RETRAIT_CARTE_SOLDE_CAISSE" event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="RETRAIT_CARTE_SOLDE_COMPTE" event="CARTE_RETIREE"            futur="EN_SERVICE" />
+   <transition from="RETRAIT_CARTE_SOLDE_COMPTE" event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="RETRAIT_CARTE_BILLETS"      event="CARTE_RETIREE"            futur="RETRAIT_BILLETS" />
+   <transition from="RETRAIT_CARTE_BILLETS"      event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   <transition from="RETRAIT_BILLETS"            event="BILLETS_RETIRES"          futur="EN_SERVICE" />
+   <transition from="RETRAIT_BILLETS"            event="DELAI_EXPIRE"             futur="EN_SERVICE" />
+   
+   <shortcut                                     event="TERMINATE"                futur="HORS_SERVICE" />
+   <shortcut                                     event="ANOMALIE_ON"              futur="HORS_SERVICE" />
+   <shortcut                                     event="ANNULATION_CLIENT"        futur="EN_SERVICE" />
+   
+   <on-entry state="SAISIE_CODE_1"              action="armerLeTimeoutDeSaisieDuCode" />
+   <on-entry state="SAISIE_CODE_2"              action="armerLeTimeoutDeSaisieDuCode" />
+   <on-entry state="SAISIE_CODE_3"              action="armerLeTimeoutDeSaisieDuCode" />
+   <on-entry state="SAISIE_MONTANT"             action="armerLeTimeoutDeSaisieDuMontant" />
+   <on-entry state="RETRAIT_CARTE_SOLDE_CAISSE" action="armerLeTimeoutDeRetraitDeLaCarte" />
+   <on-entry state="RETRAIT_CARTE_SOLDE_COMPTE" action="armerLeTimeoutDeRetraitDeLaCarte" />
+   <on-entry state="RETRAIT_CARTE_BILLETS"      action="armerLeTimeoutDeRetraitDeLaCarte" />
+   <on-entry state="RETRAIT_BILLETS"            action="armerLeTimeoutDeRetraitDesBillets" />
+
+   <on-exit  state="RETRAIT_BILLETS"            action="annulerLeTimeoutDeRetraitDesBillets" />
+   
+</automaton>

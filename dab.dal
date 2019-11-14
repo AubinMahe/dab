@@ -76,53 +76,7 @@ component Controleur after-dispatch-needed
    timeout saisieDuMontant   30 seconds
    timeout retraitDeLaCarte  10 seconds
    timeout retraitDesBillets 10 seconds
-   automaton MAINTENANCE state-enum Etat event-enum Evenement
-      transition MAINTENANCE                MAINTENANCE_OFF          EN_SERVICE
-      transition MAINTENANCE                SOLDE_CAISSE_INSUFFISANT MAINTENANCE
-      transition EN_SERVICE                 MAINTENANCE_ON           MAINTENANCE
-      transition HORS_SERVICE               ANOMALIE_OFF             MAINTENANCE
-      transition HORS_SERVICE               MAINTENANCE_ON           MAINTENANCE
-      transition EN_SERVICE                 SOLDE_CAISSE_INSUFFISANT HORS_SERVICE
-      transition EN_SERVICE                 CARTE_INSEREE            LECTURE_CARTE
-      transition LECTURE_CARTE              CARTE_LUE_0              SAISIE_CODE_1
-      transition LECTURE_CARTE              CARTE_LUE_1              SAISIE_CODE_2
-      transition LECTURE_CARTE              CARTE_LUE_2              SAISIE_CODE_3
-      transition LECTURE_CARTE              CARTE_INVALIDE           EN_SERVICE
-      transition LECTURE_CARTE              CARTE_CONFISQUEE         EN_SERVICE
-      transition SAISIE_CODE_1              BON_CODE                 SAISIE_MONTANT
-      transition SAISIE_CODE_1              MAUVAIS_CODE_1           SAISIE_CODE_2
-      transition SAISIE_CODE_1              DELAI_EXPIRE             EN_SERVICE
-      transition SAISIE_CODE_2              BON_CODE                 SAISIE_MONTANT
-      transition SAISIE_CODE_2              MAUVAIS_CODE_2           SAISIE_CODE_3
-      transition SAISIE_CODE_2              DELAI_EXPIRE             EN_SERVICE
-      transition SAISIE_CODE_3              BON_CODE                 SAISIE_MONTANT
-      transition SAISIE_CODE_3              MAUVAIS_CODE_3           EN_SERVICE
-      transition SAISIE_CODE_3              DELAI_EXPIRE             EN_SERVICE
-      transition SAISIE_MONTANT             MONTANT_OK               RETRAIT_CARTE_BILLETS
-      transition SAISIE_MONTANT             DELAI_EXPIRE             EN_SERVICE
-      transition SAISIE_MONTANT             SOLDE_CAISSE_INSUFFISANT RETRAIT_CARTE_SOLDE_CAISSE
-      transition SAISIE_MONTANT             SOLDE_COMPTE_INSUFFISANT RETRAIT_CARTE_SOLDE_COMPTE
-      transition SAISIE_MONTANT             MONTANT_EXCESSIF         RETRAIT_CARTE_SOLDE_COMPTE
-      transition RETRAIT_CARTE_SOLDE_CAISSE CARTE_RETIREE            EN_SERVICE
-      transition RETRAIT_CARTE_SOLDE_CAISSE DELAI_EXPIRE             EN_SERVICE
-      transition RETRAIT_CARTE_SOLDE_COMPTE CARTE_RETIREE            EN_SERVICE
-      transition RETRAIT_CARTE_SOLDE_COMPTE DELAI_EXPIRE             EN_SERVICE
-      transition RETRAIT_CARTE_BILLETS      CARTE_RETIREE            RETRAIT_BILLETS
-      transition RETRAIT_CARTE_BILLETS      DELAI_EXPIRE             EN_SERVICE
-      transition RETRAIT_BILLETS            BILLETS_RETIRES          EN_SERVICE
-      transition RETRAIT_BILLETS            DELAI_EXPIRE             EN_SERVICE
-      shortcut                              TERMINATE                HORS_SERVICE
-      shortcut                              ANOMALIE_ON              HORS_SERVICE
-      shortcut                              ANNULATION_CLIENT        EN_SERVICE
-      on-entry SAISIE_CODE_1              armerLeTimeoutDeSaisieDuCode
-      on-entry SAISIE_CODE_2              armerLeTimeoutDeSaisieDuCode
-      on-entry SAISIE_CODE_3              armerLeTimeoutDeSaisieDuCode
-      on-entry SAISIE_MONTANT             armerLeTimeoutDeSaisieDuMontant
-      on-entry RETRAIT_CARTE_SOLDE_CAISSE armerLeTimeoutDeRetraitDeLaCarte
-      on-entry RETRAIT_CARTE_SOLDE_COMPTE armerLeTimeoutDeRetraitDeLaCarte
-      on-entry RETRAIT_CARTE_BILLETS      armerLeTimeoutDeRetraitDeLaCarte
-      on-entry RETRAIT_BILLETS            armerLeTimeoutDeRetraitDesBillets
-      on-exit  RETRAIT_BILLETS            annulerLeTimeoutDeRetraitDesBillets
+   automaton 
    generation
       language C    module udt sources 'udt-c/src-gen'
       language C++  module udt sources 'udt-cpp/src-gen'

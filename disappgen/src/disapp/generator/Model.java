@@ -1,6 +1,8 @@
 package disapp.generator;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -15,8 +17,12 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.sax.SAXSource;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
@@ -66,11 +72,25 @@ final class Model {
    private final DisappType                             _application;
    private final long                                   _lastModified;
 
-   Model( File source, boolean force ) throws JAXBException {
-      final JAXBContext jaxbContext = JAXBContext.newInstance( "disapp.generator.model" );
-      final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-      @SuppressWarnings("unchecked")
-      final JAXBElement<DisappType> elt = (JAXBElement<DisappType>)unmarshaller.unmarshal( source );
+   @SuppressWarnings("unchecked")
+   private static JAXBElement<DisappType> readXIncludeAwareModel( File source ) throws Exception {
+      JAXBElement<DisappType> elt = null;
+      final SAXParserFactory spf = SAXParserFactory.newInstance();
+      spf.setXIncludeAware( true );
+      spf.setNamespaceAware( true );
+      spf.setValidating( true );
+      final XMLReader xr = spf.newSAXParser().getXMLReader();
+      try( final Reader reader = new FileReader( source )) {
+         final SAXSource src = new SAXSource( xr, new InputSource( reader ));
+         final JAXBContext jaxbContext = JAXBContext.newInstance( "disapp.generator.model" );
+         final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+         elt = (JAXBElement<DisappType>)unmarshaller.unmarshal( src );
+      }
+      return elt;
+   }
+
+   Model( File source, boolean force ) throws Exception {
+      final JAXBElement<DisappType> elt = readXIncludeAwareModel( source );
       _source       = source;
       _force        = force;
       _application  = elt.getValue();
@@ -122,6 +142,23 @@ final class Model {
          }
       }
       for( final ComponentType component : _application.getComponent()) {
+         final AutomatonType automaton = component.getAutomaton();
+         if( automaton == null ) {
+            _actions.put( component, null );
+         }
+         else {
+            createEventAndStateIfNecessary( automaton );
+            _actions.put(
+               component,
+               automaton
+                  .getOnEntryOrOnExit()
+                  .stream()
+                  .map( e -> e.getValue())
+                  .map( action -> action.getAction())
+                  .collect( Collectors.toCollection( LinkedHashSet::new )));
+         }
+      }
+      for( final ComponentType component : _application.getComponent()) {
          typesUsedBy( component );
       }
       for( final InterfaceType iface : _application.getInterface()) {
@@ -146,19 +183,6 @@ final class Model {
                throw new IllegalStateException( "Unexpected class: " + facet.getClass());
             }
          }
-      }
-      for( final ComponentType component : _application.getComponent()) {
-         final AutomatonType automaton = component.getAutomaton();
-         if( automaton != null ) {
-            createEventAndStateIfNecessary( automaton );
-         }
-         _actions.put( component, ( component.getAutomaton() == null ) ? null :
-            component.getAutomaton()
-               .getOnEntryOrOnExit()
-               .stream()
-               .map( e -> e.getValue())
-               .map( action -> action.getAction())
-               .collect( Collectors.toCollection( LinkedHashSet::new )));
       }
       for( final ComponentType component : _application.getComponent()) {
          final Map<InterfaceType, List<DataType>> allData = new LinkedHashMap<>();
@@ -202,6 +226,14 @@ final class Model {
       }
    }
 
+   private static String toString( FieldType field ) {
+      return "Name: "      + field.getName() +
+         ", description: " + field.getDescription() +
+         ", value: "       + field.getValue() +
+         ", type: "        + field.getType() +
+         ", userType: "    + field.getUserType();
+   }
+
    static String getUserType( FieldType field ) {
       final FieldtypeType type = field.getType();
       final String        typeName;
@@ -214,7 +246,7 @@ final class Model {
             typeName = ((EnumerationType)enumType).getName();
          }
          else {
-            throw new IllegalStateException();
+            throw new IllegalStateException( "Unexpected field type for " + toString( field ));
          }
       }
       else if( type == FieldtypeType.STRUCT ) {
