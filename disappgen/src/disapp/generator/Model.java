@@ -42,8 +42,10 @@ import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
+import disapp.generator.model.ShortcutType;
 import disapp.generator.model.StateEnumType;
 import disapp.generator.model.StructType;
+import disapp.generator.model.TransitionType;
 
 final class Model {
 
@@ -276,12 +278,12 @@ final class Model {
          final EnumerationType enumeration = new EnumerationType();
          enumeration.setName( event );
          final SortedSet<LiteralType> literals = new TreeSet<>(( l, r ) -> l.getName().compareTo( r.getName()));
-         for( final var transition : automaton.getTransition()) {
+         for( final TransitionType transition : automaton.getTransition()) {
             final LiteralType literal = new LiteralType();
             literal.setName( transition.getEvent());
             literals.add( literal );
          }
-         for( final var shortcut : automaton.getShortcut()) {
+         for( final ShortcutType shortcut : automaton.getShortcut()) {
             final LiteralType literal = new LiteralType();
             literal.setName( shortcut.getEvent());
             literals.add( literal );
@@ -307,7 +309,7 @@ final class Model {
          final EnumerationType enumeration = new EnumerationType();
          enumeration.setName( state );
          final SortedSet<LiteralType> literals = new TreeSet<>(( l, r ) -> l.getName().compareTo( r.getName()));
-         for( final var transition : automaton.getTransition()) {
+         for( final TransitionType transition : automaton.getTransition()) {
             LiteralType literal = new LiteralType();
             literal.setName( transition.getFrom());
             literals.add( literal );
@@ -315,7 +317,7 @@ final class Model {
             literal.setName( transition.getFutur());
             literals.add( literal );
          }
-         for( final var shortcut : automaton.getShortcut()) {
+         for( final ShortcutType shortcut : automaton.getShortcut()) {
             final LiteralType literal = new LiteralType();
             literal.setName( shortcut.getFutur());
             literals.add( literal );
