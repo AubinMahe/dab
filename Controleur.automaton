@@ -55,5 +55,5 @@
    <on-entry state="RETRAIT_BILLETS"            action="armerLeTimeoutDeRetraitDesBillets" />
 
    <on-exit  state="RETRAIT_BILLETS"            action="annulerLeTimeoutDeRetraitDesBillets" />
-   
+
 </automaton>
