@@ -1,4 +1,4 @@
-package org.hpms.automaton.editors;
+package org.hpms.automaton.ui;
 
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.zest.core.viewers.EntityConnectionData;

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.hpms.automaton.feature"
+      label="Editeur d'automate"
+      version="1.0.0"
+      provider-name="Aubin Mahé">
+
+   <description>
+      Editeur d'automates.
+   </description>
+
+   <plugin
+         id="org.hpms.automaton.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

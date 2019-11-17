@@ -1,0 +1,33 @@
+target "Editeur d'automates"
+
+location "http://download.eclipse.org/releases/2019-09" {
+   org.apache.xerces lazy
+   org.apache.xml.resolver lazy
+   org.apache.xml.serializer lazy
+   org.eclipse.equinox.core.feature.feature.group lazy
+   org.eclipse.emf.ecore.feature.group lazy
+   org.eclipse.emf.common.feature.group lazy
+   org.eclipse.platform.feature.group lazy
+	org.eclipse.draw2d lazy
+	org.eclipse.wst.common.core lazy
+   org.eclipse.wst.common.environment lazy
+	org.eclipse.wst.common.frameworks lazy
+	org.eclipse.wst.common.frameworks.ui lazy
+   org.eclipse.wst.common.project.facet.core lazy 
+   org.eclipse.wst.common.ui lazy
+	org.eclipse.wst.common.uriresolver lazy
+	org.eclipse.wst.sse.core
+	org.eclipse.wst.sse.ui lazy
+	org.eclipse.wst.validation lazy
+   org.eclipse.wst.validation.ui lazy 
+   org.eclipse.wst.xml.core lazy
+   org.eclipse.wst.xml.ui lazy
+   org.eclipse.zest.core lazy
+   org.eclipse.zest.layouts lazy
+}
+
+// Add support for java 11 (removed javax.annotation)...
+location "https://download.eclipse.org/tools/orbit/downloads/drops/R20190827152740/repository" {
+   javax.annotation lazy
+   javax.xml lazy
+}

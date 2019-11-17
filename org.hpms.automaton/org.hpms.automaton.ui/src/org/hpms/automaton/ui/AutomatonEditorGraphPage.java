@@ -1,4 +1,4 @@
-package org.hpms.automaton.editors;
+package org.hpms.automaton.ui;
 
 import java.util.Iterator;
 import java.util.prefs.Preferences;

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde?>
+<!-- generated with https://github.com/eclipse-cbi/targetplatform-dsl -->
+<target name="Editeur d'automates" sequenceNumber="1574018373">
+  <locations>
+    <location includeMode="slicer" includeAllPlatforms="false" includeSource="false" includeConfigurePhase="false" type="InstallableUnit">
+      <unit id="org.apache.xerces" version="0.0.0"/>
+      <unit id="org.apache.xml.resolver" version="0.0.0"/>
+      <unit id="org.apache.xml.serializer" version="0.0.0"/>
+      <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
+      <unit id="org.eclipse.emf.ecore.feature.group" version="0.0.0"/>
+      <unit id="org.eclipse.emf.common.feature.group" version="0.0.0"/>
+      <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
+      <unit id="org.eclipse.draw2d" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.core" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.environment" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.frameworks" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.frameworks.ui" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.project.facet.core" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.ui" version="0.0.0"/>
+      <unit id="org.eclipse.wst.common.uriresolver" version="0.0.0"/>
+      <unit id="org.eclipse.wst.sse.core" version="1.2.100.v201901310548"/>
+      <unit id="org.eclipse.wst.sse.ui" version="0.0.0"/>
+      <unit id="org.eclipse.wst.validation" version="0.0.0"/>
+      <unit id="org.eclipse.wst.validation.ui" version="0.0.0"/>
+      <unit id="org.eclipse.wst.xml.core" version="0.0.0"/>
+      <unit id="org.eclipse.wst.xml.ui" version="0.0.0"/>
+      <unit id="org.eclipse.zest.core" version="0.0.0"/>
+      <unit id="org.eclipse.zest.layouts" version="0.0.0"/>
+      <repository location="http://download.eclipse.org/releases/2019-09"/>
+    </location>
+    <location includeMode="slicer" includeAllPlatforms="false" includeSource="false" includeConfigurePhase="false" type="InstallableUnit">
+      <unit id="javax.annotation" version="0.0.0"/>
+      <unit id="javax.xml" version="0.0.0"/>
+      <repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20190827152740/repository"/>
+    </location>
+  </locations>
+</target>

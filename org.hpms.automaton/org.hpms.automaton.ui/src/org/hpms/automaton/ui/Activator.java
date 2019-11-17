@@ -1,4 +1,4 @@
-package org.hpms.automaton.editors;
+package org.hpms.automaton.ui;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;

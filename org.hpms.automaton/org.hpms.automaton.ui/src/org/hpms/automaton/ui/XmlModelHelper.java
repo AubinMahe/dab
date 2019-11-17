@@ -1,4 +1,4 @@
-package org.hpms.automaton.editors;
+package org.hpms.automaton.ui;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;

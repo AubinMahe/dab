@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description name="org.hpms.automaton">
+      Update site de l&apos;éditeur d&apos;automate
+   </description>
+   <feature id="org.hpms.automaton.feature" version="1.0.0">
+      <category name="org.hpms.automaton.category"/>
+   </feature>
+   <category-def name="org.hpms.automaton.category" label="Editeur d&apos;automates"/>
+</site>

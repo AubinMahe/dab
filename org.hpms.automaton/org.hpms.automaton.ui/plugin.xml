@@ -2,19 +2,19 @@
 <plugin>
 
    <extension
-         id="org.hpms.automaton.fragment"
+         id="org.hpms.automaton.ui.fragment"
          point="org.eclipse.e4.workbench.model">
       <fragment
             uri="view.e4xmi">
       </fragment>
    </extension>
    <extension
-         id="org.hpms.automaton.contenttype"
+         id="org.hpms.automaton.ui.contenttype"
          name="Automaton content type"
          point="org.eclipse.core.contenttype.contentTypes">
       <content-type
             file-extensions="automaton"
-            id="org.hpms.automaton.content-type"
+            id="org.hpms.automaton.ui.content-type"
             base-type="org.eclipse.core.runtime.xml"
             name="Automaton"
             priority="normal">
@@ -23,11 +23,11 @@
    <extension
          point="org.eclipse.ui.editors">
       <editor
-            class="org.hpms.automaton.editors.AutomatonEditor"
-            contributorClass="org.hpms.automaton.editors.AutomatonEditorContributor"
+            class="org.hpms.automaton.ui.AutomatonEditor"
+            contributorClass="org.hpms.automaton.ui.AutomatonEditorContributor"
             default="true"
             extensions="automaton"
-            id="org.hpms.automaton.editors.AutomatonEditor"
+            id="org.hpms.automaton.ui.AutomatonEditor"
             name="Automaton Editor">
       </editor>
    </extension>
