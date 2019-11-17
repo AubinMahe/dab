@@ -47,7 +47,7 @@ public class AutomatonEditor extends MultiPageEditorPart
       try {
          xmlEditor = new StructuredTextEditor();
          final int index = addPage( xmlEditor, getEditorInput());
-         setPageText( index, xmlEditor.getTitle());
+         setPageText( index, "XML text" );
       }
       catch( final PartInitException e ) {
          ErrorDialog.openError( getSite().getShell(), "Error creating nested text editor", null, e.getStatus());
@@ -58,7 +58,7 @@ public class AutomatonEditor extends MultiPageEditorPart
    protected void createPages() {
       createXMLView();
       final int index = addPage( graphPage.create( getContainer(), xmlEditor ));
-      setPageText( index, "Graph" );
+      setPageText( index, "Automaton graph" );
       final IWorkbenchPage page = getSite().getWorkbenchWindow().getPages()[0];
       page.addPartListener( new IPartListener() {
          @Override public void partOpened( IWorkbenchPart part ) { /**/ }
