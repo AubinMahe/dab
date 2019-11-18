@@ -4,9 +4,9 @@
 
 L'application est décrite par des **composants**. Les relations entre composants sont décrites sous formes d'**interfaces** **offertes** ou **requises**. Les interfaces contiennent des **événements**, certains de types **[requêtes/réponses](https://en.wikipedia.org/wiki/Request%E2%80%93response)** et des **données partagées** selon le modèle **[publish/subscribe](https://fr.wikipedia.org/wiki/Publish-subscribe)**. Les événements sont composés d'un ensemble de **données** de types **scalaire**, **énuméré** ou **agrégat**.
 
-Les logiques applicatives peuvent en grande partie être décrites sous forme d'**[automates finis](https://fr.wikipedia.org/wiki/Automate_fini)**. Le support des événements temporisés ou *timeouts* est fourni par le modèle. Les actions associées à l'entrée dans un état peuvent armer ou annuler des *timeouts*. Le déclenchement de ces derniers donne lieu à l'émission d'événements de type *loopback*, reçus par le composant comme un événement réseau, dans le même thread.
+Les logiques applicatives peuvent en grande partie être décrites sous forme d'**[automates finis](https://fr.wikipedia.org/wiki/Automate_fini)**. Le support des événements temporisés ou *timeouts* est fourni par le modèle. Les actions associées à l'entrée dans un état peuvent armer ou annuler des *timeouts*. Le déclenchement de ces derniers donne lieu à l'émission d'événements de type *loopback*, reçus par le composant comme un événement réseau, dans le même thread. Un [plugin Eclipse](org.hpms.automaton/org.hpms.automaton.usite/target/org.hpms.automaton.usite-1.0.0.zip) a été développé pour éditer au mieux les automates : voici l'exemple appliqué à [l'unité de traitement](org.hpms.automaton/snapshot.png). Il est basé sur un [méta-modèle](distributed-application-automaton.xsd) déposé.
 
-Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml)
+Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml) mais un langage spécifique a été créé, le *DAL* au moyen du [framework Xtext](https://www.eclipse.org/Xtext/). Le modèle *DAL* est disponible [ici](dab.dal).
 
 La régularité de l'architecture sous-tend la régularité du code, une grande partie de l'application est donc générée :
 - Le code de communication, création, envoi et réception des messages UDP (événements)
@@ -84,6 +84,7 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
+1. Maintenant que le langage *DAL* existe, il faut générer le fichier XML. [Xtend](https://www.eclipse.org/xtend/) est fait pour ça.
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
@@ -99,6 +100,5 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Boite à idées, à débattre...
 
-1. Proposer une surcouche au format XML d'entrée sous forme d'un [langage dédié ou DSL](https://fr.wikipedia.org/wiki/Langage_d%C3%A9di%C3%A9). Un [essai](./dab.dal) a été créé dans ce sens.
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...

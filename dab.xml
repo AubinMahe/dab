@@ -4,7 +4,7 @@
    xmlns:xi="http://www.w3.org/2001/XInclude"
    name="DAB">
    <types>
-
+   
       <struct name="Carte">
          <field name="id"       type="string" length="4" description="Identifiant de la carte" />
          <field name="code"     type="string" length="4" description="Identifiant de la carte" />

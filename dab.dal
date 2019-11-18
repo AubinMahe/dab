@@ -1,47 +1,52 @@
+model DAB
+
 types
+
+   enum Etat automaton-state
+
    class Carte
-      id       string[4] 'Identifiant de la carte'
-      code     string[4] 'Identifiant de la carte'
-      month    byte      'Jour de péremption de la carte'
-      year     ushort    'Année de péremption de la carte'
-      nbEssais byte      'Nombre d'essais en échec de la carte'
+      id       string[4] "Identifiant de la carte"
+      code     string[4] "Identifiant de la carte"
+      month    byte      "Jour de péremption de la carte"
+      year     ushort    "Année de péremption de la carte"
+      nbEssais byte      "Nombre d'essais en échec de la carte"
       
    class Compte
-      id       string[4] 'Identifiant du compte'
-      solde    double    'Solde du compte'
-      autorise boolean   'Le compte est-il autorisé ?'
+      id       string[4] "Identifiant du compte"
+      solde    double    "Solde du compte"
+      autorise boolean   "Le compte est-il autorisé ?"
       
    class EtatDuDab
-      etat        Etat   'Etat du DAB, tel que décrit par l'énuméré Etat'
-      soldeCaisse double 'Montant de la caisse en €'
+      etat        Etat   "Etat du DAB, tel que décrit par l'énuméré Etat"
+      soldeCaisse double "Montant de la caisse en €"
 
    generation
-      language C    module dabtypes sources dabtypes-c
-      language C++  module dabtypes sources dabtypes-cpp
-      language Java module dabtypes sources dabtypes-java
+      language C    module dabtypes sources "dabtypes-c"
+      language C++  module dabtypes sources "dabtypes-cpp"
+      language Java module dabtypes sources "dabtypes-java"
 
 interface IHM
    event ejecterLaCarte
    event ejecterLesBillets
-      montant double 'Montant à donner à l'utilisateur du DAB'
+      montant double        "Montant à donner à l'utilisateur du DAB"
    event confisquerLaCarte
    event placerLesBilletsDansLaCorbeille
    event shutdown
 
 interface UniteDeTraitement
-   data etatDuDab         'EtatDuDab Les données décrivant l'état du DAB'
+   data etatDuDab EtatDuDab "Les données décrivant l'état du DAB"
    event maintenance
-      maintenance boolean 'Maintenance active (true) ou inactive (false)'
+      maintenance boolean   "Maintenance active (true) ou inactive (false)"
    event rechargerLaCaisse
-      montant double      'Montant à rajouter dans la caisse'
+      montant double        "Montant à rajouter dans la caisse"
    event anomalie
-      anomalie boolean    'Anomalie active (true) ou inactive (false)'
+      anomalie boolean      "Anomalie active (true) ou inactive (false)"
    event carteInseree
-      carteID string[4]   'Identifiant de la carte'
+      carteID string[4]     "Identifiant de la carte"
    event codeSaisi
-      code string[4]      'Code de la carte'
+      code string[4]        "Code de la carte"
    event montantSaisi
-      montant double      'Montant du retrait en €'
+      montant double        "Montant du retrait en €"
    event carteRetiree
    event billetsRetires
    event annulationDemandeeParLeClient
@@ -49,76 +54,85 @@ interface UniteDeTraitement
 
 interface SiteCentral
    request getInformations
-         carteID string[4] 'Identifiant de la carte'
+         carteID string[4] "Identifiant de la carte"
       response
-         carte  Carte      'Données de la carte'
-         compte Compte     'Données du compte'
+         carte  Carte      "Données de la carte"
+         compte Compte     "Données du compte"
    event incrNbEssais
-      carteID string[4]    'Identifiant de la carte'
-   retrait
-      carteID string[4]    'Identifiant de la carte'
-      montant double       'Montant du retrait en €'
+      carteID string[4]    "Identifiant de la carte"
+   event retrait
+      carteID string[4]    "Identifiant de la carte"
+      montant double       "Montant du retrait en €"
    event shutdown
 
 component Distributeur 
    offers   IHM
    requires UniteDeTraitement
    generation
-      language C    module dab sources 'distributeur-c/src-gen'
-      language C++  module dab sources 'distributeur-cpp/src-gen'
-      language Java module dab sources 'distributeur-java/src-gen'
+      language C    module dab sources "distributeur-c/src-gen"
+      language C++  module dab sources "distributeur-cpp/src-gen"
+      language Java module dab sources "distributeur-java/src-gen"
 
-component Controleur after-dispatch-needed
+component Controleur after-dispatch is needed
    offers   UniteDeTraitement
-   requires IHM
-   requires SiteCentral
-   timeout saisieDuCode      30 seconds
-   timeout saisieDuMontant   30 seconds
-   timeout retraitDeLaCarte  10 seconds
-   timeout retraitDesBillets 10 seconds
-   automaton 
+   requires IHM SiteCentral
+   timeout
+      saisieDuCode      30 second
+      saisieDuMontant   30 second
+      retraitDeLaCarte  10 second
+      retraitDesBillets 10 second
+   uses an automaton 
    generation
-      language C    module udt sources 'udt-c/src-gen'
-      language C++  module udt sources 'udt-cpp/src-gen'
-      language Java module udt sources 'udt-java/src-gen'
+      language C    module udt sources "udt-c/src-gen"
+      language C++  module udt sources "udt-cpp/src-gen"
+      language Java module udt sources "udt-java/src-gen"
 
 component Banque
    offers SiteCentral
    generation
-      language C    module sc sources 'sc-c/src-gen'
-      language C++  module sc sources 'sc-cpp/src-gen'
-      language Java module sc sources 'sc-java/src-gen'
+      language C    module sc sources "sc-c/src-gen"
+      language C++  module sc sources "sc-cpp/src-gen"
+      language Java module sc sources "sc-java/src-gen"
 
-deployment '.'
+deployment "."
    process 127.0.0.1:2416
-      sc Banque
+      instance sc of Banque
    process 127.0.0.1:2417
-      udt1 Controleur
-         requires SiteCentral sc
-         requires IHM         ihm1
+      instance udt1 of Controleur
+         requires
+            SiteCentral sc
+            IHM         ihm1
    process 127.0.0.1:2418
-      ihm1 Distributeur
-         requires UniteDeTraitement udt1
+      instance ihm1 of Distributeur
+         requires
+            UniteDeTraitement udt1
    process 127.0.0.1:2419
-      udt2 Controleur
-         requires SiteCentral sc
-         requires IHM         ihm2
+      instance udt2 of Controleur
+         requires
+            SiteCentral sc
+            IHM         ihm2
    process 127.0.0.1:2420
-      ihm2 Distributeur
-         requires UniteDeTraitement udt2
+      instance ihm2 of Distributeur
+         requires
+            UniteDeTraitement udt2
 
-deployment 'alt'
+deployment "alt"
    process 127.0.0.1:2416
-      m-sc Banque
+      instance sc of Banque
    process 127.0.0.1:2417
-      m-udt1 Controleur
-         requires SiteCentral m-sc
-         requires IHM         m-ihm1
-      m-ihm1 Distributeur
-         requires UniteDeTraitement m-udt1
-      m-ihm2 Distributeur
-         requires UniteDeTraitement m-udt2
+      instance udt1 of Controleur
+         requires
+            SiteCentral sc
+            IHM         ihm1
+      instance ihm1 of Distributeur
+         requires
+            UniteDeTraitement udt1
+      instance ihm2 of Distributeur
+         requires
+            UniteDeTraitement udt2
    process 127.0.0.1:2419
-      m-udt2 Controleur
-         requires SiteCentral m-sc
-         requires IHM         m-ihm2
+      instance udt2 of Controleur
+         requires
+            SiteCentral sc
+            IHM         ihm2
+ 

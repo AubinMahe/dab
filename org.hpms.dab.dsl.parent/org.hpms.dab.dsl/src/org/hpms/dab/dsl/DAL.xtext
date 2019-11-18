@@ -1,0 +1,117 @@
+grammar org.hpms.dab.dsl.DAL hidden(WS, ML_COMMENT, SL_COMMENT)
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+generate dal "http://org.hpms.dab.dsl/DAL"
+
+DAL :
+   'model' name = ID
+   ( 'types' types = types        )?
+   ( interfaces  += interfaceType )+
+   ( components  += component     )+
+   ( deployments += deployment    )+
+;
+types :
+   ( classes += clazz | enums += enumType )+
+   generation = generation
+;
+clazz returns UserType :
+   'class' name = ID ( fields += field )+
+;
+enumType returns UserType :
+   'enum' name = ID ( isAutomatonState = 'automaton-state' | ( literals += ID )+ )
+;
+field :
+   name = ID type = type description = STRING
+;
+type :
+    type   = 'boolean'
+   |type   = 'byte'
+   |type   = 'short'
+   |type   = 'ushort'
+   |type   = 'int'
+   |type   = 'uint'
+   |type   = 'long'
+   |type   = 'ulong'
+   |type   = 'float'
+   |type   = 'double'
+   |string = 'string' '[' length = INT ']'
+   |user   = [UserType|ID]
+;
+generation :
+   'generation' ( languages += language )+
+;
+language :
+   'language' lang = lang 'module' name = ID 'sources' sources = STRING
+;
+lang:
+   isC = 'C'
+   |isCPP = 'C++'
+   |isJava = 'Java'
+;
+interfaceType :
+   'interface' name = ID ( facets += facet )+
+;
+facet :
+   'event' name = ID ( fields += field )*
+   |'data' name = ID type = type description = STRING
+   |'request' name = ID ( request += field )* 'response' ( response += field )+
+;
+component :
+   'component' name = ID
+   ( afterDispatch = 'after-dispatch' 'is' 'needed' )?
+   ('offers'   ( offers   += offer   )+ )?
+   ('requires' ( requires += require )+ )?
+   ('timeout'  ( timeouts += timeout )* )?
+   ( usesAutomaton = 'uses' 'an' 'automaton' )?
+   generation = generation
+;
+offer:
+   name = [interfaceType|ID]
+;
+require:
+   name = [interfaceType|ID]
+;
+timeout:
+   name = ID duration = INT unit = unit
+;
+unit:
+   'millisecond'
+   |'second'
+   |'minute'
+   |'hour'
+;
+deployment:
+   'deployment' targetPath = STRING
+   ( processes += process )+
+;
+process:
+   'process' (ip = IP | hostname = HOSTNAME) ':' port = INT
+   ( components += instance )+
+;
+instance:
+   'instance' name = ID 'of' component = [component|ID]
+   ('requires' ( requires += connection )+ )?
+;
+connection:
+   intrfc = [interfaceType|ID] instance = [instance|ID]
+;
+terminal INT returns ecore::EInt: ('0'..'9')+;
+terminal ID: '^'?('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
+terminal IP: BYTE '.' BYTE '.' BYTE '.' BYTE;
+terminal LABEL: ('a'..'z'|'0'..'9') ('a'..'z'|'-'|'0'..'9')*;
+terminal HOSTNAME: LABEL ( '.' LABEL )*;
+terminal BYTE:
+    ('1' '2' ('0'..'7'))
+   |('1'('0'..'1')('0'..'9'))
+   |(('1'..'9')('0'..'9'))
+   |(('1'..'9'))
+;
+terminal STRING:
+   '"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
+   "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
+;
+terminal ML_COMMENT : '/*' -> '*/';
+terminal SL_COMMENT : '//' !('\n'|'\r')* ('\r'? '\n')?;
+terminal WS         : (' '|'\t'|'\r'|'\n')+;
+terminal ANY_OTHER: .;
