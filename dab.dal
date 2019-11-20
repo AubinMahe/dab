@@ -17,7 +17,7 @@ types
       autorise boolean   "Le compte est-il autorisé ?"
       
    class EtatDuDab
-      etat        Etat   "Etat du DAB, tel que décrit par l'énuméré Etat"
+      etat        Etat   "Etat courant de l'automate du composant Controleur"
       soldeCaisse double "Montant de la caisse en €"
 
    generation
@@ -77,10 +77,10 @@ component Controleur after-dispatch is needed
    offers   UniteDeTraitement
    requires IHM SiteCentral
    timeout
-      saisieDuCode      30 second
-      saisieDuMontant   30 second
-      retraitDeLaCarte  10 second
-      retraitDesBillets 10 second
+      saisieDuCode      30 seconds
+      saisieDuMontant   30 seconds
+      retraitDeLaCarte  10 seconds
+      retraitDesBillets 10 seconds
    uses an automaton 
    generation
       language C    module udt sources "udt-c/src-gen"

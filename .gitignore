@@ -49,3 +49,9 @@ UniteDeTraitement
 UniteDeTraitement-mingw32
 UniteDeTraitement-o64
 UDT.jar
+
+dab-generated.xml
+target/
+xtend-gen/
+generated/
+

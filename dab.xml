@@ -76,11 +76,11 @@
          </response>
       </request>
       <event name="incrNbEssais">
-         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
+         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
       </event>
       <event name="retrait">
-         <field name="carteID" type="string"  description="Identifiant de la carte" length="4" />
-         <field name="montant" type="double"  description="Montant du retrait en €" />
+         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
+         <field name="montant" type="double" description="Montant du retrait en €" />
       </event>
       <event name="shutdown" />
    </interface>
@@ -144,24 +144,24 @@
 
    <deployment target-dir="alt">
       <process address="127.0.0.1" port="2416">
-         <instance name="m-sc" component="Banque" />
+         <instance name="sc" component="Banque" />
       </process>
       <process address="127.0.0.1" port="2417">
-         <instance name="m-udt1" component="Controleur" >
-            <requires interface="SiteCentral" to-instance="m-sc" />
-            <requires interface="IHM"         to-instance="m-ihm1" />
+         <instance name="udt1" component="Controleur" >
+            <requires interface="SiteCentral" to-instance="sc" />
+            <requires interface="IHM"         to-instance="ihm1" />
          </instance>
-         <instance name="m-ihm1" component="Distributeur" >
-            <requires interface="UniteDeTraitement" to-instance="m-udt1" />
+         <instance name="ihm1" component="Distributeur" >
+            <requires interface="UniteDeTraitement" to-instance="udt1" />
          </instance>
-         <instance name="m-ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="m-udt2" />
+         <instance name="ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="udt2" />
          </instance>
       </process>
       <process address="127.0.0.1" port="2419">
-         <instance name="m-udt2" component="Controleur">
-            <requires interface="SiteCentral" to-instance="m-sc" />
-            <requires interface="IHM"         to-instance="m-ihm2" />
+         <instance name="udt2" component="Controleur">
+            <requires interface="SiteCentral" to-instance="sc" />
+            <requires interface="IHM"         to-instance="ihm2" />
          </instance>
       </process>
    </deployment>

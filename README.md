@@ -6,7 +6,8 @@ L'application est décrite par des **composants**. Les relations entre composant
 
 Les logiques applicatives peuvent en grande partie être décrites sous forme d'**[automates finis](https://fr.wikipedia.org/wiki/Automate_fini)**. Le support des événements temporisés ou *timeouts* est fourni par le modèle. Les actions associées à l'entrée dans un état peuvent armer ou annuler des *timeouts*. Le déclenchement de ces derniers donne lieu à l'émission d'événements de type *loopback*, reçus par le composant comme un événement réseau, dans le même thread. Un [plugin Eclipse](org.hpms.automaton/org.hpms.automaton.usite/target/org.hpms.automaton.usite-1.0.0.zip) a été développé pour éditer au mieux les automates : voici l'exemple appliqué à [l'unité de traitement](org.hpms.automaton/snapshot.png). Il est basé sur un [méta-modèle](distributed-application-automaton.xsd) déposé.
 
-Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml) mais un langage spécifique a été créé, le *DAL* au moyen du [framework Xtext](https://www.eclipse.org/Xtext/). Le modèle *DAL* est disponible [ici](dab.dal).
+Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml) mais un langage spécifique a été créé, le *DAL* au moyen du [framework Xtext](https://www.eclipse.org/Xtext/). Le modèle *DAL* est disponible [ici](dab.dal). Il génère, au moyen d'[Xtend](https://www.eclipse.org/xtend/), le fichier XML [dab.xml](dab.xml).
+
 
 La régularité de l'architecture sous-tend la régularité du code, une grande partie de l'application est donc générée :
 - Le code de communication, création, envoi et réception des messages UDP (événements)
@@ -32,7 +33,7 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 
 **Pour construire** le projet, il est nécessaire de disposer de :
 - **Java**, dont la version doit être supérieure ou égale à 8, [OpenJDK](https://adoptopenjdk.net/) *latest* est vivement recommandé.
-- Du compilateur **[JAXB](https://javaee.github.io/jaxb-v2/)** `xjc`, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install xjc` 
+- Du compilateur **[JAXB](https://javaee.github.io/jaxb-v2/)** `xjc`, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install xjc`
 - Du compilateur **[C11 et C++17](https://gcc.gnu.org/)** pour GNU/Linux et compilateur croisé, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc gcc-mingw-w64`
 - Du [compilateur croisé Linux/Mac OS X](https://github.com/tpoechtrager/osxcross)
 - De [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires MS-Windows et de son équivalent pour macOS X : [DarlingHQ](https://www.darlinghq.org/)
@@ -43,7 +44,7 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 **Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
 
 **Les traces d'exécution** sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
-Pour lancer ces terminaux, taper `start-ttys`. 
+Pour lancer ces terminaux, taper `start-ttys`.
 
 **Différents déploiements** exécutables :
 - Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
@@ -67,7 +68,7 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 **En pas-à-pas**, pour comprendre :
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
-1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources` 
+1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources`
 1. Compiler dans l'ordre :
     1. util-c        : `(cd util-c && make)`, produit également `util-c-win32` et `util-c-o64`
     1. dabtypes-c    : `(cd dabtypes-c && make)`, produit également `dabtypes-c-win32` et `dabtypes-c-o64`
@@ -84,7 +85,6 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
-1. Maintenant que le langage *DAL* existe, il faut générer le fichier XML. [Xtend](https://www.eclipse.org/xtend/) est fait pour ça.
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
@@ -93,7 +93,7 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
     * composants distribués sur plusieurs machines
     * composants distribués sur plusieurs processus (éventuellement plusieurs langages)
     * composants regroupés au sein d'un même processus (mono-langage)<br />
-      Dans ce dernier cas, **des appels directs entre composants seraient plus performants**. 
+      Dans ce dernier cas, **des appels directs entre composants seraient plus performants**.
 
 1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
 1. Automate : associer une action au franchissement d'une transition.</li>

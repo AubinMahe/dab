@@ -16,27 +16,27 @@ types :
    generation = generation
 ;
 clazz returns UserType :
-   'class' name = ID ( fields += field )+
+   isClass ?= 'class' name = ID ( fields += field )+
 ;
 enumType returns UserType :
-   'enum' name = ID ( isAutomatonState = 'automaton-state' | ( literals += ID )+ )
+   isEnum ?= 'enum' name = ID ( isAutomatonState ?= 'automaton-state' | ( literals += ID )+ )
 ;
 field :
    name = ID type = type description = STRING
 ;
 type :
-    type   = 'boolean'
-   |type   = 'byte'
-   |type   = 'short'
-   |type   = 'ushort'
-   |type   = 'int'
-   |type   = 'uint'
-   |type   = 'long'
-   |type   = 'ulong'
-   |type   = 'float'
-   |type   = 'double'
-   |string = 'string' '[' length = INT ']'
-   |user   = [UserType|ID]
+    type = 'boolean'
+   |type = 'byte'
+   |type = 'short'
+   |type = 'ushort'
+   |type = 'int'
+   |type = 'uint'
+   |type = 'long'
+   |type = 'ulong'
+   |type = 'float'
+   |type = 'double'
+   |type = 'string' '[' length = INT ']'
+   |user = [UserType|ID]
 ;
 generation :
    'generation' ( languages += language )+
@@ -44,50 +44,46 @@ generation :
 language :
    'language' lang = lang 'module' name = ID 'sources' sources = STRING
 ;
-lang:
-   isC = 'C'
-   |isCPP = 'C++'
-   |isJava = 'Java'
-;
+lang: 'C' |'C++' |'Java' ;
 interfaceType :
    'interface' name = ID ( facets += facet )+
 ;
 facet :
-   'event' name = ID ( fields += field )*
-   |'data' name = ID type = type description = STRING
-   |'request' name = ID ( request += field )* 'response' ( response += field )+
+   isEvent    ?= 'event'   name = ID ( fields += field )*
+   |isData    ?= 'data'    name = ID type = type description = STRING
+   |isRequest ?= 'request' name = ID ( fields += field )* 'response' ( response += field )+
 ;
 component :
    'component' name = ID
-   ( afterDispatch = 'after-dispatch' 'is' 'needed' )?
+   ( afterDispatch ?= 'after-dispatch' 'is' 'needed' )?
    ('offers'   ( offers   += offer   )+ )?
    ('requires' ( requires += require )+ )?
    ('timeout'  ( timeouts += timeout )* )?
-   ( usesAutomaton = 'uses' 'an' 'automaton' )?
+   ( usesAutomaton ?= 'uses' 'an' 'automaton' )?
    generation = generation
 ;
 offer:
-   name = [interfaceType|ID]
+   intrfc = [interfaceType|ID]
 ;
 require:
-   name = [interfaceType|ID]
+   intrfc = [interfaceType|ID]
 ;
 timeout:
    name = ID duration = INT unit = unit
 ;
 unit:
-   'millisecond'
-   |'second'
-   |'minute'
-   |'hour'
+   'milliseconds'
+   |'seconds'
+   |'minutes'
+   |'hours'
 ;
 deployment:
-   'deployment' targetPath = STRING
+   'deployment' targetDir = STRING
    ( processes += process )+
 ;
 process:
    'process' (ip = IP | hostname = HOSTNAME) ':' port = INT
-   ( components += instance )+
+   ( instances += instance )+
 ;
 instance:
    'instance' name = ID 'of' component = [component|ID]
