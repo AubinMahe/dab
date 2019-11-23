@@ -717,8 +717,8 @@ util_error <prefix>_<component.name; format="cname">_init( <
          processes.(instance).address>", <
          processes.(instance).port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
-         processes.(instancesByName.(req.toInstance.name)).address>", <
-         processes.(instancesByName.(req.toInstance.name)).port>, &<
+         processes.(instancesByName.(req.toInstance)).address>", <
+         processes.(instancesByName.(req.toInstance)).port>, &<
          req.interface.name; format="cname"> ));
 }>      <data:{iface|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
@@ -730,8 +730,8 @@ util_error <prefix>_<component.name; format="cname">_init( <
          processes.(instance).address>", <
          processes.(instance).port>, &This->localAddress ));
       <requires.(instance.name):{req|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
-         processes.(instancesByName.(req.toInstance.name)).address>", <
-         processes.(instancesByName.(req.toInstance.name)).port>, &<
+         processes.(instancesByName.(req.toInstance)).address>", <
+         processes.(instancesByName.(req.toInstance)).port>, &<
          req.interface.name; format="cname"> ));
 }>      <data:{iface|UTIL_ERROR_CHECK( io_datagram_socket_init( "<
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <

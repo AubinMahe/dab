@@ -758,7 +758,7 @@ final class Model {
       for( final ProcessType process : deployment.getProcess()) {
          for( final InstanceType dataReader : process.getInstance()) {
             for( final RequiresType requires : dataReader.getRequires()) {
-               if( requires.getToInstance() == dataWriter ) {
+               if( dataWriter.getName().equals( requires.getToInstance())) {
                   return dataReader;
                }
             }

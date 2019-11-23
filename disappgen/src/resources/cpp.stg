@@ -747,14 +747,14 @@ static sockaddr_in & init<rt>SocketAddress( const char * name ) {
 < first(instances):{instance|
    if( 0 == strcmp( name, "<instance.name>" )) {
       io::DatagramSocket::init( "<
-         processes.(requires.(instance.name).(rt).toInstance).address>", <
-         processes.(requires.(instance.name).(rt).toInstance).port>, address );
+         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).address>", <
+         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).port>, address );
 }>< rest(instances):{instance|
    \}
    else if( 0 == strcmp( name, "<instance.name>" )) {
       io::DatagramSocket::init( "<
-         processes.(requires.(instance.name).(rt).toInstance).address>", <
-         processes.(requires.(instance.name).(rt).toInstance).port>, address );
+         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).address>", <
+         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).port>, address );
    \}
 }>   else {
       throw util::NotApplicable( UTIL_CTXT, "'%s' isn't a valid name as defined in XML application file!", name );

@@ -175,21 +175,27 @@
       </xs:restriction>
    </xs:simpleType>
    
+   <xs:simpleType name="instanceID">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
    <xs:complexType name="requiresType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:IDREF" name="interface"   use="required" />
-            <xs:attribute type="xs:IDREF" name="to-instance" use="required" />
+            <xs:attribute type="xs:IDREF"   name="interface"   use="required" />
+            <xs:attribute type="instanceID" name="to-instance" use="required" />
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
-   
+
    <xs:complexType name="instanceType">
       <xs:sequence>
          <xs:element type="requiresType" name="requires" minOccurs="0" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:ID"          name="name"      use="required" />
-      <xs:attribute type="xs:IDREF"       name="component" use="required" />
+      <xs:attribute type="instanceID" name="name"      use="required" />
+      <xs:attribute type="xs:IDREF"   name="component" use="required" />
    </xs:complexType>
 
    <xs:complexType name="processType">

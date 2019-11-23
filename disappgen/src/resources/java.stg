@@ -597,8 +597,8 @@ data:{iface|, <iface.name; format="argument">}>;
                processes.(instance).address>", <
                processes.(instance).port> ));
          <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(instancesByName.(req.toInstance.name)).address>", <
-            processes.(instancesByName.(req.toInstance.name)).port> );
+            processes.(instancesByName.(req.toInstance)).address>", <
+            processes.(instancesByName.(req.toInstance)).port> );
 }>         <data:{iface|<iface.name; format="argument"> = new InetSocketAddress( "<
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
             processes.(dataWriter.([instance.name, "/", iface.name])).port> );
@@ -612,8 +612,8 @@ data:{iface|, <iface.name; format="argument">}>;
                processes.(instance).address>", <
                processes.(instance).port> ));
          <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(instancesByName.(req.toInstance.name)).address>", <
-            processes.(instancesByName.(req.toInstance.name)).port> );
+            processes.(instancesByName.(req.toInstance)).address>", <
+            processes.(instancesByName.(req.toInstance)).port> );
 }>         <data:{iface|<iface.name; format="argument"> = new InetSocketAddress( "<
             processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
             processes.(dataWriter.([instance.name, "/", iface.name])).port> );
