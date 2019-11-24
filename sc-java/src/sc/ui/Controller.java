@@ -17,10 +17,10 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import sc.ComponentFactory_sc;
 import sc.ICarte;
 import sc.ICompte;
 import sc.IRepository;
-import sc.Banque;
 
 /**
  * Les informations détenues par le Site Central sont :
@@ -130,7 +130,12 @@ public class Controller implements IRepository {
          stage.setY( prefs.getDouble( "y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage ));
-      new Banque( name, this );
+      if( name.equals( "sc" )) {
+         new ComponentFactory_sc();
+      }
+      else {
+         throw new IllegalStateException( name + " isn't a valid process name");
+      }
    }
 
    @Override

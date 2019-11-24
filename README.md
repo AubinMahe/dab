@@ -8,11 +8,13 @@ Les logiques applicatives peuvent en grande partie être décrites sous forme d'
 
 Le méta modèle de ce genre d'application est décrit par le schéma XML (xsd) : [distributed-application.xsd](distributed-application.xsd) alors que le modèle d'une application est décrit par un document XML : [dab.xml](dab.xml) mais un langage spécifique a été créé, le *DAL* au moyen du [framework Xtext](https://www.eclipse.org/Xtext/). Le modèle *DAL* est disponible [ici](dab.dal). Il génère, au moyen d'[Xtend](https://www.eclipse.org/xtend/), le fichier XML [dab.xml](dab.xml).
 
-
 La régularité de l'architecture sous-tend la régularité du code, une grande partie de l'application est donc générée :
 - Le code de communication, création, envoi et réception des messages UDP (événements)
 - Le code d'activation des acteurs concerné par les événements reçus du réseau et des *timeouts* (routage)
 
+Dans le diagramme de classe UML du composant 'Distributeur' (IHM) ci-dessous, seul la classe `Distributeur` est manuelle :
+![UML class diagram](dab-class-diagram.png "Diagramme de classe UML du composant 'Distributeur' (IHM)")
+ 
 Il a été développé quelques bibliothèques de classes (Java et C++) et de fonctions C afin de :
 - Rendre homogène le traitement des messages et des événements quel que soit le langage cible.
 - Faciliter le portage entre les OS GNU/Linux et MS-Windows
@@ -85,18 +87,14 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
+1. Même si le modèle actuel permet plusieurs composants par processus, l'implémentation ne le permet pas. En effet, comme le composant abstrait écoute le port du process, il ne peut y avoir plusieurs composants (*port already bound*). Une classe **ProcessRouter** responsable d'écouter un port et de router les messages vers le ou les composants hébergés est à créer. 
+
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
 
-1. L'implémentation actuelle utilise des messages UDP pour connecter les composants, ce qui couvre les trois cas :
-    * composants distribués sur plusieurs machines
-    * composants distribués sur plusieurs processus (éventuellement plusieurs langages)
-    * composants regroupés au sein d'un même processus (mono-langage)<br />
-      Dans ce dernier cas, **des appels directs entre composants seraient plus performants**.
-
 1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
-1. Automate : associer une action au franchissement d'une transition.</li>
+1. Automate : associer une action au franchissement d'une transition.
 
 ## Boite à idées, à débattre...
 

@@ -115,27 +115,27 @@
    </component>
 
    <deployment target-dir=".">
-      <process address="127.0.0.1" port="2416">
+      <process name="sc" address="127.0.0.1" port="2416">
          <instance name="sc" component="Banque" />
       </process>
-      <process address="127.0.0.1" port="2417">
+      <process name="udt1" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
             <requires interface="IHM"         to-instance="ihm1" />
          </instance>
       </process>
-      <process address="127.0.0.1" port="2418">
+      <process name="ihm1" address="127.0.0.1" port="2418">
          <instance name="ihm1" component="Distributeur">
             <requires interface="UniteDeTraitement" to-instance="udt1" />
          </instance>
       </process>
-      <process address="127.0.0.1" port="2419">
+      <process name="udt2" address="127.0.0.1" port="2419">
          <instance name="udt2" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
             <requires interface="IHM"         to-instance="ihm2" />
          </instance>
       </process>
-      <process address="127.0.0.1" port="2420">
+      <process name="ihm2" address="127.0.0.1" port="2420">
          <instance name="ihm2" component="Distributeur">
             <requires interface="UniteDeTraitement" to-instance="udt2" />
          </instance>
@@ -143,10 +143,10 @@
    </deployment>
 
    <deployment target-dir="alt">
-      <process address="127.0.0.1" port="2416">
+      <process name="sc" address="127.0.0.1" port="2416">
          <instance name="sc" component="Banque" />
       </process>
-      <process address="127.0.0.1" port="2417">
+      <process name="dab" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur" >
             <requires interface="SiteCentral" to-instance="sc" />
             <requires interface="IHM"         to-instance="ihm1" />
@@ -154,14 +154,12 @@
          <instance name="ihm1" component="Distributeur" >
             <requires interface="UniteDeTraitement" to-instance="udt1" />
          </instance>
-         <instance name="ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="udt2" />
-         </instance>
-      </process>
-      <process address="127.0.0.1" port="2419">
          <instance name="udt2" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
             <requires interface="IHM"         to-instance="ihm2" />
+         </instance>
+         <instance name="ihm2" component="Distributeur">
+            <requires interface="UniteDeTraitement" to-instance="udt2" />
          </instance>
       </process>
    </deployment>

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -743,7 +745,7 @@ final class Model {
       return instances;
    }
 
-   private DeploymentType getDeployment( String targetDir ) {
+   DeploymentType getDeployment( String targetDir ) {
       for( final DeploymentType deployment : _application.getDeployment()) {
          if( deployment.getTargetDir().equals( targetDir )) {
             return deployment;
@@ -825,5 +827,32 @@ final class Model {
 
    public Set<String> getAutomatonActions( ComponentType component ) {
       return _actions.get( component );
+   }
+
+   public Map<InterfaceType, Map<String, Set<ProcessType>>> getDataConsumer( String deploymentName, ComponentType component ) {
+      final DeploymentType deployment = getDeployment( deploymentName );
+      final Map<InterfaceType, Map<String, Set<ProcessType>>> processes = new HashMap<>();
+      for( final OfferedInterfaceUsageType offers : component.getOffers()) {
+         final InterfaceType intrfc = (InterfaceType)offers.getInterface();
+         for( final ProcessType process : deployment.getProcess()) {
+            for( final InstanceType instance : process.getInstance()) {
+               for( final RequiresType req : instance.getRequires()) {
+                  if( req.getInterface() == intrfc ) {
+                     Map<String, Set<ProcessType>> m = processes.get( intrfc );
+                     if( m == null ) {
+                        processes.put( intrfc, m = new HashMap<>());
+                     }
+                     final String instanceName = req.getToInstance();
+                     Set<ProcessType> p = m.get( instanceName );
+                     if( p == null ) {
+                        m.put( instanceName, p = new HashSet<>());
+                     }
+                     p.add( process );
+                  }
+               }
+            }
+         }
+      }
+      return processes;
    }
 }

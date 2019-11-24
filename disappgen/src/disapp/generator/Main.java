@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 
 import disapp.generator.model.ComponentType;
+import disapp.generator.model.DeploymentType;
 import disapp.generator.model.ImplementationType;
+import disapp.generator.model.ProcessType;
 
 public class Main {
 
@@ -26,6 +28,10 @@ public class Main {
             case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
+      }
+      final DeploymentType dep = _model.getDeployment( deployment );
+      for( final ProcessType p : dep.getProcess()) {
+         java.generateFactory( p );
       }
       c  .generateTypesMakefileSourcesList();
       cpp.generateTypesMakefileSourcesList();

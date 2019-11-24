@@ -5,6 +5,9 @@ import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import dab.ComponentFactory_ihm1;
+import dab.ComponentFactory_ihm2;
+import dab.Distributeur;
 import dab.DistributeurComponent;
 import dab.IIHM;
 import dab.IUniteDeTraitementData;
@@ -21,7 +24,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-public class Controller extends Thread implements IIHM, IUniteDeTraitementData, IController {
+public class Controller implements IIHM, IUniteDeTraitementData, IController {
 
    private Distributeur _component;
    private Etat         _etat   = Etat.MAINTENANCE;
@@ -154,7 +157,7 @@ public class Controller extends Thread implements IIHM, IUniteDeTraitementData, 
          final Preferences prefs = Preferences.userNodeForPackage( getClass());
          prefs.putDouble( instanceName + "-x", stage.getX());
          prefs.putDouble( instanceName + "-y", stage.getY());
-         _component.uniteDeTraitement().shutdown();
+         _component.getUniteDeTraitement().shutdown();
       }
       catch( final IOException e ){
          e.printStackTrace();
@@ -169,9 +172,12 @@ public class Controller extends Thread implements IIHM, IUniteDeTraitementData, 
          stage.setY( prefs.getDouble( instanceName + "-y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage, instanceName ));
-      _component = new Distributeur( instanceName, this );
-      setDaemon( true );
-      start();
+      switch( instanceName ) {
+      case "ihm1": _component = new ComponentFactory_ihm1().getIhm1(); break;
+      case "ihm2": _component = new ComponentFactory_ihm2().getIhm2(); break;
+      default: throw new IllegalStateException( instanceName + " isn't a valid process name");
+      }
+      _component.setController( this );
    }
 
    @FXML
@@ -185,7 +191,7 @@ public class Controller extends Thread implements IIHM, IUniteDeTraitementData, 
          switch( text.strip()) {
          case "Annuler":
             _saisie = "";
-            _component.uniteDeTraitement().annulationDemandeeParLeClient();
+            _component.getUniteDeTraitement().annulationDemandeeParLeClient();
             break;
          case "Effacer":
             if( _saisie.length() > 0 ) {
@@ -198,11 +204,11 @@ public class Controller extends Thread implements IIHM, IUniteDeTraitementData, 
                ( _etat == Etat.SAISIE_CODE_2 )||
                ( _etat == Etat.SAISIE_CODE_3 );
             if( saisieCode ) {
-               _component.uniteDeTraitement().codeSaisi( _saisie );
+               _component.getUniteDeTraitement().codeSaisi( _saisie );
             }
             else if( _etat == Etat.SAISIE_MONTANT ) {
                _dernierMontantSaisi = Double.parseDouble( _saisie );
-               _component.uniteDeTraitement().montantSaisi( _dernierMontantSaisi );
+               _component.getUniteDeTraitement().montantSaisi( _dernierMontantSaisi );
             }
             _saisie = "";
             break;
@@ -213,33 +219,33 @@ public class Controller extends Thread implements IIHM, IUniteDeTraitementData, 
 
    @FXML
    private void carteInseree() throws IOException {
-      _component.uniteDeTraitement().carteInseree( _carteID.getText());
+      _component.getUniteDeTraitement().carteInseree( _carteID.getText());
    }
 
    @FXML
    private void maintenance() throws IOException {
-      _component.uniteDeTraitement().maintenance( _maintenance.isSelected());
+      _component.getUniteDeTraitement().maintenance( _maintenance.isSelected());
    }
 
    @FXML
    private void rechargerLaCaisse() throws IOException {
       final double montant = Double.parseDouble( _ajouterALaCaisse.getText());
-      _component.uniteDeTraitement().rechargerLaCaisse( montant );
+      _component.getUniteDeTraitement().rechargerLaCaisse( montant );
    }
 
    @FXML
    private void prendreLaCarte() throws IOException {
-      _component.uniteDeTraitement().carteRetiree();
+      _component.getUniteDeTraitement().carteRetiree();
    }
 
    @FXML
    private void prendreLesBillets() throws IOException {
-      _component.uniteDeTraitement().billetsRetires();
+      _component.getUniteDeTraitement().billetsRetires();
    }
 
    @FXML
    private void anomalie() throws IOException {
-      _component.uniteDeTraitement().anomalie( _anomalie.isSelected());
+      _component.getUniteDeTraitement().anomalie( _anomalie.isSelected());
    }
 
    @FXML

@@ -140,28 +140,20 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final List<InstanceType>                 instances         = _model.getInstancesOf        ( _deployment, component );
-      final Map<String, List<RequiresType>>    requires          = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>          dataWriter        = _model.getDataWriterOf       ( _deployment, component );
-      final Map<String, InstanceType>          instancesByName   = _model.getInstancesByName    ( _deployment );
-      final Set<String>                        actions           = _model.getAutomatonActions( component );
-      final Map<InterfaceType, List<DataType>> offData           = _model.getOfferedDataOf   ( component );
-      final Map<InterfaceType, List<DataType>> reqData           = _model.getRequiredDataOf  ( component );
-      final Map<InstanceType, ProcessType>     processByInstance = _model.getProcessByInstance();
-      final Set<String>                        responses         = Model.getReponses( component );
-      final ST                                 tmpl              = _group.getInstanceOf( "/componentImplementation" );
-      tmpl.add( "typesPackage"   , _moduleNameTypes );
-      tmpl.add( "package"        , _moduleName );
-      tmpl.add( "component"      , component );
-      tmpl.add( "requires"       , requires );
-      tmpl.add( "dataWriter"     , dataWriter );
-      tmpl.add( "instancesByName", instancesByName );
-      tmpl.add( "instances"      , instances );
-      tmpl.add( "actions"        , actions );
-      tmpl.add( "data"           , offData );
-      tmpl.add( "reqData"        , reqData );
-      tmpl.add( "processes"      , processByInstance );
-      tmpl.add( "responses"       , responses );
+      final Map<String, List<RequiresType>>    requires  = _model.getRequiredInstancesOf( _deployment, component );
+      final Set<String>                        actions   = _model.getAutomatonActions( component );
+      final Map<InterfaceType, List<DataType>> offData   = _model.getOfferedDataOf   ( component );
+      final Map<InterfaceType, List<DataType>> reqData   = _model.getRequiredDataOf  ( component );
+      final Set<String>                        responses = Model.getReponses( component );
+      final ST                                 tmpl      = _group.getInstanceOf( "/componentImplementation" );
+      tmpl.add( "typesPackage", _moduleNameTypes );
+      tmpl.add( "package"     , _moduleName );
+      tmpl.add( "component"   , component );
+      tmpl.add( "requires"    , requires );
+      tmpl.add( "actions"     , actions );
+      tmpl.add( "data"        , offData );
+      tmpl.add( "reqData"     , reqData );
+      tmpl.add( "responses"   , responses );
       write( component.getName() + "Component.java", tmpl );
    }
 
@@ -237,5 +229,37 @@ public class JavaGenerator extends BaseGenerator {
       generateDataWriter              ( component );
       generateDataReader              ( component );
       generateAutomaton               ( component );
+   }
+
+   void generateFactory( ProcessType process ) throws IOException {
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType component = (ComponentType)instance.getComponent();
+         for( final ImplementationType implementation : component.getImplementation()) {
+            if( implementation.getLanguage().equals( "Java" )) {
+               _genDir     = _deployment + '/' + implementation.getSrcDir();
+               _moduleName = implementation.getModuleName();
+               final ST tmplIDispatcher = _group.getInstanceOf( "/IDispatcher" );
+               tmplIDispatcher.add( "package", _moduleName );
+               write( "IDispatcher.java", tmplIDispatcher );
+               final Map<InstanceType, ProcessType>       processes       = _model.getProcessByInstance();
+               final Map<InterfaceType, List<DataType>>   offData         = _model.getOfferedDataOf ( component );
+               final Map<InterfaceType, List<DataType>>   reqData         = _model.getRequiredDataOf( component );
+               final Map<String, InstanceType>            instancesByName = _model.getInstancesByName( _deployment );
+               final Map<InterfaceType, Map<String, Set<ProcessType>>> dataConsumer =
+                  _model.getDataConsumer( _deployment, component );
+               final ST tmpl = _group.getInstanceOf( "/componentFactory" );
+               tmpl.add( "typesPackage"   , _moduleNameTypes );
+               tmpl.add( "package"        , _moduleName );
+               tmpl.add( "process"        , process );
+               tmpl.add( "processes"      , processes );
+               tmpl.add( "offData"        , offData );
+               tmpl.add( "reqData"        , reqData );
+               tmpl.add( "instancesByName", instancesByName );
+               tmpl.add( "dataConsumer"   , dataConsumer );
+               write( "ComponentFactory_" + process.getName() + ".java", tmpl );
+               return;
+            }
+         }
+      }
    }
 }

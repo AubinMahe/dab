@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_z3L0QA4-EeqZ-6m6k29ySA" name="dab">
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_z_W40A4-EeqZ-6m6k29ySA">
+    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+  </packageImport>
+  <packagedElement xmi:type="uml:Interaction" xmi:id="_z5F4wA4-EeqZ-6m6k29ySA" name="Interaction1"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_7urU8A4-EeqZ-6m6k29ySA" name="Dispatcher">
+    <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="_NK-9sA6VEeqlldEIgw6K-A" client="_7urU8A4-EeqZ-6m6k29ySA" supplier="_CAdmAA6VEeqlldEIgw6K-A" contract="_CAdmAA6VEeqlldEIgw6K-A"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_9Ubx0A4-EeqZ-6m6k29ySA" name="DistributeurComponent">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_xC0ZwQ4_EeqZ-6m6k29ySA" name="unitedetraitement" type="_ZtG3kA4_EeqZ-6m6k29ySA" association="_xCzLoA4_EeqZ-6m6k29ySA"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_fQ9sQA5AEeqZ-6m6k29ySA" name="etadudab" type="_c0hfAA5AEeqZ-6m6k29ySA" association="_fQ73EA5AEeqZ-6m6k29ySA"/>
+    <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="_SnrtAA4_EeqZ-6m6k29ySA" client="_9Ubx0A4-EeqZ-6m6k29ySA" supplier="_Lq2dwA4_EeqZ-6m6k29ySA" contract="_Lq2dwA4_EeqZ-6m6k29ySA"/>
+    <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="_UIsMwA4_EeqZ-6m6k29ySA" client="_9Ubx0A4-EeqZ-6m6k29ySA" supplier="_AC7_cA4_EeqZ-6m6k29ySA" contract="_AC7_cA4_EeqZ-6m6k29ySA"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Interface" xmi:id="_AC7_cA4_EeqZ-6m6k29ySA" name="IIHM"/>
+  <packagedElement xmi:type="uml:Interface" xmi:id="_Lq2dwA4_EeqZ-6m6k29ySA" name="IUniteDeTraitementData"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_ZtG3kA4_EeqZ-6m6k29ySA" name="UniteDeTraitement">
+    <interfaceRealization xmi:type="uml:InterfaceRealization" xmi:id="_kFUBgA4_EeqZ-6m6k29ySA" client="_ZtG3kA4_EeqZ-6m6k29ySA" supplier="_bA3lgA4_EeqZ-6m6k29ySA" contract="_bA3lgA4_EeqZ-6m6k29ySA"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Interface" xmi:id="_bA3lgA4_EeqZ-6m6k29ySA" name="IUniteDeTraitement"/>
+  <packagedElement xmi:type="uml:Association" xmi:id="_xCzLoA4_EeqZ-6m6k29ySA" visibility="private" memberEnd="_xC0ZwQ4_EeqZ-6m6k29ySA _xC1n4A4_EeqZ-6m6k29ySA">
+    <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_xCzysA4_EeqZ-6m6k29ySA" source="org.eclipse.papyrus">
+      <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_xC0ZwA4_EeqZ-6m6k29ySA" key="nature" value="UML_Nature"/>
+    </eAnnotations>
+    <ownedEnd xmi:type="uml:Property" xmi:id="_xC1n4A4_EeqZ-6m6k29ySA" type="_9Ubx0A4-EeqZ-6m6k29ySA" association="_xCzLoA4_EeqZ-6m6k29ySA"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_3IpIgA4_EeqZ-6m6k29ySA" name="Distributeur">
+    <generalization xmi:type="uml:Generalization" xmi:id="_5oHboA4_EeqZ-6m6k29ySA" general="_9Ubx0A4-EeqZ-6m6k29ySA"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_c0hfAA5AEeqZ-6m6k29ySA" name="EtaDuDab"/>
+  <packagedElement xmi:type="uml:Association" xmi:id="_fQ73EA5AEeqZ-6m6k29ySA" visibility="private" memberEnd="_fQ9sQA5AEeqZ-6m6k29ySA _fQ-TUQ5AEeqZ-6m6k29ySA">
+    <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_fQ9FMA5AEeqZ-6m6k29ySA" source="org.eclipse.papyrus">
+      <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_fQ9FMQ5AEeqZ-6m6k29ySA" key="nature" value="UML_Nature"/>
+    </eAnnotations>
+    <ownedEnd xmi:type="uml:Property" xmi:id="_fQ-TUQ5AEeqZ-6m6k29ySA" type="_9Ubx0A4-EeqZ-6m6k29ySA" association="_fQ73EA5AEeqZ-6m6k29ySA"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_id1NEA6REeqlldEIgw6K-A" name="ComponentFactory">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_B2zwMA6UEeqlldEIgw6K-A" name="address" visibility="private" aggregation="composite">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/EcorePrimitiveTypes.library.uml#EString"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_PGA8cA6UEeqlldEIgw6K-A" name="port" visibility="private">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_4PNHUg6UEeqlldEIgw6K-A" name="dispatcher" type="_CAdmAA6VEeqlldEIgw6K-A" association="_4PMgQA6UEeqlldEIgw6K-A">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_4PSm4A6UEeqlldEIgw6K-A" value="*"/>
+    </ownedAttribute>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="_4PMgQA6UEeqlldEIgw6K-A" memberEnd="_4PNHUg6UEeqlldEIgw6K-A _4PWRQA6UEeqlldEIgw6K-A">
+    <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_4PNHUA6UEeqlldEIgw6K-A" source="org.eclipse.papyrus">
+      <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_4PNHUQ6UEeqlldEIgw6K-A" key="nature" value="UML_Nature"/>
+    </eAnnotations>
+    <ownedEnd xmi:type="uml:Property" xmi:id="_4PWRQA6UEeqlldEIgw6K-A" type="_id1NEA6REeqlldEIgw6K-A" association="_4PMgQA6UEeqlldEIgw6K-A"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Interface" xmi:id="_CAdmAA6VEeqlldEIgw6K-A" name="IDispatcher"/>
+  <packagedElement xmi:type="uml:Dependency" xmi:id="_sw5bgA6VEeqlldEIgw6K-A" name="instantiates" client="_id1NEA6REeqlldEIgw6K-A" supplier="_7urU8A4-EeqZ-6m6k29ySA"/>
+  <packagedElement xmi:type="uml:Dependency" xmi:id="_BJh1oA6jEeqlldEIgw6K-A" name="instantiates" client="_id1NEA6REeqlldEIgw6K-A" supplier="_3IpIgA4_EeqZ-6m6k29ySA"/>
+  <packagedElement xmi:type="uml:Dependency" xmi:id="_EZnJgA6nEeqlldEIgw6K-A" name="instantiates" client="_id1NEA6REeqlldEIgw6K-A" supplier="_ZtG3kA4_EeqZ-6m6k29ySA"/>
+  <packagedElement xmi:type="uml:Dependency" xmi:id="_JSGicA6nEeqlldEIgw6K-A" name="instantiates" client="_id1NEA6REeqlldEIgw6K-A" supplier="_c0hfAA5AEeqZ-6m6k29ySA"/>
+</uml:Model>

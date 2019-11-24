@@ -1,10 +1,9 @@
-package dab;
+package udt;
 
 import java.io.IOException;
 
 import dabtypes.Etat;
 import dabtypes.Evenement;
-import udt.ControleurComponent;
 
 public final class Controleur extends ControleurComponent {
 
@@ -14,10 +13,10 @@ public final class Controleur extends ControleurComponent {
    private final Compte _compte = new Compte();
    private /* */ double _montantDeLatransactionEnCours = 0.0;
 
-   public Controleur( String name ) throws IOException {
-      super( name );
-      _uniteDeTraitement._etatDuDab.etat        = _automaton.getCurrentState();
-      _uniteDeTraitement._etatDuDab.soldeCaisse = 0.0;
+   @Override
+   protected void init() {
+      _uniteDeTraitementData._etatDuDab.etat        = _automaton.getCurrentState();
+      _uniteDeTraitementData._etatDuDab.soldeCaisse = 0.0;
    }
 
    public Etat getEtat() {
@@ -25,7 +24,7 @@ public final class Controleur extends ControleurComponent {
    }
 
    public double getSoldeCaisse() {
-      return _uniteDeTraitement._etatDuDab.soldeCaisse;
+      return _uniteDeTraitementData._etatDuDab.soldeCaisse;
    }
 
    @Override
@@ -40,8 +39,8 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void rechargerLaCaisse( double montant ) throws IOException {
-      _uniteDeTraitement._etatDuDab.soldeCaisse += montant;              // 'montant' peut être négatif
-      if( _uniteDeTraitement._etatDuDab.soldeCaisse < RETRAIT_MAX ) {    // _valeurCaisse peut donc passer en dessous du seuil
+      _uniteDeTraitementData._etatDuDab.soldeCaisse += montant;              // 'montant' peut être négatif
+      if( _uniteDeTraitementData._etatDuDab.soldeCaisse < RETRAIT_MAX ) {    // _valeurCaisse peut donc passer en dessous du seuil
          _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
       }
    }
@@ -117,7 +116,7 @@ public final class Controleur extends ControleurComponent {
    @Override
    public void montantSaisi( double montant ) throws IOException {
       _iHM.ejecterLaCarte();
-      if( montant > _uniteDeTraitement._etatDuDab.soldeCaisse ) {
+      if( montant > _uniteDeTraitementData._etatDuDab.soldeCaisse ) {
          _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
       }
       else if( montant > _compte.getSolde()) {
@@ -133,7 +132,7 @@ public final class Controleur extends ControleurComponent {
    public void carteRetiree() throws IOException {
       _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
       _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
-      _uniteDeTraitement._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
+      _uniteDeTraitementData._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
       _montantDeLatransactionEnCours = 0.0;
       _automaton.process( Evenement.CARTE_RETIREE );
    }
@@ -155,13 +154,13 @@ public final class Controleur extends ControleurComponent {
       _iHM.shutdown();
       _siteCentral.shutdown();
       _automaton.process( Evenement.TERMINATE );
-      terminate();
+      System.exit( 0 );
    }
 
    @Override
-   protected void afterDispatch() throws IOException {
-      _uniteDeTraitement._etatDuDab.etat = _automaton.getCurrentState();
-      _uniteDeTraitement.publishEtatDuDab();
+   protected void afterDispatch( boolean dispatched ) throws IOException {
+      _uniteDeTraitementData._etatDuDab.etat = _automaton.getCurrentState();
+      _uniteDeTraitementData.publishEtatDuDab();
    }
 
    private void confisquerLaCarte() {

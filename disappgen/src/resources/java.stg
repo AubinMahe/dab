@@ -40,7 +40,7 @@ args( fields ) ::= <<
 
 
 
-data( visibility, field ) ::= <<
+dataGen( visibility, field ) ::= <<
 <     if( field.isBoolean )><visibility> boolean <field.name>;
 < elseif( field.isByte    )><visibility> byte <field.name>;
 < elseif( field.isShort   )><visibility> short <field.name>;
@@ -258,20 +258,20 @@ endif>) throws IOException;< endif>
 
 
 byteBufferGet( field ) ::= <<
-<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( _in );
-< elseif( field.isByte    )>final byte <field.name> = _in.get();
-< elseif( field.isShort   )>final short <field.name> = _in.getShort();
-< elseif( field.isUshort  )>final ushort <field.name> = _in.getUShort();
-< elseif( field.isInt     )>final int <field.name> = _in.getInt();
-< elseif( field.isUint    )>final uint <field.name> = _in.getUInt();
-< elseif( field.isLong    )>final long <field.name> = _in.getLong();
-< elseif( field.isUlong   )>final ulong <field.name> = _in.getULong();
-< elseif( field.isFloat   )>final float <field.name> = _in.getFloat();
-< elseif( field.isDouble  )>final double <field.name> = _in.getDouble();
-< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( _in );
-< elseif( field.isEnum    )>final <typesPackage>.<field.userType.name> <field.name> = <typesPackage>.<field.userType.name>.values()[_in.get()];
+<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( in );
+< elseif( field.isByte    )>final byte <field.name> = in.get();
+< elseif( field.isShort   )>final short <field.name> = in.getShort();
+< elseif( field.isUshort  )>final ushort <field.name> = in.getUShort();
+< elseif( field.isInt     )>final int <field.name> = in.getInt();
+< elseif( field.isUint    )>final uint <field.name> = in.getUInt();
+< elseif( field.isLong    )>final long <field.name> = in.getLong();
+< elseif( field.isUlong   )>final ulong <field.name> = in.getULong();
+< elseif( field.isFloat   )>final float <field.name> = in.getFloat();
+< elseif( field.isDouble  )>final double <field.name> = in.getDouble();
+< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( in );
+< elseif( field.isEnum    )>final <typesPackage>.<field.userType.name> <field.name> = <typesPackage>.<field.userType.name>.values()[in.get()];
 < elseif( field.isStruct  )>final <typesPackage>.<field.userType.name> <field.name> = new <typesPackage>.<field.userType.name>();
-<field.name>.get( _in );
+<field.name>.get( in );
 < endif>
 >>
 
@@ -304,7 +304,7 @@ private static enum <ifaceName>Event {
 private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <
                                               eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
-private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event ) throws IOException {
+private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event, ByteBuffer in ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.type )>< else>
@@ -317,7 +317,7 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
       if( facet.response )
 >      final <typesPackage>.<ifaceName><facet.name; format="cap">Response response = new <
               typesPackage>.<ifaceName><facet.name; format="cap">Response();
-      _listener.<facet.name>( <args( facet.arguments.field )>, response );
+      _component.<facet.name>( <args( facet.arguments.field )>, response );
       _out.clear();
       _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
       _out.put( EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> );
@@ -326,7 +326,7 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
       _channel.send( _out, from );
       System.err.printf( "SiteCentral.getInformations|response sent to %s\n", from );
       < else
->      _listener.<facet.name>(<args( facet.field )>);
+>      _component.<facet.name>(<args( facet.field )>);
       < endif>
       return true;\}
 < endif>}>   default:
@@ -362,13 +362,13 @@ private static enum <ifaceName>Response {
    }
 }
 
-private boolean dispatch( <ifaceName>Response event ) throws IOException {
+private boolean dispatch( <ifaceName>Response event, ByteBuffer in ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
 <reqRequests.(ifaceName):{req|
    case <req.name; format="ID">:{
       <req.response.field:{field|<byteBufferGet( field )>}
->      _listener.<req.name>(<args( req.response.field )>);
+>      _component.<req.name>(<args( req.response.field )>);
       return true;\}
 }>   default:
       System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
@@ -403,13 +403,13 @@ private static enum <iface.name>Data {
    }
 }
 
-private boolean dispatch( <iface.name>Data event ) throws IOException {
+private boolean dispatch( <iface.name>Data event, ByteBuffer in ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
 <data.(iface):{dataType|
    case <dataType.name; format="ID">:{
-      _listener._<dataType.name; format="argument">.get( _in );
-      _listener.<dataType.name; format="argument">Published();
+      _component.get<dataType.name; format="cap">().get( in );
+      _component.<dataType.name; format="argument">Published();
       return true;\}
 }>   default:
       System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
@@ -434,7 +434,7 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-public class <component.name>Dispatcher {
+public class <component.name>Dispatcher implements IDispatcher {
 
    < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
 < endif>
@@ -481,7 +481,7 @@ public class <component.name>Dispatcher {
       switch( event ) {
 <component.timeout:{to|
       case <to.name; format="ID">:{
-         _listener.<to.name; format="argument">Elapsed();
+         _component.<to.name; format="argument">Elapsed();
          return true;\}
 }>      default:
          System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
@@ -490,17 +490,16 @@ public class <component.name>Dispatcher {
    }
 
 < endif>
-   private final ByteBuffer      _in  = ByteBuffer.allocate( <rawSize> );
+   private final DatagramChannel _channel;
+   private final <component.name>Component _component;
 < if( offRequests )
 >   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
-< endif>   private final DatagramChannel _channel;
-<data:{iface|<data.(iface):{field|
-   <data("private", field)>}>}
->   private final <component.name>Component _listener;
+< endif>
 
-   public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component listener ) {
-      _channel  = channel;
-      _listener = listener;
+
+   public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component component ) {
+      _channel   = channel;
+      _component = component;
    }
 
 < if( component.timeout )>   void loopback( LoopbackEvent event ) throws IOException {
@@ -511,42 +510,36 @@ public class <component.name>Dispatcher {
       _channel.send( out, _channel.getLocalAddress());
    }
 
-< endif>   public boolean hasDispatched() throws IOException {
-      _in.clear();
-      final SocketAddress from = _channel.receive( _in );
-      _in.flip();
-      final byte intrfc = _in.get();
-      final byte event  = _in.get();
-      System.err.printf( "%s.run|intrfc = %d, event = %d, %d byte(s) remaining in message\n",
-         getClass().getName(), intrfc, event, _in.remaining());
+< endif>   @Override
+   public void beforeDispatch() {}
+   
+   @Override
+   public boolean hasDispatched( byte intrfc, byte event, SocketAddress from, ByteBuffer in ) throws IOException {
       switch( intrfc ) {
 < if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
 < endif><offers.keys:{ifaceName|
       case INTRFC_<ifaceName; format="ID">: return dispatch( <
-         if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ));
+         if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ), in );
 }><reqRequests:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ));
+      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ), in );
 }><data:{iface|
-      case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ));
+      case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ), in );
 }>      }
       return false;
    }
+
+   @Override
+   public void afterDispatch( boolean dispatched ) {}
 }
 >>
 
 
 
-componentImplementation(
-    typesPackage, package, component, requires, dataWriter, instancesByName,
-    instances, actions, data, reqData, processes, dataConsumer, responses
-) ::= <<
+componentImplementation( typesPackage, package, component, requires, actions, data, reqData, responses ) ::= <<
 package <package>;
 //componentImplementation
+
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
-import java.nio.channels.DatagramChannel;
 < if( component.timeout )>
 import java.time.Duration;
 
@@ -554,129 +547,81 @@ import util.Timeout;
 < endif>
 
 
-public abstract class <component.name>Component implements Runnable<
-component.offers:          {o|, I<o.interface.name>}><
-responses:{ifaceName|, I<ifaceName>}><
+public abstract class <component.name>Component implements <
+component.offers:{o|I<o.interface.name>}><
+responses:{ifaceName|< if(component.offers)>, < endif>I<ifaceName>}><
 reqData:{iface|, I<iface.name>Data}> {
 
 <component.timeout:{to|
    private static final Duration <to.name; format="ID">_DURATION = Duration.of<to.unit.toJava; format="cap">( <to.duration> );
 }>
-<data:{iface|
-   protected final <iface.name>Data _<iface.name; format="argument">;
-}><first(requires):{req|
-   <requires.(req):{rt|protected final <rt.interface.name> _<rt.interface.name; format="argument">;
-}>}><
+< if( component.timeout )>
+   private <component.name>Dispatcher _dispatcher;
+
+< endif>
+<first(requires):{req|
+   <requires.(req):{rt|protected I<rt.interface.name> _<rt.interface.name; format="argument">;
+}>}><data:{iface|
+   protected <iface.name>Data _<iface.name; format="argument">Data;
+}><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
-< endif>   protected final <component.name>Dispatcher _dispatcher;
-<reqData:{iface|<reqData.(iface):{data|
-   protected final <typesPackage>.<data.name; format="cap"> _<data.name; format="argument"> = new <
-      typesPackage>.<data.name; format="cap">();
+< endif><reqData:{iface|<reqData.(iface):{data|
+   protected <typesPackage>.<data.name; format="cap"> _<data.name; format="argument">;
 }>}><component.timeout:{to|
    protected final Timeout _<to.name> = new Timeout( <to.name; format="ID">_DURATION, () -> loopback( <
       component.name>Dispatcher.LoopbackEvent.<to.name; format="ID"> ));
 }>
-   private DatagramChannel _channel;
-   private boolean         _running;
-
-   public <component.name>Component( String name ) throws IOException {
-      _running = false;
-< if( requires )>
-      InetSocketAddress <
-first(requires):{req|<
-first( requires.(req) ):{rt|<rt.interface.name; format="argument">}><
-rest ( requires.(req) ):{rt|, <rt.interface.name; format="argument">}>}><
-data:{iface|, <iface.name; format="argument">}>;
-< endif>
-< first(instances):{instance|
-      if( name.equals( "<instance.name>" )) {
-         _channel = DatagramChannel
-            .open     ( StandardProtocolFamily.INET )
-            .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-            .bind     ( new InetSocketAddress( "<
-               processes.(instance).address>", <
-               processes.(instance).port> ));
-         <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(instancesByName.(req.toInstance)).address>", <
-            processes.(instancesByName.(req.toInstance)).port> );
-}>         <data:{iface|<iface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
-            processes.(dataWriter.([instance.name, "/", iface.name])).port> );
-}>}
->      < rest(instances):{instance|\}
-      else if( name.equals( "<instance.name>" )) {
-         _channel = DatagramChannel
-            .open     ( StandardProtocolFamily.INET )
-            .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-            .bind     ( new InetSocketAddress( "<
-               processes.(instance).address>", <
-               processes.(instance).port> ));
-         <requires.(instance.name):{req|<req.interface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(instancesByName.(req.toInstance)).address>", <
-            processes.(instancesByName.(req.toInstance)).port> );
-}>         <data:{iface|<iface.name; format="argument"> = new InetSocketAddress( "<
-            processes.(dataWriter.([instance.name, "/", iface.name])).address>", <
-            processes.(dataWriter.([instance.name, "/", iface.name])).port> );
-}>}>      }
-      else {
-         throw new IllegalArgumentException( "'" + name + "' isn't a valid name defined in XML application file!" );
-      }
-<data:{iface|
-      _<iface.name; format="argument"> = new <iface.name>Data( _channel, <iface.name; format="argument"> );
-}>< first(requires):{req|<requires.(req):{rt|
-      _<rt.interface.name; format="argument"> = new <
-        rt.interface.name>( _channel, <rt.interface.name; format="argument"> );
-}>}>      _dispatcher = new <component.name>Dispatcher( _channel, this );
-   }<
-if( component.afterDispatchNeeded )>
-
-   protected abstract void afterDispatch() throws IOException;< endif>
-
    <component.timeout:{to|protected abstract void <to.name>Elapsed() throws IOException;
 }>
    <actions:{action|protected abstract void <action>();
 }>
-
-<first(requires):{req|<requires.(req):{rt|
-   public <rt.interface.name> get<rt.interface.name>() {
-      return _<rt.interface.name; format="argument">;
-   \}
-}>}>
-<data:{iface|
-   public <iface.name>Data get<iface.name>() {
-      return _<iface.name; format="argument">;
-   \}
-}>
-   protected void terminate() {
-      _running = false;
-   }
+   protected void init() {}
 
 < if( component.timeout )>
-   protected void loopback( <component.name>Dispatcher.LoopbackEvent event ) {
+   private void loopback( <component.name>Dispatcher.LoopbackEvent event ) {
       try {
          _dispatcher.loopback( event );
       }
-      catch( final IOException t ) {
+      catch( final Throwable t ) {
          t.printStackTrace();
       }
    }
-< endif>
-   @Override
-   public final void run() {
-      _running = true;
-      while( _running ) {
-         try {
-            if( _dispatcher.hasDispatched()) {< if( component.afterDispatchNeeded )>
-               afterDispatch();
-< endif>
-            }
-         }
-         catch( final IOException e ) {
-            e.printStackTrace();
-            terminate();
-         }
-      }
+
+   void set( <component.name>Dispatcher dispatcher ) {
+      _dispatcher = dispatcher;
    }
+
+< endif>
+< first( requires ):{req|<requires.(req):{rt|
+
+   public void connect( I<rt.interface.name> <rt.interface.name; format="argument"> ) {
+      _<rt.interface.name; format="argument"> = <rt.interface.name; format="argument">;
+   \}
+
+   public I<rt.interface.name> get<rt.interface.name>() {
+      return _<rt.interface.name; format="argument">;
+   \}
+}>}><reqData:{iface|<reqData.(iface):{data|
+
+   public void connect( <typesPackage>.<data.name; format="cap"> <data.name; format="argument"> ) {
+      _<data.name; format="argument"> = <data.name; format="argument">;
+   \}
+
+   public <typesPackage>.<data.name; format="cap"> get<data.name; format="cap">() {
+      return _<data.name; format="argument">;
+   \}}>}>
+<data:{iface|
+   public void connect( <iface.name>Data data ) {
+      _<iface.name; format="argument">Data = data;
+   \}
+
+   public <iface.name>Data get<iface.name; format="cap">Data() {
+      return _<iface.name; format="argument">Data;
+   \}}>
+
+   protected void beforeDispatch() throws IOException {}
+   
+   protected void afterDispatch( boolean dispatched ) throws IOException {}
 }
 >>
 
@@ -767,5 +712,113 @@ public class Automaton extends util.Automaton\<<component.automaton.stateEnum.na
          component.automaton.stateEnum.name>.<elt.value.state>, component::<
          elt.value.action> );
 }>   }
+}
+>>
+
+
+
+IDispatcher( package ) ::= <<
+package <package>;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+
+public interface IDispatcher {
+
+   void beforeDispatch();
+
+   boolean hasDispatched( byte intrfc, byte event, SocketAddress from, ByteBuffer in ) throws IOException;
+
+   void afterDispatch( boolean dispatched );
+}
+>>
+
+
+
+componentFactory( typesPackage, package, process, processes, offData, reqData, instancesByName, dataConsumer ) ::= <<
+package <package>;
+// ComponentFactory
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.util.HashSet;
+import java.util.Set;
+
+public final class ComponentFactory_<process.name> implements Runnable {
+
+   private final Set\<IDispatcher> _dispatchers = new HashSet\<>();
+   private final DatagramChannel  _channel;
+
+<process.instance:{instance|
+   private final <instance.component.name> _<instance.name; format="argument"> = new <instance.component.name>();
+}>
+   public ComponentFactory_<process.name>() throws IOException {
+      _channel = DatagramChannel
+         .open     ( StandardProtocolFamily.INET )
+         .setOption( StandardSocketOptions.SO_REUSEADDR, true )
+         .bind     ( new InetSocketAddress( "<process.address>", <process.port> ));
+<process.instance:{instance|
+      connect<instance.name; format="cap">();
+}><process.instance:{instance|
+      _<instance.name; format="argument">.init();
+}>      final Thread networkThread = new Thread( this );
+      networkThread.setDaemon( true );
+      networkThread.start();
+   }
+
+<process.instance:{instance|
+   private void connect<instance.name; format="cap">() {
+<reqData:{iface|<reqData.(iface):{data|
+      final <typesPackage>.<data.type.name> <data.name; format="argument"> = new <typesPackage>.<data.type.name>();
+      _<instance.name; format="argument">.connect( <data.name; format="argument"> );
+}>}><offData:{iface|
+<dataConsumer.(iface).(instance.name):{process|
+      _<instance.name; format="argument">.connect( new <iface.name>Data( _channel, new InetSocketAddress( "<process.address>", <process.port> )));
+}>}><
+process.instance:{instance|<instance.requires:{requires|
+      _<instance.name; format="argument">.connect( new <requires.interface.name>( _channel, new InetSocketAddress( "<
+         processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port> )));
+}>}>      _dispatchers.add( new <instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> ));
+   \}
+
+   public <instance.component.name> get<instance.name; format="cap">() {
+      return _<instance.name; format="argument">;
+   \}
+
+}>   @Override
+   public final void run() {
+      final ByteBuffer in = ByteBuffer.allocate( 11 );
+      for(;;) {
+         try {
+            in.clear();
+            final SocketAddress from = _channel.receive( in );
+            in.flip();
+            final byte intrfc = in.get();
+            final byte event  = in.get();
+            for( final IDispatcher dispatcher : _dispatchers ) {
+               dispatcher.beforeDispatch();
+            }
+            boolean dispatched = false;
+            for( final IDispatcher dispatcher : _dispatchers ) {
+               if( dispatcher.hasDispatched( intrfc, event, from, in )) {
+                  dispatched = true;
+                  break;
+               }
+            }
+            for( final IDispatcher dispatcher : _dispatchers ) {
+               dispatcher.afterDispatch( dispatched );
+            }
+         }
+         catch( final IOException e ) {
+            e.printStackTrace();
+            System.exit( 1 );
+         }
+      }
+   }
 }
 >>

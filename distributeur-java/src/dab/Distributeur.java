@@ -1,25 +1,16 @@
-package dab.ui;
+package dab;
 
 import java.io.IOException;
 
-import dab.IUniteDeTraitement;
-import dabtypes.EtatDuDab;
+import dab.ui.Controller;
 import javafx.application.Platform;
 
 public class Distributeur extends dab.DistributeurComponent {
 
-   private final Controller _controller;
+   private Controller _controller;
 
-   public Distributeur( String name, Controller controller ) throws IOException {
-      super( name );
+   public void setController( Controller controller ) {
       _controller = controller;
-      final Thread networkThread = new Thread( this );
-      networkThread.setDaemon( true );
-      networkThread.start();
-   }
-
-   public EtatDuDab getEtatDuDab() {
-      return _etatDuDab;
    }
 
    @Override
@@ -45,10 +36,6 @@ public class Distributeur extends dab.DistributeurComponent {
    @Override
    public void shutdown() throws IOException {
       Platform.runLater( _controller::shutdown );
-   }
-
-   public IUniteDeTraitement uniteDeTraitement() {
-      return _uniteDeTraitement;
    }
 
    @Override

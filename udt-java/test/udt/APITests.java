@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import dab.Controleur;
 import dabtypes.Carte;
 import dabtypes.Compte;
 import dabtypes.Etat;
@@ -36,7 +35,7 @@ class APITests {
       compte.autorise = true;
       compte.solde    = 3_257.23;
 
-      ctrl = new Controleur( "udt1" );
+      ctrl = new ComponentFactory_udt1().getUdt1();
       assertEquals( ctrl.getEtat(), Etat.MAINTENANCE );
       ctrl.rechargerLaCaisse( soldeCaisse );
       ctrl.maintenance( false );

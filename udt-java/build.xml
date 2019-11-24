@@ -34,7 +34,7 @@
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
-         <arg value="dab.Main" />
+         <arg value="udt.Main" />
          <arg value="--name=udt1" />
       </exec> 
    </target>  
@@ -46,7 +46,7 @@
          <arg value="-hold" />
          <arg value="-e" /><arg value="java" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
-         <arg value="dab.Main" />
+         <arg value="udt.Main" />
          <arg value="--name=udt2" />
       </exec>
    </target>

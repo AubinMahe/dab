@@ -6,14 +6,10 @@ import dabtypes.SiteCentralGetInformationsResponse;
 
 public final class Banque extends BanqueComponent {
 
-   private final IRepository _repository;
+   private IRepository _repository;
 
-   public Banque( String name, IRepository repository ) throws IOException {
-      super( name );
+   public void setRepository ( IRepository repository ) {
       _repository = repository;
-      final Thread networkThread = new Thread( this );
-      networkThread.setDaemon( true );
-      networkThread.start();
    }
 
    @Override
