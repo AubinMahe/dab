@@ -21,13 +21,12 @@ import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
-import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
 
 public class CGenerator extends BaseGenerator {
 
-   public CGenerator( Model model, String deployment ) {
-      super( model, deployment, "c.stg", new CRenderer());
+   public CGenerator( Model model ) {
+      super( model, "c.stg", new CRenderer());
    }
 
    private void generateEnumHeader( String name ) throws IOException {
@@ -176,9 +175,9 @@ public class CGenerator extends BaseGenerator {
          }
       }
       final String                             compName        = component.getName();
-      final List<InstanceType>                 instances       = _model.getInstancesOf( _deployment, component );
-      final Map<String, List<RequiresType>>    requires        = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( _deployment );
+      final List<InstanceType>                 instances       = _model.getInstancesOf( "TODO", component );// TODO
+      final List<InterfaceType>                requires        = Model.getRequiredInterfacesBy( component );
+      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( "TODO" );       // TODO
       final Map<String, List<Object>>          reqEvents       = _model.getRequiredEventsOrRequests( component );
       final Map<String, List<RequestType>>     reqRequests     = Model.getRequestMap( reqEvents );
       final Set<String>                        actions         = _model.getAutomatonActions( component );
@@ -202,10 +201,10 @@ public class CGenerator extends BaseGenerator {
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
       final String                             compName          = component.getName();
-      final List<InstanceType>                 instances         = _model.getInstancesOf        ( _deployment, component );
-      final Map<String, List<RequiresType>>    requires          = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>          dataWriter        = _model.getDataWriterOf       ( _deployment, component );
-      final Map<String, InstanceType>          instancesByName   = _model.getInstancesByName    ( _deployment );
+      final List<InstanceType>                 instances         = _model.getInstancesOf( "TODO", component );// TODO
+      final List<InterfaceType>                requires          = Model.getRequiredInterfacesBy( component );
+      final Map<String, InstanceType>          dataWriter        = _model.getDataWriterOf       ( "TODO", component );// TODO
+      final Map<String, InstanceType>          instancesByName   = _model.getInstancesByName    ( "TODO" );// TODO
       final Map<InterfaceType, List<DataType>> offData           = _model.getOfferedDataOf( component );
       final Map<InstanceType, ProcessType>     processByInstance = _model.getProcessByInstance();
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
@@ -268,11 +267,11 @@ public class CGenerator extends BaseGenerator {
    }
 
    void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
-      _genDir     = _deployment + "/" + implementation.getSrcDir();
+      _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       for( final ImplementationType impl : _model.getApplication().getTypes().getImplementation()) {
          if( impl.getLanguage().equals( "C" )) {
-            _genDirTypes     = _deployment + '/' + impl.getSrcDir();
+            _genDirTypes     = impl.getSrcDir();
             _moduleNameTypes = impl.getModuleName();
             break;
          }

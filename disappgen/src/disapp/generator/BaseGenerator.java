@@ -34,7 +34,6 @@ abstract class BaseGenerator {
    protected final SortedSet<File> _generatedFiles = new TreeSet<>();
    protected final SortedSet<File> _generatedTypes = new TreeSet<>();
    protected final Model           _model;
-   protected final String          _deployment;
    protected final STGroup         _group;
    protected final BaseRenderer    _renderer;
    protected /* */ String          _genDir;
@@ -42,9 +41,8 @@ abstract class BaseGenerator {
    protected /* */ String          _genDirTypes;
    protected /* */ String          _moduleNameTypes;
 
-   protected BaseGenerator( Model model, String deployment, String templateName, BaseRenderer renderer ) {
+   protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
       _model       = model;
-      _deployment  = deployment;
       _group       = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
       _renderer    = renderer;
       _group.registerRenderer( String.class, _renderer );
@@ -204,7 +202,8 @@ abstract class BaseGenerator {
    }
 
    protected void write( String filename, ST source ) throws IOException {
-      final File target = new File( _genDir, _moduleName + '/' + filename );
+      final String path = _moduleName.replaceAll( "\\.", "/" ).replaceAll( "::", "/" );
+      final File target = new File( _genDir, path + '/' + filename );
       if( ! _model.isUpToDate( target ) && ! _generatedFiles.contains( target )) {
          target.getParentFile().mkdirs();
          try( final PrintStream ps = new PrintStream( target )) {

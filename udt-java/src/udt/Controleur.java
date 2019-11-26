@@ -14,7 +14,7 @@ public final class Controleur extends ControleurComponent {
    private /* */ double _montantDeLatransactionEnCours = 0.0;
 
    @Override
-   protected void init() {
+   public void init() {
       _uniteDeTraitementData._etatDuDab.etat        = _automaton.getCurrentState();
       _uniteDeTraitementData._etatDuDab.soldeCaisse = 0.0;
    }

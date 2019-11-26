@@ -434,7 +434,7 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-public class <component.name>Dispatcher implements IDispatcher {
+public class <component.name>Dispatcher implements da.IDispatcher {
 
    < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
 < endif>
@@ -511,7 +511,9 @@ public class <component.name>Dispatcher implements IDispatcher {
    }
 
 < endif>   @Override
-   public void beforeDispatch() {}
+   public void beforeDispatch() throws IOException {
+      _component.beforeDispatch();
+   }
    
    @Override
    public boolean hasDispatched( byte intrfc, byte event, SocketAddress from, ByteBuffer in ) throws IOException {
@@ -529,7 +531,9 @@ public class <component.name>Dispatcher implements IDispatcher {
    }
 
    @Override
-   public void afterDispatch( boolean dispatched ) {}
+   public void afterDispatch( boolean dispatched ) throws IOException {
+      _component.afterDispatch( dispatched );
+   }
 }
 >>
 
@@ -559,9 +563,9 @@ reqData:{iface|, I<iface.name>Data}> {
    private <component.name>Dispatcher _dispatcher;
 
 < endif>
-<first(requires):{req|
-   <requires.(req):{rt|protected I<rt.interface.name> _<rt.interface.name; format="argument">;
-}>}><data:{iface|
+<requires:{iface|
+   protected I<iface.name> _<iface.name; format="argument">;
+}><data:{iface|
    protected <iface.name>Data _<iface.name; format="argument">Data;
 }><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
@@ -575,7 +579,7 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 }>
    <actions:{action|protected abstract void <action>();
 }>
-   protected void init() {}
+   public void init() {}
 
 < if( component.timeout )>
    private void loopback( <component.name>Dispatcher.LoopbackEvent event ) {
@@ -592,16 +596,16 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
    }
 
 < endif>
-< first( requires ):{req|<requires.(req):{rt|
+<requires:{iface|
 
-   public void connect( I<rt.interface.name> <rt.interface.name; format="argument"> ) {
-      _<rt.interface.name; format="argument"> = <rt.interface.name; format="argument">;
+   public void connect( I<iface.name> <iface.name; format="argument"> ) {
+      _<iface.name; format="argument"> = <iface.name; format="argument">;
    \}
 
-   public I<rt.interface.name> get<rt.interface.name>() {
-      return _<rt.interface.name; format="argument">;
+   public I<iface.name> get<iface.name>() {
+      return _<iface.name; format="argument">;
    \}
-}>}><reqData:{iface|<reqData.(iface):{data|
+}><reqData:{iface|<reqData.(iface):{data|
 
    public void connect( <typesPackage>.<data.name; format="cap"> <data.name; format="argument"> ) {
       _<data.name; format="argument"> = <data.name; format="argument">;
@@ -717,26 +721,7 @@ public class Automaton extends util.Automaton\<<component.automaton.stateEnum.na
 
 
 
-IDispatcher( package ) ::= <<
-package <package>;
-
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-
-public interface IDispatcher {
-
-   void beforeDispatch();
-
-   boolean hasDispatched( byte intrfc, byte event, SocketAddress from, ByteBuffer in ) throws IOException;
-
-   void afterDispatch( boolean dispatched );
-}
->>
-
-
-
-componentFactory( typesPackage, package, process, processes, offData, reqData, instancesByName, dataConsumer ) ::= <<
+componentFactory( typesPackage, package, process, processes, offData, reqData, instancesByName, dataConsumer, modules ) ::= <<
 package <package>;
 // ComponentFactory
 import java.io.IOException;
@@ -749,15 +734,16 @@ import java.nio.channels.DatagramChannel;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class ComponentFactory_<process.name> implements Runnable {
+public final class ComponentFactory extends Thread {
 
-   private final Set\<IDispatcher> _dispatchers = new HashSet\<>();
-   private final DatagramChannel  _channel;
+   private final Set\<da.IDispatcher> _dispatchers = new HashSet\<>();
+   private final DatagramChannel     _channel;
 
 <process.instance:{instance|
-   private final <instance.component.name> _<instance.name; format="argument"> = new <instance.component.name>();
+   private final <modules.(instance.component)>.<instance.component.name> _<instance.name; format="argument"
+      > = new <modules.(instance.component)>.<instance.component.name>();
 }>
-   public ComponentFactory_<process.name>() throws IOException {
+   public ComponentFactory() throws IOException {
       _channel = DatagramChannel
          .open     ( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
@@ -766,9 +752,9 @@ public final class ComponentFactory_<process.name> implements Runnable {
       connect<instance.name; format="cap">();
 }><process.instance:{instance|
       _<instance.name; format="argument">.init();
-}>      final Thread networkThread = new Thread( this );
-      networkThread.setDaemon( true );
-      networkThread.start();
+}>      setName( getClass().getName());
+      setDaemon( true );
+      start();
    }
 
 <process.instance:{instance|
@@ -778,21 +764,24 @@ public final class ComponentFactory_<process.name> implements Runnable {
       _<instance.name; format="argument">.connect( <data.name; format="argument"> );
 }>}><offData:{iface|
 <dataConsumer.(iface).(instance.name):{process|
-      _<instance.name; format="argument">.connect( new <iface.name>Data( _channel, new InetSocketAddress( "<process.address>", <process.port> )));
+      _<instance.name; format="argument">.connect( new <modules.(instance.component)>.<
+         iface.name>Data( _channel, new InetSocketAddress( "<process.address>", <process.port> )));
 }>}><
 process.instance:{instance|<instance.requires:{requires|
-      _<instance.name; format="argument">.connect( new <requires.interface.name>( _channel, new InetSocketAddress( "<
+      _<instance.name; format="argument">.connect( new <
+         modules.(instance.component)>.<requires.interface.name>( _channel, new InetSocketAddress( "<
          processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port> )));
-}>}>      _dispatchers.add( new <instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> ));
+}>}>      _dispatchers.add( new <
+             modules.(instance.component)>.<instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> ));
    \}
 
-   public <instance.component.name> get<instance.name; format="cap">() {
+   public <modules.(instance.component)>.<instance.component.name> get<instance.name; format="cap">() {
       return _<instance.name; format="argument">;
    \}
 
 }>   @Override
    public final void run() {
-      final ByteBuffer in = ByteBuffer.allocate( 11 );
+      final ByteBuffer in = ByteBuffer.allocate( 64*1024 );
       for(;;) {
          try {
             in.clear();
@@ -800,17 +789,17 @@ process.instance:{instance|<instance.requires:{requires|
             in.flip();
             final byte intrfc = in.get();
             final byte event  = in.get();
-            for( final IDispatcher dispatcher : _dispatchers ) {
+            for( final da.IDispatcher dispatcher : _dispatchers ) {
                dispatcher.beforeDispatch();
             }
             boolean dispatched = false;
-            for( final IDispatcher dispatcher : _dispatchers ) {
+            for( final da.IDispatcher dispatcher : _dispatchers ) {
                if( dispatcher.hasDispatched( intrfc, event, from, in )) {
                   dispatched = true;
                   break;
                }
             }
-            for( final IDispatcher dispatcher : _dispatchers ) {
+            for( final da.IDispatcher dispatcher : _dispatchers ) {
                dispatcher.afterDispatch( dispatched );
             }
          }

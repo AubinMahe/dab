@@ -35,7 +35,7 @@ class APITests {
       compte.autorise = true;
       compte.solde    = 3_257.23;
 
-      ctrl = new ComponentFactory_udt1().getUdt1();
+      ctrl = new isolated.udt1.ComponentFactory().getUdt1();
       assertEquals( ctrl.getEtat(), Etat.MAINTENANCE );
       ctrl.rechargerLaCaisse( soldeCaisse );
       ctrl.maintenance( false );

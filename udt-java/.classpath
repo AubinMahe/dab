@@ -14,6 +14,8 @@
 	</classpathentry>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="src" path="src-boot"/>
+	<classpathentry kind="src" path="factories/isolated/udt1/src-gen"/>
+	<classpathentry kind="src" path="factories/isolated/udt2/src-gen"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry kind="output" path="bin"/>

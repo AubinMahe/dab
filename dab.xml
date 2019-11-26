@@ -114,7 +114,7 @@
       <implementation language="Java" src-dir="sc-java/src-gen" module-name="sc" />
    </component>
 
-   <deployment target-dir=".">
+   <deployment name="isolated">
       <process name="sc" address="127.0.0.1" port="2416">
          <instance name="sc" component="Banque" />
       </process>
@@ -142,7 +142,7 @@
       </process>
    </deployment>
 
-   <deployment target-dir="alt">
+   <deployment name="mixed">
       <process name="sc" address="127.0.0.1" port="2416">
          <instance name="sc" component="Banque" />
       </process>

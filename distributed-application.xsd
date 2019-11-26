@@ -198,20 +198,32 @@
       <xs:attribute type="xs:IDREF"   name="component" use="required" />
    </xs:complexType>
 
+   <xs:simpleType name="processName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
    <xs:complexType name="processType">
       <xs:sequence>
          <xs:element type="instanceType" name="instance" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:string"      name="name"    use="required" />
+      <xs:attribute type="processName"    name="name"    use="required" />
       <xs:attribute type="xs:string"      name="address" use="required" />
       <xs:attribute type="portNumberType" name="port"    use="required" />
    </xs:complexType>
+
+   <xs:simpleType name="deploymentName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
 
    <xs:complexType name="deploymentType">
       <xs:sequence>
          <xs:element type="processType" name="process" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:anyURI" name="target-dir" use="required" />
+      <xs:attribute type="deploymentName" name="name" use="required" />
    </xs:complexType>
 
    <xs:complexType name="typesType">
@@ -233,6 +245,11 @@
    </xs:complexType>
 
    <xs:element name="distributed-application" type="disappType">
+
+      <xs:unique name="deployment-name">
+         <xs:selector xpath=".//deployment"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
 
       <xs:unique name="component-name">
          <xs:selector xpath=".//component"/>

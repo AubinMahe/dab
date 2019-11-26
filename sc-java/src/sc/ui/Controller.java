@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import fx.IController;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -17,7 +18,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
-import sc.ComponentFactory_sc;
+import sc.Banque;
 import sc.ICarte;
 import sc.ICompte;
 import sc.IRepository;
@@ -29,7 +30,7 @@ import sc.IRepository;
  *  Le solde du compte correspondant à chaque numéro de carte.
  *  le statut du compte correspondant à chaque numéro de carte (autorisé ou interdit).
  */
-public class Controller implements IRepository {
+public class Controller implements IRepository, IController<Banque> {
 
    @FXML private TableView<Carte>  _cartes;
    @FXML private TableView<Compte> _comptes;
@@ -123,19 +124,15 @@ public class Controller implements IRepository {
       prefs.putDouble( "y", stage.getY());
    }
 
-   public void init( Stage stage, String name ) throws BackingStoreException, IOException {
+   @Override
+   public void init( Stage stage, String name, Banque component ) throws BackingStoreException, IOException {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
          stage.setX( prefs.getDouble( "x", -4.0 ));
          stage.setY( prefs.getDouble( "y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage ));
-      if( name.equals( "sc" )) {
-         new ComponentFactory_sc();
-      }
-      else {
-         throw new IllegalStateException( name + " isn't a valid process name");
-      }
+      component.setRepository( this );
    }
 
    @Override

@@ -17,24 +17,27 @@ public class Main {
    }
 
    private void generateComponents( String deployment ) throws IOException {
-      final JavaGenerator java = new JavaGenerator( _model, deployment );
-      final CGenerator    c    = new CGenerator   ( _model, deployment );
-      final CppGenerator  cpp  = new CppGenerator ( _model, deployment );
+      final DeploymentType dep = _model.getDeployment( deployment );
+      if( dep == null ) {
+         throw new IllegalStateException( "'" + deployment + "' is not a valid deployment name" );
+      }
+      final JavaGenerator java = new JavaGenerator( _model );
+//      final CGenerator    c    = new CGenerator   ( _model, deployment );
+//      final CppGenerator  cpp  = new CppGenerator ( _model, deployment );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final ImplementationType implementation : component.getImplementation()) {
             switch( implementation.getLanguage()) {
             case "Java": java.generateComponent( component, implementation ); break;
-            case "C"   : c   .generateComponent( component, implementation ); break;
-            case "C++" : cpp .generateComponent( component, implementation ); break;
+//            case "C"   : c   .generateComponent( component, implementation ); break;
+//            case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
       }
-      final DeploymentType dep = _model.getDeployment( deployment );
-      for( final ProcessType p : dep.getProcess()) {
-         java.generateFactory( p );
+      for( final ProcessType process : dep.getProcess()) {
+         java.generateFactory( deployment, process );
       }
-      c  .generateTypesMakefileSourcesList();
-      cpp.generateTypesMakefileSourcesList();
+//      c  .generateTypesMakefileSourcesList();
+//      cpp.generateTypesMakefileSourcesList();
    }
 
    private static void usage() {

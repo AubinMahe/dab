@@ -1,7 +1,5 @@
 package udt;
 
-import udt.ComponentFactory_udt1;
-import udt.ComponentFactory_udt2;
 import util.CommandLine;
 
 public final class Main {
@@ -22,16 +20,19 @@ public final class Main {
          return; // unreachable
       }
       try {
+         final Thread factory;
          switch( name ) {
-         case "udt1": new ComponentFactory_udt1(); break;
-         case "udt2": new ComponentFactory_udt2(); break;
-         default: throw new IllegalStateException( name + " isn't a valid process name");
+         case "isolated.udt1": factory = new isolated.udt1.ComponentFactory(); break;
+         case "isolated.udt2": factory = new isolated.udt2.ComponentFactory(); break;
+         default: throw new IllegalStateException( name + " isn't a valid deployment.process name");
          }
+         factory.join();
       }
       catch( final Throwable t ) {
          t.printStackTrace();
          System.exit( 2 );
       }
+      System.out.printf( "%s.main|done.\n", Main.class.getName());
       System.exit( 0 );
    }
 }

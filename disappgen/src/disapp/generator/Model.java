@@ -36,6 +36,7 @@ import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
+import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.LiteralType;
@@ -137,7 +138,7 @@ final class Model {
       }
       for( final DeploymentType deployment : _application.getDeployment()) {
          final Map<String, InstanceType> instancesByName = new LinkedHashMap<>();
-         _instancesByName.put( deployment.getTargetDir(), instancesByName );
+         _instancesByName.put( deployment.getName(), instancesByName );
          for( final ProcessType process : deployment.getProcess()) {
             for( final InstanceType instance : process.getInstance()) {
                _processByInstance.put( instance, process );
@@ -714,17 +715,13 @@ final class Model {
       return retVal;
    }
 
-   Map<String, List<RequiresType>> getRequiredInstancesOf( String deployment, ComponentType component ) {
-      final Map<String, List<RequiresType>> instances = new LinkedHashMap<>();
-      for( final InstanceType instance : _instancesByName.get( deployment ).values()) {
-         if( instance.getComponent() == component ) {
-            final List<RequiresType> requires = instance.getRequires();
-            if( ! requires.isEmpty()) {
-               instances.put( instance.getName(), requires );
-            }
-         }
+   static List<InterfaceType> getRequiredInterfacesBy( ComponentType component ) {
+      final List<InterfaceType> interfaces = new LinkedList<>();
+      for( final RequiredInterfaceUsageType instance : component.getRequires()) {
+         final InterfaceType intrfc = (InterfaceType)instance.getInterface();
+         interfaces.add( intrfc );
       }
-      return instances;
+      return interfaces;
    }
 
    Map<String, Map<String, RequiresType>> getRequiredInstancesMapOf( String deployment, ComponentType component ) {
@@ -745,9 +742,9 @@ final class Model {
       return instances;
    }
 
-   DeploymentType getDeployment( String targetDir ) {
+   DeploymentType getDeployment( String name ) {
       for( final DeploymentType deployment : _application.getDeployment()) {
-         if( deployment.getTargetDir().equals( targetDir )) {
+         if( deployment.getName().equals( name )) {
             return deployment;
          }
       }
@@ -854,5 +851,18 @@ final class Model {
          }
       }
       return processes;
+   }
+
+   public Map<ComponentType, String> getModules( String language ) {
+      final Map<ComponentType, String> modules = new HashMap<>();
+      for( final ComponentType component : _application.getComponent()) {
+         for( final ImplementationType implementation : component.getImplementation()) {
+            if( implementation.getLanguage().equals( language )) {
+               modules.put( component, implementation.getModuleName());
+               break;
+            }
+         }
+      }
+      return modules;
    }
 }

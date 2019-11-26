@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import sc.Banque;
 
 public class Main extends Application {
 
@@ -30,7 +31,13 @@ public class Main extends Application {
       stage.setScene( new Scene( loader.load()));
       stage.setTitle( "Site Central '" + name + "'" );
       final Controller ctrl = loader.getController();
-      ctrl.init( stage, name );
+      final Banque instance;
+      switch( name ) {
+      case "isolated.sc": instance = new isolated.sc.ComponentFactory().getSc(); break;
+      case "mixed.sc"   : instance = new mixed.sc.ComponentFactory().getSc(); break;
+      default: throw new IllegalStateException( "'" + name + "' isn't a valid deployement.process name" );
+      }
+      ctrl.init( stage, name, instance );
       stage.show();
    }
 

@@ -13,6 +13,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src-boot"/>
+	<classpathentry kind="src" path="factories/isolated/ihm1/src-gen"/>
+	<classpathentry kind="src" path="factories/isolated/ihm2/src-gen"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry kind="output" path="bin"/>

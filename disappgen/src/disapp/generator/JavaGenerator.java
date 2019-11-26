@@ -19,13 +19,12 @@ import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
-import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
 
 public class JavaGenerator extends BaseGenerator {
 
-   public JavaGenerator( Model model, String deployment ) {
-      super( model, deployment, "java.stg", new BaseRenderer());
+   public JavaGenerator( Model model ) {
+      super( model, "java.stg", new BaseRenderer());
    }
 
    @Override
@@ -140,7 +139,7 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final Map<String, List<RequiresType>>    requires  = _model.getRequiredInstancesOf( _deployment, component );
+      final List<InterfaceType>                requires  = Model.getRequiredInterfacesBy( component );
       final Set<String>                        actions   = _model.getAutomatonActions( component );
       final Map<InterfaceType, List<DataType>> offData   = _model.getOfferedDataOf   ( component );
       final Map<InterfaceType, List<DataType>> reqData   = _model.getRequiredDataOf  ( component );
@@ -211,11 +210,11 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
-      _genDir     = _deployment + '/' + implementation.getSrcDir();
+      _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       for( final ImplementationType impl : _model.getApplication().getTypes().getImplementation()) {
          if( impl.getLanguage().equals( "Java" )) {
-            _genDirTypes     = _deployment + '/' + impl.getSrcDir();
+            _genDirTypes     = impl.getSrcDir();
             _moduleNameTypes = impl.getModuleName();
             break;
          }
@@ -231,22 +230,20 @@ public class JavaGenerator extends BaseGenerator {
       generateAutomaton               ( component );
    }
 
-   void generateFactory( ProcessType process ) throws IOException {
+   void generateFactory( String deployment, ProcessType process ) throws IOException {
       for( final InstanceType instance : process.getInstance()) {
          final ComponentType component = (ComponentType)instance.getComponent();
          for( final ImplementationType implementation : component.getImplementation()) {
             if( implementation.getLanguage().equals( "Java" )) {
-               _genDir     = _deployment + '/' + implementation.getSrcDir();
-               _moduleName = implementation.getModuleName();
-               final ST tmplIDispatcher = _group.getInstanceOf( "/IDispatcher" );
-               tmplIDispatcher.add( "package", _moduleName );
-               write( "IDispatcher.java", tmplIDispatcher );
-               final Map<InstanceType, ProcessType>       processes       = _model.getProcessByInstance();
-               final Map<InterfaceType, List<DataType>>   offData         = _model.getOfferedDataOf ( component );
-               final Map<InterfaceType, List<DataType>>   reqData         = _model.getRequiredDataOf( component );
-               final Map<String, InstanceType>            instancesByName = _model.getInstancesByName( _deployment );
-               final Map<InterfaceType, Map<String, Set<ProcessType>>> dataConsumer =
-                  _model.getDataConsumer( _deployment, component );
+               _moduleName = deployment + '.' + process.getName();
+               _genDir     = "factories/" + deployment + '/' + process.getName() + "/src-gen";
+               final Map<InstanceType, ProcessType>     processes       = _model.getProcessByInstance();
+               final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf ( component );
+               final Map<InterfaceType, List<DataType>> reqData         = _model.getRequiredDataOf( component );
+               final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( deployment );
+               final Map<InterfaceType,
+                  Map<String, Set<ProcessType>>>        dataConsumer    = _model.getDataConsumer( deployment, component );
+               final Map<ComponentType, String>         modules         = _model.getModules( "Java" );
                final ST tmpl = _group.getInstanceOf( "/componentFactory" );
                tmpl.add( "typesPackage"   , _moduleNameTypes );
                tmpl.add( "package"        , _moduleName );
@@ -256,7 +253,8 @@ public class JavaGenerator extends BaseGenerator {
                tmpl.add( "reqData"        , reqData );
                tmpl.add( "instancesByName", instancesByName );
                tmpl.add( "dataConsumer"   , dataConsumer );
-               write( "ComponentFactory_" + process.getName() + ".java", tmpl );
+               tmpl.add( "modules"        , modules );
+               write( "ComponentFactory.java", tmpl );
                return;
             }
          }

@@ -35,10 +35,10 @@
 
    <target name="disappgen"><ant dir="disappgen" target="jar" /></target>
    <target name="generate-one-component-per-process" depends="disappgen">
-      <generate-all-sources target="." />
+      <generate-all-sources target="isolated" />
    </target>
    <target name="generate-several-components-per-process" depends="disappgen">
-      <generate-all-sources target="alt" />
+      <generate-all-sources target="mixed" />
    </target>
 
    <target name="util-c"           ><exec dir="util-c"           executable="make" output="util-c/compile.log"           failonerror="true" /></target>
@@ -73,6 +73,39 @@
       </concat>
    </target>
 
+   <target name="build-c">
+      <echo message="    -- Compilation C    --" />
+      <antcall target="util-c" />
+      <antcall target="dabtypes-c" />
+      <parallel>
+         <antcall target="distributeur-c" />
+         <antcall target="site-central-c" />
+         <antcall target="udt-c" />
+      </parallel>
+   </target>
+
+   <target name="build-cpp">
+      <echo message="    -- Compilation C++  --" />
+      <antcall target="util-cpp" />
+      <antcall target="dabtypes-cpp" />
+      <parallel>
+         <antcall target="distributeur-cpp" />
+         <antcall target="site-central-cpp" />
+         <antcall target="udt-cpp" />
+      </parallel>
+   </target>
+
+   <target name="build-java">
+      <echo message="    -- Compilation Java --" />
+      <antcall target="util-java" />
+      <antcall target="dabtypes-java" />
+      <parallel>
+         <antcall target="distributeur-java" />
+         <antcall target="site-central-java" />
+         <antcall target="udt-java" />
+      </parallel>
+   </target>
+
    <target name="all" description="Produit tout en parallèle">
       <antcall target="generate-one-component-per-process" />
       <echo>
@@ -81,36 +114,9 @@
 
       </echo>
       <parallel>
-         <sequential>
-            <echo message="    -- Compilation C    --" />
-            <antcall target="util-c" />
-            <antcall target="dabtypes-c" />
-            <parallel>
-               <antcall target="distributeur-c" />
-               <antcall target="site-central-c" />
-               <antcall target="udt-c" />
-            </parallel>
-         </sequential>
-         <sequential>
-            <echo message="    -- Compilation C++  --" />
-            <antcall target="util-cpp" />
-            <antcall target="dabtypes-cpp" />
-            <parallel>
-               <antcall target="distributeur-cpp" />
-               <antcall target="site-central-cpp" />
-               <antcall target="udt-cpp" />
-            </parallel>
-         </sequential>
-         <sequential>
-            <echo message="    -- Compilation Java --" />
-            <antcall target="util-java" />
-            <antcall target="dabtypes-java" />
-            <parallel>
-               <antcall target="distributeur-java" />
-               <antcall target="site-central-java" />
-               <antcall target="udt-java" />
-            </parallel>
-         </sequential>
+         <antcall target="build-c" />
+         <antcall target="build-cpp" />
+         <antcall target="build-java" />
       </parallel>
       <echo>
 

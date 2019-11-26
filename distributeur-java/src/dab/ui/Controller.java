@@ -5,8 +5,6 @@ import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import dab.ComponentFactory_ihm1;
-import dab.ComponentFactory_ihm2;
 import dab.Distributeur;
 import dab.DistributeurComponent;
 import dab.IIHM;
@@ -24,7 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-public class Controller implements IIHM, IUniteDeTraitementData, IController {
+public class Controller implements IIHM, IUniteDeTraitementData, IController<Distributeur> {
 
    private Distributeur _component;
    private Etat         _etat   = Etat.MAINTENANCE;
@@ -165,18 +163,14 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController {
    }
 
    @Override
-   public void init( Stage stage, String instanceName ) throws BackingStoreException, IOException {
+   public void init( Stage stage, String instanceName, Distributeur component ) throws BackingStoreException, IOException {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
          stage.setX( prefs.getDouble( instanceName + "-x", -4.0 ));
          stage.setY( prefs.getDouble( instanceName + "-y", -4.0 ));
       }
       stage.setOnCloseRequest( e -> done( stage, instanceName ));
-      switch( instanceName ) {
-      case "ihm1": _component = new ComponentFactory_ihm1().getIhm1(); break;
-      case "ihm2": _component = new ComponentFactory_ihm2().getIhm2(); break;
-      default: throw new IllegalStateException( instanceName + " isn't a valid process name");
-      }
+      _component = component;
       _component.setController( this );
    }
 

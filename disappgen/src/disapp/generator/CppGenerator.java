@@ -19,13 +19,12 @@ import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
-import disapp.generator.model.RequiresType;
 import disapp.generator.model.StructType;
 
 public class CppGenerator extends BaseGenerator {
 
-   public CppGenerator( Model model, String deployment ) {
-      super( model, deployment, "cpp.stg", new BaseRenderer() );
+   public CppGenerator( Model model ) {
+      super( model, "cpp.stg", new BaseRenderer() );
    }
 
    private void generateEnumHeader( EnumerationType enm ) throws IOException {
@@ -196,9 +195,9 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateComponentInterface( ComponentType component ) throws IOException {
-      final List<InstanceType>                 instances       = _model.getInstancesOf( _deployment, component );
-      final Map<String, List<RequiresType>>    requires        = _model.getRequiredInstancesOf( _deployment, component );
-      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( _deployment );
+      final List<InstanceType>                 instances       = _model.getInstancesOf( "TODO", component ); // TODO
+      final List<InterfaceType>                requires        = Model.getRequiredInterfacesBy( component );
+      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( "TODO" ); // TODO
       final Set<String>                        actions         = _model.getAutomatonActions( component );
       final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf( component );
       final Set<String>                        responses       = Model.getReponses( component );
@@ -218,9 +217,9 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final List<InstanceType>                     instances         = _model.getInstancesOf( _deployment, component );
-      final Map<String, Map<String, RequiresType>> requires          = _model.getRequiredInstancesMapOf( _deployment, component );
-      final Map<String, InstanceType>              instancesByName   = _model.getInstancesByName( _deployment );
+      final List<InstanceType>                     instances         = _model.getInstancesOf( "TODO", component ); // TODO
+      final List<InterfaceType>                    requires          = Model.getRequiredInterfacesBy( component );
+      final Map<String, InstanceType>              instancesByName   = _model.getInstancesByName( "TODO" ); // TODO
       final Map<InstanceType, ProcessType>         processByInstance = _model.getProcessByInstance();
       final Map<InterfaceType, List<DataType>>     offData           = _model.getOfferedDataOf( component );
       final Map<InterfaceType, List<DataType>>     reqData           = _model.getRequiredDataOf  ( component );
@@ -302,11 +301,11 @@ public class CppGenerator extends BaseGenerator {
    }
 
    void generateComponent( ComponentType component, ImplementationType implementation ) throws IOException {
-      _genDir     = _deployment + "/" + implementation.getSrcDir();
+      _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       for( final ImplementationType impl : _model.getApplication().getTypes().getImplementation()) {
          if( impl.getLanguage().equals( "C++" )) {
-            _genDirTypes     = _deployment + '/' + impl.getSrcDir();
+            _genDirTypes     = impl.getSrcDir();
             _moduleNameTypes = impl.getModuleName();
             break;
          }
