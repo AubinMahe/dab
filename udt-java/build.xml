@@ -20,6 +20,8 @@
          <src path="src" />
          <src path="src-boot" />
          <src path="src-gen" />
+         <src path="../factories/isolated/udt1/src-gen" />
+         <src path="../factories/isolated/udt2/src-gen" />
       </javac>
    </target>
 
@@ -35,7 +37,7 @@
          <arg value="-e" /><arg value="java" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="udt.Main" />
-         <arg value="--name=udt1" />
+         <arg value="--name=isolated.udt1" />
       </exec> 
    </target>  
 
@@ -47,7 +49,7 @@
          <arg value="-e" /><arg value="java" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="udt.Main" />
-         <arg value="--name=udt2" />
+         <arg value="--name=isolated.udt2" />
       </exec>
    </target>
 

@@ -26,6 +26,8 @@
          <src path="src" />
          <src path="src-boot" />
          <src path="src-gen" />
+         <src path="../factories/isolated/ihm1/src-gen" />
+         <src path="../factories/isolated/ihm2/src-gen" />
       </javac>
    </target>
 
@@ -48,7 +50,7 @@
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.ui.Main" />
-         <arg value="--name=ihm1" />
+         <arg value="--name=isolated.ihm1" />
       </exec>
    </target>
 
@@ -62,7 +64,7 @@
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="dab.ui.Main" />
-         <arg value="--name=ihm2" />
+         <arg value="--name=isolated.ihm2" />
       </exec>
    </target>
 

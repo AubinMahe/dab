@@ -26,6 +26,8 @@
          <src path="src" />
          <src path="src-boot" />
          <src path="src-gen" />
+         <src path="../factories/mixed/sc/src-gen" />
+         <src path="../factories/isolated/sc/src-gen" />
       </javac>
    </target>
 
@@ -48,7 +50,7 @@
          <arg value="--add-modules=javafx.controls,javafx.fxml,javafx.graphics" />
          <arg value="-cp" /><arg value="${jutil}:${dabtypes}:${jar}" />
          <arg value="sc.ui.Main" />
-         <arg value="--name=sc" />
+         <arg value="--name=isolated.sc" />
       </exec>
    </target>
 
