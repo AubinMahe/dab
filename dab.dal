@@ -94,32 +94,32 @@ component Banque
       language C++  module sc sources "sc-cpp/src-gen"
       language Java module sc sources "sc-java/src-gen"
 
-deployment "."
-   process 127.0.0.1:2416
+deployment "isolated"
+   process sc 127.0.0.1:2416
       instance sc of Banque
-   process 127.0.0.1:2417
+   process udt1 127.0.0.1:2417
       instance udt1 of Controleur
          requires
             SiteCentral sc
             IHM         ihm1
-   process 127.0.0.1:2418
+   process ihm1 127.0.0.1:2418
       instance ihm1 of Distributeur
          requires
             UniteDeTraitement udt1
-   process 127.0.0.1:2419
+   process udt2 127.0.0.1:2419
       instance udt2 of Controleur
          requires
             SiteCentral sc
             IHM         ihm2
-   process 127.0.0.1:2420
+   process ihm2 127.0.0.1:2420
       instance ihm2 of Distributeur
          requires
             UniteDeTraitement udt2
 
-deployment "alt"
-   process 127.0.0.1:2416
+deployment "mixed"
+   process sc 127.0.0.1:2416
       instance sc of Banque
-   process 127.0.0.1:2417
+   process dab 127.0.0.1:2417
       instance udt1 of Controleur
          requires
             SiteCentral sc
@@ -127,12 +127,11 @@ deployment "alt"
       instance ihm1 of Distributeur
          requires
             UniteDeTraitement udt1
-      instance ihm2 of Distributeur
-         requires
-            UniteDeTraitement udt2
-   process 127.0.0.1:2419
       instance udt2 of Controleur
          requires
             SiteCentral sc
             IHM         ihm2
+      instance ihm2 of Distributeur
+         requires
+            UniteDeTraitement udt2
  

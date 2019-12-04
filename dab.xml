@@ -4,7 +4,7 @@
    xmlns:xi="http://www.w3.org/2001/XInclude"
    name="DAB">
    <types>
-   
+
       <struct name="Carte">
          <field name="id"       type="string" length="4" description="Identifiant de la carte" />
          <field name="code"     type="string" length="4" description="Identifiant de la carte" />
@@ -12,13 +12,13 @@
          <field name="year"     type="ushort"            description="Année de péremption de la carte" />
          <field name="nbEssais" type="byte"              description="Nombre d'essais en échec de la carte" />
       </struct>
-   
+
       <struct name="Compte">
          <field name="id"       type="string" length="4" description="Identifiant du compte" />
          <field name="solde"    type="double"            description="Solde du compte" />
          <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
       </struct>
-   
+
       <struct name="EtatDuDab">
          <field name="etat" type="enum" userType="Etat" description="Etat courant de l'automate du composant Controleur" />
          <field name="soldeCaisse" type="double"  description="Montant de la caisse en €" />
@@ -40,7 +40,7 @@
    </interface>
 
    <interface name="UniteDeTraitement">
-      <data  name="etatDuDab" type="EtatDuDab" description="Les données décrivant l'état du DAB" />
+      <data name="etatDuDab" type="EtatDuDab" description="Les données décrivant l'état du DAB" />
       <event name="maintenance">
          <field name="maintenance" type="boolean" description="Maintenance active (true) ou inactive (false)" />
       </event>
@@ -85,7 +85,7 @@
       <event name="shutdown" />
    </interface>
 
-   <component name="Distributeur">
+   <component name="Distributeur" after-dispatch-needed="false">
       <offers   interface="IHM" />
       <requires interface="UniteDeTraitement" />
       <implementation language="C"    src-dir="distributeur-c/src-gen"    module-name="dab" />
@@ -107,7 +107,7 @@
       <implementation language="Java" src-dir="udt-java/src-gen" module-name="udt" />
    </component>
 
-   <component name="Banque">
+   <component name="Banque" after-dispatch-needed="false">
       <offers interface="SiteCentral" />
       <implementation language="C"    src-dir="sc-c/src-gen"    module-name="sc" />
       <implementation language="C++"  src-dir="sc-cpp/src-gen"  module-name="sc" />
@@ -147,11 +147,11 @@
          <instance name="sc" component="Banque" />
       </process>
       <process name="dab" address="127.0.0.1" port="2417">
-         <instance name="udt1" component="Controleur" >
+         <instance name="udt1" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
             <requires interface="IHM"         to-instance="ihm1" />
          </instance>
-         <instance name="ihm1" component="Distributeur" >
+         <instance name="ihm1" component="Distributeur">
             <requires interface="UniteDeTraitement" to-instance="udt1" />
          </instance>
          <instance name="udt2" component="Controleur">

@@ -87,13 +87,18 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
-1. Même si le modèle actuel permet plusieurs composants par processus, l'implémentation ne le permet pas. En effet, comme le composant abstrait écoute le port du process, il ne peut y avoir plusieurs composants (*port already bound*). Une classe **ProcessRouter** responsable d'écouter un port et de router les messages vers le ou les composants hébergés est à créer. 
+1. Dans l'état actuel du modèle, il n'existe qu'un seul module de types, dont le nom (physique) est fourni par la balise `implémentation`. Il faudrait lui donner un nom logique, ce qui permettrait de déclarer plusieurs modules de types et de référencer un type dans le reste du module par son nom qualifié : `<module-name>.<type-name>`.
+
+1. Il existe une balise `implementation` sous la balise `<types>`. C'est inutile puisque les implémentations nécessaires peuvent être déduites de leurs usages par le reste du modèle.
+
+1. Même si le modèle actuel permet plusieurs composants par processus, l'implémentation ne le permet pas (sauf pour Java). En effet, comme le composant abstrait écoute le port du process, il ne peut y avoir plusieurs composants (*port already bound*). Une classe **ComponentFactory** responsable du cycle de vie des instances de composant et du routage des messages est à créer. C'est fait pour Java mais il faut l'étendre aux langages C et C++.
 
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
 
 1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
+1. Wizard : même si les classes manuelle sont simples à coder, un wizard Eclipse de génération de classes serait bienvenu. A faire en Java, C et C++.
 1. Automate : associer une action au franchissement d'une transition.
 
 ## Boite à idées, à débattre...

@@ -10,19 +10,7 @@ import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 import org.hpms.dab.dsl.dal.DAL
-import org.hpms.dab.dsl.dal.UserType
-import org.hpms.dab.dsl.dal.component
-import org.hpms.dab.dsl.dal.deployment
-import org.hpms.dab.dsl.dal.field
-import org.hpms.dab.dsl.dal.generation
-import org.hpms.dab.dsl.dal.instance
-import org.hpms.dab.dsl.dal.interfaceType
-import org.hpms.dab.dsl.dal.offer
-import org.hpms.dab.dsl.dal.process
-import org.hpms.dab.dsl.dal.require
-import org.hpms.dab.dsl.dal.timeout
 import org.hpms.dab.dsl.dal.type
-import org.hpms.dab.dsl.dal.types
 
 /**
  * Generates code from your model files on save.
@@ -31,208 +19,128 @@ import org.hpms.dab.dsl.dal.types
  */
 class DALGenerator extends AbstractGenerator {
 
-   private def generate( type type ) {
-      if( type.user !== null ) {
-         if( type.user.isIsEnum || type.user.isIsAutomatonState ) {
-            '''enum" userType="«type.user.name»'''
-         }
-         else {
-            '''struct" userType="«type.user.name»'''
-         }
-      }
-      else if( type.type == "string" ) '''string" length="«type.length»'''
-      else type.type
-   }
+   private def generate( type type ) '''«
+      IF type.user !== null»«
+         IF type.user.isIsEnum || type.user.isIsAutomatonState
+            »enum" userType="«type.user.name»«
+         ELSE
+            »struct" userType="«type.user.name»«
+         ENDIF»«
+      ELSEIF type.type == "string"
+         »string" length="«type.length»«
+      ELSE
+         »«type.type»«
+      ENDIF
+   »'''
 
-   private def generate( field field ) {
-      return '''<field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
-      '''
-   }
-
-   private def generateClass( UserType clazz ) {
-      var result = '''      <struct name="«clazz.name»">
-      '''
-      for( field : clazz.fields ) {
-         result += '         ' + generate( field ) 
-      }
-      return result + '''      </struct>
-      '''
-   }
-
-   private def generateEnum( UserType enm ) {
-      if( enm.isAutomatonState ) {
-         return ""
-      }
-      var result = '''      <enumeration name="«enm.name»">
-      '''
-      for( literal : enm.literals ) {
-         result += '''         <literal name="«literal»" />
-         ''' 
-      }
-      return result + '''      </enumeration>
-      '''
-   }
-
-   private def generate( generation generation ) {
-      var result = ''
-      for( language : generation.languages ) {
-         result += '''      <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name»" />''' + '\n'
-      }
-      return result
-   }
-
-   private def generate( types types ) {
-      if( types.classes.empty && types.classes.empty ) {
-         return "";
-      }
-      var result = '''   <types>
-      '''
-      for( clazz : types.classes ) {
-         result += '\n' + generateClass( clazz )
-      }
-      for( clazz : types.enums ) {
-         result += '\n' + generateEnum( clazz )
-      }
-      result += generate( types.generation )
-      return result + '''   </types>
-      '''
-   }
-
-   private def generate( interfaceType intrfc ) {
-      var result = '\n' + '''   <interface name="«intrfc.name»">''' + '\n'
-      for( facet : intrfc.facets ) {
-         if( facet.isRequest ) {
-            result += '''      <request name="«facet.name»">''' + '\n' +
-                        '         <arguments>\n'
-            for( field : facet.fields ) {
-               result += '            ' + generate( field )
-            }
-            result += '         </arguments>\n' +
-                      '         <response>\n'
-            for( field : facet.response ) {
-               result += '            ' + generate( field )
-            }
-            result += '         </response>\n' +
-                      '      </request>\n'
-         }
-         else if( facet.isData ) {
-            result += '''      <data name="«facet.name»" type="«facet.type.user.name»" description="«facet.description»" />''' + '\n'
-         }
-         else if( facet.isIsEvent ) {
-            if( facet.fields.isEmpty ) {
-               result += '''      <event name="«facet.name»" />''' + '\n'
-            }
-            else {
-               result += '''      <event name="«facet.name»">''' + '\n'
-               for( field : facet.fields ) {
-                  result += '         ' + generate( field )
-               }
-               result += '      </event>\n'
-            }
-         }
-      }
-      return result + '   </interface>\n'
-   }
-   
-   private def generate( offer offer ) {
-      '''<offers   interface="«offer.intrfc.name»" />
-      '''
-   }
-   
-   private def generate( require require ) {
-      '''<requires interface="«require.intrfc.name»" />
-      '''
-   }
-   
-   private def generate( timeout to ) {
-      '''<timeout name="«to.name»" duration="«to.duration»" unit="«to.unit»" />
-      '''
-   }
-   
-   private def generate( component component ) {
-      var result = '\n' + '''   <component name="«component.name»"«IF component.afterDispatch»after-dispatch-needed="true"«ENDIF»>
-      '''
-      for( offer : component.offers ) {
-         result += '      ' + generate( offer )
-      }
-      for( require : component.requires ) {
-         result += '      ' + generate( require )
-      }
-      for( to : component.timeouts ) {
-         result += '      ' + generate( to )
-      }
-      if( component.usesAutomaton ) {
-         result += '''      <xi:include href="./«component.name».automaton" />
-         '''
-      }
-      result += generate( component.generation )
-      return result + '''   </component>
-      '''
-   }
-   
-   private def generate( instance instance ) {
-      if( instance.requires.isEmpty ) {
-         return '''         <instance name="«instance.name»" component="«instance.component.name»" />
-         '''
-      }
-      var result = '''         <instance name="«instance.name»" component="«instance.component.name»">
-      '''
-      for( require : instance.requires ) {
-         result += '''            <requires interface="«require.intrfc.name»" to-instance="«require.instance.name»" />
-         '''
-      }
-      return result + '''         </instance>
-      '''
-   }
-
-   private def generate( process process ) {
-      var result = '';
-      if( process.hostname !== null ) {
-         result += '''      <process address="«process.hostname»" port="«process.port»">
-         '''
-      }
-      else {
-         result += '''      <process address="«process.ip»" port="«process.port»">
-         '''
-      }
-      for( instance : process.instances ) {
-         result += generate( instance )
-      }
-      return result + '''      </process>
-      '''
-   }
-
-   private def generate( deployment deployment ) {
-      var result = '\n' + '''   <deployment target-dir="«deployment.targetDir»">
-      '''
-      for( process : deployment.processes ) {
-         result += generate( process )
-      }
-      return result + '''   </deployment>
-      '''
-   }
-   
-   private def generate( DAL model ) {
-      var result = '''
+   private def generate( DAL model ) '''
       <?xml version="1.0" encoding="UTF-8"?>
       <distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="distributed-application.xsd"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          name="«model.name»">
-      '''
-      result += generate( model.types )
-      for( intrfc : model.interfaces ) {
-         result += generate( intrfc )
-      }
-      for( component : model.components ) {
-         result += generate( component )
-      }
-      for( deployment : model.deployments ) {
-         result += generate( deployment )
-      }
-      return result + '\n' + '''</distributed-application>
-      '''
-   }
+      «IF ! ( model.types.classes.empty && model.types.classes.empty )
+»   <types>
+            «FOR clazz : model.types.classes»
+
+               <struct name="«clazz.name»">
+                  «FOR field : clazz.fields»
+                     <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                  «ENDFOR»
+               </struct>
+            «ENDFOR»
+            «FOR clazz : model.types.enums»
+               «IF ! clazz.isAutomatonState»
+
+                  <enumeration name="«clazz.name»">
+                  «FOR literal : clazz.literals»
+                     <literal name="«literal»" />
+                  «ENDFOR»
+                  </enumeration>
+               «ENDIF»
+            «ENDFOR»
+
+            «FOR language : model.types.generation.languages»
+               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name»" />
+            «ENDFOR»
+         </types>
+
+      «ENDIF»
+      «FOR intrfc : model.interfaces
+»   <interface name="«intrfc.name»">
+            «FOR facet : intrfc.facets»
+               «IF facet.isRequest»
+                  <request name="«facet.name»">
+                     <arguments>
+                        «FOR field : facet.fields»
+                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                        «ENDFOR»
+                     </arguments>
+                     <response>
+                        «FOR field : facet.response»
+                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                        «ENDFOR»
+                     </response>
+                  </request>
+               «ELSEIF facet.isData»
+                  <data name="«facet.name»" type="«facet.type.user.name»" description="«facet.description»" />
+               «ELSEIF facet.isIsEvent»
+                  «IF facet.fields.isEmpty»
+                     <event name="«facet.name»" />
+                  «ELSE»
+                     <event name="«facet.name»">
+                        «FOR field : facet.fields»
+                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                        «ENDFOR»
+                     </event>
+                  «ENDIF»
+               «ENDIF»
+            «ENDFOR»
+         </interface>
+
+      «ENDFOR»
+      «FOR component : model.components
+»   <component name="«component.name»" after-dispatch-needed="«component.afterDispatch»">
+            «FOR offer : component.offers»
+               <offers   interface="«offer.intrfc.name»" />
+            «ENDFOR»
+            «FOR require : component.requires»
+               <requires interface="«require.intrfc.name»" />
+            «ENDFOR»
+            «FOR to : component.timeouts»
+               <timeout name="«to.name»" duration="«to.duration»" unit="«to.unit»" />
+            «ENDFOR»
+            «IF component.usesAutomaton»
+               <xi:include href="./«component.name».automaton" />
+            «ENDIF»
+            «FOR language : component.generation.languages»
+               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name»" />
+            «ENDFOR»
+         </component>
+
+      «ENDFOR»
+      «FOR deployment : model.deployments
+»   <deployment name="«deployment.targetDir»">
+            «FOR process : deployment.processes»
+               <process name="«process.name»" address="«IF process.hostname !== null»«process.hostname»«ELSE»«process.ip»«ENDIF»" port="«process.port»">
+                  «FOR instance : process.instances»
+                     «IF instance.requires.isEmpty»
+                        <instance name="«instance.name»" component="«instance.component.name»" />
+                     «ELSE»
+                        <instance name="«instance.name»" component="«instance.component.name»">
+                           «FOR require : instance.requires»
+                              <requires interface="«require.intrfc.name»" to-instance="«require.instance.name»" />
+                           «ENDFOR»
+                        </instance>
+                     «ENDIF»
+                  «ENDFOR»
+               </process>
+            «ENDFOR»
+         </deployment>
+
+      «ENDFOR»
+      </distributed-application>
+   '''
 
 	override void doGenerate( Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context ) {
       val model = resource.getContents.get(0) as DAL

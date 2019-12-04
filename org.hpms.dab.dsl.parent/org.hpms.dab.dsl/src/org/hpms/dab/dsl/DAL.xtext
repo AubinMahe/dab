@@ -82,7 +82,7 @@ deployment:
    ( processes += process )+
 ;
 process:
-   'process' (ip = IP | hostname = HOSTNAME) ':' port = INT
+   'process' name = ID (ip = IP | hostname = HOSTNAME) ':' port = INT
    ( instances += instance )+
 ;
 instance:
