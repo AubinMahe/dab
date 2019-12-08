@@ -55,6 +55,10 @@ import disapp.generator.model.TypesType;
 
 final class Model {
 
+   static protected final String JAVA_LANGUAGE = "Java";
+   static protected final String CPP_LANGUAGE  = "C++";
+   static protected final String C_LANGUAGE    = "C";
+
    private final Map<String, InterfaceType>             _interfaces         = new LinkedHashMap<>();
    private final Map<String, EnumerationType>           _enums              = new LinkedHashMap<>();
    private final Map<String, StructType>                _structs            = new LinkedHashMap<>();
@@ -210,7 +214,6 @@ final class Model {
                _interfacesID.put( name + "Response", ++ifaceID );
             }
          }
-
       }
       for( final TypesType types : _application.getTypes()) {
          for( final EnumerationType type : types.getEnumeration()) {
@@ -219,7 +222,16 @@ final class Model {
                if( typesModel2Impl == null ) {
                   _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
                }
-               typesModel2Impl.put( types.getModuleName() + '.' + type.getName(), impl.getModuleName() + '.' + type.getName());
+               final String language = impl.getLanguage();
+               final String model    = types.getModuleName() + '.' + type.getName();
+               final String lang;
+               switch( language ) {
+               case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
+               case CPP_LANGUAGE : lang = impl.getModuleName() + "::" + type.getName(); break;
+               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + type.getName(); break;
+               default: throw new IllegalStateException( language );
+               }
+               typesModel2Impl.put( model, lang );
             }
          }
          for( final StructType type : types.getStruct()) {
@@ -228,7 +240,16 @@ final class Model {
                if( typesModel2Impl == null ) {
                   _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
                }
-               typesModel2Impl.put( types.getModuleName() + '.' + type.getName(), impl.getModuleName() + '.' + type.getName());
+               final String language = impl.getLanguage();
+               final String model    = types.getModuleName() + '.' + type.getName();
+               final String lang;
+               switch( language ) {
+               case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
+               case CPP_LANGUAGE : lang = impl.getModuleName() + "::" + type.getName(); break;
+               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + type.getName(); break;
+               default: throw new IllegalStateException( language );
+               }
+               typesModel2Impl.put( model, lang );
             }
          }
       }
@@ -898,5 +919,32 @@ final class Model {
 
    Map<String, String> getTypes( String language ) {
       return _typesModel2Impl.get( language );
+   }
+
+   public static SortedSet<String> getUserTypesRequiredBy( InterfaceType iface ) {
+      final SortedSet<String> types = new TreeSet<>();
+      for( final Object facet : iface.getEventOrRequestOrData()) {
+         if( facet instanceof EventType ) {
+            final EventType event = (EventType)facet;
+            for( final FieldType field : event.getField()) {
+               if( field.getUserType() != null ) {
+                  types.add( field.getUserType());
+               }
+            }
+         }
+         else if( facet instanceof RequestType ) {
+            final RequestType request = (RequestType)facet;
+            for( final FieldType field : request.getArguments().getField()) {
+               if( field.getUserType() != null ) {
+                  types.add( field.getUserType());
+               }
+            }
+         }
+         else if( facet instanceof DataType ) {
+            final DataType data = (DataType)facet;
+            types.add( data.getType());
+         }
+      }
+      return types;
    }
 }

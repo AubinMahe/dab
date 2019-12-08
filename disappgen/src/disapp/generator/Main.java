@@ -23,21 +23,22 @@ public class Main {
       }
       final JavaGenerator java = new JavaGenerator( _model );
 //      final CGenerator    c    = new CGenerator   ( _model, deployment );
-//      final CppGenerator  cpp  = new CppGenerator ( _model, deployment );
+      final CppGenerator  cpp  = new CppGenerator ( _model );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final ComponentImplType implementation : component.getImplementation()) {
             switch( implementation.getLanguage()) {
             case "Java": java.component( component, implementation ); break;
 //            case "C"   : c   .generateComponent( component, implementation ); break;
-//            case "C++" : cpp .generateComponent( component, implementation ); break;
+            case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
       }
       for( final ProcessType process : dep.getProcess()) {
          java.factory( deployment, process );
+         cpp .factory( deployment, process );
       }
 //      c  .generateTypesMakefileSourcesList();
-//      cpp.generateTypesMakefileSourcesList();
+      cpp.generateTypesMakefileSourcesList();
    }
 
    private static void usage() {

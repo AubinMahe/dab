@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
@@ -14,7 +13,6 @@ import disapp.generator.model.ComponentImplType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
 import disapp.generator.model.EnumerationType;
-import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.ProcessType;
@@ -25,73 +23,108 @@ import disapp.generator.model.StructType;
 public class CppGenerator extends BaseGenerator {
 
    public CppGenerator( Model model ) {
-      super( model, "cpp.stg", new BaseRenderer() );
+      super( model, Model.CPP_LANGUAGE, "cpp.stg", new BaseRenderer() );
    }
 
-   private void generateEnumHeader( EnumerationType enm ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/enumHeader" );
-      final String moduleName = getModuleName( enm.getName(), "C++" );
-      tmpl.add( "namespace", moduleName );
-      tmpl.add( "enum"     , enm );
+   private void enumHeader( String name ) throws IOException {
+      final EnumerationType enm             = _model.getEnum( name );
+      final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
+      final String          implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
+      final ST              tmpl            = _group.getInstanceOf( "/enumHeader" );
+      tmpl.add( "namespace", implModuleName );
+      tmpl.add( "enum"   , enm );
       setRendererMaxWidth( enm );
-      writeType( moduleName, enm.getName() + ".hpp", tmpl );
+      final String filename = name.substring( name.lastIndexOf( '.' ) + 1 ) + ".hpp";
+      final String subPath  = implModuleName.replaceAll( "::", "/" );
+      writeType( modelModuleName, subPath, filename, tmpl );
    }
 
-   private void generateEnumBody( EnumerationType enm ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/enumBody" );
-      final String moduleName = getModuleName( enm.getName(), "C++" );
-      tmpl.add( "namespace", moduleName );
+   private void enumBody( String name ) throws IOException {
+      final EnumerationType enm             = _model.getEnum( name );
+      final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
+      final String          implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
+      final ST              tmpl            = _group.getInstanceOf( "/enumBody" );
+      tmpl.add( "namespace", implModuleName );
       tmpl.add( "enum"     , enm );
       setRendererMaxWidth( enm );
-      writeType( moduleName, enm.getName() + ".cpp", tmpl );
+      final String filename = name.substring( name.lastIndexOf( '.' ) + 1 ) + ".cpp";
+      final String subPath  = implModuleName.replaceAll( "::", "/" );
+      writeType( modelModuleName, subPath, filename, tmpl );
    }
 
    @Override
    protected void gEnum( String name ) throws IOException {
-      final EnumerationType enm  = _model.getEnum( name );
-      generateEnumHeader( enm );
-      generateEnumBody  ( enm );
+      enumHeader( name );
+      enumBody  ( name );
    }
 
-   private void generateStructHeader( StructType struct ) throws IOException {
-      final ST tmpl = _group.getInstanceOf( "/structHeader" );
-      final String moduleName = getModuleName( struct.getName(), "C++" );
-      tmpl.add( "namespace", moduleName );
-      tmpl.add( "struct"   , struct   );
-      writeType( moduleName, struct.getName() + ".hpp", tmpl );
-   }
-
-   private void generateStructBody( StructType struct ) throws IOException {
-      final ST tmpl   = _group.getInstanceOf( "/structBody" );
-      final String moduleName = getModuleName( struct.getName(), "C++" );
-      tmpl.add( "namespace", moduleName );
-      tmpl.add( "struct"   , struct   );
+   private void generateStructHeader( String name ) throws IOException {
+      final StructType          struct          = _model.getStruct( name );
+      final String              modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
+      final String              implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
+      final Map<String, String> types           = _model.getTypes( Model.CPP_LANGUAGE );
+      final ST                  tmpl            = _group.getInstanceOf( "/structHeader" );
+      tmpl.add( "namespace", implModuleName );
+      tmpl.add( "struct"   , struct );
+      tmpl.add( "types"    , types );
       setRendererFieldsMaxWidth( struct );
-      writeType( moduleName, struct.getName() + ".cpp", tmpl );
+      final String filename = name.substring( name.lastIndexOf( '.' ) + 1 ) + ".hpp";
+      final String subPath  = implModuleName.replaceAll( "::", "/" );
+      writeType( modelModuleName, subPath, filename, tmpl );
+   }
+
+   private void generateStructBody( String modelName ) throws IOException {
+      final StructType          struct          = _model.getStruct( modelName );
+      final String              modelModuleName = modelName.substring( 0, modelName.lastIndexOf( '.' ));
+      final String              implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
+      final Map<String, String> types           = _model.getTypes( Model.CPP_LANGUAGE );
+      final ST                  tmpl            = _group.getInstanceOf( "/structBody" );
+      tmpl.add( "namespace", implModuleName );
+      tmpl.add( "struct"   , struct );
+      tmpl.add( "modelName", modelName );
+      tmpl.add( "types"    , types );
+      setRendererFieldsMaxWidth( struct );
+      final String filename = modelName.substring( modelName.lastIndexOf( '.' ) + 1 ) + ".cpp";
+      final String subPath  = implModuleName.replaceAll( "::", "/" );
+      writeType( modelModuleName, subPath, filename, tmpl );
    }
 
    @Override
    protected void struct( String name ) throws IOException {
-      final StructType struct = _model.getStruct( name );
-      generateStructHeader( struct );
-      generateStructBody  ( struct );
+      generateStructHeader( name );
+      generateStructBody  ( name );
+   }
+
+   private void responses( ComponentType component ) throws IOException {
+      for( final Entry<InterfaceType, List<RequestType>> e : Model.getResponses( component ).entrySet()) {
+         final InterfaceType       iface     = e.getKey();
+         final String              ifaceName = iface.getName();
+         final List<RequestType>   requests  = e.getValue();
+         final Map<String, String> types     = _model.getTypes( Model.CPP_LANGUAGE );
+         final ST tmpl = _group.getInstanceOf( "/responsesHeader" );
+         tmpl.add( "namespace"  , _moduleName );
+         tmpl.add( "ifaceName", ifaceName );
+         tmpl.add( "requests" , requests );
+         tmpl.add( "types"    , types );
+         write( 'I' + ifaceName + "Responses.hpp", tmpl );
+      }
    }
 
    private void generateRequiredInterfaces( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
-         final InterfaceType     iface      = (InterfaceType)required.getInterface();
-         final String            ifaceName  = iface.getName();
-         final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
-         final int               rawSize    = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
-         final int               ifaceID    = _model.getInterfaceID( ifaceName );
-         final ST                tmpl       = _group.getInstanceOf( "/requiredInterface" );
-         tmpl.add( "namespace"     , _moduleName );
-         tmpl.add( "ifaceName"     , ifaceName );
-         tmpl.add( "usedTypes"     , usedTypes );
-         tmpl.add( "rawSize"       , rawSize );
-         tmpl.add( "iface"         , iface );
-         tmpl.add( "ifaceID"       , ifaceID );
-         write( ifaceName + ".hpp", tmpl );
+         final InterfaceType       iface     = (InterfaceType)required.getInterface();
+         final SortedSet<String>   usedTypes = Model.getUserTypesRequiredBy( iface );
+         final int                 rawSize   = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
+         final int                 ifaceID   = _model.getInterfaceID( iface.getName());
+         final Map<String, String> types     = _model.getTypes( Model.CPP_LANGUAGE );
+         final ST                  tmpl      = _group.getInstanceOf( "/requiredInterface" );
+         tmpl.add( "namespace", _moduleName );
+         tmpl.add( "usedTypes", usedTypes );
+         tmpl.add( "rawSize"  , rawSize );
+         tmpl.add( "iface"    , iface );
+         tmpl.add( "ifaceID"  , ifaceID );
+         tmpl.add( "types"    , types );
+         write( iface.getName() + ".hpp", tmpl );
       }
    }
 
@@ -116,25 +149,17 @@ public class CppGenerator extends BaseGenerator {
 
    private void generateOfferedInterface( ComponentType component ) throws IOException {
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
-         final InterfaceType     iface            = (InterfaceType)offered.getInterface();
-         final String            ifaceName        = iface.getName();
-         final SortedSet<String> usedTypes        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eventsOrRequests = _model.getFacets().get( ifaceName );
-         final ST                tmpl             = _group.getInstanceOf( "/offeredInterface" );
+         final InterfaceType       iface            = (InterfaceType)offered.getInterface();
+         final String              ifaceName        = iface.getName();
+         final SortedSet<String>   usedTypes        = _model.getUsedTypesBy( ifaceName );
+         final List<Object>        eventsOrRequests = _model.getFacets().get( ifaceName );
+         final Map<String, String> types            = _model.getTypes( Model.CPP_LANGUAGE );
+         final ST                  tmpl             = _group.getInstanceOf( "/offeredInterface" );
          tmpl.add( "namespace"       , _moduleName );
-         tmpl.add( "name"            , ifaceName );
+         tmpl.add( "ifaceName"       , ifaceName );
          tmpl.add( "usedTypes"       , usedTypes );
          tmpl.add( "eventsOrRequests", eventsOrRequests );
-         write( 'I' + ifaceName + ".hpp", tmpl );
-      }
-      for( final String ifaceName : Model.getResponses( component )) {
-         final SortedSet<String> usedTypes        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eventsOrRequests = _model.getFacets().get( ifaceName );
-         final ST            tmpl  = _group.getInstanceOf( "/offeredInterface" );
-         tmpl.add( "namespace"       , _moduleName );
-         tmpl.add( "name"            , ifaceName );
-         tmpl.add( "usedTypes"       , usedTypes );
-         tmpl.add( "eventsOrRequests", eventsOrRequests );
+         tmpl.add( "types"           , types );
          write( 'I' + ifaceName + ".hpp", tmpl );
       }
    }
@@ -179,6 +204,7 @@ public class CppGenerator extends BaseGenerator {
       final Map<String, List<RequestType>>     offRequests  = Model.getRequestMap( offEvents );
       final Map<String, List<RequestType>>     reqRequests  = Model.getRequestMap( reqEvents );
       final int                                respRawSize  = _model.getBufferResponseCapacity( offEvents );
+      final Map<String, String>                types        = _model.getTypes( Model.CPP_LANGUAGE );
       final ST                                 tmpl         = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "namespace"     , _moduleName );
       tmpl.add( "component"     , component );
@@ -190,48 +216,49 @@ public class CppGenerator extends BaseGenerator {
       tmpl.add( "offRequests"   , offRequests );
       tmpl.add( "reqRequests"   , reqRequests );
       tmpl.add( "hasResponse"   , respRawSize > 0 );
+      tmpl.add( "types"         , types );
       setRendererInterfaceMaxWidth( "width", ifaces );
       write( component.getName() + "Dispatcher.cpp", tmpl );
    }
 
    private void generateComponentInterface( ComponentType component ) throws IOException {
-      final List<InstanceType>                 instances       = _model.getInstancesOf( "TODO", component ); // TODO
-      final List<InterfaceType>                requires        = Model.getRequiredInterfacesBy( component );
-      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( "TODO" ); // TODO
-      final Set<String>                        actions         = _model.getAutomatonActions( component );
-      final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf( component );
-      final Set<String>                        responses       = Model.getResponses( component );
-      final Map<InterfaceType, List<DataType>> reqData         = _model.getRequiredDataOf  ( component );
-      final ST                                 tmpl            = _group.getInstanceOf( "/componentInterface" );
-      tmpl.add( "namespace"      , _moduleName );
-      tmpl.add( "component"      , component );
-      tmpl.add( "requires"       , requires );
-      tmpl.add( "instancesByName", instancesByName );
-      tmpl.add( "instances"      , instances );
-      tmpl.add( "actions"        , actions );
-      tmpl.add( "data"           , offData );
-      tmpl.add( "responses"      , responses );
-      tmpl.add( "reqData"        , reqData );
-      write( component.getName() + "Component.hpp", tmpl );
+//      final List<InstanceType>                    instances       = _model.getInstancesOf( "TODO", component ); // TODO
+//      final List<InterfaceType>                   requires        = Model.getRequiredInterfacesBy( component );
+//      final Map<String, InstanceType>             instancesByName = _model.getInstancesByName( "TODO" ); // TODO
+//      final Set<String>                           actions         = _model.getAutomatonActions( component );
+//      final Map<InterfaceType, List<DataType>>    offData         = _model.getOfferedDataOf( component );
+//      final Map<InterfaceType, List<RequestType>> responses       = Model.getResponses( component );
+//      final Map<InterfaceType, List<DataType>>    reqData         = _model.getRequiredDataOf  ( component );
+//      final ST                                    tmpl            = _group.getInstanceOf( "/componentInterface" );
+//      tmpl.add( "namespace"      , _moduleName );
+//      tmpl.add( "component"      , component );
+//      tmpl.add( "requires"       , requires );
+//      tmpl.add( "instancesByName", instancesByName );
+//      tmpl.add( "instances"      , instances );
+//      tmpl.add( "actions"        , actions );
+//      tmpl.add( "data"           , offData );
+//      tmpl.add( "responses"      , responses );
+//      tmpl.add( "reqData"        , reqData );
+//      write( component.getName() + "Component.hpp", tmpl );
    }
 
    private void generateComponentImplementation( ComponentType component ) throws IOException {
-      final List<InstanceType>                     instances         = _model.getInstancesOf( "TODO", component ); // TODO
-      final List<InterfaceType>                    requires          = Model.getRequiredInterfacesBy( component );
-      final Map<String, InstanceType>              instancesByName   = _model.getInstancesByName( "TODO" ); // TODO
-      final Map<InstanceType, ProcessType>         processByInstance = _model.getProcessByInstance();
-      final Map<InterfaceType, List<DataType>>     offData           = _model.getOfferedDataOf( component );
-      final Map<InterfaceType, List<DataType>>     reqData           = _model.getRequiredDataOf  ( component );
-      final ST                                     tmpl              = _group.getInstanceOf( "/componentImplementation" );
-      tmpl.add( "namespace"      , _moduleName );
-      tmpl.add( "component"      , component );
-      tmpl.add( "requires"       , requires );
-      tmpl.add( "instancesByName", instancesByName );
-      tmpl.add( "instances"      , instances );
-      tmpl.add( "processes"      , processByInstance );
-      tmpl.add( "data"           , offData );
-      tmpl.add( "reqData"        , reqData );
-      write( component.getName() + "Component.cpp", tmpl );
+//      final List<InstanceType>                     instances         = _model.getInstancesOf( "TODO", component ); // TODO
+//      final List<InterfaceType>                    requires          = Model.getRequiredInterfacesBy( component );
+//      final Map<String, InstanceType>              instancesByName   = _model.getInstancesByName( "TODO" ); // TODO
+//      final Map<InstanceType, ProcessType>         processByInstance = _model.getProcessByInstance();
+//      final Map<InterfaceType, List<DataType>>     offData           = _model.getOfferedDataOf( component );
+//      final Map<InterfaceType, List<DataType>>     reqData           = _model.getRequiredDataOf  ( component );
+//      final ST                                     tmpl              = _group.getInstanceOf( "/componentImplementation" );
+//      tmpl.add( "namespace"      , _moduleName );
+//      tmpl.add( "component"      , component );
+//      tmpl.add( "requires"       , requires );
+//      tmpl.add( "instancesByName", instancesByName );
+//      tmpl.add( "instances"      , instances );
+//      tmpl.add( "processes"      , processByInstance );
+//      tmpl.add( "data"           , offData );
+//      tmpl.add( "reqData"        , reqData );
+//      write( component.getName() + "Component.cpp", tmpl );
    }
 
    private void generateDataWriter( ComponentType component ) throws IOException {
@@ -299,6 +326,7 @@ public class CppGenerator extends BaseGenerator {
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
+      responses               ( component );
       generateRequiredInterfaces      ( component );
       generateRequiredImplementations ( component );
       generateOfferedInterface        ( component );
@@ -309,14 +337,18 @@ public class CppGenerator extends BaseGenerator {
       generateDataWriter              ( component );
       generateDataReader              ( component );
       generateAutomaton               ( component );
-      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".hpp", ".cpp" );
+//      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".hpp", ".cpp" );
+   }
+
+   void factory( String deployment, ProcessType process ) throws IOException {
+
    }
 
    public void generateTypesMakefileSourcesList() throws FileNotFoundException {
       for( final Entry<String, String> e : _genDirTypes.entrySet()) {
          final String moduleName = e.getKey();
          final String genDir     = e.getValue();
-         generateMakefileSourcesList( _generatedTypes, moduleName, genDir + "/src-gen", ".hpp", ".cpp" );
+//         generateMakefileSourcesList( _generatedTypes, moduleName, genDir + "/src-gen", ".hpp", ".cpp" );
       }
    }
 }

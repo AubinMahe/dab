@@ -44,7 +44,7 @@ abstract class BaseGenerator {
    protected /* */ String              _genDir;
    protected /* */ String              _moduleName;
 
-   protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
+   protected BaseGenerator( Model model, String language, String templateName, BaseRenderer renderer ) {
       _model    = model;
       _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
       _renderer = renderer;
@@ -57,7 +57,9 @@ abstract class BaseGenerator {
       _group.registerModelAdaptor( DataType       .class, new DataAdaptor());
       for( final TypesType types : _model.getApplication().getTypes()) {
          for( final TypesImplType impl : types.getImplementation()) {
-            _genDirTypes.put( types.getModuleName(), impl.getSrcDir());
+            if( impl.getLanguage().equals( language )) {
+               _genDirTypes.put( types.getModuleName(), impl.getSrcDir());
+            }
          }
       }
    }

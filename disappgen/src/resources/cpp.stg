@@ -20,8 +20,8 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float<
   elseif( field.isDouble  )>double<
   elseif( field.isString  )>char<
-  elseif( field.isEnum    )><field.userType.name><
-  elseif( field.isStruct  )><field.userType.name><
+  elseif( field.isEnum    )><types.(field.userType)><
+  elseif( field.isStruct  )><types.(field.userType)><
   endif>
 >>
 
@@ -92,80 +92,6 @@ byteBufferPut( prefix, fields ) ::= <<
 
 
 
-structHeader( namespace, struct ) ::= <<
-#pragma once
-
-#include \<io/ByteBuffer.hpp>
-
-<struct.field:{field|<
-if( field.isStruct || field.isEnum )>
-#include \<<namespace>/<type(field)>.hpp><
-endif>}>
-
-namespace <namespace> {
-
-   struct <struct.name> {
-
-<struct.field:{field|<
-if( field.isString )>
-      char <field.name>[<field.length> + 1];<
-else>
-      <type(field)> <field.name>;<
-endif>}>
-
-      void put( io::ByteBuffer & target ) const;
-      void get( io::ByteBuffer & source );
-   };
-}
->>
-
-
-
-structBody( namespace, struct, maxLength, maxStrLength ) ::= <<
-#include \<<namespace>/<struct.name>.hpp>
-
-using namespace <namespace>;
-
-void <struct.name>::put( io::ByteBuffer & target ) const {
-<struct.field:{field|
-   < if(     field.isBoolean )>target.putBool  ( <field.name> );
-   < elseif( field.isByte    )>target.putByte  ( <field.name> );
-   < elseif( field.isShort   )>target.putShort ( <field.name> );
-   < elseif( field.isUshort  )>target.putUShort( <field.name> );
-   < elseif( field.isInt     )>target.putInt   ( <field.name> );
-   < elseif( field.isUint    )>target.putUInt  ( <field.name> );
-   < elseif( field.isLong    )>target.putLong  ( <field.name> );
-   < elseif( field.isUlong   )>target.putULong ( <field.name> );
-   < elseif( field.isFloat   )>target.putFloat ( <field.name> );
-   < elseif( field.isDouble  )>target.putDouble( <field.name> );
-   < elseif( field.isString  )>target.putString( <field.name> );
-   < elseif( field.isEnum    )>target.putByte  ((byte)<field.name> );
-   < elseif( field.isStruct  )><field.name>.put( target );
-   < endif>
-}>}
-
-void <struct.name>::get( io::ByteBuffer & source ) {
-<struct.field:{field|
-   < if(     field.isBoolean )><field.name; format="width"> = source.getBool  ();
-   < elseif( field.isByte    )><field.name; format="width"> = source.getByte  ();
-   < elseif( field.isShort   )><field.name; format="width"> = source.getShort ();
-   < elseif( field.isUshort  )><field.name; format="width"> = source.getUShort();
-   < elseif( field.isInt     )><field.name; format="width"> = source.getInt   ();
-   < elseif( field.isUint    )><field.name; format="width"> = source.getUInt  ();
-   < elseif( field.isLong    )><field.name; format="width"> = source.getLong  ();
-   < elseif( field.isUlong   )><field.name; format="width"> = source.getULong ();
-   < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
-   < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-   < elseif( field.isString  )>source.getString( <
-                                  field.name; format="strWidth">, sizeof( <field.name; format="strWidth"> ));
-   < elseif( field.isEnum    )><field.name; format="width"> = (<field.userType.name>)source.getByte();
-   < elseif( field.isStruct  )><field.name>.get( source );
-   < endif>
-}>}
->>
-
-
-
 enumHeader( namespace, enum ) ::= <<
 #pragma once
 
@@ -205,29 +131,122 @@ namespace <namespace> {
 
 
 
-requiredInterface( typesNamespace, namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+structHeader( namespace, struct, types ) ::= <<
+#pragma once
+
+#include \<io/ByteBuffer.hpp>
+
+<struct.field:{field|<
+if( field.isStruct || field.isEnum )>
+#include \<<types.(field.userType); format="NamespaceToPath">.hpp><
+endif>}>
+
+namespace <namespace> {
+
+   struct <struct.name> {
+
+<struct.field:{field|<
+if( field.isString )>
+      char <field.name>[<field.length> + 1];<
+else>
+      <type(field)> <field.name>;<
+endif>}>
+
+      void put( io::ByteBuffer & target ) const;
+      void get( io::ByteBuffer & source );
+   };
+}
+>>
+
+
+
+structBody( namespace, struct, modelName, maxLength, maxStrLength, types ) ::= <<
+#include \<<types.(modelName); format="NamespaceToPath">.hpp>
+
+using namespace <namespace>;
+
+void <struct.name>::put( io::ByteBuffer & target ) const {
+<struct.field:{field|
+   < if(     field.isBoolean )>target.putBool  ( <field.name> );
+   < elseif( field.isByte    )>target.putByte  ( <field.name> );
+   < elseif( field.isShort   )>target.putShort ( <field.name> );
+   < elseif( field.isUshort  )>target.putUShort( <field.name> );
+   < elseif( field.isInt     )>target.putInt   ( <field.name> );
+   < elseif( field.isUint    )>target.putUInt  ( <field.name> );
+   < elseif( field.isLong    )>target.putLong  ( <field.name> );
+   < elseif( field.isUlong   )>target.putULong ( <field.name> );
+   < elseif( field.isFloat   )>target.putFloat ( <field.name> );
+   < elseif( field.isDouble  )>target.putDouble( <field.name> );
+   < elseif( field.isString  )>target.putString( <field.name> );
+   < elseif( field.isEnum    )>target.putByte  ((byte)<field.name> );
+   < elseif( field.isStruct  )><field.name>.put( target );
+   < endif>
+}>}
+
+void <struct.name>::get( io::ByteBuffer & source ) {
+<struct.field:{field|
+   < if(     field.isBoolean )><field.name; format="width"> = source.getBool  ();
+   < elseif( field.isByte    )><field.name; format="width"> = source.getByte  ();
+   < elseif( field.isShort   )><field.name; format="width"> = source.getShort ();
+   < elseif( field.isUshort  )><field.name; format="width"> = source.getUShort();
+   < elseif( field.isInt     )><field.name; format="width"> = source.getInt   ();
+   < elseif( field.isUint    )><field.name; format="width"> = source.getUInt  ();
+   < elseif( field.isLong    )><field.name; format="width"> = source.getLong  ();
+   < elseif( field.isUlong   )><field.name; format="width"> = source.getULong ();
+   < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
+   < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
+   < elseif( field.isString  )>source.getString( <
+                                  field.name; format="strWidth">, sizeof( <field.name; format="strWidth"> ));
+   < elseif( field.isEnum    )><field.name; format="width"> = (<types.(field.userType)>)source.getByte();
+   < elseif( field.isStruct  )><field.name>.get( source );
+   < endif>
+}>}
+>>
+
+
+
+responsesHeader( namespace, ifaceName, requests, types ) ::= <<
+#pragma once
+//responses
+<requests:{request|
+#include \<<types.(request.type); format="NamespaceToPath">.hpp\>
+}>
+namespace <namespace> {
+
+   class I<ifaceName>Responses {
+   public:
+
+<requests:{request|
+      virtual void <request.name>Response( <types.(request.type)> <request.name> ) = 0;
+}>
+   private:
+      I<ifaceName>Responses( const I<ifaceName>Responses & ) = delete;
+      I<ifaceName>Responses & operator = ( const I<ifaceName>Responses & ) = delete;
+   };
+}
+>>
+
+
+
+requiredInterface( namespace, usedTypes, rawSize, iface, ifaceID, types ) ::= <<
 #pragma once
 //requiredInterface
 #include \<io/DatagramSocket.hpp>
 
-<usedTypes:{type|#include \<<typesNamespace>/<type>.hpp>
-}>
-<iface.eventOrRequestOrData:{facet|<if( facet.arguments )>
-#include \<<typesNamespace>/<ifaceName><facet.name; format="cap">Response.hpp>
-<endif>
+<usedTypes:{type|#include \<<types.(type); format="NamespaceToPath">.hpp>
 }>
 namespace <namespace> {
 
-   class <ifaceName> {
+   class <iface.name> {
    public:
 
-      <ifaceName>( io::DatagramSocket & socket, const sockaddr_in & target );
+      <iface.name>( io::DatagramSocket & socket, const sockaddr_in & target );
 
    public:
 
-<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+<iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
       void <facet.name>( <
-if( facet.arguments )><
+if( facet.isRequest )><
          signature( facet.arguments.field )><
 else><
          signature( facet.field )><
@@ -254,16 +273,16 @@ endif> );
       io::ByteBuffer       _out;
 
    private:
-      <ifaceName>( const <ifaceName> & ) = delete;
-      <ifaceName> & operator = ( const <ifaceName> & ) = delete;
+      <iface.name>( const <iface.name> & ) = delete;
+      <iface.name> & operator = ( const <iface.name> & ) = delete;
    };
 }
 >>
 
 
 
-requiredImplementation( typesNamespace, namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
-#include \<<namespace>/<iface.name>.hpp>
+requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+#include \<<namespace; format="NamespaceToPath">/<iface.name>.hpp>
 //requiredImplementation
 using namespace <namespace>;
 
@@ -272,10 +291,10 @@ using namespace <namespace>;
    _target( target ),
    _out   ( _raw, <rawSize> )
 {}
-<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+<iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
 
 void <iface.name>::<facet.name>( <
-if( facet.arguments )><
+if( facet.isRequest )><
     signature( facet.arguments.field )><
 else><
     signature( facet.field )><
@@ -284,9 +303,9 @@ endif> ) {
    _out.putByte( <iface.name; format="ID">_ID );
    _out.putByte( <facet.name; format="ID"> );
    <
-if( facet.arguments )><
+if( facet.isRequest )><
    byteBufferPut( "", facet.arguments.field )><
-elseif( facet.type )><
+elseif( facet.isData )><
    byteBufferPut( "_", facet )><
 else><
    byteBufferPut( "", facet.field )><
@@ -300,30 +319,30 @@ endif>
 
 
 
-offeredInterface( typesNamespace, namespace, name, usedTypes, eventsOrRequests ) ::= <<
+offeredInterface( namespace, ifaceName, usedTypes, eventsOrRequests, types ) ::= <<
 #pragma once
 //offeredInterface
 #include \<types.hpp>
 
-<usedTypes:{used|
-#include \<<typesNamespace>/<used>.hpp>
+<usedTypes:{type|
+#include \<<types.(type); format="NamespaceToPath">.hpp>
 }>
 namespace <namespace> {
 
-   class I<name> {
+   class I<ifaceName> {
    public:
 
-      I<name>( void ) = default;
-      virtual ~ I<name>( void ) = default;
+      I<ifaceName>( void ) = default;
+      virtual ~ I<ifaceName>( void ) = default;
 
    public:
 
-<eventsOrRequests:{facet|< if(facet.type)>< else>
+<eventsOrRequests:{facet|< if( facet.isData )>< else>
       virtual void <facet.name>( <
-if( facet.arguments )><
-    signature( facet.arguments.field )>, <typesNamespace>::<name><facet.name; format="cap">Response & response<
+if( facet.isRequest )><
+         signature( facet.arguments.field )>, <types.(facet.type)> & <facet.name><
 else><
-    signature( facet.field )><
+         signature( facet.field )><
 endif> ) = 0;< endif>
 }>
    public:
@@ -331,8 +350,8 @@ endif> ) = 0;< endif>
       virtual void run( void ) = 0;
 
    private:
-      I<name>( const I<name> & ) = delete;
-      I<name> & operator = ( const I<name> & ) = delete;
+      I<ifaceName>( const I<ifaceName> & ) = delete;
+      I<ifaceName> & operator = ( const I<ifaceName> & ) = delete;
    };
 }
 >>
@@ -376,12 +395,12 @@ namespace <namespace> {
 <ifaces.keys:{ifaceName|
          <ifaceName; format="ID,width"> = <ifaces.(ifaceName)>,
 < if( offRequests.(ifaceName))>
-         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
+         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Response" ))>,
 < endif>
 <data:{iface|
          <iface.name; format="ID,width"> = <requires.(iface.name)>,
 }>}><reqRequests:{ifaceName|
-         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Responses" ))>,
+         <ifaceName; format="ID">_RESPONSES = <ifacesIDs.( concat( ifaceName, "Response" ))>,
 }>      };
 <ifaces.keys:{ifaceName|
 
@@ -443,35 +462,11 @@ byteBufferGet( fields ) ::= <<
 < elseif( field.isDouble  )>double <field.name> = _in.getDouble();
 < elseif( field.isString  )>char <field.name>[<field.length> + 1];
 _in.getString( <field.name>, sizeof( <field.name> ));
-< elseif( field.isEnum    )><typesNamespace>::<field.userType.name> <field.name> = _in.getByte();
-< elseif( field.isStruct  )><typesNamespace>::<field.userType.name> <field.name>;
+< elseif( field.isEnum    )><types.(field.userType)> <field.name> = _in.getByte();
+< elseif( field.isStruct  )><types.(field.userType)> <field.name>;
 <field.name>.get( _in );
 < endif>
 }>
->>
-
-
-
-dispatcherImplResponse() ::= <<
-// dispatcherImplResponse -- begin
-      enum class Interface : byte {
-         <reqRequests.(ifaceName):{req|<req.name; format="ID">( <i> ),
-}>      };
-
-bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
-   UTIL_LOG_ARGS( "event = %d", event );
-   switch( event ) {
-<reqRequests.(ifaceName):{req|
-   case <req.name; format="ID">:{
-      <req.response.field:{field|<byteBufferGet( field )>}
->      _listener.<req.name>(<args( req.response.field )>);
-      return true;\}
-}>   default:
-      UTIL_LOG_ARGS( "Unexpected event: %s", (byte)event );
-      return false;
-   }
-}
-// dispatcherImplResponse -- end
 >>
 
 
@@ -496,11 +491,11 @@ bool <component.name>Dispatcher::dispatch( <iface.name>Data event ) {
 
 
 dispatcherImplementation(
-    typesNamespace, namespace, component, ifaces, events, eventIDs, usedTypes, offRequests, reqRequests, hasResponse, data
+    namespace, component, ifaces, events, eventIDs, usedTypes, offRequests, reqRequests, hasResponse, data, types
 ) ::= <<
 //dispatcherImplementation
-#include \<<namespace>/<component.name>Dispatcher.hpp>
-#include \<<namespace>/<component.name>Component.hpp>
+#include \<<namespace; format="NamespaceToPath">/<component.name>Dispatcher.hpp>
+#include \<<namespace; format="NamespaceToPath">/<component.name>Component.hpp>
 
 #include \<util/Log.hpp>
 
@@ -519,20 +514,20 @@ using namespace <namespace>;
 <ifaces.keys:{ifaceName|
 
 
-<events.(ifaceName):{facet|< if( facet.response )>
+<events.(ifaceName):{facet|< if( facet.isRequest )>
 static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
 bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event ) {
    switch( event ) {
-<events.(ifaceName):{facet|< if( facet.type )>< else>
+<events.(ifaceName):{facet|< if( facet.isData )>< else>
    case <ifaceName>Event::<facet.name; format="ID">:{
-      < if( facet.arguments )><facet.arguments.field:{field|<
+      < if( facet.isRequest )><facet.arguments.field:{field|<
          byteBufferGet( field )>}>< 
       elseif( facet.field )><facet.field:{field|<
          byteBufferGet( field )>}><
       endif><
-      if( facet.response )
->      <typesNamespace>::<ifaceName><facet.name; format="cap">Response response;
+      if( facet.isRequest )
+>      <ifaceName><facet.name; format="cap">Response response;
       _listener.<facet.name>( <args( facet.arguments.field )>, response );
       _out.clear();
       _out.putByte((byte)Interface::<ifaceName; format="ID">_RESPONSES );
@@ -558,13 +553,13 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
 }>
 <reqRequests:{ifaceName|
 
-
 bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
    switch( event ) {
 <reqRequests.(ifaceName):{facet|
    case <ifaceName>Response::<facet.name; format="ID">:{
-      <facet.response.field:{field|<byteBufferGet( field )>}
->      _listener.<facet.name>( <args( facet.response.field )> );
+      <types.(facet.type)> <facet.name>;
+      <facet.name>.get( _in );
+      _listener.<facet.name>( <facet.name> );
       break;
       \}
 }>   default:

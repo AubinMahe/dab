@@ -20,8 +20,8 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float  <
   elseif( field.isDouble  )>double <
   elseif( field.isString  )>String <
-  elseif( field.isEnum    )><field.userType.name><
-  elseif( field.isStruct  )><field.userType.name><
+  elseif( field.isEnum    )><types.(field.userType)><
+  elseif( field.isStruct  )><types.(field.userType)><
   endif>
 >>
 
@@ -105,19 +105,8 @@ import io.ByteBufferHelper;
 public class <struct.name> {
 
 <struct.field:{field|
-   public < if( field.isBoolean )>boolean <field.name>;
-< elseif(       field.isByte    )>byte    <field.name>;
-< elseif(       field.isShort   )>short   <field.name>;
-< elseif(       field.isUshort  )>short   <field.name>;
-< elseif(       field.isInt     )>int     <field.name>;
-< elseif(       field.isUint    )>int     <field.name>;
-< elseif(       field.isLong    )>long    <field.name>;
-< elseif(       field.isUlong   )>long    <field.name>;
-< elseif(       field.isFloat   )>float   <field.name>;
-< elseif(       field.isDouble  )>double  <field.name>;
-< elseif(       field.isString  )>String  <field.name>;
-< elseif(       field.isEnum    )><types.(field.userType)> <field.name>;
-< elseif(       field.isStruct  )>final <types.(field.userType)> <field.name> = new <types.(field.userType)>();
+   public < if( field.isStruct )>final <type( field )> <field.name> = new <type( field )>();
+< else><type( field )> <field.name>;
 < endif>
 }>
    public void put( ByteBuffer target ) {
@@ -152,7 +141,7 @@ public class <struct.name> {
 < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
 < elseif( field.isEnum    )><field.name; format="width"> = <types.(field.userType)>.values()[source.get()];
 < elseif( field.isString  )><field.name; format="width"> = ByteBufferHelper.getString( source );
-< elseif( field.isStruct  )><field.name; format="width">.put( source );
+< elseif( field.isStruct  )><field.name; format="width">.get( source );
 < endif>
 }>   }
 }
@@ -174,17 +163,17 @@ public interface I<ifaceName>Responses {
 
 
 
-requiredInterface( package, ifaceName, iface ) ::= <<
+requiredInterface( package, iface ) ::= <<
 package <package>;
 // requiredInterface
 
 import java.io.IOException;
 
-public interface I<ifaceName> {
+public interface I<iface.name> {
 
 <iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
    void <facet.name; format="argument">(<
-if( facet.arguments )><
+if( facet.isRequest )><
       signature( facet.arguments.field )><
 else><
       signature( facet.field )><
@@ -336,7 +325,7 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
 >      final <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
       _component.<facet.name>( <args( facet.arguments.field )>, <facet.name> );
       _out.clear();
-      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSE );
+      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
       _out.put( EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> );
       <facet.name>.put( _out );
       _out.flip();
@@ -458,10 +447,10 @@ public class <component.name>Dispatcher implements da.IDispatcher {
 < endif>
 <offers.keys:{ifaceName|
    private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
-   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSE = <
+   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
       ifacesIDs.( concat( ifaceName, "Response" ))>;
 < endif>
-}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSE = <
+}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
         ifacesIDs.( concat( ifaceName, "Response" ))>;
 }>
    private final DatagramChannel _channel;
@@ -542,7 +531,7 @@ public class <component.name>Dispatcher implements da.IDispatcher {
       case INTRFC_<ifaceName; format="ID">: return dispatch( <
          if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ), in );
 }><reqRequests:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">_RESPONSE: return dispatch( <ifaceName>Response.valueOf( event ), in );
+      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ), in );
 }><data:{iface|
       case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ), in );
 }>      }

@@ -26,15 +26,15 @@ import disapp.generator.model.StructType;
 public class JavaGenerator extends BaseGenerator {
 
    public JavaGenerator( Model model ) {
-      super( model, "java.stg", new BaseRenderer());
+      super( model, Model.JAVA_LANGUAGE, "java.stg", new BaseRenderer());
    }
 
    @Override
    protected void gEnum( String name ) throws IOException {
       final EnumerationType enm = _model.getEnum( name );
-      final String modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
-      final String implModuleName  = _model.getModuleName( modelModuleName, "Java" );
-      final ST tmpl = _group.getInstanceOf( "/enum" );
+      final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
+      final String          implModuleName  = _model.getModuleName( modelModuleName, Model.JAVA_LANGUAGE );
+      final ST              tmpl = _group.getInstanceOf( "/enum" );
       tmpl.add( "package", implModuleName );
       tmpl.add( "enum"   , enm );
       setRendererMaxWidth( enm );
@@ -47,8 +47,8 @@ public class JavaGenerator extends BaseGenerator {
    protected void struct( String name ) throws IOException {
       final StructType          struct          = _model.getStruct( name );
       final String              modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
-      final String              implModuleName  = _model.getModuleName( modelModuleName, "Java" );
-      final Map<String, String> types           = _model.getTypes( "Java" );
+      final String              implModuleName  = _model.getModuleName( modelModuleName, Model.JAVA_LANGUAGE );
+      final Map<String, String> types           = _model.getTypes( Model.JAVA_LANGUAGE );
       final ST                  tmpl            = _group.getInstanceOf( "/struct" );
       tmpl.add( "package", implModuleName );
       tmpl.add( "struct" , struct );
@@ -64,7 +64,7 @@ public class JavaGenerator extends BaseGenerator {
          final InterfaceType       iface     = e.getKey();
          final String              ifaceName = iface.getName();
          final List<RequestType>   requests  = e.getValue();
-         final Map<String, String> types     = _model.getTypes( "Java" );
+         final Map<String, String> types     = _model.getTypes( Model.JAVA_LANGUAGE );
          final ST tmpl = _group.getInstanceOf( "/responses" );
          tmpl.add( "package"  , _moduleName );
          tmpl.add( "ifaceName", ifaceName );
@@ -76,13 +76,11 @@ public class JavaGenerator extends BaseGenerator {
 
    private void requiredInterfaces( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
-         final InterfaceType iface     = (InterfaceType)required.getInterface();
-         final String        ifaceName = iface.getName();
-         final ST            tmpl      = _group.getInstanceOf( "/requiredInterface" );
-         tmpl.add( "package"     , _moduleName );
-         tmpl.add( "ifaceName"   , ifaceName );
-         tmpl.add( "iface"       , iface );
-         write( 'I' + ifaceName + ".java", tmpl );
+         final InterfaceType iface = (InterfaceType)required.getInterface();
+         final ST            tmpl  = _group.getInstanceOf( "/requiredInterface" );
+         tmpl.add( "package", _moduleName );
+         tmpl.add( "iface"  , iface );
+         write( 'I' + iface.getName() + ".java", tmpl );
       }
    }
 
@@ -114,7 +112,7 @@ public class JavaGenerator extends BaseGenerator {
          final String              ifaceName = iface.getName();
          final SortedSet<String>   usedTypes = _model.getUsedTypesBy( ifaceName );
          final List<Object>        facets    = _model.getFacets().get( ifaceName );
-         final Map<String, String> types     = _model.getTypes( "Java" );
+         final Map<String, String> types     = _model.getTypes( Model.JAVA_LANGUAGE );
          final ST                  tmpl      = _group.getInstanceOf( "/offeredInterface" );
          tmpl.add( "package"  , _moduleName );
          tmpl.add( "ifaceName", ifaceName );
@@ -138,7 +136,7 @@ public class JavaGenerator extends BaseGenerator {
       final Map<String, List<RequestType>>     reqRequests = Model.getRequestMap( reqEvents );
       final int                                respRawSize = _model.getBufferResponseCapacity( offEvents );
       final Map<InterfaceType, List<DataType>> data        = _model.getRequiredDataOf( component );
-      final Map<String, String>                types       = _model.getTypes( "Java" );
+      final Map<String, String>                types       = _model.getTypes( Model.JAVA_LANGUAGE );
       final int rawSize = Math.max( _model.getBufferInCapacity( component ), _model.getBufferResponseCapacity( reqEvents ));
       final ST  tmpl    = _group.getInstanceOf( "/dispatcherImplementation" );
       tmpl.add( "package"      , _moduleName );
@@ -186,7 +184,7 @@ public class JavaGenerator extends BaseGenerator {
          for( final OfferedInterfaceUsageType offered : component.getOffers()) {
             final InterfaceType       iface = (InterfaceType)offered.getInterface();
             final List<DataType>      data  = compData.get( iface );
-            final Map<String, String> types = _model.getTypes( "Java" );
+            final Map<String, String> types = _model.getTypes( Model.JAVA_LANGUAGE );
             if( data != null ) {
                final String ifaceName = iface.getName();
                final int    ID        = _model.getInterfaceID( ifaceName );
@@ -226,7 +224,7 @@ public class JavaGenerator extends BaseGenerator {
    private void automaton( ComponentType component ) throws IOException {
       final AutomatonType automaton = component.getAutomaton();
       if( automaton != null ) {
-         final Map<String, String> types = _model.getTypes( "Java" );
+         final Map<String, String> types = _model.getTypes( Model.JAVA_LANGUAGE );
          final String stateModelName = automaton.getStateEnum().getName();
          final String stateFullName  = types.get( stateModelName );
          final String stateShortName = stateModelName.substring( stateModelName.lastIndexOf( '.' ) + 1 );
@@ -262,12 +260,12 @@ public class JavaGenerator extends BaseGenerator {
    void factory( String deployment, ProcessType process ) throws IOException {
       final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
       final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance();
-      final Map<String, String>            types           = _model.getTypes( "Java" );
-      final Map<ComponentType, String>     modules         = _model.getModules( "Java" );
+      final Map<String, String>            types           = _model.getTypes( Model.JAVA_LANGUAGE );
+      final Map<ComponentType, String>     modules         = _model.getModules( Model.JAVA_LANGUAGE );
       for( final InstanceType instance : process.getInstance()) {
          final ComponentType component = (ComponentType)instance.getComponent();
          for( final ComponentImplType implementation : component.getImplementation()) {
-            if( implementation.getLanguage().equals( "Java" )) {
+            if( implementation.getLanguage().equals( Model.JAVA_LANGUAGE )) {
                _moduleName = deployment + '.' + process.getName();
                _genDir     = "factories/" + deployment + '/' + process.getName() + "/src-gen";
                final Map<InterfaceType,
