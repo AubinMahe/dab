@@ -1,12 +1,12 @@
 package sc.ui;
 
+import hpms.sc.ICompte;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import sc.ICompte;
 
 public class Compte implements ICompte {
 
@@ -59,7 +59,7 @@ public class Compte implements ICompte {
    }
 
    @Override
-   public void copyTo( dabtypes.Compte out ) {
+   public void copyTo( hpms.dabtypes.Compte out ) {
       out.id       = getId();
       out.solde    = getSolde();
       out.autorise = getAutorise();

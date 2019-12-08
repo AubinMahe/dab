@@ -1,9 +1,9 @@
-package udt;
+package hpms.udt;
 
 import java.io.IOException;
 
-import dabtypes.Etat;
-import dabtypes.Evenement;
+import hpms.dabtypes.Etat;
+import hpms.dabtypes.Evenement;
 
 public final class Controleur extends ControleurComponent {
 
@@ -30,10 +30,10 @@ public final class Controleur extends ControleurComponent {
    @Override
    public void maintenance( boolean maintenance ) {
       if( maintenance ) {
-         _automaton.process( Evenement.MAINTENANCE_ON );
+         _automaton.process( hpms.dabtypes.Evenement.MAINTENANCE_ON );
       }
       else {
-         _automaton.process( Evenement.MAINTENANCE_OFF );
+         _automaton.process( hpms.dabtypes.Evenement.MAINTENANCE_OFF );
       }
    }
 
@@ -59,12 +59,14 @@ public final class Controleur extends ControleurComponent {
    public void carteInseree( String id ) throws IOException {
       _carte .invalidate();
       _compte.invalidate();
-      _siteCentral.getInformations( id );
+      _siteCentral.informations( id );
       _automaton.process( Evenement.CARTE_INSEREE );
    }
 
    @Override
-   public void getInformations( dabtypes.Carte carte, dabtypes.Compte compte ) throws IOException {
+   public void informationsResponse( hpms.dabtypes.Information information ) throws IOException {
+      final hpms.dabtypes.Carte carte = information.carte;
+      final hpms.dabtypes.Compte compte = information.compte;
       _carte .set( carte );
       _compte.set( compte );
       if( _carte.isValid() && _compte.isValid()) {

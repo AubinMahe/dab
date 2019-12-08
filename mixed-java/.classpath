@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="factories/mixed/dab/src-gen"/>
+	<classpathentry kind="src" path="factories/mixed/hpms.dab/src-gen"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/distributeur-java"/>

@@ -6,9 +6,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.collections.*?> 
 
-<?import sc.ui.*?> 
+<?import hpms.sc.ui.*?> 
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="sc.ui.Controller">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="hpms.sc.ui.Controller">
    <stylesheets>
       <java.net.URL value="@ui.css"/> 
    </stylesheets>

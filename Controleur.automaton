@@ -3,8 +3,8 @@
    xsi:noNamespaceSchemaLocation="distributed-application-automaton.xsd"
    initial="MAINTENANCE">
 
-   <state-enum name="Etat" />
-   <event-enum name="Evenement" />
+   <state-enum name="dabtypes.Etat" />
+   <event-enum name="dabtypes.Evenement" />
 
    <transition from="MAINTENANCE"                event="MAINTENANCE_OFF"          futur="EN_SERVICE" />
    <transition from="MAINTENANCE"                event="SOLDE_CAISSE_INSUFFISANT" futur="MAINTENANCE" />

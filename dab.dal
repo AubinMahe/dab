@@ -1,77 +1,81 @@
-model DAB
+types dabtypes
 
-types
-
-   enum Etat automaton-state
+   enum Etat
+      automaton-state
 
    class Carte
-      id       string[4] "Identifiant de la carte"
-      code     string[4] "Identifiant de la carte"
-      month    byte      "Jour de péremption de la carte"
-      year     ushort    "Année de péremption de la carte"
-      nbEssais byte      "Nombre d'essais en échec de la carte"
+      id       string[4]        "Identifiant de la carte"
+      code     string[4]        "Identifiant de la carte"
+      month    byte             "Jour de péremption de la carte"
+      year     ushort           "Année de péremption de la carte"
+      nbEssais byte             "Nombre d'essais en échec de la carte"
       
    class Compte
-      id       string[4] "Identifiant du compte"
-      solde    double    "Solde du compte"
-      autorise boolean   "Le compte est-il autorisé ?"
+      id       string[4]        "Identifiant du compte"
+      solde    double           "Solde du compte"
+      autorise boolean          "Le compte est-il autorisé ?"
       
+   class Information            "Les informations relatives à une transaction"
+      carte  dabtypes.Carte     "La carte utilisée pour la transaction"
+      compte dabtypes.Compte    "Le compte associé à la carte"
+
    class EtatDuDab
-      etat        Etat   "Etat courant de l'automate du composant Controleur"
-      soldeCaisse double "Montant de la caisse en €"
+      etat        dabtypes.Etat "Etat courant de l'automate du composant Controleur"
+      soldeCaisse double        "Montant de la caisse en €"
 
    generation
-      language C    module dabtypes sources "dabtypes-c"
-      language C++  module dabtypes sources "dabtypes-cpp"
-      language Java module dabtypes sources "dabtypes-java"
+      C    as 'DBT'            in "dabtypes-c/src-gen"
+      C++  as 'hpms::dabtypes' in "dabtypes-cpp/src-gen"
+      Java as 'hpms.dabtypes'  in "dabtypes-java/src-gen"
 
 interface IHM
    event ejecterLaCarte
    event ejecterLesBillets
-      montant double        "Montant à donner à l'utilisateur du DAB"
+      montant double            "Montant à donner à l'utilisateur du DAB"
    event confisquerLaCarte
    event placerLesBilletsDansLaCorbeille
    event shutdown
 
 interface UniteDeTraitement
-   data etatDuDab EtatDuDab "Les données décrivant l'état du DAB"
-   event maintenance
-      maintenance boolean   "Maintenance active (true) ou inactive (false)"
-   event rechargerLaCaisse
-      montant double        "Montant à rajouter dans la caisse"
-   event anomalie
-      anomalie boolean      "Anomalie active (true) ou inactive (false)"
-   event carteInseree
-      carteID string[4]     "Identifiant de la carte"
-   event codeSaisi
-      code string[4]        "Code de la carte"
-   event montantSaisi
-      montant double        "Montant du retrait en €"
+   data etatDuDab               "Partage des données décrivant l'état du DAB"
+      dabtypes.EtatDuDab        
+   event maintenance            
+      maintenance boolean       "Maintenance active (true) ou inactive (false)"
+   event rechargerLaCaisse      
+      montant double            "Montant à rajouter dans la caisse"
+   event anomalie               
+      anomalie boolean          "Anomalie active (true) ou inactive (false)"
+   event carteInseree           
+      carteID string[4]         "Identifiant de la carte"
+   event codeSaisi              
+      code string[4]            "Code de la carte"
+   event montantSaisi           
+      montant double            "Montant du retrait en €"
    event carteRetiree
    event billetsRetires
    event annulationDemandeeParLeClient
    event shutdown
 
 interface SiteCentral
-   request getInformations
-         carteID string[4] "Identifiant de la carte"
-      response
-         carte  Carte      "Données de la carte"
-         compte Compte     "Données du compte"
-   event incrNbEssais
-      carteID string[4]    "Identifiant de la carte"
-   event retrait
-      carteID string[4]    "Identifiant de la carte"
-      montant double       "Montant du retrait en €"
+   request informations         "Requête asynchrone auprès du site central qui retourne les informations de carte et de compte à partir de l'id de carte"
+      response                  
+         dabtypes.Information   "Les informations de carte et de compte nécessaires"
+      from                      
+         carteID string[4]      "Identifiant de la carte"
+   event incrNbEssais           
+      carteID string[4]         "Identifiant de la carte"
+   event retrait                
+      carteID string[4]         "Identifiant de la carte"
+      montant double            "Montant du retrait en €"
    event shutdown
 
 component Distributeur 
    offers   IHM
    requires UniteDeTraitement
    generation
-      language C    module dab sources "distributeur-c/src-gen"
-      language C++  module dab sources "distributeur-cpp/src-gen"
-      language Java module dab sources "distributeur-java/src-gen"
+      C    as 'DAB'       in "distributeur-c/src-gen"
+      C++  as 'hpms::dab' in "distributeur-cpp/src-gen"
+      Java as 'hpms.dab'  in "distributeur-java/src-gen"
 
 component Controleur after-dispatch is needed
    offers   UniteDeTraitement
@@ -83,18 +87,18 @@ component Controleur after-dispatch is needed
       retraitDesBillets 10 seconds
    uses an automaton 
    generation
-      language C    module udt sources "udt-c/src-gen"
-      language C++  module udt sources "udt-cpp/src-gen"
-      language Java module udt sources "udt-java/src-gen"
+      C    as 'UDT'       in "udt-c/src-gen"
+      C++  as 'hpms::udt' in "udt-cpp/src-gen"
+      Java as 'hpms.udt'  in "udt-java/src-gen"
 
 component Banque
    offers SiteCentral
    generation
-      language C    module sc sources "sc-c/src-gen"
-      language C++  module sc sources "sc-cpp/src-gen"
-      language Java module sc sources "sc-java/src-gen"
+      C    as 'SC'       in "sc-c/src-gen"
+      C++  as 'hpms::sc' in "sc-cpp/src-gen"
+      Java as 'hpms.sc'  in "sc-java/src-gen"
 
-deployment "isolated"
+deployment isolated
    process sc 127.0.0.1:2416
       instance sc of Banque
    process udt1 127.0.0.1:2417
@@ -116,7 +120,7 @@ deployment "isolated"
          requires
             UniteDeTraitement udt2
 
-deployment "mixed"
+deployment mixed
    process sc 127.0.0.1:2416
       instance sc of Banque
    process dab 127.0.0.1:2417

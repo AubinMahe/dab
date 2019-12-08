@@ -1,4 +1,4 @@
-package sc;
+package hpms.sc;
 
 public interface IRepository {
 

@@ -14,11 +14,10 @@ class DALFormatter extends AbstractFormatter2 {
 	@Inject extension DALGrammarAccess
 
 	def dispatch void format(types types, extension IFormattableDocument document) {
-		// TODO: format HiddenRegions around keywords, attributes, cross references, etc. 
-		for (classType : types.classes) {
+		for( classType : types.structs ) {
 			classType.format
 		}
-		for (enumType : types.enums) {
+		for( enumType : types.enums ) {
 			enumType.format
 		}
 		types.generation.format

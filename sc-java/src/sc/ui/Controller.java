@@ -5,6 +5,10 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import fx.IController;
+import hpms.sc.Banque;
+import hpms.sc.ICarte;
+import hpms.sc.ICompte;
+import hpms.sc.IRepository;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -18,10 +22,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
-import sc.Banque;
-import sc.ICarte;
-import sc.ICompte;
-import sc.IRepository;
 
 /**
  * Les informations détenues par le Site Central sont :

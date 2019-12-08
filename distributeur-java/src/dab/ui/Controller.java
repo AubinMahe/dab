@@ -5,12 +5,12 @@ import java.text.NumberFormat;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import dab.Distributeur;
-import dab.DistributeurComponent;
-import dab.IIHM;
-import dab.IUniteDeTraitementData;
-import dabtypes.Etat;
 import fx.IController;
+import hpms.dab.Distributeur;
+import hpms.dab.DistributeurComponent;
+import hpms.dab.IIHM;
+import hpms.dab.IUniteDeTraitementData;
+import hpms.dabtypes.Etat;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

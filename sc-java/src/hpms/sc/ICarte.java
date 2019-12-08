@@ -1,6 +1,6 @@
-package sc;
+package hpms.sc;
 
-import dabtypes.Carte;
+import hpms.dabtypes.Carte;
 
 public interface ICarte {
 

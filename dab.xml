@@ -1,38 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:noNamespaceSchemaLocation="distributed-application.xsd"
-   xmlns:xi="http://www.w3.org/2001/XInclude"
-   name="DAB">
-   <types>
+   xmlns:xi="http://www.w3.org/2001/XInclude">
+   <types module-name="dabtypes">
 
       <struct name="Carte">
-         <field name="id"       type="string" length="4" description="Identifiant de la carte" />
-         <field name="code"     type="string" length="4" description="Identifiant de la carte" />
-         <field name="month"    type="byte"              description="Jour de péremption de la carte" />
-         <field name="year"     type="ushort"            description="Année de péremption de la carte" />
-         <field name="nbEssais" type="byte"              description="Nombre d'essais en échec de la carte" />
+         <field name="id" type="string" length="4"
+            description="Identifiant de la carte" />
+         <field name="code" type="string" length="4"
+            description="Identifiant de la carte" />
+         <field name="month" type="byte"
+            description="Jour de péremption de la carte" />
+         <field name="year" type="ushort"
+            description="Année de péremption de la carte" />
+         <field name="nbEssais" type="byte"
+            description="Nombre d'essais en échec de la carte" />
       </struct>
 
       <struct name="Compte">
-         <field name="id"       type="string" length="4" description="Identifiant du compte" />
-         <field name="solde"    type="double"            description="Solde du compte" />
-         <field name="autorise" type="boolean"           description="Le compte est-il autorisé ?" />
+         <field name="id" type="string" length="4"
+            description="Identifiant du compte" />
+         <field name="solde" type="double"
+            description="Solde du compte" />
+         <field name="autorise" type="boolean"
+            description="Le compte est-il autorisé ?" />
+      </struct>
+
+      <struct name="Information">
+         <field name="carte" type="struct" userType="dabtypes.Carte"
+            description="La carte utilisée pour la transaction" />
+         <field name="compte" type="struct" userType="dabtypes.Compte"
+            description="Le compte associé à la carte" />
       </struct>
 
       <struct name="EtatDuDab">
-         <field name="etat" type="enum" userType="Etat" description="Etat courant de l'automate du composant Controleur" />
-         <field name="soldeCaisse" type="double"  description="Montant de la caisse en €" />
+         <field name="etat" type="enum" userType="dabtypes.Etat"
+            description="Etat courant de l'automate du composant Controleur" />
+         <field name="soldeCaisse" type="double"
+            description="Montant de la caisse en €" />
       </struct>
 
-      <implementation language="C"    src-dir="dabtypes-c"    module-name="dabtypes" />
-      <implementation language="C++"  src-dir="dabtypes-cpp"  module-name="dabtypes" />
-      <implementation language="Java" src-dir="dabtypes-java" module-name="dabtypes" />
+      <implementation language="C" src-dir="dabtypes-c/src-gen" module-name="DBT" />
+      <implementation language="C++" src-dir="dabtypes-cpp/src-gen" module-name="hpms::dabtypes" />
+      <implementation language="Java" src-dir="dabtypes-java/src-gen" module-name="hpms.dabtypes" />
    </types>
 
    <interface name="IHM">
       <event name="ejecterLaCarte" />
       <event name="ejecterLesBillets">
-         <field name="montant"     type="double"  description="Montant à donner à l'utilisateur du DAB" />
+         <field name="montant" type="double"
+            description="Montant à donner à l'utilisateur du DAB" />
       </event>
       <event name="confisquerLaCarte" />
       <event name="placerLesBilletsDansLaCorbeille" />
@@ -40,24 +57,31 @@
    </interface>
 
    <interface name="UniteDeTraitement">
-      <data name="etatDuDab" type="EtatDuDab" description="Les données décrivant l'état du DAB" />
+      <data name="etatDuDab" type="dabtypes.EtatDuDab"
+         description="Partage des données décrivant l'état du DAB" />
       <event name="maintenance">
-         <field name="maintenance" type="boolean" description="Maintenance active (true) ou inactive (false)" />
+         <field name="maintenance" type="boolean"
+            description="Maintenance active (true) ou inactive (false)" />
       </event>
       <event name="rechargerLaCaisse">
-         <field name="montant"     type="double"  description="Montant à rajouter dans la caisse" />
+         <field name="montant" type="double"
+            description="Montant à rajouter dans la caisse" />
       </event>
       <event name="anomalie">
-         <field name="anomalie"    type="boolean" description="Anomalie active (true) ou inactive (false)" />
+         <field name="anomalie" type="boolean"
+            description="Anomalie active (true) ou inactive (false)" />
       </event>
       <event name="carteInseree">
-         <field name="carteID"     type="string" length="4" description="Identifiant de la carte" />
+         <field name="carteID" type="string" length="4"
+            description="Identifiant de la carte" />
       </event>
       <event name="codeSaisi">
-         <field name="code"        type="string" length="4" description="Code de la carte" />
+         <field name="code" type="string" length="4"
+            description="Code de la carte" />
       </event>
       <event name="montantSaisi">
-         <field name="montant"     type="double"  description="Montant du retrait en €" />
+         <field name="montant" type="double"
+            description="Montant du retrait en €" />
       </event>
       <event name="carteRetiree" />
       <event name="billetsRetires" />
@@ -66,52 +90,53 @@
    </interface>
 
    <interface name="SiteCentral">
-      <request name="getInformations">
+      <request name="informations" type="dabtypes.Information"
+         description="Requête asynchrone auprès du site central qui retourne les informations de carte et de compte à partir de l'id de carte">
          <arguments>
-            <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
+            <field name="carteID" type="string" length="4"
+               description="Identifiant de la carte" />
          </arguments>
-         <response>
-            <field name="carte"  type="struct" userType="Carte" description="Données de la carte" />
-            <field name="compte" type="struct" userType="Compte" description="Données du compte" />
-         </response>
       </request>
       <event name="incrNbEssais">
-         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
+         <field name="carteID" type="string" length="4"
+            description="Identifiant de la carte" />
       </event>
       <event name="retrait">
-         <field name="carteID" type="string" length="4" description="Identifiant de la carte" />
-         <field name="montant" type="double" description="Montant du retrait en €" />
+         <field name="carteID" type="string" length="4"
+            description="Identifiant de la carte" />
+         <field name="montant" type="double"
+            description="Montant du retrait en €" />
       </event>
       <event name="shutdown" />
    </interface>
 
    <component name="Distributeur" after-dispatch-needed="false">
-      <offers   interface="IHM" />
+      <offers interface="IHM" />
       <requires interface="UniteDeTraitement" />
-      <implementation language="C"    src-dir="distributeur-c/src-gen"    module-name="dab" />
-      <implementation language="C++"  src-dir="distributeur-cpp/src-gen"  module-name="dab" />
-      <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="dab" />
+      <implementation language="C" src-dir="distributeur-c/src-gen" module-name="DAB" />
+      <implementation language="C++" src-dir="distributeur-cpp/src-gen" module-name="hpms::dab" />
+      <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="hpms.dab" />
    </component>
 
    <component name="Controleur" after-dispatch-needed="true">
-      <offers   interface="UniteDeTraitement" />
+      <offers interface="UniteDeTraitement" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
-      <timeout name="saisieDuCode"      duration="30" unit="seconds" />
-      <timeout name="saisieDuMontant"   duration="30" unit="seconds" />
-      <timeout name="retraitDeLaCarte"  duration="10" unit="seconds" />
+      <timeout name="saisieDuCode" duration="30" unit="seconds" />
+      <timeout name="saisieDuMontant" duration="30" unit="seconds" />
+      <timeout name="retraitDeLaCarte" duration="10" unit="seconds" />
       <timeout name="retraitDesBillets" duration="10" unit="seconds" />
       <xi:include href="./Controleur.automaton" />
-      <implementation language="C"    src-dir="udt-c/src-gen"    module-name="udt" />
-      <implementation language="C++"  src-dir="udt-cpp/src-gen"  module-name="udt" />
-      <implementation language="Java" src-dir="udt-java/src-gen" module-name="udt" />
+      <implementation language="C" src-dir="udt-c/src-gen" module-name="UDT" />
+      <implementation language="C++" src-dir="udt-cpp/src-gen" module-name="hpms::udt" />
+      <implementation language="Java" src-dir="udt-java/src-gen" module-name="hpms.udt" />
    </component>
 
    <component name="Banque" after-dispatch-needed="false">
       <offers interface="SiteCentral" />
-      <implementation language="C"    src-dir="sc-c/src-gen"    module-name="sc" />
-      <implementation language="C++"  src-dir="sc-cpp/src-gen"  module-name="sc" />
-      <implementation language="Java" src-dir="sc-java/src-gen" module-name="sc" />
+      <implementation language="C" src-dir="sc-c/src-gen" module-name="SC" />
+      <implementation language="C++" src-dir="sc-cpp/src-gen" module-name="hpms::sc" />
+      <implementation language="Java" src-dir="sc-java/src-gen" module-name="hpms.sc" />
    </component>
 
    <deployment name="isolated">
@@ -121,7 +146,7 @@
       <process name="udt1" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM"         to-instance="ihm1" />
+            <requires interface="IHM" to-instance="ihm1" />
          </instance>
       </process>
       <process name="ihm1" address="127.0.0.1" port="2418">
@@ -132,7 +157,7 @@
       <process name="udt2" address="127.0.0.1" port="2419">
          <instance name="udt2" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM"         to-instance="ihm2" />
+            <requires interface="IHM" to-instance="ihm2" />
          </instance>
       </process>
       <process name="ihm2" address="127.0.0.1" port="2420">
@@ -149,14 +174,14 @@
       <process name="dab" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM"         to-instance="ihm1" />
+            <requires interface="IHM" to-instance="ihm1" />
          </instance>
          <instance name="ihm1" component="Distributeur">
             <requires interface="UniteDeTraitement" to-instance="udt1" />
          </instance>
          <instance name="udt2" component="Controleur">
             <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM"         to-instance="ihm2" />
+            <requires interface="IHM" to-instance="ihm2" />
          </instance>
          <instance name="ihm2" component="Distributeur">
             <requires interface="UniteDeTraitement" to-instance="udt2" />

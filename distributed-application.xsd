@@ -55,14 +55,20 @@
       </xs:restriction>
    </xs:simpleType>
    
+   <xs:simpleType name="dottedPath">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[^.]+\.[^.]+" />
+      </xs:restriction>
+   </xs:simpleType>
+   
    <xs:complexType name="fieldType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
             <xs:attribute type="xs:NCName"          name="name"         use="required" />
             <xs:attribute type="fieldtypeType"      name="type"         use="required" />
-            <xs:attribute type="xs:IDREF"           name="userType"     use="optional" />
+            <xs:attribute type="dottedPath"         name="userType"     use="optional" />
             <xs:attribute type="xs:positiveInteger" name="length"       use="optional" />
-            <xs:attribute type="xs:string"          name="description"  use="required" />
+            <xs:attribute type="xs:string"          name="description"  use="optional" />
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
@@ -81,12 +87,6 @@
       <xs:attribute type="xs:NCName" name="name" use="required" />
    </xs:complexType>
    
-   <xs:complexType name="responseType">
-      <xs:sequence>
-         <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
-      </xs:sequence>
-   </xs:complexType>
-
    <xs:complexType name="argumentsType">
       <xs:sequence>
          <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
@@ -96,17 +96,18 @@
    <xs:complexType name="requestType">
       <xs:sequence>
          <xs:element type="argumentsType" name="arguments" minOccurs="0" maxOccurs="1" />
-         <xs:element type="responseType"  name="response"  minOccurs="1" maxOccurs="1" />
       </xs:sequence>
-      <xs:attribute type="xs:NCName" name="name" use="required" />
+      <xs:attribute type="xs:NCName"  name="name"        use="required" />
+      <xs:attribute type="dottedPath" name="type"        use="required" />
+      <xs:attribute type="xs:string"  name="description" use="optional" />
    </xs:complexType>
 
    <xs:complexType name="dataType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:NCName" name="name"        use="required" />
-            <xs:attribute type="xs:IDREF"  name="type"        use="required" />
-            <xs:attribute type="xs:string" name="description" use="required" />
+            <xs:attribute type="xs:NCName"  name="name"        use="required" />
+            <xs:attribute type="dottedPath" name="type"        use="required" />
+            <xs:attribute type="xs:string"  name="description" use="optional" />
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
@@ -130,10 +131,10 @@
       <xs:attribute type="xs:IDREF" name="interface" use="required" />
    </xs:complexType>
    
-   <xs:complexType name="implementationType">
+   <xs:complexType name="componentImplType">
       <xs:attribute type="languageType" name="language"    use="required" />
       <xs:attribute type="xs:string"    name="src-dir"     use="required" />
-      <xs:attribute type="xs:NCName"    name="module-name" use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
    </xs:complexType>
 
    <xs:simpleType name="durationUnits">
@@ -162,7 +163,7 @@
          <xs:element type="requiredInterfaceUsageType" name="requires"       minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="timeoutType"                name="timeout"        minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
-         <xs:element type="implementationType"         name="implementation" minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="componentImplType"          name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />
       <xs:attribute type="xs:boolean" name="after-dispatch-needed" use="optional" default="false" />
@@ -226,22 +227,28 @@
       <xs:attribute type="deploymentName" name="name" use="required" />
    </xs:complexType>
 
+   <xs:complexType name="typesImplType">
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+   </xs:complexType>
+
    <xs:complexType name="typesType">
       <xs:sequence>
-         <xs:element type="enumerationType"    name="enumeration"    minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="structType"         name="struct"         minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="implementationType" name="implementation" minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="enumerationType" name="enumeration" minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="structType"      name="struct"      minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="typesImplType"   name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
+      <xs:attribute type="xs:ID" name="module-name" />
    </xs:complexType>
 
    <xs:complexType name="disappType">
       <xs:sequence>
-         <xs:element type="typesType"       name="types"       minOccurs="0" maxOccurs="1" />
+         <xs:element type="typesType"       name="types"       minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="interfaceType"   name="interface"   minOccurs="1" maxOccurs="unbounded" />
          <xs:element type="componentType"   name="component"   minOccurs="1" maxOccurs="unbounded" />
          <xs:element type="deploymentType"  name="deployment"  minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:ID" name="name" />
    </xs:complexType>
 
    <xs:element name="distributed-application" type="disappType">

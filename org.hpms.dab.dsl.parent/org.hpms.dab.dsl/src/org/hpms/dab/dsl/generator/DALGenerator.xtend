@@ -21,10 +21,10 @@ class DALGenerator extends AbstractGenerator {
 
    private def generate( type type ) '''«
       IF type.user !== null»«
-         IF type.user.isIsEnum || type.user.isIsAutomatonState
-            »enum" userType="«type.user.name»«
+         IF type.user.type.isEnum || type.user.type.isAutomatonState
+            »enum" userType="«type.user.lib.name».«type.user.type.name»«
          ELSE
-            »struct" userType="«type.user.name»«
+            »struct" userType="«type.user.lib.name».«type.user.type.name»«
          ENDIF»«
       ELSEIF type.type == "string"
          »string" length="«type.length»«
@@ -33,19 +33,28 @@ class DALGenerator extends AbstractGenerator {
       ENDIF
    »'''
 
+   private def description( String indent, String description ) {
+      if( description === null || description.isBlank ) {
+         return "";
+      }
+      return '''
+
+«indent»description="«description»"''';
+   }
+
    private def generate( DAL model ) '''
       <?xml version="1.0" encoding="UTF-8"?>
       <distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="distributed-application.xsd"
-         xmlns:xi="http://www.w3.org/2001/XInclude"
-         name="«model.name»">
-      «IF ! ( model.types.classes.empty && model.types.classes.empty )
-»   <types>
-            «FOR clazz : model.types.classes»
+         xmlns:xi="http://www.w3.org/2001/XInclude">
+      «IF ! ( model.types.structs.empty && model.types.structs.empty )
+»   <types module-name="«model.types.name»">
+            «FOR clazz : model.types.structs»
 
                <struct name="«clazz.name»">
                   «FOR field : clazz.fields»
-                     <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                     <field name="«field.name»" type="«generate( field.type )»"«
+                        description( "   ", field.description )» />
                   «ENDFOR»
                </struct>
             «ENDFOR»
@@ -61,7 +70,7 @@ class DALGenerator extends AbstractGenerator {
             «ENDFOR»
 
             «FOR language : model.types.generation.languages»
-               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name»" />
+               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name.substring( 1, language.name.length - 1 )»" />
             «ENDFOR»
          </types>
 
@@ -70,27 +79,28 @@ class DALGenerator extends AbstractGenerator {
 »   <interface name="«intrfc.name»">
             «FOR facet : intrfc.facets»
                «IF facet.isRequest»
-                  <request name="«facet.name»">
+                  <request name="«facet.request.name»" type="«facet.request.out.response.lib.name».«facet.request.out.response.type.name»"«
+                     description( "   ", facet.request.description )»>
                      <arguments>
-                        «FOR field : facet.fields»
-                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                        «FOR field : facet.request.in.fields»
+                           <field name="«field.name»" type="«generate( field.type )»"«
+                              description( "   ", field.description )» />
                         «ENDFOR»
                      </arguments>
-                     <response>
-                        «FOR field : facet.response»
-                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
-                        «ENDFOR»
-                     </response>
                   </request>
                «ELSEIF facet.isData»
-                  <data name="«facet.name»" type="«facet.type.user.name»" description="«facet.description»" />
+                  <data name="«facet.data.name»" type="«facet.data.type.user.lib.name».«facet.data.type.user.type.name»"«
+                     description( "   ", facet.data.description )» />
                «ELSEIF facet.isIsEvent»
-                  «IF facet.fields.isEmpty»
-                     <event name="«facet.name»" />
+                  «IF facet.event.fields.isEmpty»
+                     <event name="«facet.event.name»"«
+                        description( "   ", facet.event.description )» />
                   «ELSE»
-                     <event name="«facet.name»">
-                        «FOR field : facet.fields»
-                           <field name="«field.name»" type="«generate( field.type )»" description="«field.description»" />
+                     <event name="«facet.event.name»"«
+                        description( "   ", facet.event.description )»>
+                        «FOR field : facet.event.fields»
+                           <field name="«field.name»" type="«generate( field.type )»"«
+                              description( "   ", field.description )» />
                         «ENDFOR»
                      </event>
                   «ENDIF»
@@ -102,7 +112,7 @@ class DALGenerator extends AbstractGenerator {
       «FOR component : model.components
 »   <component name="«component.name»" after-dispatch-needed="«component.afterDispatch»">
             «FOR offer : component.offers»
-               <offers   interface="«offer.intrfc.name»" />
+               <offers interface="«offer.intrfc.name»" />
             «ENDFOR»
             «FOR require : component.requires»
                <requires interface="«require.intrfc.name»" />
@@ -114,13 +124,13 @@ class DALGenerator extends AbstractGenerator {
                <xi:include href="./«component.name».automaton" />
             «ENDIF»
             «FOR language : component.generation.languages»
-               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name»" />
+               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name.substring( 1, language.name.length - 1 )»" />
             «ENDFOR»
          </component>
 
       «ENDFOR»
       «FOR deployment : model.deployments
-»   <deployment name="«deployment.targetDir»">
+»   <deployment name="«deployment.name»">
             «FOR process : deployment.processes»
                <process name="«process.name»" address="«IF process.hostname !== null»«process.hostname»«ELSE»«process.ip»«ENDIF»" port="«process.port»">
                   «FOR instance : process.instances»
@@ -149,7 +159,6 @@ class DALGenerator extends AbstractGenerator {
       str = str.substring( 0, str.lastIndexOf( '.' )) + '-generated.xml'
       val iFile = ResourcesPlugin.workspace.root.getFile( new Path( str ))
       val file = iFile.projectRelativePath.toPortableString
-      println( file )
       fsa.generateFile( file, text )
 	}
 }

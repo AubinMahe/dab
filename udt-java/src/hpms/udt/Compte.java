@@ -1,4 +1,4 @@
-package udt;
+package hpms.udt;
 
 class Compte {
 
@@ -21,7 +21,7 @@ class Compte {
       _isValid  = ( _id.length() > 0 )&&( _solde > 0.0 );
    }
 
-   public void set( dabtypes.Compte compte ) {
+   public void set( hpms.dabtypes.Compte compte ) {
       _id       = compte.id;
       _solde    = compte.solde;
       _autorise = compte.autorise;

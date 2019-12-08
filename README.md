@@ -87,7 +87,9 @@ Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le r
 
 ## Reste à faire
 
-1. Dans l'état actuel du modèle, il n'existe qu'un seul module de types, dont le nom (physique) est fourni par la balise `implémentation`. Il faudrait lui donner un nom logique, ce qui permettrait de déclarer plusieurs modules de types et de référencer un type dans le reste du module par son nom qualifié : `<module-name>.<type-name>`.
+1. Remettre les packages dans l'ordre org.hpms....
+
+1. Dans l'état actuel du modèle, il n'existe qu'un seul module de types, dont le nom (physique) est fourni par la balise `implémentation`. Il faudrait lui donner un nom logique, ce qui permettrait de déclarer plusieurs modules de types et de référencer un type dans le reste du modèle par son nom qualifié : `<module-name>.<type-name>`.
 
 1. Il existe une balise `implementation` sous la balise `<types>`. C'est inutile puisque les implémentations nécessaires peuvent être déduites de leurs usages par le reste du modèle.
 

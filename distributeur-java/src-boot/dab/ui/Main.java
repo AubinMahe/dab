@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ResourceBundle;
 import java.util.prefs.BackingStoreException;
 
-import dab.Distributeur;
+import hpms.dab.Distributeur;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -41,8 +41,8 @@ public class Main extends Application {
       }
       final Distributeur component;
       switch( name ) {
-      case "isolated.ihm1": component = isolated.ihm1.ComponentFactory.get().getIhm1(); break;
-      case "isolated.ihm2": component = isolated.ihm2.ComponentFactory.get().getIhm2(); break;
+      case "isolated.ihm1": component = new isolated.ihm1.ComponentFactory().getIhm1(); break;
+      case "isolated.ihm2": component = new isolated.ihm2.ComponentFactory().getIhm2(); break;
       default: throw new IllegalStateException( name + " isn't a valid deployment.process name");
       }
       start( component, name, stage );

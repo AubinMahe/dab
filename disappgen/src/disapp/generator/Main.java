@@ -3,9 +3,9 @@ package disapp.generator;
 import java.io.File;
 import java.io.IOException;
 
+import disapp.generator.model.ComponentImplType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DeploymentType;
-import disapp.generator.model.ImplementationType;
 import disapp.generator.model.ProcessType;
 
 public class Main {
@@ -25,16 +25,16 @@ public class Main {
 //      final CGenerator    c    = new CGenerator   ( _model, deployment );
 //      final CppGenerator  cpp  = new CppGenerator ( _model, deployment );
       for( final ComponentType component : _model.getApplication().getComponent()) {
-         for( final ImplementationType implementation : component.getImplementation()) {
+         for( final ComponentImplType implementation : component.getImplementation()) {
             switch( implementation.getLanguage()) {
-            case "Java": java.generateComponent( component, implementation ); break;
+            case "Java": java.component( component, implementation ); break;
 //            case "C"   : c   .generateComponent( component, implementation ); break;
 //            case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
       }
       for( final ProcessType process : dep.getProcess()) {
-         java.generateFactory( deployment, process );
+         java.factory( deployment, process );
       }
 //      c  .generateTypesMakefileSourcesList();
 //      cpp.generateTypesMakefileSourcesList();

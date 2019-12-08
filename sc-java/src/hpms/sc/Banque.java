@@ -1,8 +1,6 @@
-package sc;
+package hpms.sc;
 
 import java.io.IOException;
-
-import dabtypes.SiteCentralGetInformationsResponse;
 
 public final class Banque extends BanqueComponent {
 
@@ -13,7 +11,7 @@ public final class Banque extends BanqueComponent {
    }
 
    @Override
-   public void getInformations( String carteID, SiteCentralGetInformationsResponse response ) throws IOException {
+   public void informations( String carteID, hpms.dabtypes.Information response ) throws IOException {
       System.err.printf( getClass().getName() + ".getInformations|carteID = '%s'\n", carteID );
       final ICarte  iCarte  = _repository.getCarte ( carteID );
       final ICompte iCompte = _repository.getCompte( carteID );

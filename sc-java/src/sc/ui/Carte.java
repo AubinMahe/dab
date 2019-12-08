@@ -1,10 +1,10 @@
 package sc.ui;
 
+import hpms.sc.ICarte;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import sc.ICarte;
 
 public class Carte implements ICarte {
 
@@ -105,7 +105,7 @@ public class Carte implements ICarte {
    }
 
    @Override
-   public void copyTo( dabtypes.Carte out ) {
+   public void copyTo( hpms.dabtypes.Carte out ) {
       out.id       = getId();
       out.code     = getCode();
       out.month    = getExpirationMonth();

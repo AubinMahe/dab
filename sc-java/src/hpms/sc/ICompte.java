@@ -1,6 +1,6 @@
-package sc;
+package hpms.sc;
 
-import dabtypes.Compte;
+import hpms.dabtypes.Compte;
 
 public interface ICompte {
 

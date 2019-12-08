@@ -20,8 +20,8 @@ type( field ) ::= <<
   elseif( field.isFloat   )>float  <
   elseif( field.isDouble  )>double <
   elseif( field.isString  )>String <
-  elseif( field.isEnum    )><typesPackage>.<field.userType.name><
-  elseif( field.isStruct  )><typesPackage>.<field.userType.name><
+  elseif( field.isEnum    )><field.userType.name><
+  elseif( field.isStruct  )><field.userType.name><
   endif>
 >>
 
@@ -52,8 +52,8 @@ dataGen( visibility, field ) ::= <<
 < elseif( field.isFloat   )><visibility> float <field.name>;
 < elseif( field.isDouble  )><visibility> double <field.name>;
 < elseif( field.isString  )><visibility> String <field.name>;
-< elseif( field.isEnum    )><visibility> <typesPackage>.<field.userType.name> _<field.name> = <typesPackage>.<field.userType.name>.values()[0];
-< elseif( field.isStruct  )><visibility> final <typesPackage>.<field.userType.name> _<field.name> = new <typesPackage>.<field.userType.name>();
+< elseif( field.isEnum    )><visibility> <field.userType.name> _<field.name> = <field.userType.name>.values()[0];
+< elseif( field.isStruct  )><visibility> final <field.userType.name> _<field.name> = new <field.userType.name>();
 < endif>
 >>
 
@@ -95,7 +95,7 @@ public enum <enum.name> {
 
 
 
-struct( package, struct, maxLength, maxStrLength ) ::= <<
+struct( package, struct, maxLength, maxStrLength, types ) ::= <<
 package <package>;
 
 import java.nio.ByteBuffer;
@@ -116,8 +116,8 @@ public class <struct.name> {
 < elseif(       field.isFloat   )>float   <field.name>;
 < elseif(       field.isDouble  )>double  <field.name>;
 < elseif(       field.isString  )>String  <field.name>;
-< elseif(       field.isEnum    )><field.userType.name> <field.name>;
-< elseif(       field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
+< elseif(       field.isEnum    )><types.(field.userType)> <field.name>;
+< elseif(       field.isStruct  )>final <types.(field.userType)> <field.name> = new <types.(field.userType)>();
 < endif>
 }>
    public void put( ByteBuffer target ) {
@@ -150,7 +150,7 @@ public class <struct.name> {
 < elseif( field.isUlong   )><field.name; format="width"> = source.getLong();
 < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat();
 < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-< elseif( field.isEnum    )><field.name; format="width"> = <field.userType.name>.values()[source.get()];
+< elseif( field.isEnum    )><field.name; format="width"> = <types.(field.userType)>.values()[source.get()];
 < elseif( field.isString  )><field.name; format="width"> = ByteBufferHelper.getString( source );
 < elseif( field.isStruct  )><field.name; format="width">.put( source );
 < endif>
@@ -160,7 +160,21 @@ public class <struct.name> {
 
 
 
-requiredInterface( typesPackage, package, ifaceName, iface ) ::= <<
+responses( package, ifaceName, requests, types ) ::= <<
+package <package>;
+
+import java.io.IOException;
+
+public interface I<ifaceName>Responses {
+
+<requests:{request|
+   public void <request.name>Response( <types.(request.type)> <request.name> ) throws IOException;
+}>}
+>>
+
+
+
+requiredInterface( package, ifaceName, iface ) ::= <<
 package <package>;
 // requiredInterface
 
@@ -168,7 +182,7 @@ import java.io.IOException;
 
 public interface I<ifaceName> {
 
-<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+<iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
    void <facet.name; format="argument">(<
 if( facet.arguments )><
       signature( facet.arguments.field )><
@@ -181,7 +195,7 @@ endif>) throws IOException;< endif>
 
 
 
-requiredImplementation( typesPackage, package, usedTypes, ifaceName, rawSize, iface, ifaceID ) ::= <<
+requiredImplementation( package, usedTypes, ifaceName, rawSize, iface, ifaceID, imports ) ::= <<
 package <package>;
 //requiredImplementation
 import java.io.IOException;
@@ -191,7 +205,7 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-<usedTypes:{type|import <typesPackage>.<type>;
+<imports:{type|import <type>;
 }>
 public class <ifaceName> implements I<ifaceName> {
 
@@ -207,7 +221,7 @@ public class <ifaceName> implements I<ifaceName> {
       _channel = channel;
       _target  = target;
    }
-<iface.eventOrRequestOrData:{facet|< if( facet.type )>< else>
+<iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
 
    @Override
    public void <facet.name; format="argument">(<
@@ -236,21 +250,25 @@ endif>
 
 
 
-offeredInterface( typesPackage, package, name, usedTypes, facets ) ::= <<
+offeredInterface( package, ifaceName, usedTypes, facets, types ) ::= <<
 package <package>;
 // offeredInterface
 
 import java.io.IOException;
 
-public interface I<name> {
+public interface I<ifaceName> {
 
-<facets:{facet|< if( facet.type )>< else>
+<facets:{facet|<
+if( facet.isData )><
+else>
    void <facet.name>(<
-if( facet.arguments )><
-    signature( facet.arguments.field )>, <typesPackage>.<name><facet.name; format="cap">Response reponse<
-else><
-    signature( facet.field )><
-endif>) throws IOException;< endif>
+   if( facet.isRequest )><
+      if( facet.arguments )> <signature( facet.arguments.field )>, <types.(facet.type)> <facet.name> <
+      else> <types.(facet.type)> <facet.name> <
+      endif><
+   else><signature( facet.field )><
+   endif>) throws IOException;<
+endif>
 }>
 }
 >>
@@ -269,8 +287,8 @@ byteBufferGet( field ) ::= <<
 < elseif( field.isFloat   )>final float <field.name> = in.getFloat();
 < elseif( field.isDouble  )>final double <field.name> = in.getDouble();
 < elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( in );
-< elseif( field.isEnum    )>final <typesPackage>.<field.userType.name> <field.name> = <typesPackage>.<field.userType.name>.values()[in.get()];
-< elseif( field.isStruct  )>final <typesPackage>.<field.userType.name> <field.name> = new <typesPackage>.<field.userType.name>();
+< elseif( field.isEnum    )>final <field.userType.name> <field.name> = <field.userType.name>.values()[in.get()];
+< elseif( field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
 <field.name>.get( in );
 < endif>
 >>
@@ -300,31 +318,30 @@ private static enum <ifaceName>Event {
    }
 }
 
-<events.(ifaceName):{facet|< if( facet.response )>
-private static final byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <
+<events.(ifaceName):{facet|< if( facet.isRequest )>
+private static final byte EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> = <
                                               eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
 private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event, ByteBuffer in ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
-<events.(ifaceName):{facet|< if( facet.type )>< else>
+<events.(ifaceName):{facet|< if( facet.isData )>< else>
    case <facet.name; format="ID">:{
-      < if( facet.arguments )><facet.arguments.field:{field|<
+      < if( facet.isRequest )><facet.arguments.field:{field|<
          byteBufferGet( field )>}>< 
       elseif( facet.field )><facet.field:{field|<
          byteBufferGet( field )>}><
       endif><
-      if( facet.response )
->      final <typesPackage>.<ifaceName><facet.name; format="cap">Response response = new <
-              typesPackage>.<ifaceName><facet.name; format="cap">Response();
-      _component.<facet.name>( <args( facet.arguments.field )>, response );
+      if( facet.isRequest )
+>      final <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
+      _component.<facet.name>( <args( facet.arguments.field )>, <facet.name> );
       _out.clear();
-      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
-      _out.put( EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> );
-      response.put( _out );
+      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSE );
+      _out.put( EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> );
+      <facet.name>.put( _out );
       _out.flip();
       _channel.send( _out, from );
-      System.err.printf( "SiteCentral.getInformations|response sent to %s\n", from );
+      System.err.printf( "<ifaceName>.<facet.name>|response sent to %s\n", from );
       < else
 >      _component.<facet.name>(<args( facet.field )>);
       < endif>
@@ -365,10 +382,11 @@ private static enum <ifaceName>Response {
 private boolean dispatch( <ifaceName>Response event, ByteBuffer in ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
-<reqRequests.(ifaceName):{req|
-   case <req.name; format="ID">:{
-      <req.response.field:{field|<byteBufferGet( field )>}
->      _component.<req.name>(<args( req.response.field )>);
+<reqRequests.(ifaceName):{facet|
+   case <facet.name; format="ID">:{
+      final <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
+      <facet.name>.get( in );
+      _component.<facet.name>Response( <facet.name> );
       return true;\}
 }>   default:
       System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
@@ -422,8 +440,8 @@ private boolean dispatch( <iface.name>Data event, ByteBuffer in ) throws IOExcep
 
 
 dispatcherImplementation(
-   typesPackage, package, component, offers, requires, events, eventIDs,
-   ifacesIDs, usedTypes, rawSize, respRawSize, offRequests, reqRequests, data
+   package, component, offers, requires, events, eventIDs, ifacesIDs,
+   usedTypes, rawSize, respRawSize, offRequests, reqRequests, data, types
 ) ::= <<
 package <package>;
 //dispatcherImplementation
@@ -440,12 +458,19 @@ public class <component.name>Dispatcher implements da.IDispatcher {
 < endif>
 <offers.keys:{ifaceName|
    private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
-   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
-      ifacesIDs.( concat( ifaceName, "Responses" ))>;
+   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSE = <
+      ifacesIDs.( concat( ifaceName, "Response" ))>;
 < endif>
-}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
-        ifacesIDs.( concat( ifaceName, "Responses" ))>;
+}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSE = <
+        ifacesIDs.( concat( ifaceName, "Response" ))>;
 }>
+   private final DatagramChannel _channel;
+   private final <component.name>Component _component;
+< if( offRequests )
+>   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
+< endif>
+
+
 <offers.keys:{ifaceName|
    <dispatcherImplOneInterface()>
 }>
@@ -490,12 +515,6 @@ public class <component.name>Dispatcher implements da.IDispatcher {
    }
 
 < endif>
-   private final DatagramChannel _channel;
-   private final <component.name>Component _component;
-< if( offRequests )
->   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
-< endif>
-
 
    public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component component ) {
       _channel   = channel;
@@ -523,7 +542,7 @@ public class <component.name>Dispatcher implements da.IDispatcher {
       case INTRFC_<ifaceName; format="ID">: return dispatch( <
          if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ), in );
 }><reqRequests:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ), in );
+      case INTRFC_<ifaceName; format="ID">_RESPONSE: return dispatch( <ifaceName>Response.valueOf( event ), in );
 }><data:{iface|
       case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ), in );
 }>      }
@@ -539,7 +558,7 @@ public class <component.name>Dispatcher implements da.IDispatcher {
 
 
 
-componentImplementation( typesPackage, package, component, requires, actions, data, reqData, responses ) ::= <<
+componentImplementation( package, component, requires, actions, offData, reqData, responses, imports ) ::= <<
 package <package>;
 //componentImplementation
 
@@ -549,11 +568,12 @@ import java.time.Duration;
 
 import util.Timeout;
 < endif>
-
+<imports:{type|import <type>;
+}>
 
 public abstract class <component.name>Component implements <
 component.offers:{o|I<o.interface.name>}><
-responses:{ifaceName|< if(component.offers)>, < endif>I<ifaceName>}><
+responses:{iface|< if(component.offers)>, < endif>I<iface.name>Responses}><
 reqData:{iface|, I<iface.name>Data}> {
 
 <component.timeout:{to|
@@ -565,12 +585,12 @@ reqData:{iface|, I<iface.name>Data}> {
 < endif>
 <requires:{iface|
    protected I<iface.name> _<iface.name; format="argument">;
-}><data:{iface|
+}><offData:{iface|
    protected <iface.name>Data _<iface.name; format="argument">Data;
 }><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
 < endif><reqData:{iface|<reqData.(iface):{data|
-   protected <typesPackage>.<data.name; format="cap"> _<data.name; format="argument">;
+   protected <data.name; format="cap"> _<data.name; format="argument">;
 }>}><component.timeout:{to|
    protected final Timeout _<to.name> = new Timeout( <to.name; format="ID">_DURATION, () -> loopback( <
       component.name>Dispatcher.LoopbackEvent.<to.name; format="ID"> ));
@@ -607,14 +627,14 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
    \}
 }><reqData:{iface|<reqData.(iface):{data|
 
-   public void connect( <typesPackage>.<data.name; format="cap"> <data.name; format="argument"> ) {
+   public void connect( <data.name; format="cap"> <data.name; format="argument"> ) {
       _<data.name; format="argument"> = <data.name; format="argument">;
    \}
 
-   public <typesPackage>.<data.name; format="cap"> get<data.name; format="cap">() {
+   public <data.name; format="cap"> get<data.name; format="cap">() {
       return _<data.name; format="argument">;
    \}}>}>
-<data:{iface|
+<offData:{iface|
    public void connect( <iface.name>Data data ) {
       _<iface.name; format="argument">Data = data;
    \}
@@ -631,7 +651,7 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 
 
 
-dataWriter( typesPackage, package, interface, ifaceID, data, dataID, rawSize  ) ::= <<
+dataWriter( package, interface, ifaceID, data, dataID, rawSize, types ) ::= <<
 package <package>;
 
 // dataWriter
@@ -648,8 +668,7 @@ public class <interface.name>Data {
 <data:{dataType|
    private static final byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
 
-   public final <typesPackage>.<dataType.name; format="cap"> _<dataType.name; format="argument"> = new <
-      typesPackage>.<dataType.name; format="cap">();
+   public final <types.(dataType.type)> _<dataType.name> = new <types.(dataType.type)>();
 }>
    private final DatagramChannel _channel;
    private final SocketAddress   _target;
@@ -692,28 +711,28 @@ public interface I<interface.name>Data {
 
 
 
-automaton( typesPackage, package, component ) ::= <<
+automaton( package, component, stateFullName, stateShortName, eventFullName, eventShortName ) ::= <<
 package <package>;
 
-import <typesPackage>.<component.automaton.stateEnum.name>;
-import <typesPackage>.<component.automaton.eventEnum.name>;
+import <stateFullName>;
+import <eventFullName>;
 
-public class Automaton extends util.Automaton\<<component.automaton.stateEnum.name>, <component.automaton.eventEnum.name>\> {
+public class Automaton extends util.Automaton\<<stateShortName>, <eventShortName>\> {
 
    public Automaton( <component.name>Component component ) {
-      super( <component.automaton.stateEnum.name>.<component.automaton.initial> );
+      super( <stateShortName>.<component.automaton.initial> );
 
       <component.automaton.transition:{transition|add( <
-         component.automaton.stateEnum.name>.<transition.from>, <
-         component.automaton.eventEnum.name>.<transition.event>, <
-         component.automaton.stateEnum.name>.<transition.futur> );
+         stateShortName>.<transition.from>, <
+         eventShortName>.<transition.event>, <
+         stateShortName>.<transition.futur> );
 }>
       <component.automaton.shortcut:{shortcut|add( <
-         component.automaton.eventEnum.name>.<shortcut.event>, <
-         component.automaton.stateEnum.name>.<shortcut.futur> );
+         eventShortName>.<shortcut.event>, <
+         stateShortName>.<shortcut.futur> );
 }>
       <component.automaton.onEntryOrOnExit:{elt|add<elt.name.localPart; format="UpperCamelCase">( <
-         component.automaton.stateEnum.name>.<elt.value.state>, component::<
+         stateShortName>.<elt.value.state>, component::<
          elt.value.action> );
 }>   }
 }
@@ -721,7 +740,7 @@ public class Automaton extends util.Automaton\<<component.automaton.stateEnum.na
 
 
 
-componentFactory( typesPackage, package, process, processes, offData, reqData, instancesByName, dataConsumer, modules ) ::= <<
+componentFactory( package, process, processes, offData, reqData, instancesByName, dataConsumer, modules, types ) ::= <<
 package <package>;
 // ComponentFactory
 import java.io.IOException;
@@ -760,7 +779,7 @@ public final class ComponentFactory extends Thread {
 <process.instance:{instance|
    private void connect<instance.name; format="cap">() {
 <reqData:{iface|<reqData.(iface):{data|
-      final <typesPackage>.<data.type.name> <data.name; format="argument"> = new <typesPackage>.<data.type.name>();
+      final <types.(data.type)> <data.name; format="argument"> = new <types.(data.type)>();
       _<instance.name; format="argument">.connect( <data.name; format="argument"> );
 }>}><offData:{iface|
 <dataConsumer.(iface).(instance.name):{process|

@@ -8,9 +8,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.collections.*?> 
 
-<?import dab.ui.*?>
+<?import hpms.dab.ui.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="dab.ui.Controller">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="hpms.dab.ui.Controller">
    <stylesheets>
       <java.net.URL value="@ui.css"/> 
    </stylesheets>

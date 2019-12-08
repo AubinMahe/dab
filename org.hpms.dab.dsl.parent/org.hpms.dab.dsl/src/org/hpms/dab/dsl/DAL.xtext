@@ -5,24 +5,38 @@ import "http://www.eclipse.org/emf/2002/Ecore" as ecore
 generate dal "http://org.hpms.dab.dsl/DAL"
 
 DAL :
-   'model' name = ID
+   ( description = STRING         )?
    ( 'types' types = types        )?
    ( interfaces  += interfaceType )+
    ( components  += component     )+
    ( deployments += deployment    )+
 ;
 types :
-   ( classes += clazz | enums += enumType )+
+   name = ID
+   ( description = STRING )?
+   ( structs += struct
+   | enums   += enumType  )+
    generation = generation
 ;
-clazz returns UserType :
-   isClass ?= 'class' name = ID ( fields += field )+
+struct returns UserType :
+   isClass ?= 'class' name = ID
+   ( description = STRING )?
+   ( fields += field )+
 ;
 enumType returns UserType :
-   isEnum ?= 'enum' name = ID ( isAutomatonState ?= 'automaton-state' | ( literals += ID )+ )
+   isEnum ?= 'enum' name = ID
+   ( description = STRING )?
+   ( isAutomatonState ?= 'automaton-state'
+   | ( literals += ID )+
+   )
 ;
 field :
-   name = ID type = type description = STRING
+   name = ID
+   type = type
+   ( description = STRING )?
+;
+QName:
+   lib = [types|ID] '.' type = [UserType|ID]
 ;
 type :
     type = 'boolean'
@@ -36,25 +50,56 @@ type :
    |type = 'float'
    |type = 'double'
    |type = 'string' '[' length = INT ']'
-   |user = [UserType|ID]
+   |user = QName
 ;
 generation :
    'generation' ( languages += language )+
 ;
 language :
-   'language' lang = lang 'module' name = ID 'sources' sources = STRING
+   (
+        lang = 'C'    'as' name = CPREFIX
+      | lang = 'C++'  'as' name = NAMESPACE
+      | lang = 'Java' 'as' name = PACKAGE
+   )
+   'in' sources = STRING
 ;
-lang: 'C' |'C++' |'Java' ;
 interfaceType :
-   'interface' name = ID ( facets += facet )+
+   'interface' name = ID
+   ( description = STRING )?
+   ( facets += facet )+
+;
+event:
+   name = ID
+   ( description = STRING )?
+   ( fields += field )*
+;
+data:
+   name = ID
+   ( description = STRING )?
+   type = type
+;
+requestOut:
+   'response' response = QName
+   ( description = STRING )?
+;
+requestIn:
+   {requestIn} 'from' ( fields += field )*
+   ( description = STRING )?
+;
+request:
+   name = ID
+   ( description = STRING )?
+   out = requestOut
+   in  = requestIn
 ;
 facet :
-   isEvent    ?= 'event'   name = ID ( fields += field )*
-   |isData    ?= 'data'    name = ID type = type description = STRING
-   |isRequest ?= 'request' name = ID ( fields += field )* 'response' ( response += field )+
+     isEvent   ?= 'event'   event   = event
+   | isData    ?= 'data'    data    = data
+   | isRequest ?= 'request' request = request
 ;
 component :
    'component' name = ID
+   ( description = STRING )?
    ( afterDispatch ?= 'after-dispatch' 'is' 'needed' )?
    ('offers'   ( offers   += offer   )+ )?
    ('requires' ( requires += require )+ )?
@@ -72,37 +117,45 @@ timeout:
    name = ID duration = INT unit = unit
 ;
 unit:
-   'milliseconds'
+    'milliseconds'
    |'seconds'
    |'minutes'
    |'hours'
 ;
 deployment:
-   'deployment' targetDir = STRING
+   'deployment' name = ID
+   ( description = STRING )?
    ( processes += process )+
 ;
 process:
-   'process' name = ID (ip = IP | hostname = HOSTNAME) ':' port = INT
+   'process' name = ID
+   ( description = STRING )?
+   ( ip = IP | hostname = HOSTNAME ) ':' port = INT
    ( instances += instance )+
 ;
 instance:
-   'instance' name = ID 'of' component = [component|ID]
+   'instance' name = ID
+   'of' component = [component|ID]
+   ( description = STRING )?
    ('requires' ( requires += connection )+ )?
 ;
 connection:
    intrfc = [interfaceType|ID] instance = [instance|ID]
 ;
-terminal INT returns ecore::EInt: ('0'..'9')+;
-terminal ID: '^'?('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
-terminal IP: BYTE '.' BYTE '.' BYTE '.' BYTE;
-terminal LABEL: ('a'..'z'|'0'..'9') ('a'..'z'|'-'|'0'..'9')*;
-terminal HOSTNAME: LABEL ( '.' LABEL )*;
 terminal BYTE:
     ('1' '2' ('0'..'7'))
-   |('1'('0'..'1')('0'..'9'))
-   |(('1'..'9')('0'..'9'))
-   |(('1'..'9'))
+   |('1' ('0'..'1') ('0'..'9'))
+   |(('1'..'9') ('0'..'9'))
+   |('0'..'9')
 ;
+terminal INT returns ecore::EInt: ('0'..'9')+;
+terminal ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
+terminal CPREFIX  : "'" ('A'..'Z') ('A'..'Z'|'0'..'9')* "'" ;
+terminal NAMESPACE: "'" (('a'..'z') ('a'..'z'|'0'..'9')*)('::'(('a'..'z') ('a'..'z'|'0'..'9')*))* "'" ;
+terminal PACKAGE  : "'" (('a'..'z') ('a'..'z'|'0'..'9')*)('.' (('a'..'z') ('a'..'z'|'0'..'9')*))* "'";
+terminal LABEL: ('a'..'z'|'0'..'9') ('a'..'z'|'-'|'0'..'9')*;
+terminal HOSTNAME: '"' LABEL ( '.' LABEL )* '"';
+terminal IP: BYTE '.' BYTE '.' BYTE '.' BYTE;
 terminal STRING:
    '"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
    "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
@@ -110,4 +163,4 @@ terminal STRING:
 terminal ML_COMMENT : '/*' -> '*/';
 terminal SL_COMMENT : '//' !('\n'|'\r')* ('\r'? '\n')?;
 terminal WS         : (' '|'\t'|'\r'|'\n')+;
-terminal ANY_OTHER: .;
+//terminal ANY_OTHER: .;

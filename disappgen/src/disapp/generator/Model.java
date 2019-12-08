@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
 import disapp.generator.model.AutomatonType;
+import disapp.generator.model.ComponentImplType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
 import disapp.generator.model.DeploymentType;
@@ -36,7 +39,6 @@ import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
-import disapp.generator.model.ImplementationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.LiteralType;
@@ -46,32 +48,30 @@ import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
 import disapp.generator.model.ShortcutType;
-import disapp.generator.model.StateEnumType;
 import disapp.generator.model.StructType;
 import disapp.generator.model.TransitionType;
+import disapp.generator.model.TypesImplType;
+import disapp.generator.model.TypesType;
 
 final class Model {
 
-   private static final String RESPONSES_INTERFACE_SUFFIX = "Responses";
-   private static final String RESPONSES_STRUCT_SUFFIX    = "Response";
-
-   private final Map<String, InterfaceType>             _interfaces        = new LinkedHashMap<>();
-   private final Map<String, InterfaceType>             _responses         = new LinkedHashMap<>();
-   private final Map<String, EnumerationType>           _enums             = new LinkedHashMap<>();
-   private final Map<String, StructType>                _structs           = new LinkedHashMap<>();
-   private final Map<String, SortedSet<String>>         _usedTypes         = new LinkedHashMap<>();
-   private final Map<String, List<Object>>              _facetsByName      = new LinkedHashMap<>();
-   private final Map<String, Map<String, InstanceType>> _instancesByName   = new LinkedHashMap<>();
-   private final Map<InstanceType, ProcessType>         _processByInstance = new LinkedHashMap<>();
-   private final Map<String, Byte>                      _interfacesID      = new LinkedHashMap<>();
-   private final Map<String, Map<String, Byte>>         _eventIDs          = new LinkedHashMap<>();
-   private final Map<ComponentType, Set<String>>        _actions           = new LinkedHashMap<>();
+   private final Map<String, InterfaceType>             _interfaces         = new LinkedHashMap<>();
+   private final Map<String, EnumerationType>           _enums              = new LinkedHashMap<>();
+   private final Map<String, StructType>                _structs            = new LinkedHashMap<>();
+   private final Map<String, SortedSet<String>>         _usedTypes          = new LinkedHashMap<>();
+   private final Map<String, List<Object>>              _facetsByName       = new LinkedHashMap<>();
+   private final Map<String, Map<String, InstanceType>> _instancesByName    = new LinkedHashMap<>();
+   private final Map<InstanceType, ProcessType>         _processByInstance  = new LinkedHashMap<>();
+   private final Map<String, Byte>                      _interfacesID       = new LinkedHashMap<>();
+   private final Map<String, Map<String, Byte>>         _eventIDs           = new LinkedHashMap<>();
+   private final Map<ComponentType, Set<String>>        _actions            = new LinkedHashMap<>();
+   private final Map<String, SortedMap<String, String>> _typesModel2Impl    = new HashMap<>();
    private final Map<ComponentType,
       Map<InterfaceType,
-         List<DataType>>>                               _offeredData       = new LinkedHashMap<>();
+         List<DataType>>>                               _offeredData        = new LinkedHashMap<>();
    private final Map<ComponentType,
       Map<InterfaceType,
-         List<DataType>>>                               _requiredData      = new LinkedHashMap<>();
+         List<DataType>>>                               _requiredData       = new LinkedHashMap<>();
    private final File                                   _source;
    private final boolean                                _force;
    private final DisappType                             _application;
@@ -100,37 +100,13 @@ final class Model {
       _force        = force;
       _application  = elt.getValue();
       _lastModified = _source.lastModified();
-      final Set<InterfaceType> responseSet = new LinkedHashSet<>();
-      for( final InterfaceType iface : _application.getInterface()) {
-         final String ifaceName = iface.getName();
-         for( final Object facet : iface.getEventOrRequestOrData()) {
-            if( facet instanceof RequestType ) {
-               final RequestType request       = (RequestType)facet;
-               final String      respIfaceName = ifaceName + RESPONSES_INTERFACE_SUFFIX;
-               InterfaceType responses = _responses.get( respIfaceName );
-               if( responses == null ) {
-                  _responses.put( respIfaceName, responses = new InterfaceType() );
-                  responses.setName( respIfaceName );
-               }
-               _interfaces.put( respIfaceName, responses );
-               responseSet.add( responses );
-               final EventType event = new EventType();
-               event.setName( request.getName());
-               event.getField().addAll( request.getResponse().getField());
-               responses.getEventOrRequestOrData().add( event );
-               final StructType struct = new StructType();
-               struct.setName( ifaceName + BaseRenderer.cap( request.getName()) + RESPONSES_STRUCT_SUFFIX );
-               struct.getField().addAll( request.getResponse().getField());
-               _application.getTypes().getStruct().add( struct );
-            }
+      for( final TypesType types : _application.getTypes()) {
+         for( final EnumerationType enm : types.getEnumeration()) {
+            _enums.put( types.getModuleName() + '.' + enm.getName(), enm );
          }
-      }
-      _application.getInterface().addAll( responseSet );
-      for( final EnumerationType enm : _application.getTypes().getEnumeration()) {
-         _enums.put( enm.getName(), enm );
-      }
-      for( final StructType struct : _application.getTypes().getStruct()) {
-         _structs.put( struct.getName(), struct );
+         for( final StructType struct : types.getStruct()) {
+            _structs.put( types.getModuleName() + '.' + struct.getName(), struct );
+         }
       }
       for( final InterfaceType iface : _application.getInterface()) {
          _interfaces.put( iface.getName(), iface );
@@ -226,12 +202,39 @@ final class Model {
          }
       }
       byte ifaceID = 0;
-      for( final String name : _interfaces.keySet()) {
+      for( final Entry<String, InterfaceType> e : _interfaces.entrySet()) {
+         final String name = e.getKey();
          _interfacesID.put( name, ++ifaceID );
+         for( final Object facet : e.getValue().getEventOrRequestOrData()) {
+            if( facet instanceof RequestType ) {
+               _interfacesID.put( name + "Response", ++ifaceID );
+            }
+         }
+
+      }
+      for( final TypesType types : _application.getTypes()) {
+         for( final EnumerationType type : types.getEnumeration()) {
+            for( final TypesImplType impl : types.getImplementation()) {
+               SortedMap<String, String> typesModel2Impl = _typesModel2Impl.get( impl.getLanguage());
+               if( typesModel2Impl == null ) {
+                  _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
+               }
+               typesModel2Impl.put( types.getModuleName() + '.' + type.getName(), impl.getModuleName() + '.' + type.getName());
+            }
+         }
+         for( final StructType type : types.getStruct()) {
+            for( final TypesImplType impl : types.getImplementation()) {
+               SortedMap<String, String> typesModel2Impl = _typesModel2Impl.get( impl.getLanguage());
+               if( typesModel2Impl == null ) {
+                  _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
+               }
+               typesModel2Impl.put( types.getModuleName() + '.' + type.getName(), impl.getModuleName() + '.' + type.getName());
+            }
+         }
       }
    }
 
-   private static String toString( FieldType field ) {
+   static String toString( FieldType field ) {
       return "Name: "      + field.getName() +
          ", description: " + field.getDescription() +
          ", value: "       + field.getValue() +
@@ -239,47 +242,11 @@ final class Model {
          ", userType: "    + field.getUserType();
    }
 
-   static String getUserType( FieldType field ) {
-      final FieldtypeType type = field.getType();
-      final String        typeName;
-      if( type == FieldtypeType.ENUM ) {
-         final Object enumType = field.getUserType();
-         if( enumType instanceof StateEnumType ) {
-            typeName = ((StateEnumType)enumType).getName();
-         }
-         else if( enumType instanceof EnumerationType ) {
-            typeName = ((EnumerationType)enumType).getName();
-         }
-         else {
-            throw new IllegalStateException( "Unexpected field type for " + toString( field ));
-         }
-      }
-      else if( type == FieldtypeType.STRUCT ) {
-         typeName = ((StructType)field.getUserType()).getName();
-      }
-      else {
-         typeName = null;
-      }
-      return typeName;
-   }
-
-   EnumerationType getEnum( FieldType field ) {
-      final FieldtypeType type = field.getType();
-      if( type == FieldtypeType.ENUM ) {
-         final Object enumType = field.getUserType();
-         if( enumType instanceof StateEnumType ) {
-            return _enums.get(((StateEnumType)enumType).getName());
-         }
-         return (EnumerationType)enumType;
-      }
-      throw new IllegalStateException( field.getName() + " is'nt an enum" );
-   }
-
    private void createEventAndStateIfNecessary( AutomatonType automaton ) {
       final String event = automaton.getEventEnum().getName();
       if( ! _enums.containsKey( event )) {
          final EnumerationType enumeration = new EnumerationType();
-         enumeration.setName( event );
+         enumeration.setName( event.substring( event.lastIndexOf( '.' ) + 1 ));
          final SortedSet<LiteralType> literals = new TreeSet<>(( l, r ) -> l.getName().compareTo( r.getName()));
          for( final TransitionType transition : automaton.getTransition()) {
             final LiteralType literal = new LiteralType();
@@ -304,13 +271,19 @@ final class Model {
          else {
             enumeration.setType( EnumType.UINT );
          }
-         _application.getTypes().getEnumeration().add( enumeration );
-         _enums.put( enumeration.getName(), enumeration );
+         _enums.put( event, enumeration );
+         final String moduleName = event.substring( 0, event.lastIndexOf( '.' ));
+         for( final TypesType types : _application.getTypes()) {
+            if( types.getModuleName().equals( moduleName )) {
+               types.getEnumeration().add( enumeration );
+               break;
+            }
+         }
       }
       final String state = automaton.getStateEnum().getName();
       if( ! _enums.containsKey( state )) {
          final EnumerationType enumeration = new EnumerationType();
-         enumeration.setName( state );
+         enumeration.setName( state.substring( event.lastIndexOf( '.' ) + 1 ));
          final SortedSet<LiteralType> literals = new TreeSet<>(( l, r ) -> l.getName().compareTo( r.getName()));
          for( final TransitionType transition : automaton.getTransition()) {
             LiteralType literal = new LiteralType();
@@ -338,12 +311,18 @@ final class Model {
          else {
             enumeration.setType( EnumType.UINT );
          }
-         _application.getTypes().getEnumeration().add( enumeration );
-         _enums.put( enumeration.getName(), enumeration );
+         _enums.put( state, enumeration );
+         final String moduleName = state.substring( 0, state.lastIndexOf( '.' ));
+         for( final TypesType types : _application.getTypes()) {
+            if( types.getModuleName().equals( moduleName )) {
+               types.getEnumeration().add( enumeration );
+               break;
+            }
+         }
       }
    }
 
-   public Map<String, Map<String, Byte>> getEventIDs() {
+   Map<String, Map<String, Byte>> getEventIDs() {
       return _eventIDs;
    }
 
@@ -366,26 +345,24 @@ final class Model {
          return;
       }
       types.add( typeName );
-   }
-
-   private void typesUsedBy( String ifaceName, FieldType field ) {
-      final String typeName = getUserType( field );
-      if( typeName != null ) {
-         typesUsedBy( ifaceName, typeName );
-         if( field.getType() == FieldtypeType.STRUCT ) {
-            final StructType struct = (StructType)field.getUserType();
-            for( final FieldType field2 : struct.getField()) {
-               typesUsedBy( ifaceName, field2 );
-            }
+      if( isStruct( typeName )) {
+         final StructType struct = _structs.get( typeName );
+         for( final FieldType field : struct.getField()) {
+            typesUsedBy( ifaceName, field );
          }
       }
    }
 
-   private void typesUsedBy( String ifaceName, StructType struct ) {
-      final String typeName = struct.getName();
-      typesUsedBy( ifaceName, typeName );
-      for( final FieldType field2 : struct.getField()) {
-         typesUsedBy( ifaceName, field2 );
+   private void typesUsedBy( String ifaceName, FieldType field ) {
+      final String typeName = field.getUserType();
+      if( typeName != null ) {
+         typesUsedBy( ifaceName, typeName );
+         if( field.getType() == FieldtypeType.STRUCT ) {
+            final StructType struct = _structs.get( typeName );
+            for( final FieldType field2 : struct.getField()) {
+               typesUsedBy( ifaceName, field2 );
+            }
+         }
       }
    }
 
@@ -405,16 +382,11 @@ final class Model {
          else if( facet instanceof RequestType) {
             final RequestType request = (RequestType)facet;
             typesUsedBy( ifaceName, request.getArguments().getField());
-            typesUsedBy( ifaceName, request.getResponse().getField());
-            SortedSet<String> types = _usedTypes.get( ifaceName );
-            if( types == null ) {
-               _usedTypes.put( ifaceName, types = new TreeSet<>());
-            }
-            types.add( ifaceName + BaseRenderer.cap( request.getName()) + RESPONSES_STRUCT_SUFFIX );
+            typesUsedBy( ifaceName, request.getType());
          }
          else if( facet instanceof DataType ) {
             final DataType data = (DataType)facet;
-            typesUsedBy( ifaceName, (StructType)data.getType());
+            typesUsedBy( ifaceName, data.getType());
          }
          else {
             throw new IllegalStateException( "unexpected class: " + facet.getClass());
@@ -478,6 +450,10 @@ final class Model {
       return ifaces;
    }
 
+   boolean isEnum( String name ) {
+      return _enums.containsKey( name );
+   }
+
    EnumerationType getEnum( String name ) {
       final EnumerationType enm = _enums.get( name );
       if( enm == null ) {
@@ -486,8 +462,16 @@ final class Model {
       return enm;
    }
 
-   boolean enumIsDefined( String name ) {
-      return _enums.containsKey( name );
+   EnumerationType getEnum( FieldType field ) {
+      return getEnum( field.getUserType());
+   }
+
+   boolean isStruct( String name ) {
+      return _structs.containsKey( name );
+   }
+
+   StructType getStruct( FieldType field ) {
+      return getStruct( field.getUserType());
    }
 
    StructType getStruct( String name ) {
@@ -498,15 +482,11 @@ final class Model {
       return struct;
    }
 
-   boolean structIsDefined( String name ) {
-      return _structs.containsKey( name );
-   }
-
    SortedSet<String> getUsedTypesBy( String ifaceName ) {
       return _usedTypes.get( ifaceName );
    }
 
-   public SortedSet<String> getUsedTypesBy( List<OfferedInterfaceUsageType> allOffered ) {
+   SortedSet<String> getUsedTypesBy( List<OfferedInterfaceUsageType> allOffered ) {
       final SortedSet<String> usedTypes = new TreeSet<>();
       for( final OfferedInterfaceUsageType offered : allOffered ) {
          final InterfaceType     iface     = (InterfaceType)offered.getInterface();
@@ -519,11 +499,11 @@ final class Model {
       return usedTypes;
    }
 
-   public Map<String, List<Object>> getFacets() {
+   Map<String, List<Object>> getFacets() {
       return _facetsByName;
    }
 
-   public Map<String, List<Object>> getOfferedEventsOrRequests( ComponentType component ) {
+   Map<String, List<Object>> getOfferedEventsOrRequests( ComponentType component ) {
       final Map<String, List<Object>> eventsOrRequestsForOneComponent = new LinkedHashMap<>();
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
          final InterfaceType iface            = (InterfaceType)offered.getInterface();
@@ -534,7 +514,7 @@ final class Model {
       return eventsOrRequestsForOneComponent;
    }
 
-   public Map<String, List<Object>> getRequiredEventsOrRequests( ComponentType component ) {
+   Map<String, List<Object>> getRequiredEventsOrRequests( ComponentType component ) {
       final Map<String, List<Object>> eventsOrRequestsForOneComponent = new LinkedHashMap<>();
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
          final InterfaceType iface            = (InterfaceType)required.getInterface();
@@ -557,7 +537,7 @@ final class Model {
       }
    }
 
-   public int getFieldSize( FieldType field ) {
+   int getFieldSize( FieldType field ) {
       final FieldtypeType type = field.getType();
       switch( type ) {
       case BOOLEAN: return 1;
@@ -571,13 +551,13 @@ final class Model {
       case FLOAT  : return 4;
       case DOUBLE : return 8;
       case STRING : return 4 + field.getLength().intValue();
-      case ENUM   : return getEnumSize  (getEnum( field ));
-      case STRUCT : return getStructSize((StructType)field.getUserType());
+      case ENUM   : return getEnumSize  ( getEnum( field ));
+      case STRUCT : return getStructSize( getStruct( field ));
       default     : throw new IllegalStateException();
       }
    }
 
-   protected int getStructSize( StructType struct ) {
+   int getStructSize( StructType struct ) {
       int msgSize = 0;
       for( final FieldType field : struct.getField()) {
          msgSize += getFieldSize( field );
@@ -590,7 +570,7 @@ final class Model {
     * @param fields the list of fields
     * @return the size, with the header.
     */
-   public int getMessageSize( List<FieldType> fields ) {
+   int getMessageSize( List<FieldType> fields ) {
       int msgSize = 1 + 1; // INTERFACE + EVENT
       for( final FieldType field : fields ) {
          msgSize += getFieldSize( field );
@@ -603,9 +583,9 @@ final class Model {
     * @param field the field
     * @return the size, with the header.
     */
-   public int getMessageSize( DataType data ) {
+   int getMessageSize( DataType data ) {
       int msgSize = 1 + 1; // INTERFACE + EVENT
-      msgSize += getStructSize((StructType)data.getType());
+      msgSize += getStructSize( _structs.get( data.getType()));
       return msgSize;
    }
 
@@ -644,7 +624,7 @@ final class Model {
       return capacity;
    }
 
-   public int getBufferOutCapacity( InterfaceType required ) {
+   int getBufferOutCapacity( InterfaceType required ) {
       int capacity = 0;
       final String        ifaceName = required.getName();
       final List<Object> facets    = _facetsByName.get( ifaceName );
@@ -667,20 +647,21 @@ final class Model {
       return capacity;
    }
 
-   public int getBufferResponseCapacity( Map<String, List<Object>> events ) {
+   int getBufferResponseCapacity( Map<String, List<Object>> events ) {
       int capacity = 0;
       for( final List<Object> facets : events.values()) {
          for( final Object facet : facets ) {
             if( facet instanceof RequestType ) {
-               final RequestType request = (RequestType)facet;
-               capacity = Math.max( capacity, getMessageSize( request.getResponse().getField()));
+               final RequestType request  = (RequestType)facet;
+               final StructType  response = _structs.get( request.getType());
+               capacity = Math.max( capacity, getMessageSize( response.getField()));
             }
          }
       }
       return capacity;
    }
 
-   public int getDataBufferOutCapacity( List<DataType> data ) {
+   int getDataBufferOutCapacity( List<DataType> data ) {
       int rawSize = 0;
       for( final DataType d : data ) {
          rawSize = Math.max( rawSize, getMessageSize( d ));
@@ -698,21 +679,26 @@ final class Model {
       return instances;
    }
 
-   static Set<String> getReponses( ComponentType component ) {
-      final Set<String> retVal = new LinkedHashSet<>();
+   StructType getResponse( RequestType request ) {
+      return _structs.get( request.getType());
+   }
+
+   static Map<InterfaceType, List<RequestType>> getResponses( ComponentType component ) {
+      final Map<InterfaceType, List<RequestType>> responsesByIface = new HashMap<>();
       for( final RequiredInterfaceUsageType riut : component.getRequires()) {
          final InterfaceType req = (InterfaceType)riut.getInterface();
          for( final Object facet : req.getEventOrRequestOrData()) {
             if( facet instanceof RequestType ) {
-               final RequestType rt = (RequestType)facet;
-               if( rt.getResponse() != null ) {
-                  retVal.add( req.getName() + RESPONSES_INTERFACE_SUFFIX );
-                  break;
+               final RequestType request  = (RequestType)facet;
+               List<RequestType> responses = responsesByIface.get( req );
+               if( responses == null ) {
+                  responsesByIface.put( req, responses = new LinkedList<>());
                }
+               responses.add( request );
             }
          }
       }
-      return retVal;
+      return responsesByIface;
    }
 
    static List<InterfaceType> getRequiredInterfacesBy( ComponentType component ) {
@@ -751,33 +737,38 @@ final class Model {
       return null;
    }
 
-   // TODO retourner une liste
-   private InstanceType getReaderOf( String targetDir, InstanceType dataWriter ) {
+   private Set<InstanceType> getReaderOf( String targetDir, InstanceType dataWriter ) {
+      final Set<InstanceType> instances = new HashSet<>();
       final DeploymentType deployment = getDeployment( targetDir );
       for( final ProcessType process : deployment.getProcess()) {
          for( final InstanceType dataReader : process.getInstance()) {
             for( final RequiresType requires : dataReader.getRequires()) {
                if( dataWriter.getName().equals( requires.getToInstance())) {
-                  return dataReader;
+                  instances.add( dataReader );
                }
             }
          }
       }
-      return null;
+      return instances;
    }
 
-   Map<String, InstanceType> getDataWriterOf( String targetDir, ComponentType component ) {
-      final Map<String, InstanceType> retVal = new LinkedHashMap<>();
-      for( final InstanceType dataWriter : getInstancesOf( targetDir, component )) { // udt1, udt2
+   Map<String, Set<InstanceType>> getDataWriterOf( String deployment, ComponentType component ) {
+      final Map<String, Set<InstanceType>> retVal = new LinkedHashMap<>();
+      for( final InstanceType dataWriter : getInstancesOf( deployment, component )) { // udt1, udt2
          final String writerName = dataWriter.getName();
          for( final OfferedInterfaceUsageType offered : component.getOffers()) {
             final InterfaceType offIface = (InterfaceType)offered.getInterface();
             final String ifaceName = offIface.getName();
             for( final Object offFacet : offIface.getEventOrRequestOrData()) {
                if( offFacet instanceof DataType ) {
-                  final InstanceType dataReader = getReaderOf( targetDir, dataWriter );
-                  final String       readerName = dataReader.getName();
-                  retVal.put( writerName + '/' + ifaceName, getInstancesByName( targetDir ).get( readerName ));
+                  final Set<InstanceType> instances = new HashSet<>();
+                  retVal.put( writerName + '/' + ifaceName, instances );
+                  for( final InstanceType dataReader : getReaderOf( deployment, dataWriter )) {
+                     final String                    readerName   = dataReader.getName();
+                     final Map<String, InstanceType> instancesMap = _instancesByName.get( deployment );
+                     final InstanceType              instance     = instancesMap.get( readerName );
+                     instances.add( instance );
+                  }
                }
             }
          }
@@ -797,11 +788,11 @@ final class Model {
       return _instancesByName.get( deployment );
    }
 
-   public Map<InterfaceType, List<DataType>> getOfferedDataOf( ComponentType component ) {
+   Map<InterfaceType, List<DataType>> getOfferedDataOf( ComponentType component ) {
       return _offeredData.get( component );
    }
 
-   public Map<InterfaceType, List<DataType>> getRequiredDataOf( ComponentType component ) {
+   Map<InterfaceType, List<DataType>> getRequiredDataOf( ComponentType component ) {
       return _requiredData.get( component );
    }
 
@@ -822,11 +813,11 @@ final class Model {
       return requestsMap;
    }
 
-   public Set<String> getAutomatonActions( ComponentType component ) {
+   Set<String> getAutomatonActions( ComponentType component ) {
       return _actions.get( component );
    }
 
-   public Map<InterfaceType, Map<String, Set<ProcessType>>> getDataConsumer( String deploymentName, ComponentType component ) {
+   Map<InterfaceType, Map<String, Set<ProcessType>>> getDataConsumer( String deploymentName, ComponentType component ) {
       final DeploymentType deployment = getDeployment( deploymentName );
       final Map<InterfaceType, Map<String, Set<ProcessType>>> processes = new HashMap<>();
       for( final OfferedInterfaceUsageType offers : component.getOffers()) {
@@ -853,10 +844,10 @@ final class Model {
       return processes;
    }
 
-   public Map<ComponentType, String> getModules( String language ) {
+   Map<ComponentType, String> getModules( String language ) {
       final Map<ComponentType, String> modules = new HashMap<>();
       for( final ComponentType component : _application.getComponent()) {
-         for( final ImplementationType implementation : component.getImplementation()) {
+         for( final ComponentImplType implementation : component.getImplementation()) {
             if( implementation.getLanguage().equals( language )) {
                modules.put( component, implementation.getModuleName());
                break;
@@ -864,5 +855,48 @@ final class Model {
          }
       }
       return modules;
+   }
+
+   String getModuleName( String modelModuleName, String language ) {
+      for( final TypesType types : _application.getTypes()) {
+         if( types.getModuleName().equals( modelModuleName )) {
+            for( final TypesImplType impl : types.getImplementation()) {
+               if( impl.getLanguage().equals( language )) {
+                  return impl.getModuleName();
+               }
+            }
+         }
+      }
+      throw new IllegalStateException( modelModuleName + " isn't defined for the language " + language );
+   }
+
+   void addImports( Map<InterfaceType, List<DataType>> dataMap, SortedSet<String> imports ) {
+      if( dataMap != null ) {
+         for( final List<DataType> lst : dataMap.values()) {
+            for( final DataType data : lst ) {
+               final int    lastDot         = data.getType().lastIndexOf( '.' );
+               final String modelModuleName = data.getType().substring( 0, lastDot );
+               final String typeName        = data.getType().substring( lastDot + 1 );
+               final String implModuleName  = getModuleName( modelModuleName, "Java" );
+               imports.add( implModuleName + "." + typeName );
+            }
+         }
+      }
+   }
+
+   void addImports( SortedSet<String> usedTypes, SortedSet<String> imports ) {
+      if( usedTypes != null ) {
+         for( final String type : usedTypes ) {
+            final int    lastDot         = type.lastIndexOf( '.' );
+            final String modelModuleName = type.substring( 0, lastDot );
+            final String typeName        = type.substring( lastDot + 1 );
+            final String implModuleName  = getModuleName( modelModuleName, "Java" );
+            imports.add( implModuleName + "." + typeName );
+         }
+      }
+   }
+
+   Map<String, String> getTypes( String language ) {
+      return _typesModel2Impl.get( language );
    }
 }

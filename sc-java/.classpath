@@ -6,7 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jfx-13"/>
-	<classpathentry excluding="sc/SiteCentralComponent.java" kind="src" path="src"/>
+	<classpathentry excluding="hpms.sc/SiteCentralComponent.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="src-gen">
 		<attributes>
 			<attribute name="ignore_optional_problems" value="true"/>

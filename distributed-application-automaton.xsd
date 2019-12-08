@@ -3,7 +3,11 @@
    xmlns:xs="http://www.w3.org/2001/XMLSchema"
    attributeFormDefault="unqualified"
    elementFormDefault="qualified">
-   
+
+   <xs:import
+      namespace     ="http://www.w3.org/XML/1998/namespace"
+      schemaLocation="http://www.w3.org/2001/03/xml.xsd" />
+
    <xs:complexType name="transitionType">
       <xs:attribute type="xs:NCName" name="from"  use="required" />
       <xs:attribute type="xs:NCName" name="event" use="required" />
@@ -42,6 +46,7 @@
          </xs:sequence>
       </xs:sequence>
       <xs:attribute type="xs:NCName" name="initial" use="required" />
+      <xs:attribute ref="xml:base" use="optional" />
    </xs:complexType>
 
    <xs:element name="automaton" type="automatonType" />

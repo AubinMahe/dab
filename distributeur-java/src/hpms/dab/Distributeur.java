@@ -1,11 +1,11 @@
-package dab;
+package hpms.dab;
 
 import java.io.IOException;
 
 import dab.ui.Controller;
 import javafx.application.Platform;
 
-public class Distributeur extends dab.DistributeurComponent {
+public class Distributeur extends hpms.dab.DistributeurComponent {
 
    private Controller _controller;
 

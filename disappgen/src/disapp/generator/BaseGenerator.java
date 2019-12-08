@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -28,48 +30,56 @@ import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.StructType;
+import disapp.generator.model.TypesImplType;
+import disapp.generator.model.TypesType;
 
 abstract class BaseGenerator {
 
-   protected final SortedSet<File> _generatedFiles = new TreeSet<>();
-   protected final SortedSet<File> _generatedTypes = new TreeSet<>();
-   protected final Model           _model;
-   protected final STGroup         _group;
-   protected final BaseRenderer    _renderer;
-   protected /* */ String          _genDir;
-   protected /* */ String          _moduleName;
-   protected /* */ String          _genDirTypes;
-   protected /* */ String          _moduleNameTypes;
+   protected final SortedSet<File>     _generatedFiles = new TreeSet<>();
+   protected final SortedSet<File>     _generatedTypes = new TreeSet<>();
+   protected final Map<String, String> _genDirTypes    = new HashMap<>();
+   protected final Model               _model;
+   protected final STGroup             _group;
+   protected final BaseRenderer        _renderer;
+   protected /* */ String              _genDir;
+   protected /* */ String              _moduleName;
 
    protected BaseGenerator( Model model, String templateName, BaseRenderer renderer ) {
-      _model       = model;
-      _group       = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
-      _renderer    = renderer;
+      _model    = model;
+      _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+      _renderer = renderer;
       _group.registerRenderer( String.class, _renderer );
       _group.registerModelAdaptor( FieldType      .class, new FieldAdaptor());
       _group.registerModelAdaptor( EnumerationType.class, new EnumerationAdaptor());
       _group.registerModelAdaptor( JAXBElement    .class, new ActionAdaptor());
       _group.registerModelAdaptor( DurationUnits  .class, new DurationUnitAdaptor());
+      _group.registerModelAdaptor( RequestType    .class, new RequestAdaptor());
+      _group.registerModelAdaptor( DataType       .class, new DataAdaptor());
+      for( final TypesType types : _model.getApplication().getTypes()) {
+         for( final TypesImplType impl : types.getImplementation()) {
+            _genDirTypes.put( types.getModuleName(), impl.getSrcDir());
+         }
+      }
    }
 
-   abstract protected void generateEnum  ( String xUser ) throws IOException;
-   abstract protected void generateStruct( String xUser ) throws IOException;
+   abstract protected void gEnum ( String xUser ) throws IOException;
+   abstract protected void struct( String xUser ) throws IOException;
 
    private void generateTypesUsedBy( InterfaceType iface ) throws IOException {
       final SortedSet<String> used = _model.getUsedTypesBy( iface.getName());
       if( used != null ) {
          for( final String typeName : used ) {
-            if( _model.enumIsDefined( typeName )) {
-               generateEnum( typeName );
+            if( _model.isEnum( typeName )) {
+               gEnum( typeName );
             }
-            else if( _model.structIsDefined( typeName )){
-               generateStruct( typeName );
+            else if( _model.isStruct( typeName )){
+               struct( typeName );
             }
          }
       }
    }
 
-   protected void generateTypesUsedBy( ComponentType component ) throws IOException {
+   protected void typesUsedBy( ComponentType component ) throws IOException {
       for( final OfferedInterfaceUsageType usage : component.getOffers()) {
          generateTypesUsedBy((InterfaceType)usage.getInterface());
       }
@@ -78,8 +88,8 @@ abstract class BaseGenerator {
       }
       final AutomatonType automaton = component.getAutomaton();
       if( automaton != null ) {
-         generateEnum( automaton.getStateEnum().getName());
-         generateEnum( automaton.getEventEnum().getName());
+         gEnum( automaton.getStateEnum().getName());
+         gEnum( automaton.getEventEnum().getName());
       }
    }
 
@@ -141,7 +151,8 @@ abstract class BaseGenerator {
             for( final FieldType field : request.getArguments().getField()) {
                configureRendererWidthsCumulative( field );
             }
-            for( final FieldType field : request.getResponse().getField()) {
+            final StructType struct = _model.getResponse( request );
+            for( final FieldType field : struct.getField()) {
                configureRendererWidthsCumulative( field );
             }
          }
@@ -188,9 +199,9 @@ abstract class BaseGenerator {
       files.clear();
    }
 
-   protected void writeType( String filename, ST source ) throws IOException {
-      final String folder = (filename.endsWith( ".h" )||filename.endsWith( ".hpp" )) ? "inc-gen" : "src-gen";
-      final File target = new File( _genDirTypes, folder + '/' + _moduleNameTypes + '/' + filename );
+   protected void writeType( String modelModuleName, String subPath, String filename, ST source ) throws IOException {
+      final String genDir = _genDirTypes.get( modelModuleName );
+      final File   target = new File( genDir + '/' + subPath + '/' + filename );
       if( ! _model.isUpToDate( target ) && ! _generatedTypes.contains( target )) {
          target.getParentFile().mkdirs();
          try( final PrintStream ps = new PrintStream( target )) {
