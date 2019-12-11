@@ -14,7 +14,6 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src-boot"/>
 	<classpathentry kind="src" path="factories/isolated/sc/src-gen"/>
-	<classpathentry kind="src" path="factories/mixed/sc/src-gen"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry kind="output" path="bin"/>

@@ -1,5 +1,5 @@
-#include <dab/DistributeurUI.hpp>
-#include <dab/Distributeur.hpp>
+#include <hpms/dab/DistributeurUI.hpp>
+#include <hpms/dab/Distributeur.hpp>
 
 #include <os/sleep.hpp>
 #include <io/Console.hpp>
@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-using namespace dab;
+using namespace hpms::dab;
 
 DistributeurUI::DistributeurUI( Distributeur & distributeur ) :
    _distributeur( distributeur ),
@@ -19,11 +19,11 @@ DistributeurUI::DistributeurUI( Distributeur & distributeur ) :
 void DistributeurUI::run( void ) {
    const io::Console & console( io::Console::getConsole());
    UTIL_LOG_MSG( "waiting for core" );
-   while( ! _distributeur.isRunning()) {
+//   while( ! _distributeur.isRunning()) { TODO
       os::sleep( 100 );
-   }
+//   }
    int c = 0;
-   while( c != 'Q' && _distributeur.isRunning()) {
+   while( c != 'Q' /*&& _distributeur.isRunning()*/) {// TODO
       UTIL_LOG_MSG( "printing UI" );
       printf( IO_ED IO_HOME );
       printf( "+-------------------------------------------\n\r" );
@@ -56,10 +56,10 @@ void DistributeurUI::run( void ) {
       printf( "+-------------------------------------------\n\r" );
       printf( "                Votre choix : " );
       fflush( stdout );
-      while( ! console.kbhit() && _distributeur.isRunning() && ! _refresh ) {
+      while( ! console.kbhit() /*&& _distributeur.isRunning()*/ && ! _refresh ) {// TODO
          os::sleep( 20 );
       }
-      if( console.kbhit() && _distributeur.isRunning()) {
+      if( console.kbhit() /*&& _distributeur.isRunning()*/) {// TODO
          c = toupper( console.getch());
          switch( c ) {
          case '0': _distributeur.udt().maintenance                  ( true   ); break;
@@ -84,7 +84,7 @@ void DistributeurUI::run( void ) {
    }
    UTIL_LOG_MSG( "sending shutdown to UniteDeTraitement" );
    _distributeur.udt().shutdown();
-   _distributeur.terminate();
+//   _distributeur.terminate(); TODO
    UTIL_LOG_DONE();
 }
 

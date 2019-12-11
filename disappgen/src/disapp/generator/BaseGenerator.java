@@ -13,8 +13,10 @@ import java.util.TreeSet;
 import javax.xml.bind.JAXBElement;
 
 import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STErrorListener;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
+import org.stringtemplate.v4.misc.STMessage;
 
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
@@ -44,17 +46,47 @@ abstract class BaseGenerator {
    protected /* */ String              _genDir;
    protected /* */ String              _moduleName;
 
+   class DisAppErrListener implements STErrorListener {
+
+      @Override
+      public void compileTimeError( STMessage msg ) {
+         System.err.println( msg.toString());
+         System.exit( 1 );
+      }
+
+      @Override
+      public void runTimeError( STMessage msg ) {
+         System.err.println( msg.toString());
+         System.exit( 1 );
+      }
+
+      @Override
+      public void IOError( STMessage msg ) {
+         System.err.println( msg.toString());
+         System.exit( 1 );
+      }
+
+      @Override
+      public void internalError( STMessage msg ) {
+         System.err.println( msg.toString());
+         System.exit( 1 );
+      }
+   }
+
    protected BaseGenerator( Model model, String language, String templateName, BaseRenderer renderer ) {
       _model    = model;
       _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
       _renderer = renderer;
+      final EventOrRequestOrDataAdaptor eoroda = new EventOrRequestOrDataAdaptor();
+      _group.setListener(  new DisAppErrListener());
       _group.registerRenderer( String.class, _renderer );
       _group.registerModelAdaptor( FieldType      .class, new FieldAdaptor());
       _group.registerModelAdaptor( EnumerationType.class, new EnumerationAdaptor());
       _group.registerModelAdaptor( JAXBElement    .class, new ActionAdaptor());
       _group.registerModelAdaptor( DurationUnits  .class, new DurationUnitAdaptor());
-      _group.registerModelAdaptor( RequestType    .class, new RequestAdaptor());
-      _group.registerModelAdaptor( DataType       .class, new DataAdaptor());
+      _group.registerModelAdaptor( EventType      .class, eoroda );
+      _group.registerModelAdaptor( RequestType    .class, eoroda );
+      _group.registerModelAdaptor( DataType       .class, eoroda );
       for( final TypesType types : _model.getApplication().getTypes()) {
          for( final TypesImplType impl : types.getImplementation()) {
             if( impl.getLanguage().equals( language )) {
@@ -185,10 +217,10 @@ abstract class BaseGenerator {
       String          headerExt,
       String          srcEx      ) throws FileNotFoundException
    {
-      final STGroupFile group = new STGroupFile( BaseGenerator.class.getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
-      final ST          mk    = group.getInstanceOf( "/mk" );
-      final File   parent = new File( genDir ).getParentFile();
-      final String subDir = genDir.substring( parent.getPath().length() + 1 );
+      final STGroupFile group  = new STGroupFile( BaseGenerator.class.getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
+      final ST          mk     = group.getInstanceOf( "/mk" );
+      final File        parent = new File( genDir ).getParentFile();
+      final String      subDir = genDir.substring( parent.getPath().length() + 1 );
       mk.add( "path"   , subDir + "/" + moduleName );
       mk.add( "srcs"   , files.stream().filter( f -> f.getName().endsWith( srcEx     )).toArray());
       mk.add( "headers", files.stream().filter( f -> f.getName().endsWith( headerExt )).toArray());

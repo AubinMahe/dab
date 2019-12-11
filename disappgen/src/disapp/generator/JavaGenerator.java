@@ -92,7 +92,7 @@ public class JavaGenerator extends BaseGenerator {
          final int               rawSize   = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
          final int               ifaceID   = _model.getInterfaceID( ifaceName );
          final SortedSet<String> imports   = new TreeSet<>();
-         _model.addImports( usedTypes, imports );
+         _model.getImports( usedTypes, imports );
          final ST tmpl = _group.getInstanceOf( "/requiredImplementation" );
          tmpl.add( "package"  , _moduleName );
          tmpl.add( "usedTypes", usedTypes );
@@ -164,8 +164,8 @@ public class JavaGenerator extends BaseGenerator {
       final Map<InterfaceType, List<DataType>>    reqData   = _model.getRequiredDataOf  ( component );
       final Map<InterfaceType, List<RequestType>> responses = Model.getResponses( component );
       final SortedSet<String>                     imports   = new TreeSet<>();
-      _model.addImports( offData, imports );
-      _model.addImports( reqData, imports );
+      _model.getImports( offData, imports );
+      _model.getImports( reqData, imports );
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "package"  , _moduleName );
       tmpl.add( "component", component );
@@ -275,6 +275,7 @@ public class JavaGenerator extends BaseGenerator {
                final ST tmpl = _group.getInstanceOf( "/componentFactory" );
                tmpl.add( "package"        , _moduleName );
                tmpl.add( "process"        , process );
+               tmpl.add( "instancesCount" , process.getInstance().size());
                tmpl.add( "processes"      , processes );
                tmpl.add( "offData"        , offData );
                tmpl.add( "reqData"        , reqData );

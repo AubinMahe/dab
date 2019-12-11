@@ -214,7 +214,7 @@ public class <ifaceName> implements I<ifaceName> {
 
    @Override
    public void <facet.name; format="argument">(<
-if( facet.arguments )><
+if( facet.isRequest )><
     signature( facet.arguments.field )><
 else><
     signature( facet.field )><
@@ -223,7 +223,7 @@ endif>) throws IOException {
       _out.put( <iface.name; format="ID"> );
       _out.put( <facet.name; format="ID"> );
       <
-if( facet.arguments )><
+if( facet.isRequest )><
       byteBufferPut( facet.arguments.field )><
 else><
       byteBufferPut( facet.field )><
@@ -729,7 +729,7 @@ public class Automaton extends util.Automaton\<<stateShortName>, <eventShortName
 
 
 
-componentFactory( package, process, processes, offData, reqData, instancesByName, dataConsumer, modules, types ) ::= <<
+componentFactory( package, process, instancesCount, processes, offData, reqData, instancesByName, dataConsumer, modules, types ) ::= <<
 package <package>;
 // ComponentFactory
 import java.io.IOException;
@@ -744,8 +744,8 @@ import java.util.Set;
 
 public final class ComponentFactory extends Thread {
 
-   private final Set\<da.IDispatcher> _dispatchers = new HashSet\<>();
-   private final DatagramChannel     _channel;
+   private final da.IDispatcher[] _dispatchers = new da.IDispatcher[<instancesCount>];
+   private final DatagramChannel  _channel;
 
 <process.instance:{instance|
    private final <modules.(instance.component)>.<instance.component.name> _<instance.name; format="argument"
@@ -779,8 +779,8 @@ process.instance:{instance|<instance.requires:{requires|
       _<instance.name; format="argument">.connect( new <
          modules.(instance.component)>.<requires.interface.name>( _channel, new InetSocketAddress( "<
          processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port> )));
-}>}>      _dispatchers.add( new <
-             modules.(instance.component)>.<instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> ));
+}>}>      _dispatchers[<i0>] = new <
+             modules.(instance.component)>.<instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> );
    \}
 
    public <modules.(instance.component)>.<instance.component.name> get<instance.name; format="cap">() {

@@ -115,7 +115,7 @@ namespace <namespace> {
 
 
 enumBody( namespace, enum ) ::= <<
-#include \<<namespace>/<enum.name; format="cname">.hpp>
+#include \<<namespace; format="NamespaceToPath">/<enum.name; format="cname">.hpp>
 
 namespace <namespace> {
    
@@ -207,7 +207,7 @@ void <struct.name>::get( io::ByteBuffer & source ) {
 
 responsesHeader( namespace, ifaceName, requests, types ) ::= <<
 #pragma once
-//responses
+// responsesHeader
 <requests:{request|
 #include \<<types.(request.type); format="NamespaceToPath">.hpp\>
 }>
@@ -216,8 +216,13 @@ namespace <namespace> {
    class I<ifaceName>Responses {
    public:
 
+      I<ifaceName>Responses( void ) = default;
+      virtual ~ I<ifaceName>Responses( void ) = default;
+
+   public:
+
 <requests:{request|
-      virtual void <request.name>Response( <types.(request.type)> <request.name> ) = 0;
+      virtual void <request.name>Response( const <types.(request.type)> & <request.name> ) = 0;
 }>
    private:
       I<ifaceName>Responses( const I<ifaceName>Responses & ) = delete;
@@ -345,9 +350,6 @@ else><
          signature( facet.field )><
 endif> ) = 0;< endif>
 }>
-   public:
-
-      virtual void run( void ) = 0;
 
    private:
       I<ifaceName>( const I<ifaceName> & ) = delete;
@@ -359,24 +361,29 @@ endif> ) = 0;< endif>
 
 
 dispatcherInterface(
-   namespace, component, ifaces, ifacesIDs, requires, events, rawSize, hasResponse, respRawSize, data, offRequests, reqRequests
+   namespace, component, ifaces, ifacesIDs, requires, events, hasResponse, respRawSize, data, offRequests, reqRequests
 ) ::= <<
 #pragma once
-//dispatcherInterface
+// dispatcherInterface
 #include \<io/DatagramSocket.hpp>
 #include \<io/ByteBuffer.hpp>
+#include \<da/IDispatcher.hpp>
 
 namespace <namespace> {
 
    class <component.name>Component;
-   class <component.name>Dispatcher {
+   class <component.name>Dispatcher : public da::IDispatcher {
    public:
 
       <component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener );
 
    public:
 
-      bool hasDispatched( void );
+      virtual void beforeDispatch( void ) {}
+      
+      virtual bool hasDispatched( byte intrfc, byte event, sockaddr_in & from, io::ByteBuffer & in );
+      
+      virtual void afterDispatch( bool dispatched ) { (void)dispatched; }
 < if( component.timeout )>
 
       enum class LoopbackEvent : byte {
@@ -410,7 +417,7 @@ namespace <namespace> {
 }>< rest( events.(ifaceName)):{event|         <event.name; format="ID">,
 }>      \};
 
-      bool dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event );
+      bool dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event, io::ByteBuffer & in );
 }><data:{iface|
 
 
@@ -419,7 +426,7 @@ namespace <namespace> {
 }>< rest( data.(iface)):{dataType|         <dataType.name; format="ID">,
 }>      \};
 
-      bool dispatch( <iface.name>Data event );
+      bool dispatch( <iface.name>Data event, io::ByteBuffer & in );
 }><reqRequests:{ifaceName|
 
       enum class <ifaceName>Response : byte {
@@ -427,7 +434,7 @@ namespace <namespace> {
 }>< rest( reqRequests.(ifaceName)):{req|         <req.name; format="ID">,
 }>      \};
 
-      bool dispatch( <ifaceName>Response event );
+      bool dispatch( <ifaceName>Response event, io::ByteBuffer & in );
 }>< if( component.timeout )>
       bool dispatch( LoopbackEvent event );
 < endif>
@@ -435,8 +442,6 @@ namespace <namespace> {
    private:
 
       io::DatagramSocket & _socket;
-      byte                 _raw[<rawSize>];
-      io::ByteBuffer       _in;
 < if( hasResponse )>
       byte                 _outRaw[<respRawSize>];
       io::ByteBuffer       _out;
@@ -450,21 +455,21 @@ namespace <namespace> {
 
 byteBufferGet( fields ) ::= <<
 <fields:{field|
-<     if( field.isBoolean )>bool <field.name> = _in.getBool();
-< elseif( field.isByte    )>byte <field.name> = _in.getByte();
-< elseif( field.isShort   )>short <field.name> = _in.getShort();
-< elseif( field.isUshort  )>unsigned short <field.name> = _in.getUShort();
-< elseif( field.isInt     )>int <field.name> = _in.getInt();
-< elseif( field.isUint    )>unsigned int <field.name> = _in.getUInt();
-< elseif( field.isLong    )>int64_t <field.name> = _in.getLong();
-< elseif( field.isUlong   )>uint64_t <field.name> = _in.getULong();
-< elseif( field.isFloat   )>float <field.name> = _in.getFloat();
-< elseif( field.isDouble  )>double <field.name> = _in.getDouble();
+<     if( field.isBoolean )>bool <field.name> = in.getBool();
+< elseif( field.isByte    )>byte <field.name> = in.getByte();
+< elseif( field.isShort   )>short <field.name> = in.getShort();
+< elseif( field.isUshort  )>unsigned short <field.name> = in.getUShort();
+< elseif( field.isInt     )>int <field.name> = in.getInt();
+< elseif( field.isUint    )>unsigned int <field.name> = in.getUInt();
+< elseif( field.isLong    )>int64_t <field.name> = in.getLong();
+< elseif( field.isUlong   )>uint64_t <field.name> = in.getULong();
+< elseif( field.isFloat   )>float <field.name> = in.getFloat();
+< elseif( field.isDouble  )>double <field.name> = in.getDouble();
 < elseif( field.isString  )>char <field.name>[<field.length> + 1];
-_in.getString( <field.name>, sizeof( <field.name> ));
-< elseif( field.isEnum    )><types.(field.userType)> <field.name> = _in.getByte();
+in.getString( <field.name>, sizeof( <field.name> ));
+< elseif( field.isEnum    )><types.(field.userType)> <field.name> = in.getByte();
 < elseif( field.isStruct  )><types.(field.userType)> <field.name>;
-<field.name>.get( _in );
+<field.name>.get( in );
 < endif>
 }>
 >>
@@ -473,11 +478,11 @@ _in.getString( <field.name>, sizeof( <field.name> ));
 
 dispatcherImplData() ::= <<
 // dispatcherImplData -- begin
-bool <component.name>Dispatcher::dispatch( <iface.name>Data event ) {
+bool <component.name>Dispatcher::dispatch( <iface.name>Data event, io::ByteBuffer & in ) {
    switch( event ) {
 <data.(iface):{dataType|
    case <iface.name>Data::<dataType.name; format="ID">:{
-      _listener.update<dataType.name; format="cap">( _in );
+      _listener.get<dataType.name; format="cap">().get( in );
       _listener.<dataType.name>Published();
       return true;\}
 }>   default:
@@ -505,7 +510,6 @@ using namespace <namespace>;
 
 <component.name>Dispatcher::<component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener ) :
    _socket  ( socket ),
-   _in      ( _raw, sizeof( _raw )),
 < if( hasResponse )>
    _out     ( _outRaw, sizeof( _outRaw )),
 < endif>
@@ -517,7 +521,8 @@ using namespace <namespace>;
 <events.(ifaceName):{facet|< if( facet.isRequest )>
 static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
-bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event ) {
+bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif
+    ><ifaceName>Event event, io::ByteBuffer & in ) {
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.isData )>< else>
    case <ifaceName>Event::<facet.name; format="ID">:{
@@ -527,12 +532,12 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
          byteBufferGet( field )>}><
       endif><
       if( facet.isRequest )
->      <ifaceName><facet.name; format="cap">Response response;
-      _listener.<facet.name>( <args( facet.arguments.field )>, response );
+>      <types.(facet.type)> <facet.name>;
+      _listener.<facet.name>( <args( facet.arguments.field )>, <facet.name> );
       _out.clear();
       _out.putByte((byte)Interface::<ifaceName; format="ID">_RESPONSES );
       _out.putByte( EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> );
-      response.put( _out );
+      <facet.name>.put( _out );
       _out.flip();
       _socket.sendTo( _out, from );
       UTIL_LOG_ARGS( "response sent to %s", inet_ntoa( from.sin_addr ));
@@ -553,13 +558,13 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
 }>
 <reqRequests:{ifaceName|
 
-bool <component.name>Dispatcher::dispatch( <ifaceName>Response event ) {
+bool <component.name>Dispatcher::dispatch( <ifaceName>Response event, io::ByteBuffer & in ) {
    switch( event ) {
 <reqRequests.(ifaceName):{facet|
    case <ifaceName>Response::<facet.name; format="ID">:{
       <types.(facet.type)> <facet.name>;
-      <facet.name>.get( _in );
-      _listener.<facet.name>( <facet.name> );
+      <facet.name>.get( in );
+      _listener.<facet.name>Response( <facet.name> );
       break;
       \}
 }>   default:
@@ -581,31 +586,26 @@ bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
 \}
 
 < endif>
-bool <component.name>Dispatcher::hasDispatched( void ) {
-   _in.clear();
-   sockaddr_in from;
-   if( _socket.receive( _in, from )) {
-      _in.flip();
-      byte interface = _in.getByte();
-      byte event     = _in.getByte();
-      switch( static_cast\<Interface>( interface)) {
+bool <component.name>Dispatcher::hasDispatched( byte intrfc, byte event, sockaddr_in & from, io::ByteBuffer & in ) {
+   switch( static_cast\<Interface>( intrfc )) {
 < if( component.timeout )>
-      case Interface::LOOPBACK: return dispatch( static_cast\<LoopbackEvent>( event ));
+   case Interface::LOOPBACK: return dispatch( static_cast\<LoopbackEvent>( event ));
 < endif>
 <ifaces.keys:{ifaceName|
 
-      case Interface::<ifaceName; format="ID">: return dispatch( <
-        if( offRequests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ));
+   case Interface::<ifaceName; format="ID">: return dispatch( <
+     if( offRequests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ), in );
 }><reqRequests:{ifaceName|
-      case Interface::<ifaceName; format="ID">_RESPONSES: return dispatch( static_cast\<<ifaceName>Response>( event ));
+   case Interface::<ifaceName; format="ID">_RESPONSES: return dispatch( static_cast\<<ifaceName>Response>( event ), in );
 }><data:{iface|
-      case Interface::<iface.name; format="ID">: return dispatch( static_cast\<<iface.name>Data>( event ));
+   case Interface::<iface.name; format="ID">: return dispatch( static_cast\<<iface.name>Data>( event ), in );
 }>      default:
-         UTIL_LOG_ARGS( "Unknown interface: %d\n", interface );
-         break;
-      }
+      UTIL_LOG_ARGS( "Unknown interface: %d\n", intrfc );
+      break;
    }
    return false;
+   (void)from;
+   (void)in;
 }
 < if( component.timeout )>
 
@@ -622,212 +622,151 @@ void <component.name>Dispatcher::loopback( const LoopbackEvent & event ) {
 
 
 
-componentInterface(
-   typesNamespace, namespace, component, responses, requires, instancesByName, instances, actions, data, reqData
-) ::= <<
+componentHeader( namespace, component, requires, actions, offData, reqData, responses, includes, types ) ::= <<
 #pragma once
-//componentInterface
+// componentHeader
 #include \<io/DatagramSocket.hpp>
 < if( component.timeout )>
 
 #include \<util/Timeout.hpp>
 
 < endif>
-<component.offers:{offered|#include \<<namespace>/I<offered.interface.name>.hpp>
-}>
-<component.requires:{required|#include \<<namespace>/<required.interface.name>.hpp>
-}><responses:{ifaceName|#include \<<namespace>/I<ifaceName>.hpp>
-}><data:{iface|
-#include \<<namespace>/<iface.name>Data.hpp>
-}><reqData:{iface|
-#include \<<namespace>/I<iface.name>Data.hpp>
-}>
-#include \<<namespace>/<component.name>Dispatcher.hpp>
+<component.offers  :{offered |#include \<<namespace; format="NamespaceToPath">/I<offered .interface.name>.hpp>}; separator="\n">
+<component.requires:{required|#include \<<namespace; format="NamespaceToPath">/<required.interface.name >.hpp>}; separator="\n">
+<responses         :{iface   |#include \<<namespace; format="NamespaceToPath">/I<iface.name    >Responses.hpp>}; separator="\n">
+<offData           :{iface   |#include \<<namespace; format="NamespaceToPath">/<iface.name          >Data.hpp>}; separator="\n">
+<reqData           :{iface   |#include \<<namespace; format="NamespaceToPath">/I<iface.name         >Data.hpp>}; separator="\n">
+#include \<<                              namespace; format="NamespaceToPath">/<component.name>Dispatcher.hpp>
 < if( component.automaton )>
 
-#include \<<namespace>/Automaton.hpp>
+#include \<<                              namespace; format="NamespaceToPath">/Automaton.hpp>
 < endif>
-
-#include \<os/Thread.hpp>
 
 namespace <namespace> {
 
-   class <component.name>Component : <
-first(component.offers):{ offered  |public I<offered.interface.name>}><
-rest (component.offers):{ offered|, public I<offered.interface.name>}><
-reqData:{iface|, public I<iface.name>Data}><
-responses:{ifaceName|, public I<ifaceName>}> {
+   class <component.name>Component :<
+component.offers:{offered|  public I<offered.interface.name>}; separator=", "><
+reqData         :{iface  |, public I<iface.name        >Data}; separator=", "><
+responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
    public:
 
-      <component.name>Component( const char * name );
-
+      <component.name>Component( void ) :
+         _dispatcher( 0 )<requires:{iface|,
+         _<iface.name; format="argument">( 0 )}><offData:{iface|,
+         _<iface.name; format="argument">Data( 0 )}><reqData:{iface|<reqData.(iface):{data|,
+         _<data.name; format="argument">( 0 )}>}>< if( component.automaton )>,
+         _automaton( *this )< endif><component.timeout:{to|,
+         _<to.name; format="argument">( <to.name; format="ID">_DURATION, [this](){ loopback( <
+            component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> );\})}>
+      {}
+      
    public:
 
-      void run();
+      <actions:{action|virtual void <action>( void ) = 0;
+}>
+      <component.timeout:{to|virtual void <to.name>Elapsed( void ) = 0;
+}>
+   public:
 
-      bool isRunning( void ) const {
-         return _running;
+      virtual void init( void ) {}
+
+< if( component.timeout )>
+      void set( <component.name>Dispatcher & dispatcher ) {
+         _dispatcher = &dispatcher;
       }
 
-      void terminate( void );
-
-< if( actions )>
-
-   public:
-
-<actions:{action|
-      virtual void <action>( void ) = 0;
-}>
-< endif><component.timeout:{to|
-      virtual void <to.name>Elapsed( void ) = 0;
-}>
-   protected:< if( component.afterDispatchNeeded )>
-
-      virtual void afterDispatch( void ) = 0;
 < endif>
-< if( component.timeout )>
+<requires:{iface|
+      void connect( <iface.name> & <iface.name; format="argument"> ) {
+         _<iface.name; format="argument"> = &<iface.name; format="argument">;
+      \}
 
-      void loopback( const <component.name>Dispatcher::LoopbackEvent & event );
-< endif>
-<reqData:{iface|<reqData.(iface):{data|
+      <iface.name> & get<iface.name>( void ) {
+         return *_<iface.name; format="argument">;
+      \}
+}><reqData:{iface|<reqData.(iface):{data|
 
-
-      <typesNamespace>::<data.name; format="cap"> _<data.name; format="args">;
-
-   public:
+      void connect( <types.(data.type)> & <data.name; format="argument"> ) {
+         _<data.name; format="argument"> = &<data.name; format="argument">;
+      \}
+     
+      <types.(data.type)> & get<data.name; format="cap">( void ) {
+         return *_<data.name; format="argument">;
+      \}}>
+}><offData:{iface|
+      void connect( <iface.name>Data & data ) {
+         _<iface.name; format="argument">Data = &data;
+      \}
    
-      void update<data.name; format="cap">( io::ByteBuffer & in );
-
-}>}>   private:
-
-      io::DatagramSocket _socket;
-      volatile bool      _running;
-      ThreadType         _self;
-      <component.name>Dispatcher _dispatcher;
-
+      <iface.name>Data & get<iface.name; format="cap">Data( void ) {
+         return *_<iface.name; format="argument">Data;
+      \}}>
+   
    protected:
 
-< if( component.automaton )>      Automaton _automaton;
+      void beforeDispatch( void ) {}
+      
+      void afterDispatch( bool dispatched ) {
+         (void)dispatched;
+      }
+
+< if( component.timeout )>
+   private:
+
+      void loopback( <component.name>Dispatcher::LoopbackEvent event );
+
 < endif>
-<component.timeout:{to|       util::TimeoutCallback _<to.name>;
-}><data:{iface|
-      <iface.name>Data _<iface.name; format="argument">;
-}>< first(requires):{req|<requires.(req):{rt|
-      <rt.interface.name> _<rt.interface.name; format="argument">;
-}>}>   };
+   protected:
+
+      <component.name>Dispatcher * _dispatcher;
+<requires:{iface|
+      <iface.name> * _<iface.name; format="argument">;
+}><offData:{iface|
+      <iface.name>Data * _<iface.name; format="argument">Data;
+}><
+if( component.automaton )>      Automaton             _automaton;
+< endif><reqData:{iface|<reqData.(iface):{data|
+      <types.(data.type)> * _<data.name; format="argument">;
+}>}><component.timeout:{to|
+      util::TimeoutCallback _<to.name>;
+}>
+<component.timeout:{to|
+      static const unsigned <to.name; format="ID">_DURATION = <to.duration><to.unit.toCpp; format="cap">;
+}>
+   private:
+      <component.name>Component( const <component.name>Component & ) = delete;
+      <component.name>Component & operator = ( const <component.name>Component & ) = delete;
+   };
 }
 >>
 
 
 
 componentImplementation(
-   namespace, component, responses, requires, instancesByName, instances, processes, data, reqData
+   namespace, component, responses, requires, instancesByName, instances, processes, offData, reqData
 ) ::= <<
 //componentImplementation
-#include \<<namespace>/<component.name>Component.hpp>
-#include \<<namespace>/<component.name>Dispatcher.hpp>
-
-#include \<stdio.h>
-#include \<string.h>
-
-#include \<util/Exceptions.hpp>
-#include \<util/Log.hpp>
+#include \<<namespace; format="NamespaceToPath">/<component.name>Component.hpp>
 
 using namespace <namespace>;
-< first(requires):{req|<requires.(req):{rt|
-
-
-static sockaddr_in & init<rt>SocketAddress( const char * name ) {
-   static sockaddr_in address;
-< first(instances):{instance|
-   if( 0 == strcmp( name, "<instance.name>" )) {
-      io::DatagramSocket::init( "<
-         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).address>", <
-         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).port>, address );
-}>< rest(instances):{instance|
-   \}
-   else if( 0 == strcmp( name, "<instance.name>" )) {
-      io::DatagramSocket::init( "<
-         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).address>", <
-         processes.(instancesByName.(requires.(instance.name).(rt).toInstance)).port>, address );
-   \}
-}>   else {
-      throw util::NotApplicable( UTIL_CTXT, "'%s' isn't a valid name as defined in XML application file!", name );
-   \}
-   return address;
-\}}>}>
-
-<component.name>Component::<component.name>Component( const char * name ) :
-   _running   ( false ),
-   _self      ( 0 ),
-   _dispatcher( _socket, *this )< if( component.automaton )>,
-   _automaton ( *this )
-   < endif>
-   <component.timeout:{to|,
-   _<to.name; format="argument">( <to.duration><to.unit.toCpp>, [this](){ _dispatcher.loopback( <
-      component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> ); \})}><
-   data:{iface|,
-   _<iface.name; format="argument">( _socket, initIHMSocketAddress( name ))}><
-   first(requires):{req|<requires.(req):{rt|,
-   _<rt; format="argument">( _socket, init<rt>SocketAddress( name ))}>}>
-{
-< first(instances):{instance|
-   if( 0 == strcmp( name, "<instance.name>" )) {
-      _socket.bind( "<
-         processes.(instance).address>", <
-         processes.(instance).port> );
-}>< rest(instances):{instance|
-   \}
-   else if( 0 == strcmp( name, "<instance.name>" )) {
-      _socket.bind( "<
-         processes.(instance).address>", <
-         processes.(instance).port> );
-}>   }
-}<reqData:{iface|<reqData.(iface):{data|
-
-
-void <component.name>Component::update<data.name; format="cap">( io::ByteBuffer & in ) {
-   _<data.name>.get( in );
-\}
-}>}>
-
-void <component.name>Component::terminate() {
-   _running = false;
-   os::Thread::cancel( _self );
-}
 
 < if( component.timeout )>
-void <component.name>Component::loopback( const <component.name>Dispatcher::LoopbackEvent & event ) {
-   _dispatcher.loopback( event );
+void <component.name>Component::loopback( <component.name>Dispatcher::LoopbackEvent event ) {
+   _dispatcher->loopback( event );
 }
-
 < endif>
-
-void <component.name>Component::run() {
-   UTIL_LOG_HERE();
-   _self    = os::Thread::self();
-   _running = true;
-   while( _running ) {
-      if( _dispatcher.hasDispatched()) {< if( component.afterDispatchNeeded )>
-         afterDispatch();
-< endif>
-      }
-   }
-   UTIL_LOG_DONE();
-}
 >>
 
 
 
-dataWriterHeader( typesNamespace, namespace, interface, ifaceID, data, rawSize ) ::= <<
+dataWriterHeader( namespace, interface, ifaceID, data, rawSize, types ) ::= <<
 #pragma once
-
-// dataWriter
+// dataWriterHeader
 
 #include \<io/DatagramSocket.hpp>
 
 <data:{dataType|
-#include \<<typesNamespace>/<dataType.name; format="cap">.hpp>
+#include \<<types.(dataType.type); format="NamespaceToPath">.hpp>
 }>
 namespace <namespace> {
 
@@ -842,8 +781,8 @@ namespace <namespace> {
 }>
    public:
 
-      <data:{dataType|<typesNamespace>::<dataType.name; format="cap"> _<dataType.name; format="argument">;
-}>
+      <data:{dataType|<types.(dataType.type)> _<dataType.name; format="argument">;}; separator="\n">
+
    private:
 
       io::DatagramSocket & _socket;
@@ -856,8 +795,9 @@ namespace <namespace> {
 
 
 
-dataWriterBody( typesNamespace, namespace, interface, ifaceID, data, dataID, rawSize ) ::= <<
-#include \<<namespace>/<interface.name>Data.hpp>
+dataWriterBody( namespace, interface, ifaceID, data, dataID, rawSize ) ::= <<
+// dataWriterBody
+#include \<<namespace; format="NamespaceToPath">/<interface.name>Data.hpp>
 
 #include \<util/Log.hpp>
 
@@ -916,21 +856,21 @@ namespace <namespace> {
 
 
 
-automatonHeader( typesNamespace, namespace, component ) ::= <<
+automatonHeader( namespace, component, types ) ::= <<
 #pragma once
 
 #include \<util/Automaton.hpp>
 
-#include \<<typesNamespace>/<component.automaton.stateEnum.name>.hpp>
-#include \<<typesNamespace>/<component.automaton.eventEnum.name>.hpp>
+#include \<<types.(component.automaton.stateEnum.name); format="NamespaceToPath">.hpp>
+#include \<<types.(component.automaton.eventEnum.name); format="NamespaceToPath">.hpp>
 
 namespace <namespace> {
 
    class <component.name>Component;
    class Automaton : public util::Automaton\<<
       component.name>Component, <
-      typesNamespace>::<component.automaton.stateEnum.name>, <
-      typesNamespace>::<component.automaton.eventEnum.name>\> {
+      types.(component.automaton.stateEnum.name)>, <
+      types.(component.automaton.eventEnum.name)>\> {
    public:
 
       Automaton( <component.name>Component & component );
@@ -944,44 +884,162 @@ namespace <namespace> {
 
 
 
-automatonBody( typesNamespace, namespace, component ) ::= <<
+automatonBody( namespace, component, types ) ::= <<
 #include "Automaton.hpp"
-#include \<<namespace>/<component.name>Component.hpp>
+#include \<<namespace; format="NamespaceToPath">/<component.name>Component.hpp>
 
 using namespace <namespace>;
 
 Automaton :: Automaton( <component.name>Component & component ) :
    util::Automaton\<<
       component.name>Component, <
-      typesNamespace>::<component.automaton.stateEnum.name>, <
-      typesNamespace>::<component.automaton.eventEnum.name>\>( component, <
-         typesNamespace>::<component.automaton.stateEnum.name>::<component.automaton.initial> )
+      types.(component.automaton.stateEnum.name)>, <
+      types.(component.automaton.eventEnum.name)>\>( component, <
+         types.(component.automaton.stateEnum.name)>::<component.automaton.initial> )
 {
    static Transition transitions[] = {<component.automaton.transition:{tr|
 
-      { <typesNamespace>::<component.automaton.stateEnum.name>::<tr.from>, <
-         typesNamespace>::<component.automaton.eventEnum.name>::<tr.event>, <
-         typesNamespace>::<component.automaton.stateEnum.name>::<tr.futur> \},
+      { <types.(component.automaton.stateEnum.name)>::<tr.from>, <
+         types.(component.automaton.eventEnum.name)>::<tr.event>, <
+         types.(component.automaton.stateEnum.name)>::<tr.futur> \},
 }>   };
    setTransitions( transitions, sizeof(transitions)/sizeof(transitions[0]));
 
    static Shortcut shortcuts[] = {<component.automaton.shortcut:{shortcut|
 
-      { <typesNamespace>::<component.automaton.eventEnum.name>::<shortcut.event>, <
-         typesNamespace>::<component.automaton.stateEnum.name>::<shortcut.futur> \},
+      { <types.(component.automaton.eventEnum.name)>::<shortcut.event>, <
+         types.(component.automaton.stateEnum.name)>::<shortcut.futur> \},
 }>   };
    setShortcuts( shortcuts, sizeof(shortcuts)/sizeof(shortcuts[0]));
 
    static Action onEntries[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnEntry )>
-      { <typesNamespace>::<component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
+      { <types.(component.automaton.stateEnum.name)>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
    };
    setOnEntries( onEntries, sizeof(onEntries)/sizeof(onEntries[0]));
 
    static Action onExits[] = {<component.automaton.onEntryOrOnExit:{elt|< if( elt.isOnExit )>
-      { <typesNamespace>::<component.automaton.stateEnum.name>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
+      { <types.(component.automaton.stateEnum.name)>::<elt.value.state>, &<component.name>Component::<elt.value.action> \},< endif>
 }>
    };
    setOnExits( onExits, sizeof(onExits)/sizeof(onExits[0]));
+}
+>>
+
+
+
+componentFactoryHeader(
+   namespace, process, instancesCount, processes, offData, reqData, instancesByName, dataConsumer, modules, types
+) ::= <<
+#pragma once
+// ComponentFactoryHeader
+
+#include \<da/IDispatcher.hpp>
+#include \<io/DatagramSocket.hpp>
+#include \<os/Thread.hpp>
+
+<process.instance:{instance|#include \<<modules.(instance.component); format="NamespaceToPath">/<instance.component.name>.hpp\>}; separator="\n">
+
+namespace <namespace> {
+
+   class ComponentFactory : public os::Thread {
+   public:
+
+      ComponentFactory( void );
+   
+   public:
+   
+      <process.instance:{instance|<modules.(instance.component)>::<instance.component.name> & get<instance.name; format="cap">( void );}; separator="\n">
+
+   private:
+   
+      <process.instance:{instance|void connect<instance.name; format="cap">( void );}; separator="\n">
+   
+      void run( void );
+   
+   private:
+
+      static void * _run( void * userCtxt ) {
+         ((ComponentFactory *)userCtxt)->run();
+         return nullptr;
+      }
+
+   private:
+
+      da::IDispatcher *  _dispatchers[<instancesCount>];
+      io::DatagramSocket _socket;
+      <process.instance:{instance|<modules.(instance.component)>::<instance.component.name> _<instance.name; format="argument">;}; separator="\n">
+
+   private:
+      ComponentFactory( const ComponentFactory & ) = delete;
+      ComponentFactory & operator = ( const ComponentFactory & ) = delete;
+   };
+}
+>>
+
+
+
+componentFactoryBody(
+   namespace, process, instancesCount, processes, offData, reqData, instancesByName, dataConsumer, modules, types
+) ::= <<
+// ComponentFactoryBody
+#include "ComponentFactory.hpp"
+
+using namespace <namespace>;
+
+ComponentFactory::ComponentFactory( void ) :
+   os::Thread( _run, this )
+{
+   _socket.bind( "<process.address>", <process.port> );
+   <process.instance:{instance|connect<instance.name; format="cap">();}; separator="\n">
+   <process.instance:{instance|_<instance.name; format="argument">.init();}; separator="\n">
+}
+
+<process.instance:{instance|void ComponentFactory::connect<instance.name; format="cap">( void ) {
+   <reqData:{iface|<reqData.(iface):{data|
+   <types.(data.type)> * <data.name; format="argument"> = new <types.(data.type)>();
+   _<instance.name; format="argument">.connect( *<data.name; format="argument"> );}; separator="\n">}; separator="\n">
+<offData:{iface|<dataConsumer.(iface).(instance.name):{process|
+   sockaddr_in <iface.name; format="argument">;
+   io::DatagramSocket::init( "<process.address>", <process.port>, <iface.name; format="argument"> );
+   _<instance.name; format="argument">.connect( *new <
+      modules.(instance.component)>::<iface.name>Data( _socket, <iface.name; format="argument">));}; separator="\n">}; separator="\n">
+<process.instance:{instance|<instance.requires:{requires|
+   sockaddr_in <requires.interface.name; format="argument">;
+   io::DatagramSocket::init( "<processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port>, <requires.interface.name; format="argument"> );
+   _<instance.name; format="argument">.connect( *new <
+      modules.(instance.component)>::<requires.interface.name>( _socket, <requires.interface.name; format="argument"> ));}; separator="\n">}; separator="\n">
+   _dispatchers[<i0>] = new <
+      modules.(instance.component)>::<instance.component.name>Dispatcher( _socket, _<instance.name; format="argument"> );
+\}
+   
+<modules.(instance.component)>::<instance.component.name> & ComponentFactory::get<instance.name; format="cap">( void ) {
+   return _<instance.name; format="argument">;
+\}
+   
+}>void ComponentFactory::run( void ) {
+   byte raw[64*1024];
+   io::ByteBuffer in( raw, 64*1024 );
+   for(;;) {
+      in.clear();
+      sockaddr_in from;
+      _socket.receive( in, from );
+      in.flip();
+      byte intrfc = in.getByte();
+      byte event  = in.getByte();
+      for( da::IDispatcher * dispatcher : _dispatchers ) {
+         dispatcher->beforeDispatch();
+      }
+      bool dispatched = false;
+      for( da::IDispatcher * dispatcher : _dispatchers ) {
+         if( dispatcher->hasDispatched( intrfc, event, from, in )) {
+            dispatched = true;
+            break;
+         }
+      }
+      for( da::IDispatcher * dispatcher : _dispatchers ) {
+         dispatcher->afterDispatch( dispatched );
+      }
+   }
 }
 >>

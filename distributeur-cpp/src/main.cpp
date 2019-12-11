@@ -1,4 +1,7 @@
-#include <dab/Distributeur.hpp>
+#include <hpms/dab/Distributeur.hpp>
+#include <hpms/dab/DistributeurUI.hpp>
+#include <isolated/ihm1/ComponentFactory.hpp>
+#include <isolated/ihm2/ComponentFactory.hpp>
 
 #include <util/Args.hpp>
 #include <util/Log.hpp>
@@ -20,7 +23,16 @@ int main( int argc, char * argv[] ) {
    if( ! args.getString( "name", name )) {
       return usage( argv[0] );
    }
-   dab::Distributeur( name ).run();
+   if( 0 == strcmp( name, "isolated.ihm1" )) {
+      hpms::dab::DistributeurUI( isolated::ihm1::ComponentFactory().getIhm1()).run();
+   }
+   else if( 0 == strcmp( name, "isolated.ihm2" )) {
+      hpms::dab::DistributeurUI( isolated::ihm2::ComponentFactory().getIhm2()).run();
+   }
+   else {
+      fprintf( stderr, "'%s' isn't a valid deployment.process name\n", name );
+      exit( 1 );
+   }
    UTIL_LOG_DONE();
    return 0;
 }

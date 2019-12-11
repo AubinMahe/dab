@@ -110,7 +110,7 @@
       <event name="shutdown" />
    </interface>
 
-   <component name="Distributeur" after-dispatch-needed="false">
+   <component name="Distributeur">
       <offers interface="IHM" />
       <requires interface="UniteDeTraitement" />
       <implementation language="C" src-dir="distributeur-c/src-gen" module-name="DAB" />
@@ -118,7 +118,7 @@
       <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="hpms.dab" />
    </component>
 
-   <component name="Controleur" after-dispatch-needed="true">
+   <component name="Controleur">
       <offers interface="UniteDeTraitement" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
@@ -132,7 +132,7 @@
       <implementation language="Java" src-dir="udt-java/src-gen" module-name="hpms.udt" />
    </component>
 
-   <component name="Banque" after-dispatch-needed="false">
+   <component name="Banque">
       <offers interface="SiteCentral" />
       <implementation language="C" src-dir="sc-c/src-gen" module-name="SC" />
       <implementation language="C++" src-dir="sc-cpp/src-gen" module-name="hpms::sc" />

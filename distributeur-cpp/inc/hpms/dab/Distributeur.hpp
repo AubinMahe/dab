@@ -1,12 +1,16 @@
-#include <dab/DistributeurUI.hpp>
-#include <dab/DistributeurComponent.hpp>
+#pragma once
 
-namespace dab {
+#include <hpms/dab/DistributeurUI.hpp>
+#include <hpms/dab/DistributeurComponent.hpp>
+
+namespace hpms::dab {
 
    class Distributeur : public DistributeurComponent {
    public:
 
-      Distributeur( const char * name );
+      Distributeur( void );
+
+      virtual ~ Distributeur( void ) {}
 
    public:
 
@@ -19,8 +23,8 @@ namespace dab {
 
    public:
 
-      const dabtypes::EtatDuDab & getEtatDuDab( void ) { return _etatDuDab; }
-      UniteDeTraitement & udt() { return _uniteDeTraitement; }
+      const hpms::dabtypes::EtatDuDab & getEtatDuDab( void ) { return *_etatDuDab; }
+      UniteDeTraitement & udt() { return *_uniteDeTraitement; }
 
    private:
 

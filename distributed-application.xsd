@@ -166,7 +166,6 @@
          <xs:element type="componentImplType"          name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />
-      <xs:attribute type="xs:boolean" name="after-dispatch-needed" use="optional" default="false" />
    </xs:complexType>
    
    <xs:simpleType name="portNumberType">

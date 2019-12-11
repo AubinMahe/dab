@@ -59,7 +59,11 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/inc-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/ihm1/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/ihm2/src-gen}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -122,6 +126,12 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="factories/isolated/udt2|factories/isolated/udt1|factories/isolated/sc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
                     				
                 </configuration>
                 			
@@ -187,7 +197,7 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/inc-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -242,6 +252,12 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="factories/isolated/udt2|factories/isolated/udt1|factories/isolated/sc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
                     				
                 </configuration>
                 			

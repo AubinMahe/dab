@@ -51,9 +51,15 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/util-cpp/inc}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/inc-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/udt-cpp/src-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/udt1/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/udt2/src-gen}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -132,6 +138,12 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="factories/isolated/sc|factories/isolated/ihm2|factories/isolated/ihm1" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
                     				
                 </configuration>
                 			
@@ -189,9 +201,15 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/util-cpp/inc}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/inc-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/udt-cpp/src-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/udt1/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/factories/isolated/udt2/src-gen}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -268,6 +286,12 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <sourceEntries>
+                        						
+                        <entry excluding="factories/isolated/sc|factories/isolated/ihm2|factories/isolated/ihm1" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+                        					
+                    </sourceEntries>
                     				
                 </configuration>
                 			

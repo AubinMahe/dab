@@ -1,4 +1,4 @@
-#include <dab/Distributeur.hpp>
+#include <hpms/dab/Distributeur.hpp>
 
 #include <os/Thread.hpp>
 #include <util/Time.hpp>
@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-using namespace dab;
+using namespace hpms::dab;
 
 static void * launchUI( void * arg ) {
    DistributeurUI * ui = (DistributeurUI *)arg;
@@ -14,13 +14,12 @@ static void * launchUI( void * arg ) {
    return nullptr;
 }
 
-Distributeur::Distributeur( const char * name ) :
-   DistributeurComponent( name ),
+Distributeur::Distributeur( void ) :
    _ui( *this )
 {
    UTIL_LOG_HERE();
-   _etatDuDab.etat = dabtypes::Etat::MAINTENANCE;
-   _etatDuDab.soldeCaisse = 0.0;
+   _etatDuDab->etat = dabtypes::Etat::MAINTENANCE;
+   _etatDuDab->soldeCaisse = 0.0;
    os::Thread( launchUI, &_ui );
 }
 

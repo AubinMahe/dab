@@ -1,17 +1,21 @@
-#include <sc/Repository.hpp>
-#include <sc/BanqueUI.hpp>
-#include <sc/BanqueComponent.hpp>
+#pragma once
 
-namespace sc {
+#include <hpms/sc/Repository.hpp>
+#include <hpms/sc/BanqueUI.hpp>
+#include <hpms/sc/BanqueComponent.hpp>
+
+namespace hpms::sc {
 
    class Banque : public BanqueComponent {
    public:
 
-      Banque( const char * name );
+      Banque( void );
+
+      virtual ~ Banque( void ) {}
 
    public:
 
-      virtual void getInformations( const char * carteID, dabtypes::SiteCentralGetInformationsResponse & response );
+      virtual void informations( const char * carteID, hpms::dabtypes::Information & response );
 
       virtual void incrNbEssais( const char * carteID );
 

@@ -691,6 +691,9 @@ final class Model {
    }
 
    List<InstanceType> getInstancesOf( String deployment, ComponentType component ) {
+      if( ! _instancesByName.containsKey( deployment )) {
+         throw new IllegalStateException( deployment + " n'est pas un déploiement valide." );
+      }
       final List<InstanceType> instances = new LinkedList<>();
       for( final InstanceType instance : _instancesByName.get( deployment ).values()) {
          if( instance.getComponent() == component ) {
@@ -891,7 +894,7 @@ final class Model {
       throw new IllegalStateException( modelModuleName + " isn't defined for the language " + language );
    }
 
-   void addImports( Map<InterfaceType, List<DataType>> dataMap, SortedSet<String> imports ) {
+   void getImports( Map<InterfaceType, List<DataType>> dataMap, SortedSet<String> imports ) {
       if( dataMap != null ) {
          for( final List<DataType> lst : dataMap.values()) {
             for( final DataType data : lst ) {
@@ -905,7 +908,7 @@ final class Model {
       }
    }
 
-   void addImports( SortedSet<String> usedTypes, SortedSet<String> imports ) {
+   void getImports( SortedSet<String> usedTypes, SortedSet<String> imports ) {
       if( usedTypes != null ) {
          for( final String type : usedTypes ) {
             final int    lastDot         = type.lastIndexOf( '.' );
@@ -917,11 +920,17 @@ final class Model {
       }
    }
 
+   static void getIncludes( List<InterfaceType> requires, SortedSet<String> includes ) {
+      for( final InterfaceType req : requires ) {
+         includes.add( 'I' + req.getName());
+      }
+   }
+
    Map<String, String> getTypes( String language ) {
       return _typesModel2Impl.get( language );
    }
 
-   public static SortedSet<String> getUserTypesRequiredBy( InterfaceType iface ) {
+   static SortedSet<String> getUserTypesRequiredBy( InterfaceType iface ) {
       final SortedSet<String> types = new TreeSet<>();
       for( final Object facet : iface.getEventOrRequestOrData()) {
          if( facet instanceof EventType ) {

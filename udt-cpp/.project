@@ -26,4 +26,11 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>factories</name>
+			<type>2</type>
+			<location>/home/aubin/Dev/git/dab/factories</location>
+		</link>
+	</linkedResources>
 </projectDescription>

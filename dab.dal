@@ -77,7 +77,7 @@ component Distributeur
       C++  as 'hpms::dab' in "distributeur-cpp/src-gen"
       Java as 'hpms.dab'  in "distributeur-java/src-gen"
 
-component Controleur after-dispatch is needed
+component Controleur
    offers   UniteDeTraitement
    requires IHM SiteCentral
    timeout

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sc {
+namespace hpms::sc {
 
    class Banque;
    class BanqueUI {

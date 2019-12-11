@@ -1,5 +1,5 @@
-#include <sc/BanqueUI.hpp>
-#include <sc/Banque.hpp>
+#include <hpms/sc/BanqueUI.hpp>
+#include <hpms/sc/Banque.hpp>
 
 #include <os/sleep.hpp>
 #include <io/Console.hpp>
@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-using namespace sc;
+using namespace hpms::sc;
 
 BanqueUI::BanqueUI( Banque & banque ) :
    _banque ( banque ),
@@ -19,11 +19,11 @@ BanqueUI::BanqueUI( Banque & banque ) :
 void BanqueUI::run( void ) {
    const io::Console & console( io::Console::getConsole());
    UTIL_LOG_MSG( "waiting for core" );
-   while( ! _banque.isRunning()) {
+//   while( ! _banque.isRunning()) { TODO
       os::sleep( 100 );
-   }
+//   }
    int c = 0;
-   while( c != 'Q' && _banque.isRunning()) {
+   while( c != 'Q' /*&& _banque.isRunning()*/) {// TODO
       UTIL_LOG_MSG( "printing UI" );
       _refresh = false;
       printf( IO_ED IO_HOME );
@@ -61,14 +61,14 @@ void BanqueUI::run( void ) {
       printf( "\r\n" );
       printf( "    'Q' pour " IO_BOLD "Quitter" IO_SGR_OFF " : " );
       fflush( stdout );
-      while( ! console.kbhit() && _banque.isRunning() && ! _refresh ) {
+      while( ! console.kbhit() /*&& _banque.isRunning()*/ && ! _refresh ) {// TODO
          os::sleep( 20 );
       }
-      if( console.kbhit() && _banque.isRunning()) {
+      if( console.kbhit() /*&& _banque.isRunning()*/) {// TODO
          c = toupper( console.getch());
       }
    }
-   _banque.terminate();
+//   _banque.terminate(); TODO
    UTIL_LOG_DONE();
 }
 

@@ -34,7 +34,7 @@ public class Main extends Application {
       final Banque instance;
       switch( name ) {
       case "isolated.sc": instance = new isolated.sc.ComponentFactory().getSc(); break;
-      case "mixed.sc"   : instance = new mixed.sc.ComponentFactory().getSc(); break;
+//      case "mixed.sc"   : instance = new mixed.sc.ComponentFactory().getSc(); break;
       default: throw new IllegalStateException( "'" + name + "' isn't a valid deployement.process name" );
       }
       ctrl.init( stage, name, instance );

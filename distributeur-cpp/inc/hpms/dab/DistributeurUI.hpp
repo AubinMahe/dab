@@ -1,6 +1,6 @@
 #pragma once
 
-namespace dab {
+namespace hpms::dab {
 
    class Distributeur;
    class DistributeurUI {

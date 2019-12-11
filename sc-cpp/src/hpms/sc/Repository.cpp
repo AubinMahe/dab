@@ -1,13 +1,13 @@
-#include <sc/Repository.hpp>
+#include <hpms/sc/Repository.hpp>
 
 #include <util/Log.hpp>
 
 #include <stdio.h>
 #include <string.h>
 
-using namespace sc;
+using namespace hpms::sc;
 
-static void init( dabtypes::Carte & carte, const char * id, const char * code, byte month, unsigned short year ) {
+static void init( hpms::dabtypes::Carte & carte, const char * id, const char * code, byte month, unsigned short year ) {
    strncpy( carte.id  , id  , 4 ); carte.id  [4] = '\0';
    strncpy( carte.code, code, 4 ); carte.code[4] = '\0';
    carte.month    = month;
@@ -15,7 +15,7 @@ static void init( dabtypes::Carte & carte, const char * id, const char * code, b
    carte.nbEssais = 0;
 }
 
-static void init( dabtypes::Compte & compte, const char * id, double solde ) {
+static void init( hpms::dabtypes::Compte & compte, const char * id, double solde ) {
    strncpy( compte.id  , id  , 4 ); compte.id[4] = '\0';
    compte.solde    = solde;
    compte.autorise = true;
@@ -48,7 +48,7 @@ Repository::Repository( void ) {
    _cartes_compte[4].compte = &(_comptes[1]);
 }
 
-dabtypes::Carte * Repository::getCarte( const char * carte_id ) {
+hpms::dabtypes::Carte * Repository::getCarte( const char * carte_id ) {
    UTIL_LOG_ARGS( "id = %s", carte_id );
    for( unsigned row = 0, count = sizeof( _cartes )/sizeof( _cartes[0] ); row < count; ++row ) {
       if( 0 == strncmp( _cartes[row].id, carte_id, 4 )) {
@@ -59,7 +59,7 @@ dabtypes::Carte * Repository::getCarte( const char * carte_id ) {
    return nullptr;
 }
 
-dabtypes::Compte * Repository::getCompte( const char * carte_id ) {
+hpms::dabtypes::Compte * Repository::getCompte( const char * carte_id ) {
    UTIL_LOG_ARGS( "id = %s", carte_id );
    for( unsigned row = 0, count = sizeof( _cartes_compte )/sizeof( _cartes_compte[0] ); row < count; ++row ) {
       if( 0 == strncmp( _cartes_compte[row].carte->id, carte_id, 4 )) {
@@ -70,12 +70,12 @@ dabtypes::Compte * Repository::getCompte( const char * carte_id ) {
    return nullptr;
 }
 
-const dabtypes::Carte * Repository::getCartes( unsigned & count ) const {
+const hpms::dabtypes::Carte * Repository::getCartes( unsigned & count ) const {
    count = sizeof( _cartes ) / sizeof( _cartes[0] );
    return _cartes;
 }
 
-const dabtypes::Compte * Repository::getComptes( unsigned & count ) const {
+const hpms::dabtypes::Compte * Repository::getComptes( unsigned & count ) const {
    count = sizeof( _comptes ) / sizeof( _comptes[0] );
    return _comptes;
 }
