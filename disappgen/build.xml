@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="disappgen" default="jar">
 
-   <property name="jar" value="../${ant.project.name}.jar" />
+   <property name="jar" value="../dab-bin/${ant.project.name}.jar" />
 
    <target name="clean">
       <delete dir="build" />
@@ -19,6 +19,7 @@
          includeantruntime="false"
          debug            ="true"
          debuglevel       ="lines,vars,source"
+         excludes         ="disapp/generator/CGenerator.java" 
          source           ="11">
          <src path="src" />
          <src path="src-gen" />

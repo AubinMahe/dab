@@ -27,9 +27,9 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 
 ## Les projets :
 
-- **sc** pour **Site Central** : une application IHM en C, C++ ou Java qui montre l'état des comptes bancaires et des cartes de crédit
-- **udt** pour **Unité de Traitement** : l'application où est implémentée la logique du système, hors IHM en C, C++ ou Java
-- **dab** pour **Distributeur Automatique de Billets** : une application IHM en C, C++ ou Java qui permet d'en simuler l'usage par un utilisateur final.
+- **Banque** : une application IHM en C, C++ ou Java qui montre l'état des comptes bancaires et des cartes de crédit
+- **Contrôleur** : l'application où est implémentée la logique du système, hors IHM en C, C++ ou Java
+- **Distributeur** : une application IHM en C, C++ ou Java qui permet de simuler l'usage d'un distributeur automatique de billet par un utilisateur final.
 
 ## Construire et exécuter les projets :
 
@@ -43,67 +43,70 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 - De l'outil de production **[GNU Make](https://www.gnu.org/software/make/)** qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install make`
 - Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
 
-**Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux et MinGW/Windows.
+**Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux, MinGW/Windows et MacOsX.
 
 **Les traces d'exécution** sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
 Pour lancer ces terminaux, taper `start-ttys`.
 
 **Différents déploiements** exécutables :
-- Pour exécuter 1 sc, 1 dab et 1 udt en java: `ant run-java`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C pour GNU/Linux : `ant run-c`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C pour MinGW/Windows : `ant run-c-win32`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C pour macOS X/Darling : `ant run-c-o64`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour GNU/Linux : `ant run-cpp`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour MinGW/Windows : `ant run-cpp-win32`
-- Pour exécuter 1 sc, 1 dab et 1 udt en C++ pour macOS X/Darling : `ant run-cpp-o64`
-- Pour exécuter 1 sc, 2 dab et 2 udt en java : `ant run-java-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C pour GNU/Linux : `ant run-c-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C pour MinGW/Windows : `ant run-c-win32-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C pour macOS X/Darling : `ant run-c-o64-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour GNU/Linux : `ant run-cpp-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
-- Pour exécuter 1 sc, 2 dab et 2 udt en C++ pour macOS X/Darling : `ant run-cpp-o64-2`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en java: `ant run-java`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour GNU/Linux : `ant run-c`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour MinGW/Windows : `ant run-c-win32`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour macOS X/Darling : `ant run-c-o64`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour GNU/Linux : `ant run-cpp`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour macOS X/Darling : `ant run-cpp-o64`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en java : `ant run-java-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour GNU/Linux : `ant run-c-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour MinGW/Windows : `ant run-c-win32-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour macOS X/Darling : `ant run-c-o64-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour GNU/Linux : `ant run-cpp-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour macOS X/Darling : `ant run-cpp-o64-2`
 
-Les déploiements à plusieurs dab et plusieurs udt permettent de vérifier le routage correct des réponses aux requêtes.
-**Il est évidemment possible de panacher les langages** : un sc en Java, un udt en C, un dab en C++... Les combinaisons sont nombreuses !
+Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent de vérifier le routage correct des réponses aux requêtes.
+**Il est évidemment possible de panacher les langages** : une Banque en Java, un Contrôleur en C, un Distributeur en C++... Les combinaisons sont nombreuses !
 
 **En pas-à-pas**, pour comprendre :
+
+- Les librairies util-xxx et dabtypes-xxx ainsi que les trois composants `Distributeur`, `Banque` et `Controleur` produisent des librairies dynamiques (.so, .dll, .dylib).
+- Les exécutables qui correspondent au `process` du modèle hébergent les factories générées. Ce sont elles qui réalisent les instantiation, conformément au déploiement.
+  
+
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources`
 1. Compiler dans l'ordre :
-    1. util-c        : `(cd util-c && make)`, produit également `util-c-win32` et `util-c-o64`
-    1. dabtypes-c    : `(cd dabtypes-c && make)`, produit également `dabtypes-c-win32` et `dabtypes-c-o64`
-    1. udt-c         : `(cd udt-c && make)`, produit également `udt-c-win32` et `udt-c-o64`
-    1. util-cpp      : `(cd util-cpp && make)`, produit également `util-cpp-win32` et `util-cpp-o64`
-    1. dabtypes-cpp  : `(cd dabtypes-cpp && make)`, produit également `dabtypes-cpp-win32` et `dabtypes-cpp-o64`
-    1. udt-cpp       : `(cd udt-cpp && make)`, produit également `udt-cpp-win32` et `udt-cpp-o64`
-    1. util-java     : `(cd util-java && ant)`
-    1. dabtypes-java : `(cd dabtypes-java && ant)`
-    1. sc-java       : `(cd sc-java && ant)`
-    1. dab           : `(cd distributeur-java && ant)`
+    1. util-c           : `(cd util-c && make)`
+    1. dabtypes-c       : `(cd dabtypes-c && make)`
+    1. Controleur-c     : `(cd Controleur-c && make)`
+    1. util-cpp         : `(cd util-cpp && make)`
+    1. dabtypes-cpp     : `(cd dabtypes-cpp && make)`
+    1. Controleur-cpp   : `(cd Controleur-cpp && make)`
+    1. util-java        : `(cd util-java && ant)`
+    1. dabtypes-java    : `(cd dabtypes-java && ant)`
+    1. Banque-java      : `(cd Banque-java && ant)`
+    1. Distributeur-java: `(cd Distributeur-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
 
 ## Reste à faire
 
+1. Faire en C ce qui a été fait en Java et C++ : générer le code des composants et des factories afin de permettre de réutiliser les composants dans des déploiements très différents avec un nombre quelconque de composants par processus.
+
 1. Remettre les packages dans l'ordre org.hpms....
-
-1. Dans l'état actuel du modèle, il n'existe qu'un seul module de types, dont le nom (physique) est fourni par la balise `implémentation`. Il faudrait lui donner un nom logique, ce qui permettrait de déclarer plusieurs modules de types et de référencer un type dans le reste du modèle par son nom qualifié : `<module-name>.<type-name>`.
-
-1. Il existe une balise `implementation` sous la balise `<types>`. C'est inutile puisque les implémentations nécessaires peuvent être déduites de leurs usages par le reste du modèle.
-
-1. Même si le modèle actuel permet plusieurs composants par processus, l'implémentation ne le permet pas (sauf pour Java). En effet, comme le composant abstrait écoute le port du process, il ne peut y avoir plusieurs composants (*port already bound*). Une classe **ComponentFactory** responsable du cycle de vie des instances de composant et du routage des messages est à créer. C'est fait pour Java mais il faut l'étendre aux langages C et C++.
 
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
 
-1. Production : générer tout ou partie des makefiles, build Apache/Ant et projets Eclipse (au moins en Java).
 1. Wizard : même si les classes manuelle sont simples à coder, un wizard Eclipse de génération de classes serait bienvenu. A faire en Java, C et C++.
+
 1. Automate : associer une action au franchissement d'une transition.
 
 ## Boite à idées, à débattre...
 
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
+
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...
+

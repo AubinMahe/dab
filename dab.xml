@@ -113,9 +113,9 @@
    <component name="Distributeur">
       <offers interface="IHM" />
       <requires interface="UniteDeTraitement" />
-      <implementation language="C" src-dir="distributeur-c/src-gen" module-name="DAB" />
-      <implementation language="C++" src-dir="distributeur-cpp/src-gen" module-name="hpms::dab" />
-      <implementation language="Java" src-dir="distributeur-java/src-gen" module-name="hpms.dab" />
+      <implementation language="C" src-dir="Distributeur-c/src-gen" module-name="DAB" />
+      <implementation language="C++" src-dir="Distributeur-cpp/src-gen" module-name="hpms::dab" />
+      <implementation language="Java" src-dir="Distributeur-java/src-gen" module-name="hpms.dab" />
    </component>
 
    <component name="Controleur">
@@ -127,16 +127,16 @@
       <timeout name="retraitDeLaCarte" duration="10" unit="seconds" />
       <timeout name="retraitDesBillets" duration="10" unit="seconds" />
       <xi:include href="./Controleur.automaton" />
-      <implementation language="C" src-dir="udt-c/src-gen" module-name="UDT" />
-      <implementation language="C++" src-dir="udt-cpp/src-gen" module-name="hpms::udt" />
-      <implementation language="Java" src-dir="udt-java/src-gen" module-name="hpms.udt" />
+      <implementation language="C" src-dir="Controleur-c/src-gen" module-name="UDT" />
+      <implementation language="C++" src-dir="Controleur-cpp/src-gen" module-name="hpms::udt" />
+      <implementation language="Java" src-dir="Controleur-java/src-gen" module-name="hpms.udt" />
    </component>
 
    <component name="Banque">
       <offers interface="SiteCentral" />
-      <implementation language="C" src-dir="sc-c/src-gen" module-name="SC" />
-      <implementation language="C++" src-dir="sc-cpp/src-gen" module-name="hpms::sc" />
-      <implementation language="Java" src-dir="sc-java/src-gen" module-name="hpms.sc" />
+      <implementation language="C" src-dir="Banque-c/src-gen" module-name="SC" />
+      <implementation language="C++" src-dir="Banque-cpp/src-gen" module-name="hpms::sc" />
+      <implementation language="Java" src-dir="Banque-java/src-gen" module-name="hpms.sc" />
    </component>
 
    <deployment name="isolated">

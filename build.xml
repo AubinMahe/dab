@@ -1,22 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Root" default="all">
 
-   <property file="application-settings.properties" />
-
    <macrodef name="generate-all-sources">
       <attribute name="target" />
       <sequential>
          <dependset>
-            <srcfilelist   dir="@{target}" files="disappgen.jar" />
-            <targetfileset dir="distributeur-c/src-gen"    includes="**/*.h  , **/*.c"   />
-            <targetfileset dir="distributeur-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
-            <targetfileset dir="distributeur-java/src-gen" includes="**/*.java" />
-            <targetfileset dir="sc-c/src-gen"              includes="**/*.h  , **/*.c"   />
-            <targetfileset dir="sc-cpp/src-gen"            includes="**/*.hpp, **/*.cpp" />
-            <targetfileset dir="sc-java/src-gen"           includes="**/*.java" />
-            <targetfileset dir="udt-c/src-gen"             includes="**/*.h  , **/*.c"   />
-            <targetfileset dir="udt-cpp/src-gen"           includes="**/*.hpp, **/*.cpp" />
-            <targetfileset dir="udt-java/src-gen"          includes="**/*.java" />
+            <srcfilelist   dir="dab-bin" files="disappgen.jar" />
+            <srcfilelist   dir="."       files="dab.xml" />
+            <targetfileset dir="Distributeur-c/src-gen"     includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="Distributeur-cpp/src-gen"   includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="Distributeur-java/src-gen"  includes="**/*.java" />
+            <targetfileset dir="Banque-c/src-gen"           includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="Banque-cpp/src-gen"         includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="Banque-java/src-gen"        includes="**/*.java" />
+            <targetfileset dir="Controleur-c/src-gen"       includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="Controleur-cpp/src-gen"     includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="Controleur-java/src-gen"    includes="**/*.java" />
+            <targetfileset dir="isolated-sc-c/src-gen"      includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="isolated-sc-cpp/src-gen"    includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="isolated-sc-java/src-gen"   includes="**/*.java" />
+            <targetfileset dir="isolated-ihm1-c/src-gen"    includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="isolated-ihm1-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="isolated-ihm1-java/src-gen" includes="**/*.java" />
+            <targetfileset dir="isolated-ihm2-c/src-gen"    includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="isolated-ihm2-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="isolated-ihm2-java/src-gen" includes="**/*.java" />
+            <targetfileset dir="isolated-udt1-c/src-gen"    includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="isolated-udt1-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="isolated-udt1-java/src-gen" includes="**/*.java" />
+            <targetfileset dir="isolated-udt2-c/src-gen"    includes="**/*.h  , **/*.c"   />
+            <targetfileset dir="isolated-udt2-cpp/src-gen"  includes="**/*.hpp, **/*.cpp" />
+            <targetfileset dir="isolated-udt2-java/src-gen" includes="**/*.java" />
          </dependset>
          <java fork="true" classname="disapp.generator.Main">
             <classpath location="lib/antlr-runtime-3.3.jar" />
@@ -26,7 +40,7 @@
             <classpath location="lib/jaxb-core-2.3.0.jar" />
             <classpath location="lib/jaxb-impl-2.3.2.jar" />
             <classpath location="lib/ST4-4.0.4.jar" />
-            <classpath location="disappgen.jar" />
+            <classpath location="dab-bin/disappgen.jar" />
             <arg value="--model=dab.xml" />
             <arg value="--deployment=@{target}" />
          </java>
@@ -41,25 +55,40 @@
       <generate-all-sources target="mixed" />
    </target>
 
-   <target name="util-c"           ><exec dir="util-c"           executable="make" output="util-c/compile.log"           failonerror="true" /></target>
-   <target name="dabtypes-c"       ><exec dir="dabtypes-c"       executable="make" output="dabtypes-c/compile.log"       failonerror="true" /></target>
-   <target name="distributeur-c"   ><exec dir="distributeur-c"   executable="make" output="distributeur-c/compile.log"   failonerror="true" /></target>
-   <target name="site-central-c"   ><exec dir="sc-c"             executable="make" output="sc-c/compile.log"             failonerror="true" /></target>
-   <target name="udt-c"            ><exec dir="udt-c"            executable="make" output="udt-c/compile.log"            failonerror="true" /></target>
-   <target name="util-c-tests"     ><exec dir="util-c/tests"     executable="make"                                       failonerror="true" /></target>
-                                                            
-   <target name="util-cpp"         ><exec dir="util-cpp"         executable="make" output="util-cpp/compile.log"         failonerror="true" /></target>
-   <target name="dabtypes-cpp"     ><exec dir="dabtypes-cpp"     executable="make" output="dabtypes-cpp/compile.log"     failonerror="true" /></target>
-   <target name="distributeur-cpp" ><exec dir="distributeur-cpp" executable="make" output="distributeur-cpp/compile.log" failonerror="true" /></target>
-   <target name="site-central-cpp" ><exec dir="sc-cpp"           executable="make" output="sc-cpp/compile.log"           failonerror="true" /></target>
-   <target name="udt-cpp"          ><exec dir="udt-cpp"          executable="make" output="udt-cpp/compile.log"          failonerror="true" /></target>
-   <target name="util-cpp-tests"   ><exec dir="util-cpp/tests"   executable="make"                                       failonerror="true" /></target>
+   <target name="util-c"            ><exec dir="util-c"            executable="make" output="util-c/compile.log"            failonerror="true" /></target>
+   <target name="util-c-tests"      ><exec dir="util-c/tests"      executable="make"                                        failonerror="true" /></target>
+   <target name="dabtypes-c"        ><exec dir="dabtypes-c"        executable="make" output="dabtypes-c/compile.log"        failonerror="true" /></target>
+   <target name="Distributeur-c"    ><exec dir="Distributeur-c"    executable="make" output="Distributeur-c/compile.log"    failonerror="true" /></target>
+   <target name="Banque-c"          ><exec dir="Banque-c"          executable="make" output="Banque-c/compile.log"          failonerror="true" /></target>
+   <target name="Controleur-c"      ><exec dir="Controleur-c"      executable="make" output="Controleur-c/compile.log"      failonerror="true" /></target>
+   <target name="isolated-sc-c"     ><exec dir="isolated-sc-c"     executable="make" output="isolated-sc-c/compile.log"     failonerror="true" /></target>
+   <target name="isolated-ihm1-c"   ><exec dir="isolated-ihm1-c"   executable="make" output="isolated-ihm1-c/compile.log"   failonerror="true" /></target>
+   <target name="isolated-ihm2-c"   ><exec dir="isolated-ihm2-c"   executable="make" output="isolated-ihm2-c/compile.log"   failonerror="true" /></target>
+   <target name="isolated-udt1-c"   ><exec dir="isolated-udt1-c"   executable="make" output="isolated-udt1-c/compile.log"   failonerror="true" /></target>
+   <target name="isolated-udt2-c"   ><exec dir="isolated-udt2-c"   executable="make" output="isolated-udt2-c/compile.log"   failonerror="true" /></target>
+                                                                                                                           
+   <target name="util-cpp"          ><exec dir="util-cpp"          executable="make" output="util-cpp/compile.log"          failonerror="true" /></target>
+   <target name="util-cpp-tests"    ><exec dir="util-cpp/tests"    executable="make"                                        failonerror="true" /></target>
+   <target name="dabtypes-cpp"      ><exec dir="dabtypes-cpp"      executable="make" output="dabtypes-cpp/compile.log"      failonerror="true" /></target>
+   <target name="Distributeur-cpp"  ><exec dir="Distributeur-cpp"  executable="make" output="Distributeur-cpp/compile.log"  failonerror="true" /></target>
+   <target name="Banque-cpp"        ><exec dir="Banque-cpp"        executable="make" output="Banque-cpp/compile.log"        failonerror="true" /></target>
+   <target name="Controleur-cpp"    ><exec dir="Controleur-cpp"    executable="make" output="Controleur-cpp/compile.log"    failonerror="true" /></target>
+   <target name="isolated-ihm1-cpp" ><exec dir="isolated-ihm1-cpp" executable="make" output="isolated-ihm1-cpp/compile.log" failonerror="true" /></target>
+   <target name="isolated-ihm2-cpp" ><exec dir="isolated-ihm2-cpp" executable="make" output="isolated-ihm2-cpp/compile.log" failonerror="true" /></target>
+   <target name="isolated-sc-cpp"   ><exec dir="isolated-sc-cpp"   executable="make" output="isolated-sc-cpp/compile.log"   failonerror="true" /></target>
+   <target name="isolated-udt1-cpp" ><exec dir="isolated-udt1-cpp" executable="make" output="isolated-udt1-cpp/compile.log" failonerror="true" /></target>
+   <target name="isolated-udt2-cpp" ><exec dir="isolated-udt2-cpp" executable="make" output="isolated-udt2-cpp/compile.log" failonerror="true" /></target>
 
-   <target name="util-java"        ><ant dir="util-java"         output="compile.log" /></target>
-   <target name="dabtypes-java"    ><ant dir="dabtypes-java"     output="compile.log" /></target>
-   <target name="distributeur-java"><ant dir="distributeur-java" output="compile.log" /></target>
-   <target name="site-central-java"><ant dir="sc-java"           output="compile.log" /></target>
-   <target name="udt-java"         ><ant dir="udt-java"          output="compile.log" /></target>
+   <target name="util-java"         ><ant dir="util-java"          output="compile.log" /></target>
+   <target name="dabtypes-java"     ><ant dir="dabtypes-java"      output="compile.log" /></target>
+   <target name="Distributeur-java" ><ant dir="Distributeur-java"  output="compile.log" /></target>
+   <target name="Banque-java"       ><ant dir="Banque-java"        output="compile.log" /></target>
+   <target name="Controleur-java"   ><ant dir="Controleur-java"    output="compile.log" /></target>
+   <target name="isolated-ihm1-java"><ant dir="isolated-ihm1-java" output="compile.log" /></target>
+   <target name="isolated-ihm2-java"><ant dir="isolated-ihm2-java" output="compile.log" /></target>
+   <target name="isolated-sc-java"  ><ant dir="isolated-sc-java"   output="compile.log" /></target>
+   <target name="isolated-udt1-java"><ant dir="isolated-udt1-java" output="compile.log" /></target>
+   <target name="isolated-udt2-java"><ant dir="isolated-udt2-java" output="compile.log" /></target>
 
    <target name="show-errors">
       <concat>
@@ -78,9 +107,14 @@
       <antcall target="util-c" />
       <antcall target="dabtypes-c" />
       <parallel>
-         <antcall target="distributeur-c" />
-         <antcall target="site-central-c" />
-         <antcall target="udt-c" />
+         <antcall target="Distributeur-c"  />
+         <antcall target="Banque-c"        />
+         <antcall target="Controleur-c"    />
+         <antcall target="isolated-ihm1-c" />
+         <antcall target="isolated-ihm2-c" />
+         <antcall target="isolated-sc-c"   />
+         <antcall target="isolated-udt1-c" />
+         <antcall target="isolated-udt2-c" />
       </parallel>
    </target>
 
@@ -89,9 +123,14 @@
       <antcall target="util-cpp" />
       <antcall target="dabtypes-cpp" />
       <parallel>
-         <antcall target="distributeur-cpp" />
-         <antcall target="site-central-cpp" />
-         <antcall target="udt-cpp" />
+         <antcall target="Distributeur-cpp"  />
+         <antcall target="Banque-cpp"        />
+         <antcall target="Controleur-cpp"    />
+         <antcall target="isolated-ihm1-cpp" />
+         <antcall target="isolated-ihm2-cpp" />
+         <antcall target="isolated-sc-cpp"   />
+         <antcall target="isolated-udt1-cpp" />
+         <antcall target="isolated-udt2-cpp" />
       </parallel>
    </target>
 
@@ -100,9 +139,14 @@
       <antcall target="util-java" />
       <antcall target="dabtypes-java" />
       <parallel>
-         <antcall target="distributeur-java" />
-         <antcall target="site-central-java" />
-         <antcall target="udt-java" />
+         <antcall target="Distributeur-java"  />
+         <antcall target="Banque-java"        />
+         <antcall target="Controleur-java"    />
+         <antcall target="isolated-ihm1-java" />
+         <antcall target="isolated-ihm2-java" />
+         <antcall target="isolated-sc-java"   />
+         <antcall target="isolated-udt1-java" />
+         <antcall target="isolated-udt2-java" />
       </parallel>
    </target>
 
@@ -113,8 +157,11 @@
          Les fichiers de log de compilations sont nommés compile.log dans leur dossier respectif.
 
       </echo>
+      <delete>
+         <fileset dir="." includes="**/compile.log" />
+      </delete>
       <parallel>
-         <antcall target="build-c" />
+         <!--  antcall target="build-c" / -->
          <antcall target="build-cpp" />
          <antcall target="build-java" />
       </parallel>
@@ -132,25 +179,34 @@
       <antcall target="generate-one-component-per-process" />
       
       <echo message="    -- Compilation C    --" />
-      <antcall target="util-c" />
-      <antcall target="dabtypes-c" />
-      <antcall target="distributeur-c" />
-      <antcall target="site-central-c" />
-      <antcall target="udt-c" />
+      <antcall target="Distributeur-c"  />
+      <antcall target="Banque-c"        />
+      <antcall target="Controleur-c"    />
+      <antcall target="isolated-ihm1-c" />
+      <antcall target="isolated-ihm2-c" />
+      <antcall target="isolated-sc-c"   />
+      <antcall target="isolated-udt1-c" />
+      <antcall target="isolated-udt2-c" />
 
       <echo message="    -- Compilation C++  --" />
-      <antcall target="util-cpp" />
-      <antcall target="dabtypes-cpp" />
-      <antcall target="distributeur-cpp" />
-      <antcall target="site-central-cpp" />
-      <antcall target="udt-cpp" />
+      <antcall target="Distributeur-cpp"  />
+      <antcall target="Banque-cpp"        />
+      <antcall target="Controleur-cpp"    />
+      <antcall target="isolated-ihm1-cpp" />
+      <antcall target="isolated-ihm2-cpp" />
+      <antcall target="isolated-sc-cpp"   />
+      <antcall target="isolated-udt1-cpp" />
+      <antcall target="isolated-udt2-cpp" />
 
       <echo message="    -- Compilation Java --" />
-      <antcall target="util-java" />
-      <antcall target="dabtypes-java" />
-      <antcall target="distributeur-java" />
-      <antcall target="site-central-java" />
-      <antcall target="udt-java" />
+      <antcall target="Distributeur-java"  />
+      <antcall target="Banque-java"        />
+      <antcall target="Controleur-java"    />
+      <antcall target="isolated-ihm1-java" />
+      <antcall target="isolated-ihm2-java" />
+      <antcall target="isolated-sc-java"   />
+      <antcall target="isolated-udt1-java" />
+      <antcall target="isolated-udt2-java" />
    </target>
 
    <target name="start-ttys">
@@ -158,256 +214,156 @@
       <exec executable="xterm" spawn="true"><arg line="-geometry 159x40-0+40" /></exec>
    </target>
 
-   <target name="run-c" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-1"       /></exec>
+   <macrodef name="run">
+      <attribute name="deployment" />
+      <attribute name="process" />
+      <attribute name="language" />
+      <attribute name="os" default="" />
+      <sequential>
+         <exec executable="bash">
+            <arg value="scripts/run.sh" />
+            <arg value="@{deployment}-@{process}-@{language}@{os}" />
+         </exec>
+      </sequential>
+   </macrodef>
+
+   <target name="run-c" depends="isolated-ihm1-c,isolated-udt1-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" />
+      <run deployment="isolated" process="ihm1" language="c" />
+      <run deployment="isolated" process="udt1" language="c" />
    </target>
 
-   <target name="run-c-win32" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run-win32"   /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-win32-1" /></exec>
+   <target name="run-c-win32" depends="isolated-ihm1-c,isolated-udt1-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="c" os="-win32" />
+      <run deployment="isolated" process="udt1" language="c" os="-win32" />
    </target>
 
-   <target name="run-c-darwin" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run-darwin"   /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-1" /></exec>
+   <target name="run-c-darwin" depends="isolated-ihm1-c,isolated-udt1-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="c" os="-o64" />
+      <run deployment="isolated" process="udt1" language="c" os="-o64" />
    </target>
 
-   <target name="run-c-2" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-1"       /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-1"       /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-2"       /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-2"       /></exec>
+   <target name="run-c-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" />
+      <run deployment="isolated" process="ihm1" language="c" />
+      <run deployment="isolated" process="ihm2" language="c" />
+      <run deployment="isolated" process="udt1" language="c" />
+      <run deployment="isolated" process="udt2" language="c" />
    </target>
 
-   <target name="run-c-win32-2" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run-win32"   /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-win32-2" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-win32-2" /></exec>
+   <target name="run-c-win32-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="c" os="-win32" />
+      <run deployment="isolated" process="ihm2" language="c" os="-win32" />
+      <run deployment="isolated" process="udt1" language="c" os="-win32" />
+      <run deployment="isolated" process="udt2" language="c" os="-win32" />
    </target>
 
-   <target name="run-c-darwin-2" depends="util-c,udt-c">
-      <exec executable="make" dir="sc-c"            ><arg value="run-darwin"   /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="distributeur-c"  ><arg value="run-darwin-2" /></exec>
-      <exec executable="make" dir="udt-c"           ><arg value="run-darwin-2" /></exec>
+   <target name="run-c-darwin-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="c" os="-o64" />
+      <run deployment="isolated" process="ihm2" language="c" os="-o64" />
+      <run deployment="isolated" process="udt1" language="c" os="-o64" />
+      <run deployment="isolated" process="udt2" language="c" os="-o64" />
    </target>
 
-   <target name="run-cpp" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-1"       /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-1"       /></exec>
+   <target name="run-cpp" depends="isolated-ihm1-cpp,isolated-udt1-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" />
+      <run deployment="isolated" process="ihm1" language="cpp" />
+      <run deployment="isolated" process="udt1" language="cpp" />
    </target>
 
-   <target name="run-cpp-win32" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run-win32"   /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
+   <target name="run-cpp-win32" depends="isolated-ihm1-cpp,isolated-udt1-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-win32" />
    </target>
 
-   <target name="run-cpp-darwin" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run-darwin"   /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-1" /></exec>
+   <target name="run-cpp-darwin" depends="isolated-ihm1-cpp,isolated-udt1-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-o64" />
    </target>
 
-   <target name="run-cpp-2" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-1"       /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-1"       /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-2"       /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-2"       /></exec>
+   <target name="run-cpp-2" depends="isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" />
+      <run deployment="isolated" process="ihm1" language="cpp" />
+      <run deployment="isolated" process="ihm2" language="cpp" />
+      <run deployment="isolated" process="udt1" language="cpp" />
+      <run deployment="isolated" process="udt2" language="cpp" />
    </target>
 
-   <target name="run-cpp-win32-2" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-1" /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-win32-2" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-win32-2" /></exec>
+   <target name="run-cpp-win32-2" depends="isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm2" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt2" language="cpp" os="-win32" />
    </target>
 
-   <target name="run-cpp-darwin-2" depends="util-cpp,udt-cpp">
-      <exec executable="make" dir="sc-cpp"          ><arg value="run"         /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-1" /></exec>
-      <exec executable="make" dir="distributeur-cpp"><arg value="run-darwin-2" /></exec>
-      <exec executable="make" dir="udt-cpp"         ><arg value="run-darwin-2" /></exec>
+   <target name="run-cpp-darwin-2" depends="isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm2" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt2" language="cpp" os="-o64" />
    </target>
 
-   <target name="run-java" depends="util-java,udt-java">
-      <ant                    dir="sc-java"              target="run"   />
-      <ant                    dir="distributeur-java"    target="run-1" />
-      <ant                    dir="udt-java"             target="run-1" />
+
+   <target name="run-java" depends="isolated-ihm1-java,isolated-udt1-java,isolated-sc-java">
+      <run deployment="isolated" process="sc"   language="java" />
+      <run deployment="isolated" process="ihm1" language="java" />
+      <run deployment="isolated" process="udt1" language="java" />
    </target>
 
-   <target name="run-java-2" depends="util-java,udt-java">
-      <ant                    dir="sc-java"              target="run"   />
-      <ant                    dir="distributeur-java"    target="run-1" />
-      <ant                    dir="udt-java"             target="run-1" />
-      <ant                    dir="distributeur-java"    target="run-2" />
-      <ant                    dir="udt-java"             target="run-2" />
+   <target name="run-java-2" depends="isolated-ihm1-java,isolated-ihm2-java,isolated-udt1-java,isolated-udt2-java,isolated-sc-java">
+      <run deployment="isolated" process="sc"   language="java" />
+      <run deployment="isolated" process="ihm1" language="java" />
+      <run deployment="isolated" process="ihm2" language="java" />
+      <run deployment="isolated" process="udt1" language="java" />
+      <run deployment="isolated" process="udt2" language="java" />
    </target>
+
+   <macrodef name="clean-component">
+      <attribute name="name" />
+      <sequential>
+         <ant    dir ="@{name}-java" target="clean" />
+         <delete file="@{name}-java/compile.log" />
+         <delete dir ="@{name}-java/bin" />
+
+         <delete dir ="@{name}-c/BUILD" />
+         <delete dir ="@{name}-c/BUILD-mingw32" />
+         <delete dir ="@{name}-c/BUILD-o64" />
+         <delete dir ="@{name}-c/Debug" />
+         <delete dir ="@{name}-c/Release" />
+         <delete file="@{name}-c/compile.log" />
+         <delete file="@{name}-c/deps.mk" />
+         
+         <delete dir ="@{name}-cpp/BUILD" />
+         <delete dir ="@{name}-cpp/BUILD-mingw32" />
+         <delete dir ="@{name}-cpp/BUILD-o64" />
+         <delete dir ="@{name}-cpp/Debug" />
+         <delete dir ="@{name}-cpp/Release" />
+         <delete file="@{name}-cpp/compile.log" />
+         <delete file="@{name}-cpp/deps.mk" />
+      </sequential>
+   </macrodef>
 
    <target name="clean">
-      <ant  dir="distributeur-java" target="clean" />
-      <ant  dir="sc-java"           target="clean" />
-      <ant  dir="udt-java"          target="clean" />
-      <ant  dir="dabtypes-java"     target="clean" />
-      <ant  dir="util-java"         target="clean" />
-      <ant  dir="disappgen"         target="clean" />
-      <delete file="disappgen.jar" />
-      <delete dir ="disappgen/bin" />
-      
-      <!-- util -->
-      
-      <delete dir ="util.jar" />
-      <delete file="util-java/compile.log" />
-      <delete dir ="util-java/bin" />
-
-      <delete dir ="util-c/BUILD-mingw32" />
-      <delete dir ="util-c/BUILD" />
-      <delete dir ="util-c/Debug" />
-      <delete dir ="util-c/mingw32/Debug" />
-      <delete dir ="util-c/mingw32/Release" />
-      <delete dir ="util-c/Release" />
-      <delete file="util-c/compile.log" />
-      <delete file="util-c/deps" />
-      <delete dir ="util-c/lib" />
-      
-      <delete dir ="util-cpp/BUILD-mingw32" />
-      <delete dir ="util-cpp/BUILD" />
-      <delete dir ="util-cpp/Debug" />
-      <delete dir ="util-cpp/Release" />
-      <delete dir ="util-cpp/mingw32/Debug" />
-      <delete dir ="util-cpp/mingw32/Release" />
-      <delete file="util-cpp/compile.log" />
-      <delete file="util-cpp/deps" />
-      <delete dir ="util-cpp/lib" />
-      
-      <!-- dabtypes -->
-      
-      <delete file="dabtypes.jar" />
-      <delete file="dabtypes-java/compile.log" />
-      <delete dir ="dabtypes-java/bin" />
-      <delete dir ="dabtypes-java/src-gen" />
-      
-      <delete dir ="dabtypes-c/BUILD-mingw32" />
-      <delete dir ="dabtypes-c/BUILD" />
-      <delete dir ="dabtypes-c/Debug" />
-      <delete dir ="dabtypes-c/Release" />
-      <delete file="dabtypes-c/compile.log" />
-      <delete file="dabtypes-c/deps" />
-      <delete file="dabtypes-c/generated-files.mk" />
-      <delete dir ="dabtypes-c/inc-gen" />
-      <delete dir ="dabtypes-c/lib" />
-      <delete dir ="dabtypes-c/src-gen" />
-      
-      <delete dir ="dabtypes-cpp/BUILD-mingw32" />
-      <delete dir ="dabtypes-cpp/BUILD" />
-      <delete dir ="dabtypes-cpp/Debug" />
-      <delete dir ="dabtypes-cpp/Release" />
-      <delete file="dabtypes-cpp/compile.log" />
-      <delete file="dabtypes-cpp/deps" />
-      <delete file="dabtypes-cpp/generated-files.mk" />
-      <delete dir ="dabtypes-cpp/inc-gen" />
-      <delete dir ="dabtypes-cpp/lib" />
-      <delete dir ="dabtypes-cpp/src-gen" />
-
-      <!-- Distributeur -->
-
-      <delete file="DAB-UI.jar" />
-      <delete dir ="distributeur-java/bin" />
-      <delete dir ="distributeur-java/src-gen" />
-      <delete file="distributeur-java/compile.log" />
-
-
-      <delete file="distributeur" />
-      <delete file="distributeur-mingw32" />
-      <delete dir ="distributeur-c/BUILD-mingw32" />
-      <delete dir ="distributeur-c/BUILD" />
-      <delete dir ="distributeur-c/Debug" />
-      <delete dir ="distributeur-c/Release" />
-      <delete file="distributeur-c/compile.log" />
-      <delete file="distributeur-c/deps" />
-      <delete file="distributeur-c/generated-files.mk" />
-      <delete dir ="distributeur-c/src-gen" />
-
-      <delete file="Distributeur" />
-      <delete file="Distributeur-mingw32" />
-      <delete dir ="distributeur-cpp/BUILD-mingw32" />
-      <delete dir ="distributeur-cpp/BUILD" />
-      <delete dir ="distributeur-cpp/Debug" />
-      <delete dir ="distributeur-cpp/Release" />
-      <delete file="distributeur-cpp/compile.log" />
-      <delete file="distributeur-cpp/deps" />
-      <delete file="distributeur-cpp/generated-files.mk" />
-      <delete dir ="distributeur-cpp/src-gen" />
-
-      <!-- Unite de traitement -->
-      
-      <delete file="UDT.jar" />
-      <delete dir ="udt-java/bin" />
-      <delete dir ="udt-java/src-gen" />
-      <delete file="udt-java/compile.log" />
-
-      <delete file="unite_de_traitement" />
-      <delete file="unite_de_traitement-mingw32" />
-      <delete dir ="udt-c/BUILD-mingw32" />
-      <delete dir ="udt-c/BUILD" />
-      <delete dir ="udt-c/Debug" />
-      <delete dir ="udt-c/Release" />
-      <delete file="udt-c/compile.log" />
-      <delete file="udt-c/deps" />
-      <delete file="udt-c/generated-files.mk" />
-      <delete dir ="udt-c/src-gen" />
-      
-      <delete file="UniteDeTraitement" />
-      <delete file="UniteDeTraitement-mingw32" />
-      <delete dir ="udt-cpp/BUILD-mingw32" />
-      <delete dir ="udt-cpp/BUILD" />
-      <delete dir ="udt-cpp/Debug" />
-      <delete dir ="udt-cpp/Release" />
-      <delete file="udt-cpp/compile.log" />
-      <delete file="udt-cpp/deps" />
-      <delete file="udt-cpp/generated-files.mk" />
-      <delete dir ="udt-cpp/src-gen" />
-      
-      <!-- Site central -->
-
-      <delete file="Site-Central.jar" />
-      <delete dir ="sc-java/bin" />
-      <delete dir ="sc-java/src-gen" />
-      <delete file="sc-java/compile.log" />
-
-      <delete file="site_central" />
-      <delete file="site_central-mingw32" />
-      <delete dir ="sc-c/BUILD-mingw32" />
-      <delete dir ="sc-c/BUILD" />
-      <delete dir ="sc-c/Debug" />
-      <delete dir ="sc-c/Release" />
-      <delete file="sc-c/compile.log" />
-      <delete file="sc-c/deps" />
-      <delete file="sc-c/generated-files.mk" />
-      <delete dir ="sc-c/src-gen" />
-
-      <delete file="SiteCentral" />
-      <delete file="SiteCentral-mingw32" />
-      <delete dir ="sc-cpp/BUILD-mingw32" />
-      <delete dir ="sc-cpp/BUILD" />
-      <delete dir ="sc-cpp/Debug" />
-      <delete dir ="sc-cpp/Release" />
-      <delete file="sc-cpp/compile.log" />
-      <delete file="sc-cpp/deps" />
-      <delete file="sc-cpp/generated-files.mk" />
-      <delete dir ="sc-cpp/src-gen" />
+      <clean-component name="Distributeur"    />
+      <clean-component name="Banque-java"     />
+      <clean-component name="Controleur-java" />
+      <clean-component name="dabtypes-java"   />
+      <clean-component name="disappgen"       />
+      <clean-component name="isolated-ihm1"   />
+      <clean-component name="isolated-ihm2"   />
+      <clean-component name="isolated-sc"     />
+      <clean-component name="isolated-udt1"   />
+      <clean-component name="isolated-udt2"   />
+      <delete dir="dab-lib" />
+      <delete dir="dab-bin" />
    </target>
 
 </project>

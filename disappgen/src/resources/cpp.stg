@@ -375,15 +375,19 @@ namespace <namespace> {
    class <component.name>Dispatcher : public da::IDispatcher {
    public:
 
-      <component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener );
+      <component.name>Dispatcher( bool & running, io::DatagramSocket & socket, <component.name>Component & listener );
 
    public:
 
-      virtual void beforeDispatch( void ) {}
+      void terminate( void );
+
+   public:
+
+      virtual void beforeDispatch( void );
       
       virtual bool hasDispatched( byte intrfc, byte event, sockaddr_in & from, io::ByteBuffer & in );
       
-      virtual void afterDispatch( bool dispatched ) { (void)dispatched; }
+      virtual void afterDispatch( bool dispatched );
 < if( component.timeout )>
 
       enum class LoopbackEvent : byte {
@@ -502,19 +506,30 @@ dispatcherImplementation(
 #include \<<namespace; format="NamespaceToPath">/<component.name>Dispatcher.hpp>
 #include \<<namespace; format="NamespaceToPath">/<component.name>Component.hpp>
 
+#include \<io/sockets.hpp>
 #include \<util/Log.hpp>
 
 #include \<stdio.h>
 
 using namespace <namespace>;
 
-<component.name>Dispatcher::<component.name>Dispatcher( io::DatagramSocket & socket, <component.name>Component & listener ) :
+<component.name>Dispatcher::<component.name
+>Dispatcher( bool & running, io::DatagramSocket & socket, <component.name>Component & listener ) :
+   IDispatcher( running ),
    _socket  ( socket ),
 < if( hasResponse )>
    _out     ( _outRaw, sizeof( _outRaw )),
 < endif>
    _listener( listener )
-{}
+{
+   listener.setDispatcher( *this );
+}
+
+void <component.name>Dispatcher::terminate( void ) {
+   _running = false;
+   ::shutdown( _socket, SHUT_RDWR );
+   closesocket( _socket );
+}
 <ifaces.keys:{ifaceName|
 
 
@@ -586,6 +601,10 @@ bool <component.name>Dispatcher::dispatch( LoopbackEvent event ) {
 \}
 
 < endif>
+void <component.name>Dispatcher::beforeDispatch( void ) {
+   _listener.beforeDispatch();
+}
+      
 bool <component.name>Dispatcher::hasDispatched( byte intrfc, byte event, sockaddr_in & from, io::ByteBuffer & in ) {
    switch( static_cast\<Interface>( intrfc )) {
 < if( component.timeout )>
@@ -606,6 +625,10 @@ bool <component.name>Dispatcher::hasDispatched( byte intrfc, byte event, sockadd
    return false;
    (void)from;
    (void)in;
+}
+
+void <component.name>Dispatcher::afterDispatch( bool dispatched ) {
+   _listener.afterDispatch( dispatched );
 }
 < if( component.timeout )>
 
@@ -659,8 +682,20 @@ responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
          _<to.name; format="argument">( <to.name; format="ID">_DURATION, [this](){ loopback( <
             component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> );\})}>
       {}
-      
+
    public:
+
+      void setDispatcher( <component.name>Dispatcher & dispatcher ) {
+         _dispatcher = &dispatcher;
+      }
+
+      bool isRunning( void ) const {
+         return _dispatcher->isRunning();
+      }
+
+      void terminate( void ) const {
+         return _dispatcher->terminate();
+      }
 
       <actions:{action|virtual void <action>( void ) = 0;
 }>
@@ -670,12 +705,12 @@ responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
 
       virtual void init( void ) {}
 
-< if( component.timeout )>
-      void set( <component.name>Dispatcher & dispatcher ) {
-         _dispatcher = &dispatcher;
+      virtual void beforeDispatch( void ) {}
+
+      virtual void afterDispatch( bool dispatched ) {
+         (void)dispatched;
       }
 
-< endif>
 <requires:{iface|
       void connect( <iface.name> & <iface.name; format="argument"> ) {
          _<iface.name; format="argument"> = &<iface.name; format="argument">;
@@ -689,7 +724,7 @@ responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
       void connect( <types.(data.type)> & <data.name; format="argument"> ) {
          _<data.name; format="argument"> = &<data.name; format="argument">;
       \}
-     
+
       <types.(data.type)> & get<data.name; format="cap">( void ) {
          return *_<data.name; format="argument">;
       \}}>
@@ -697,18 +732,10 @@ responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
       void connect( <iface.name>Data & data ) {
          _<iface.name; format="argument">Data = &data;
       \}
-   
+
       <iface.name>Data & get<iface.name; format="cap">Data( void ) {
          return *_<iface.name; format="argument">Data;
       \}}>
-   
-   protected:
-
-      void beforeDispatch( void ) {}
-      
-      void afterDispatch( bool dispatched ) {
-         (void)dispatched;
-      }
 
 < if( component.timeout )>
    private:
@@ -942,21 +969,24 @@ componentFactoryHeader(
 
 namespace <namespace> {
 
-   class ComponentFactory : public os::Thread {
+   class ComponentFactory {
    public:
 
       ComponentFactory( void );
+      ~ ComponentFactory( void );
    
    public:
    
       <process.instance:{instance|<modules.(instance.component)>::<instance.component.name> & get<instance.name; format="cap">( void );}; separator="\n">
 
+      void join( void );
+
    private:
-   
+
       <process.instance:{instance|void connect<instance.name; format="cap">( void );}; separator="\n">
-   
+
       void run( void );
-   
+
    private:
 
       static void * _run( void * userCtxt ) {
@@ -966,7 +996,9 @@ namespace <namespace> {
 
    private:
 
+      bool               _running;
       da::IDispatcher *  _dispatchers[<instancesCount>];
+      os::Thread *       _thread;
       io::DatagramSocket _socket;
       <process.instance:{instance|<modules.(instance.component)>::<instance.component.name> _<instance.name; format="argument">;}; separator="\n">
 
@@ -985,18 +1017,48 @@ componentFactoryBody(
 // ComponentFactoryBody
 #include "ComponentFactory.hpp"
 
+#include \<io/sockets.hpp>
+#include \<os/sleep.hpp>
+#include \<util/Exceptions.hpp>
+#include \<util/Log.hpp>
+
+#include \<stdio.h>
+
 using namespace <namespace>;
 
 ComponentFactory::ComponentFactory( void ) :
-   os::Thread( _run, this )
+   _running( false ),
+   _thread( nullptr )
 {
+   UTIL_LOG_HERE();
    _socket.bind( "<process.address>", <process.port> );
    <process.instance:{instance|connect<instance.name; format="cap">();}; separator="\n">
    <process.instance:{instance|_<instance.name; format="argument">.init();}; separator="\n">
+   _thread = new os::Thread( _run, this );
+   while( ! _running ) {
+      os::sleep( 100 );
+   }
+   UTIL_LOG_DONE();
+}
+
+ComponentFactory:: ~ ComponentFactory( void ) {
+   UTIL_LOG_HERE();
+   _running = false;
+   shutdown( _socket, SHUT_RD );
+   closesocket( _socket );
+   _thread->join();
+   delete _thread;
+   UTIL_LOG_DONE();
+}
+
+void ComponentFactory::join() {
+   UTIL_LOG_HERE();
+   _thread->join();
+   UTIL_LOG_DONE();
 }
 
 <process.instance:{instance|void ComponentFactory::connect<instance.name; format="cap">( void ) {
-   <reqData:{iface|<reqData.(iface):{data|
+<reqData:{iface|<reqData.(iface):{data|
    <types.(data.type)> * <data.name; format="argument"> = new <types.(data.type)>();
    _<instance.name; format="argument">.connect( *<data.name; format="argument"> );}; separator="\n">}; separator="\n">
 <offData:{iface|<dataConsumer.(iface).(instance.name):{process|
@@ -1010,36 +1072,46 @@ ComponentFactory::ComponentFactory( void ) :
    _<instance.name; format="argument">.connect( *new <
       modules.(instance.component)>::<requires.interface.name>( _socket, <requires.interface.name; format="argument"> ));}; separator="\n">}; separator="\n">
    _dispatchers[<i0>] = new <
-      modules.(instance.component)>::<instance.component.name>Dispatcher( _socket, _<instance.name; format="argument"> );
+      modules.(instance.component)>::<instance.component.name>Dispatcher( _running, _socket, _<instance.name; format="argument"> );
 \}
    
 <modules.(instance.component)>::<instance.component.name> & ComponentFactory::get<instance.name; format="cap">( void ) {
    return _<instance.name; format="argument">;
 \}
-   
+
 }>void ComponentFactory::run( void ) {
+   UTIL_LOG_HERE();
    byte raw[64*1024];
    io::ByteBuffer in( raw, 64*1024 );
-   for(;;) {
-      in.clear();
-      sockaddr_in from;
-      _socket.receive( in, from );
-      in.flip();
-      byte intrfc = in.getByte();
-      byte event  = in.getByte();
-      for( da::IDispatcher * dispatcher : _dispatchers ) {
-         dispatcher->beforeDispatch();
-      }
-      bool dispatched = false;
-      for( da::IDispatcher * dispatcher : _dispatchers ) {
-         if( dispatcher->hasDispatched( intrfc, event, from, in )) {
-            dispatched = true;
-            break;
+   _running = true;
+   try {
+      while( _running ) {
+         in.clear();
+         sockaddr_in from;
+         _socket.receive( in, from );
+         in.flip();
+         if( in.remaining() >= 2 ) {
+            byte intrfc = in.getByte();
+            byte event  = in.getByte();
+            for( da::IDispatcher * dispatcher : _dispatchers ) {
+               dispatcher->beforeDispatch();
+            }
+            bool dispatched = false;
+            for( da::IDispatcher * dispatcher : _dispatchers ) {
+               if( dispatcher->hasDispatched( intrfc, event, from, in )) {
+                  dispatched = true;
+                  break;
+               }
+            }
+            for( da::IDispatcher * dispatcher : _dispatchers ) {
+               dispatcher->afterDispatch( dispatched );
+            }
          }
       }
-      for( da::IDispatcher * dispatcher : _dispatchers ) {
-         dispatcher->afterDispatch( dispatched );
-      }
    }
+   catch( const util::Runtime & x ) {
+      UTIL_LOG_MSG( x.what());
+   }
+   _running = false;
 }
 >>

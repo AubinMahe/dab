@@ -1,12 +1,11 @@
 group Makefile;
 
+mk_c( srcs ) ::= <<
+C_SRCSGEN =<srcs:{src|\
+ <src>}>
+>>
 
-
-mk( path, srcs, headers ) ::= <<
-SRCSGEN =<srcs:{src|\
- <path>/<src.name>}>
-
-HEADERSGEN=<headers:{header|\
- <path>/<header.name>}>
-
+mk_cpp( srcs, headers ) ::= <<
+CPP_SRCSGEN =<srcs:{src|\
+ <src>}>
 >>

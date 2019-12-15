@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -277,14 +276,12 @@ public class CGenerator extends BaseGenerator {
       generateComponentImplementation ( component );
       generateDataWriters             ( component );
       generateAutomaton               ( component );
-      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".h", ".c" );
+      generateMakefileSourcesList( _generatedFiles, _genDir, false );
    }
 
    public void generateTypesMakefileSourcesList() throws FileNotFoundException {
-      for( final Entry<String, String> e : _genDirTypes.entrySet()) {
-         final String moduleName = e.getKey();
-         final String genDir     = e.getValue();
-         generateMakefileSourcesList( _generatedTypes, moduleName, genDir + "/src-gen", ".h", ".c" );
+      for( final String genDir : _genDirTypes.values()) {
+         generateMakefileSourcesList( _generatedTypes, genDir, false );
       }
    }
 }

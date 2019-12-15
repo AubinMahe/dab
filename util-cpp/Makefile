@@ -1,5 +1,6 @@
-LIB_CPP = util-cpp
-SRCS    =\
+COMP_CPP = util
+WIN_DEPS = -lws2_32
+CPP_SRCS =\
  src/io/ByteBuffer.cpp\
  src/io/Console.cpp\
  src/io/DatagramSocket.cpp\
@@ -13,9 +14,5 @@ SRCS    =\
  src/util/Exceptions.cpp\
  src/util/Time.cpp\
  src/util/Timeout.cpp
-
-.PHONY: all
-all: lib/lib$(LIB_CPP).a lib/lib$(LIB_CPP)-mingw32.a lib/lib$(LIB_CPP)-o64.a
-
-include ../common.mk
--include deps
+ 
+include ../component.mk

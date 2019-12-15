@@ -7,9 +7,13 @@ namespace da {
    class IDispatcher {
    public:
 
-      IDispatcher( void ) = default;
+      IDispatcher( bool & running ) : _running( running ) {}
 
       virtual ~ IDispatcher( void ) = default;
+
+   public:
+
+      bool isRunning( void ) const { return _running; }
 
    public:
 
@@ -18,6 +22,10 @@ namespace da {
       virtual bool hasDispatched( byte intrfc, byte event, sockaddr_in & from, io::ByteBuffer & in ) = 0;
 
       virtual void afterDispatch( bool dispatched ) = 0;
+
+   protected:
+
+      bool & _running;
 
    private:
 

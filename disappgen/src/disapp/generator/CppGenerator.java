@@ -314,6 +314,7 @@ public class CppGenerator extends BaseGenerator {
    }
 
    void generateComponent( ComponentType component, ComponentImplType implementation ) throws IOException {
+      _generatedFiles.clear();
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
@@ -328,7 +329,7 @@ public class CppGenerator extends BaseGenerator {
       dataWriter              ( component );
       dataReader              ( component );
       automaton               ( component );
-      generateMakefileSourcesList( _generatedFiles, _genDir, _moduleName, ".hpp", ".cpp" );
+      generateMakefileSourcesList( _generatedFiles, _genDir, true );
    }
 
    void factory( String deployment, ProcessType process ) throws IOException {
@@ -341,7 +342,7 @@ public class CppGenerator extends BaseGenerator {
          for( final ComponentImplType implementation : component.getImplementation()) {
             if( implementation.getLanguage().equals( Model.CPP_LANGUAGE )) {
                _moduleName = deployment + "::" + process.getName();
-               _genDir     = "factories/" + deployment + '/' + process.getName() + "/src-gen";
+               _genDir     = deployment + '-' + process.getName() + "-cpp/src-gen";
                final Map<InterfaceType,
                   Map<String, Set<ProcessType>>>        dataConsumer = _model.getDataConsumer( deployment, component );
                final Map<InterfaceType, List<DataType>> offData      = _model.getOfferedDataOf ( component );
@@ -377,10 +378,8 @@ public class CppGenerator extends BaseGenerator {
    }
 
    public void generateTypesMakefileSourcesList() throws FileNotFoundException {
-      for( final Entry<String, String> e : _genDirTypes.entrySet()) {
-         final String moduleName = e.getKey();
-         final String genDir     = e.getValue();
-         generateMakefileSourcesList( _generatedTypes, genDir + "/src-gen", moduleName, ".hpp", ".cpp" );
+      for( final String genDir : _genDirTypes.values()) {
+         generateMakefileSourcesList( _generatedTypes, genDir, true );
       }
    }
 }

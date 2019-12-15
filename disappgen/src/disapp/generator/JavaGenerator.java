@@ -267,7 +267,7 @@ public class JavaGenerator extends BaseGenerator {
          for( final ComponentImplType implementation : component.getImplementation()) {
             if( implementation.getLanguage().equals( Model.JAVA_LANGUAGE )) {
                _moduleName = deployment + '.' + process.getName();
-               _genDir     = "factories/" + deployment + '/' + process.getName() + "/src-gen";
+               _genDir     = deployment + '-' + process.getName() + "-java/src-gen";
                final Map<InterfaceType,
                   Map<String, Set<ProcessType>>>        dataConsumer = _model.getDataConsumer( deployment, component );
                final Map<InterfaceType, List<DataType>> offData      = _model.getOfferedDataOf ( component );

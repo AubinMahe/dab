@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="util" default="jar">
 
-   <property name="jar"      value="../${ant.project.name}.jar" />
+   <property name="jar"      value="../dab-lib/${ant.project.name}.jar" />
    <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" />
 
    <path id="jfx">

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,20 +211,27 @@ abstract class BaseGenerator {
       _renderer.set( property, intrfcMaxWidth );
    }
 
-   protected static void generateMakefileSourcesList(
-      SortedSet<File> files,
-      String          genDir,
-      String          moduleName,
-      String          headerExt,
-      String          srcEx      ) throws FileNotFoundException
-   {
-      final STGroupFile group  = new STGroupFile( BaseGenerator.class.getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
-      final ST          mk     = group.getInstanceOf( "/mk" );
-      final File        parent = new File( genDir ).getParentFile();
-      final String      subDir = genDir.substring( parent.getPath().length() + 1 );
-      mk.add( "path"   , subDir + "/" + moduleName );
-      mk.add( "srcs"   , files.stream().filter( f -> f.getName().endsWith( srcEx     )).toArray());
-      mk.add( "headers", files.stream().filter( f -> f.getName().endsWith( headerExt )).toArray());
+   private static String relativize( Path base, File other ) {
+      final Path path = other.getAbsoluteFile().toPath();
+      try {
+         return base.relativize( path ).toString();
+      }
+      catch( final Throwable t ) {
+         return "";
+      }
+   }
+
+   protected static void generateMakefileSourcesList( SortedSet<File> files, String genDir, boolean cplusplus  ) throws FileNotFoundException {
+      final STGroupFile group   = new STGroupFile( BaseGenerator.class.getResource( "/resources/mk.stg" ), "utf-8", '<', '>' );
+      final ST          mk      = group.getInstanceOf( "/mk_" + ( cplusplus ? "cpp" : "c" ));
+      final File        parent  = new File( genDir ).getParentFile();
+      final Path        base    = parent.getAbsoluteFile().toPath();
+      final Object[]    srcs    =
+         files.stream()
+            .filter( f -> f.getName().endsWith( cplusplus ? ".cpp" : ".c" ))
+            .map( f -> relativize( base, f ))
+            .toArray();
+      mk.add( "srcs", srcs );
       final File target = new File( parent, "generated-files.mk" );
       target.getParentFile().mkdirs();
       try( final PrintStream ps = new PrintStream( target )) {

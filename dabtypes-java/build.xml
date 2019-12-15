@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="dabtypes" default="jar">
+<project name="hpms.dabtypes" default="jar">
 
-   <property name="jutil" location="../util.jar" />
-   <property name="jar"   value="../${ant.project.name}.jar" />
+   <property name="jutil" location="../dab-lib/util.jar" />
+   <property name="jar"   location="../dab-lib/${ant.project.name}.jar" />
 
    <target name="clean">
       <delete dir="build" />
@@ -13,9 +13,10 @@
       <mkdir dir="build" />
       <javac
          destdir          ="build"
-         srcdir           ="src-gen"
-         classpath        ="${jutil}"
-         includeantruntime="false" />
+         includeantruntime="false">
+         <classpath location="${jutil}" />
+         <src path="src-gen" />
+      </javac>
    </target>
 
    <target name="jar" depends="javac">

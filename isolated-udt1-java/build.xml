@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="isolated-udt1" default="jar">
+
+   <property name="jutil"      location="../dab-lib/util.jar" />
+   <property name="dabtypes"   location="../dab-lib/hpms.dabtypes.jar" />
+   <property name="Controleur" location="../dab-lib/Controleur.jar" />
+   <property name="jar"        location="../dab-bin/${ant.project.name}.jar" />
+
+   <target name="clean">
+      <delete dir="build" />
+      <delete dir="build-tests" />
+      <delete file="${jar}" />
+   </target>
+
+   <target name="javac">
+      <mkdir dir="build" />
+      <javac
+         destdir          ="build"
+         includeantruntime="false"
+         classpath="${jutil}:${dabtypes}:${Controleur}">
+         <src path="src" />
+         <src path="src-gen" />
+      </javac>
+   </target>
+
+   <target name="jar" depends="javac">
+      <jar destfile="${jar}" basedir="build">
+         <manifest>
+            <attribute name="Main-Class" value="hpms.udt.Main" />
+            <attribute name="Class-Path" value="../dab-lib/util.jar ../dab-lib/hpms.dabtypes.jar ../dab-lib/Controleur.jar" />
+         </manifest>
+      </jar>
+   </target>
+
+   <path id="junit.platform.libs.classpath">
+       <fileset dir="../lib/junit-platform/" includes="*.jar" />
+   </path>
+
+   <path id="junit.engine.jupiter.classpath">
+       <fileset dir="../lib/jupiter/" includes="*.jar" />
+   </path>
+
+   <target name="compile-test" description="" depends="javac">
+      <mkdir dir="build-tests" />
+      <javac
+         srcdir           ="test"
+         destdir          ="build-tests"
+         classpath        ="${jutil}"
+         includeantruntime="false">
+         <classpath refid="junit.engine.jupiter.classpath" />
+         <classpath path="build" />
+       </javac>
+   </target>
+   
+   <target name="tests" description="">
+      <taskdef
+         name     ="junitlauncher"
+         classname="org.apache.tools.ant.taskdefs.optional.junitlauncher.JUnitLauncherTask">
+         <classpath>
+            <fileset dir="../lib/junit-platform/" includes="*.jar" />
+         </classpath>
+      </taskdef>
+      <mkdir dir="tests-results" />
+      <junitlauncher>
+         <classpath refid="junit.platform.libs.classpath" />
+         <classpath refid="junit.engine.jupiter.classpath" />
+         <classpath>
+            <pathelement location="build"/>
+            <pathelement location="build-tests"/>
+         </classpath>
+         <testclasses outputdir="tests-results">
+            <fileset dir="build"/>
+            <fileset dir="build-tests"/>
+            <listener type="legacy-brief" sendSysOut="true" />
+            <listener type="legacy-xml"   sendSysOut="true" sendSysErr="true" />
+         </testclasses>
+      </junitlauncher>
+   </target>
+</project>

@@ -2,6 +2,8 @@
 #include <io/sockets.hpp>
 #include <util/Exceptions.hpp>
 
+#include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 using namespace io;
@@ -69,6 +71,7 @@ bool DatagramSocket::receive( ByteBuffer & bb, sockaddr_in & from ) {
    void *    buffer = bb.array() + bb.position();
    socklen_t len    = sizeof( from );
    int       flags  = 0;
+   errno = 0;
    ssize_t   count  = ::recvfrom( _socket, (char *)buffer, max, flags, (sockaddr *)&from, &len );
    if( count < 0 ) {
       throw util::Runtime( UTIL_CTXT, "recvfrom" );

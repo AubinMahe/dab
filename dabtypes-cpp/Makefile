@@ -1,9 +1,5 @@
-LIB_CPP = dabtypes-cpp
+COMP_CPP = dabtypes
+WIN_DEPS = -L../dab-lib -lutil-cpp
+MAC_DEPS = -L../dab-lib -lutil-cpp
 
--include generated-files.mk
-
-.PHONY: all
-all: lib/lib$(LIB_CPP).a lib/lib$(LIB_CPP)-mingw32.a lib/lib$(LIB_CPP)-o64.a
-
-include ../common.mk
--include deps
+include ../component.mk

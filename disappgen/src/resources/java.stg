@@ -508,6 +508,9 @@ public class <component.name>Dispatcher implements da.IDispatcher {
    public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component component ) {
       _channel   = channel;
       _component = component;
+< if( component.timeout )>
+      component.set( this );
+< endif>
    }
 
 < if( component.timeout )>   void loopback( LoopbackEvent event ) throws IOException {

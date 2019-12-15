@@ -6,8 +6,8 @@ SRCS =\
 CPPFLAGS    = -I ../inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
 LIB         = util-cpp
 LIBW32      = $(LIB)-mingw32
-LIBFLAGS    = -L ../lib -l $(LIB) -lpthread -lefence
-LIBW32FLAGS = -L ../lib -l $(LIBW32) -lws2_32
+LIBFLAGS    = -L ../../dab-lib -l $(LIB) -lpthread -lefence
+LIBW32FLAGS = -L ../../dab-lib -l $(LIBW32) -lws2_32
 OBJS        = $(SRCS:src/%cpp=BUILD/%o)
 OBJSW32     = $(SRCS:src/%cpp=BUILD-mingw32/%o)
 
@@ -26,16 +26,13 @@ clean:
 	rm -fr BUILD
 	rm -fr BUILD-mingw32
 
-$(UTILC)/lib/lib$(LIB).a $(UTILC)/lib/lib$(LIBW32).a:
+tests: $(OBJS)
 	cd .. && make
+	g++ $(CPPFLAGS) -o $@ $(OBJS) $(LIBFLAGS)
 
-tests: $(OBJS) $(UTILC)/lib/lib$(LIB).a
+tests-win32: $(OBJSW32)
 	cd .. && make
-	g++ $(CFLAGS) -o $@ $(OBJS) $(LIBFLAGS)
-
-tests-win32: $(OBJSW32) $(UTILC)/lib/lib$(LIBW32).a
-	cd .. && make
-	i686-w64-mingw32-g++ $(CFLAGS) -o $@ $(OBJSW32) $(LIBW32FLAGS)
+	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $(OBJSW32) $(LIBW32FLAGS)
 
 .PHONY: run
 run: tests
