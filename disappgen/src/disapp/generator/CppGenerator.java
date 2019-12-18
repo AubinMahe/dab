@@ -97,7 +97,7 @@ public class CppGenerator extends BaseGenerator {
       generateStructBody  ( name );
    }
 
-   private void responses( ComponentType component ) throws IOException {
+   private void responsesHeader( ComponentType component ) throws IOException {
       for( final Entry<InterfaceType, List<RequestType>> e : Model.getResponses( component ).entrySet()) {
          final InterfaceType       iface     = e.getKey();
          final String              ifaceName = iface.getName();
@@ -318,7 +318,7 @@ public class CppGenerator extends BaseGenerator {
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
-      responses               ( component );
+      responsesHeader         ( component );
       requiredInterfaces      ( component );
       requiredImplementations ( component );
       offeredInterface        ( component );

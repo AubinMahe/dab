@@ -81,7 +81,7 @@
                                 								
                                 <option id="gnu.cpp.compiler.option.warnings.wconversion.1942684597" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.other.pic.827691846" superClass="gnu.cpp.compiler.option.other.pic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.other.pic.827691846" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.345666832" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							
@@ -205,7 +205,9 @@
                                 								
                                 <option defaultValue="gnu.cpp.compiler.debugging.level.none" id="gnu.cpp.compiler.so.release.option.debugging.level.588451348" name="Debug Level" superClass="gnu.cpp.compiler.so.release.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.other.pic.865961145" superClass="gnu.cpp.compiler.option.other.pic" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.other.pic.865961145" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.cpp.compiler.option.dialect.flags.1106481249" superClass="gnu.cpp.compiler.option.dialect.flags" value="-std=c++17" valueType="string"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1004529716" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							

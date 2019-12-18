@@ -245,7 +245,7 @@ namespace <namespace> {
    class <iface.name> {
    public:
 
-      <iface.name>( io::DatagramSocket & socket, const sockaddr_in & target );
+      <iface.name>( io::DatagramSocket & socket, const char * addr, unsigned short port );
 
    public:
 
@@ -291,11 +291,12 @@ requiredImplementation( namespace, usedTypes, ifaceName, rawSize, iface, ifaceID
 //requiredImplementation
 using namespace <namespace>;
 
-<iface.name>::<iface.name>( io::DatagramSocket & socket, const sockaddr_in & target ) :
+<iface.name>::<iface.name>( io::DatagramSocket & socket, const char * addr, unsigned short port ) :
    _socket( socket ),
-   _target( target ),
    _out   ( _raw, <rawSize> )
-{}
+{
+   io::DatagramSocket::init( addr, port, _target );
+}
 <iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
 
 void <iface.name>::<facet.name>( <
@@ -421,7 +422,7 @@ namespace <namespace> {
 }>< rest( events.(ifaceName)):{event|         <event.name; format="ID">,
 }>      \};
 
-      bool dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif><ifaceName>Event event, io::ByteBuffer & in );
+      bool dispatch( < if( offRequests.(ifaceName))>sockaddr_in & from, < endif><ifaceName>Event event, io::ByteBuffer & in );
 }><data:{iface|
 
 
@@ -536,7 +537,7 @@ void <component.name>Dispatcher::terminate( void ) {
 <events.(ifaceName):{facet|< if( facet.isRequest )>
 static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="ID"> = <eventIDs.(ifaceName).(facet.name)>;
 < endif>}>
-bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct sockaddr_in & from, < endif
+bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>sockaddr_in & from, < endif
     ><ifaceName>Event event, io::ByteBuffer & in ) {
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.isData )>< else>
@@ -546,7 +547,7 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
       elseif( facet.field )><facet.field:{field|<
          byteBufferGet( field )>}><
       endif><
-      if( facet.isRequest )
+if( facet.isRequest )
 >      <types.(facet.type)> <facet.name>;
       _listener.<facet.name>( <args( facet.arguments.field )>, <facet.name> );
       _out.clear();
@@ -555,13 +556,13 @@ bool <component.name>Dispatcher::dispatch( < if( offRequests.(ifaceName))>struct
       <facet.name>.put( _out );
       _out.flip();
       _socket.sendTo( _out, from );
-      UTIL_LOG_ARGS( "response sent to %s", inet_ntoa( from.sin_addr ));
-      < else
->      _listener.<facet.name>( <args( facet.field )> );
-      < endif>
+      UTIL_LOG_ARGS( "response sent to %s", inet_ntoa( from.sin_addr ));<
+else>      _listener.<facet.name>( <args( facet.field )> );
+< endif>
       break;
       \}
-< endif>}>   default:
+< endif>}>
+   default:
       UTIL_LOG_ARGS( "Unknown <ifaceName>'s event: %d", (byte)event );
       return false;
    \}
@@ -611,7 +612,6 @@ bool <component.name>Dispatcher::hasDispatched( byte intrfc, byte event, sockadd
    case Interface::LOOPBACK: return dispatch( static_cast\<LoopbackEvent>( event ));
 < endif>
 <ifaces.keys:{ifaceName|
-
    case Interface::<ifaceName; format="ID">: return dispatch( <
      if( offRequests.(ifaceName))>from, < endif>static_cast\<<ifaceName>Event>( event ), in );
 }><reqRequests:{ifaceName|
@@ -664,6 +664,7 @@ componentHeader( namespace, component, requires, actions, offData, reqData, resp
 
 #include \<<                              namespace; format="NamespaceToPath">/Automaton.hpp>
 < endif>
+
 
 namespace <namespace> {
 
@@ -800,7 +801,7 @@ namespace <namespace> {
    class <interface.name>Data {
    public:
 
-      <interface.name>Data( io::DatagramSocket & socket, const sockaddr_in & target );
+      <interface.name>Data( io::DatagramSocket & socket, const char * addr, unsigned short port );
 
    public:
 
@@ -813,7 +814,7 @@ namespace <namespace> {
    private:
 
       io::DatagramSocket & _socket;
-      struct sockaddr_in   _target;
+      sockaddr_in          _target;
       byte                 _raw[<rawSize>];
       io::ByteBuffer       _out;
    };
@@ -836,11 +837,12 @@ static const byte <interface.name; format="ID"> = <ifaceID>;
 
 <data:{dataType|static const byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
 }>
-<interface.name>Data::<interface.name>Data( io::DatagramSocket & socket, const sockaddr_in & target ) :
+<interface.name>Data::<interface.name>Data( io::DatagramSocket & socket, const char * addr, unsigned short port ) :
    _socket( socket ),
-   _target( target ),
    _out   ( _raw, sizeof( _raw ))
-{}
+{
+   io::DatagramSocket::init( addr, port, _target );
+}
 <data:{dataType|
 
 
@@ -961,7 +963,6 @@ componentFactoryHeader(
 #pragma once
 // ComponentFactoryHeader
 
-#include \<da/IDispatcher.hpp>
 #include \<io/DatagramSocket.hpp>
 #include \<os/Thread.hpp>
 
@@ -997,10 +998,18 @@ namespace <namespace> {
    private:
 
       bool               _running;
-      da::IDispatcher *  _dispatchers[<instancesCount>];
       os::Thread *       _thread;
       io::DatagramSocket _socket;
-      <process.instance:{instance|<modules.(instance.component)>::<instance.component.name> _<instance.name; format="argument">;}; separator="\n">
+<process.instance:{instance|
+      <modules.(instance.component)>::<instance.component.name>           _<instance.name; format="argument">;
+      <modules.(instance.component)>::<instance.component.name>Dispatcher _<instance.name; format="argument">Dispatcher;}>
+<reqData:{iface|<reqData.(iface):{data|
+      <types.(data.type)> _<data.name; format="argument">;}>}>
+<process.instance:{instance|<instance.requires:{requires|
+
+      <modules.(instance.component)>::<requires.interface.name> _<requires.interface.name; format="argument">;}>}>
+<process.instance:{instance|<offData:{iface|<dataConsumer.(iface).(instance.name):{process|
+      <modules.(instance.component)>::<iface.name>Data _<iface.name; format="argument">Data;}>}>}>
 
    private:
       ComponentFactory( const ComponentFactory & ) = delete;
@@ -1028,12 +1037,22 @@ using namespace <namespace>;
 
 ComponentFactory::ComponentFactory( void ) :
    _running( false ),
-   _thread( nullptr )
+   _thread( nullptr )<
+process.instance:{instance|,
+   _<instance.name; format="argument">Dispatcher( _running, _socket, _<instance.name; format="argument"> )}><
+process.instance:{instance|<instance.requires:{requires|,
+   _<requires.interface.name; format="argument">( _socket, "<
+      processes.(instancesByName.(requires.toInstance)).address>", <
+      processes.(instancesByName.(requires.toInstance)).port> )}>}><
+process.instance:{instance|<offData:{iface|<dataConsumer.(iface).(instance.name):{process|,
+   _<iface.name; format="argument">Data( _socket, "<process.address>", <process.port> )}>}>}>
 {
    UTIL_LOG_HERE();
    _socket.bind( "<process.address>", <process.port> );
-   <process.instance:{instance|connect<instance.name; format="cap">();}; separator="\n">
-   <process.instance:{instance|_<instance.name; format="argument">.init();}; separator="\n">
+<process.instance:{instance|
+   connect<instance.name; format="cap">();}>
+<process.instance:{instance|
+   _<instance.name; format="argument">.init();}>
    _thread = new os::Thread( _run, this );
    while( ! _running ) {
       os::sleep( 100 );
@@ -1051,35 +1070,28 @@ ComponentFactory:: ~ ComponentFactory( void ) {
    UTIL_LOG_DONE();
 }
 
-void ComponentFactory::join() {
+void ComponentFactory::join( void ) {
    UTIL_LOG_HERE();
    _thread->join();
    UTIL_LOG_DONE();
 }
+<process.instance:{instance|
 
-<process.instance:{instance|void ComponentFactory::connect<instance.name; format="cap">( void ) {
+void ComponentFactory::connect<instance.name; format="cap">( void ) {
 <reqData:{iface|<reqData.(iface):{data|
-   <types.(data.type)> * <data.name; format="argument"> = new <types.(data.type)>();
-   _<instance.name; format="argument">.connect( *<data.name; format="argument"> );}; separator="\n">}; separator="\n">
+   _<instance.name; format="argument">.connect( _<data.name; format="argument"> );}>}>
 <offData:{iface|<dataConsumer.(iface).(instance.name):{process|
-   sockaddr_in <iface.name; format="argument">;
-   io::DatagramSocket::init( "<process.address>", <process.port>, <iface.name; format="argument"> );
-   _<instance.name; format="argument">.connect( *new <
-      modules.(instance.component)>::<iface.name>Data( _socket, <iface.name; format="argument">));}; separator="\n">}; separator="\n">
-<process.instance:{instance|<instance.requires:{requires|
-   sockaddr_in <requires.interface.name; format="argument">;
-   io::DatagramSocket::init( "<processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port>, <requires.interface.name; format="argument"> );
-   _<instance.name; format="argument">.connect( *new <
-      modules.(instance.component)>::<requires.interface.name>( _socket, <requires.interface.name; format="argument"> ));}; separator="\n">}; separator="\n">
-   _dispatchers[<i0>] = new <
-      modules.(instance.component)>::<instance.component.name>Dispatcher( _running, _socket, _<instance.name; format="argument"> );
+   _<instance.name; format="argument">.connect( _<iface.name; format="argument">Data );}>}>
+<instance.requires:{requires|
+
+   _<instance.name; format="argument">.connect( _<requires.interface.name; format="argument"> );}>
 \}
    
 <modules.(instance.component)>::<instance.component.name> & ComponentFactory::get<instance.name; format="cap">( void ) {
    return _<instance.name; format="argument">;
 \}
-
-}>void ComponentFactory::run( void ) {
+}>
+void ComponentFactory::run( void ) {
    UTIL_LOG_HERE();
    byte raw[64*1024];
    io::ByteBuffer in( raw, 64*1024 );
@@ -1093,19 +1105,19 @@ void ComponentFactory::join() {
          if( in.remaining() >= 2 ) {
             byte intrfc = in.getByte();
             byte event  = in.getByte();
-            for( da::IDispatcher * dispatcher : _dispatchers ) {
-               dispatcher->beforeDispatch();
-            }
+<process.instance:{instance|
+            _<instance.name; format="cname">Dispatcher.beforeDispatch();}>
             bool dispatched = false;
-            for( da::IDispatcher * dispatcher : _dispatchers ) {
-               if( dispatcher->hasDispatched( intrfc, event, from, in )) {
+            while( true ) {
+<process.instance:{instance|
+               if( _<instance.name; format="cname">Dispatcher.hasDispatched( intrfc, event, from, in )) {
                   dispatched = true;
                   break;
-               }
+               \}}>
+               break;
             }
-            for( da::IDispatcher * dispatcher : _dispatchers ) {
-               dispatcher->afterDispatch( dispatched );
-            }
+<process.instance:{instance|
+            _<instance.name; format="cname">Dispatcher.afterDispatch( dispatched );}>
          }
       }
    }

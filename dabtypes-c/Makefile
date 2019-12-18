@@ -1,9 +1,5 @@
-COMP_C   = dabtypes-c
-SRCS     =\
- src-gen/hpms/dabtypes/Information.c\
- src-gen/hpms/dabtypes/Compte.c\
- src-gen/hpms/dabtypes/Carte.c\
- src-gen/hpms/dabtypes/Evenement.c\
- src-gen/hpms/dabtypes/Etat.c
+COMP_C   = dabtypes
+WIN_DEPS = -L../dab-lib -lutil-c
+MAC_DEPS = -L../dab-lib -lutil-c
 
-include ../common.mk
+include ../component.mk

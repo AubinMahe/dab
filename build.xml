@@ -161,7 +161,7 @@
          <fileset dir="." includes="**/compile.log" />
       </delete>
       <parallel>
-         <!--  antcall target="build-c" / -->
+         <antcall target="build-c" />
          <antcall target="build-cpp" />
          <antcall target="build-java" />
       </parallel>

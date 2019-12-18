@@ -228,7 +228,7 @@ final class Model {
                switch( language ) {
                case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
                case CPP_LANGUAGE : lang = impl.getModuleName() + "::" + type.getName(); break;
-               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + type.getName(); break;
+               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + CRenderer.cname( type.getName()); break;
                default: throw new IllegalStateException( language );
                }
                typesModel2Impl.put( model, lang );
@@ -246,7 +246,7 @@ final class Model {
                switch( language ) {
                case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
                case CPP_LANGUAGE : lang = impl.getModuleName() + "::" + type.getName(); break;
-               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + type.getName(); break;
+               case C_LANGUAGE   : lang = impl.getModuleName() + '_'  + CRenderer.cname( type.getName()); break;
                default: throw new IllegalStateException( language );
                }
                typesModel2Impl.put( model, lang );

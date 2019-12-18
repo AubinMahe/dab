@@ -21,10 +21,20 @@ public final class CRenderer extends BaseRenderer {
       return sb.toString().replaceAll( "__", "_" );
    }
 
+   public static String typeToPath( String type ) {
+      final int sep = type.indexOf( '_' );
+      final String prefix = type.substring( 0, sep ).toUpperCase();
+      final String path   = type.substring( sep + 1 );
+      return prefix + '/' + path;
+   }
+
    @Override
    protected String apply( String command, Locale locale, String str ) {
       if( command.equals( "cname" )) {
          return cname( str );
+      }
+      if( command.equals( "typeToPath" )) {
+         return typeToPath( str );
       }
       return super.apply( command, locale, str );
    }

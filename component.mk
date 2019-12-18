@@ -67,8 +67,8 @@ endif
 endif
 
 deps.mk: $(CPP_SRCS) $(CPP_SRCSGEN)
-	$(DEPS_CC) $(DEPS_FLAGS) -MM $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
-	$(DEPS_CC) $(DEPS_FLAGS) -MM $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
-	$(DEPS_CC) $(DEPS_FLAGS) -MM $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD-o64/"$$0     ; next } {print}' >> $@
+	$(DEPS_CC) $(DEPS_FLAGS) -MM $(C_SRCS) $(C_SRCSGEN) $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD/"$$0         ; next } {print}'  > $@
+	$(DEPS_CC) $(DEPS_FLAGS) -MM $(C_SRCS) $(C_SRCSGEN) $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0 ; next } {print}' >> $@
+	$(DEPS_CC) $(DEPS_FLAGS) -MM $(C_SRCS) $(C_SRCSGEN) $(CPP_SRCS) $(CPP_SRCSGEN) | awk '/.*\.o:/ {print "BUILD-o64/"$$0     ; next } {print}' >> $@
 
 -include deps.mk

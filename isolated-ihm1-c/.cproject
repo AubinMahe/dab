@@ -29,7 +29,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.1079113590" name="Debug" parent="cdt.managedbuild.config.gnu.exe.debug">
+                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.1079113590" name="Debug" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="cdt.managedbuild.config.gnu.exe.debug">
                     					
                     <folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1079113590." name="/" resourcePath="">
                         						
@@ -37,29 +37,71 @@
                             							
                             <targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.1452201366" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
                             							
-                            <builder buildPath="${workspace_loc:/isolated-ihm1-c}/Debug" id="cdt.managedbuild.target.gnu.builder.exe.debug.49903473" managedBuildOn="true" name="Gnu Make Builder.Debug" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
+                            <builder buildPath="${workspace_loc:/isolated-ihm1-c}/Debug" id="cdt.managedbuild.target.gnu.builder.exe.debug.49903473" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.archiver.base.437272760" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1458977644" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
                                 								
-                                <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.572337097" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
+                                <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.572337097" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
                                 								
-                                <option defaultValue="gnu.cpp.compiler.debugging.level.max" id="gnu.cpp.compiler.exe.debug.option.debugging.level.2094759165" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.cpp.compiler.debugging.level.max" id="gnu.cpp.compiler.exe.debug.option.debugging.level.2094759165" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 							
                             </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1756175571" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
                                 								
-                                <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.261694410" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.261694410" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
-                                <option defaultValue="gnu.c.debugging.level.max" id="gnu.c.compiler.exe.debug.option.debugging.level.2063302429" superClass="gnu.c.compiler.exe.debug.option.debugging.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.c.debugging.level.max" id="gnu.c.compiler.exe.debug.option.debugging.level.2063302429" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
+                                								
+                                <option id="gnu.c.compiler.option.dialect.std.1939065516" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.c11" valueType="enumerated"/>
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.1676027291" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/util-c/inc}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-c/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Distributeur-c/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Distributeur-c/inc}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
+                                    								
+                                </option>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.pedantic.1931669092" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.extrawarn.1552781763" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.wconversion.1764884610" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.c.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.misc.pic.1179735493" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1182180941" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
                                 							
                             </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.787754785" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.paths.1143699237" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="/home/aubin/Dev/git/dab/dab-lib"/>
+                                    								
+                                </option>
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.libs.1061553978" name="Libraries (-l)" superClass="gnu.c.link.option.libs" useByScannerDiscovery="false" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="Distributeur-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="dabtypes-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="util-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="pthread"/>
+                                    								
+                                </option>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.608363010" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
                                     									
@@ -117,7 +159,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.release.874692665" name="Release" parent="cdt.managedbuild.config.gnu.exe.release">
+                <configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.release.874692665" name="Release" optionalBuildProperties="" parent="cdt.managedbuild.config.gnu.exe.release">
                     					
                     <folderInfo id="cdt.managedbuild.config.gnu.exe.release.874692665." name="/" resourcePath="">
                         						
@@ -125,29 +167,71 @@
                             							
                             <targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.release.1851329329" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.release"/>
                             							
-                            <builder buildPath="${workspace_loc:/isolated-ihm1-c}/Release" id="cdt.managedbuild.target.gnu.builder.exe.release.179737478" managedBuildOn="true" name="Gnu Make Builder.Release" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
+                            <builder buildPath="${workspace_loc:/isolated-ihm1-c}/Release" id="cdt.managedbuild.target.gnu.builder.exe.release.179737478" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.archiver.base.1760235253" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1319241468" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
                                 								
-                                <option id="gnu.cpp.compiler.exe.release.option.optimization.level.6941601" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
+                                <option id="gnu.cpp.compiler.exe.release.option.optimization.level.6941601" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
                                 								
-                                <option defaultValue="gnu.cpp.compiler.debugging.level.none" id="gnu.cpp.compiler.exe.release.option.debugging.level.260511495" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.cpp.compiler.debugging.level.none" id="gnu.cpp.compiler.exe.release.option.debugging.level.260511495" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 							
                             </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.787616471" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
                                 								
-                                <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1753084188" superClass="gnu.c.compiler.exe.release.option.optimization.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1753084188" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
                                 								
-                                <option defaultValue="gnu.c.debugging.level.none" id="gnu.c.compiler.exe.release.option.debugging.level.1719887320" superClass="gnu.c.compiler.exe.release.option.debugging.level" valueType="enumerated"/>
+                                <option defaultValue="gnu.c.debugging.level.none" id="gnu.c.compiler.exe.release.option.debugging.level.1719887320" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
+                                								
+                                <option id="gnu.c.compiler.option.dialect.std.185432181" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.c11" valueType="enumerated"/>
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.569686517" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/util-c/inc}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-c/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Distributeur-c/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Distributeur-c/inc}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src-gen}&quot;"/>
+                                    								
+                                </option>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.pedantic.2055594488" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.extrawarn.1477278270" name="Extra warnings (-Wextra)" superClass="gnu.c.compiler.option.warnings.extrawarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.warnings.wconversion.1847380055" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.c.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.c.compiler.option.misc.pic.1461012535" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.405089495" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
                                 							
                             </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.653543879" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release">
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.paths.1054233760" name="Library search path (-L)" superClass="gnu.c.link.option.paths" valueType="libPaths">
+                                    									
+                                    <listOptionValue builtIn="false" value="/home/aubin/Dev/git/dab/dab-lib"/>
+                                    								
+                                </option>
+                                								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.libs.155877814" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" value="Distributeur-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="dabtypes-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="util-c"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="pthread"/>
+                                    								
+                                </option>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.2043992502" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
                                     									
@@ -174,6 +258,8 @@
                 </configuration>
                 			
             </storageModule>
+            			
+            <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
             		
         </cconfiguration>
         	
@@ -204,5 +290,7 @@
     </storageModule>
     	
     <storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+    	
+    <storageModule moduleId="refreshScope"/>
     
 </cproject>

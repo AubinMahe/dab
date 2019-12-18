@@ -1,7 +1,7 @@
 #include <os/thread.h>
 #include <os/errors.h>
 
-util_error os_thread_create ( os_thread * This, thread_entry_t entry, void * user_context ) {
+util_error os_thread_create( os_thread * This, thread_entry_t entry, void * user_context ) {
    UTIL_CHECK_NON_NULL( This );
    util_error retVal = UTIL_NO_ERROR;
 #ifdef _WIN32
@@ -24,7 +24,7 @@ util_error os_thread_destroy( os_thread * This ) {
    (void)This;
 }
 
-util_error os_thread_detach ( os_thread * This ) {
+util_error os_thread_detach( os_thread * This ) {
    UTIL_CHECK_NON_NULL( This );
    util_error retVal = UTIL_NO_ERROR;
 #ifndef _WIN32
