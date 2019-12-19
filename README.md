@@ -13,11 +13,12 @@ La régularité de l'architecture sous-tend la régularité du code, une grande 
 - Le code d'activation des acteurs concerné par les événements reçus du réseau et des *timeouts* (routage)
 
 Dans le diagramme de classe UML du composant 'Distributeur' (IHM) ci-dessous, seul la classe `Distributeur` est manuelle :
+
 ![UML class diagram](dab-class-diagram.png "Diagramme de classe UML du composant 'Distributeur' (IHM)")
  
 Il a été développé quelques bibliothèques de classes (Java et C++) et de fonctions C afin de :
-- Rendre homogène le traitement des messages et des événements quel que soit le langage cible.
-- Faciliter le portage entre les OS GNU/Linux et MS-Windows
+- Rendre homogène le traitement des messages et des événements quel que soit le langage cible : <a href="https://fr.wikipedia.org/wiki/C_(langage)">C</a>, <a href="https://fr.wikipedia.org/wiki/C%2B%2B">C++</a> et <a href="https://fr.wikipedia.org/wiki/Java_(langage)">Java</a>.
+- Faciliter le portage entre les OS <a href="https://fr.wikipedia.org/wiki/Linux">GNU/Linux</a>, <a href="https://fr.wikipedia.org/wiki/Microsoft_Windows">Microsoft Windows</a> et <a href="https://fr.wikipedia.org/wiki/MacOS">macOS</a>
 
 Sauf pour Java, les librairies n'ont pas recourt à l'allocation dynamique de mémoire. C'est pour cette raison que, en C++ :
 - la classe `std::string` a finalement été remplacée par des chaînes de longueurs fixes et pré allouées (le modèle spécifie les longueurs)
@@ -37,13 +38,13 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 - **Java**, dont la version doit être supérieure ou égale à 8, [OpenJDK](https://adoptopenjdk.net/) *latest* est vivement recommandé.
 - Du compilateur **[JAXB](https://javaee.github.io/jaxb-v2/)** `xjc`, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install xjc`
 - Du compilateur **[C11 et C++17](https://gcc.gnu.org/)** pour GNU/Linux et compilateur croisé, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc gcc-mingw-w64`
-- Du [compilateur croisé Linux/Mac OS X](https://github.com/tpoechtrager/osxcross)
-- De [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires MS-Windows et de son équivalent pour macOS X : [DarlingHQ](https://www.darlinghq.org/)
+- Du [compilateur croisé Linux/macOS](https://github.com/tpoechtrager/osxcross)
+- De [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires MS-Windows et de son équivalent pour macOS : [DarlingHQ](https://www.darlinghq.org/)
 - De l'outil de production **[Apache Ant](https://ant.apache.org/)**, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install ant`
 - De l'outil de production **[GNU Make](https://www.gnu.org/software/make/)** qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install make`
 - Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
 
-**Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux, MinGW/Windows et MacOsX.
+**Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux, MinGW/Windows et macOS.
 
 **Les traces d'exécution** sont supporté par un jeu de macros qui les route vers la sortie standard d'erreur. Afin d'éviter de polluer la console, les scripts de lancement les redirigent vers /dev/pts/xx, les pseudo-terminaux Linux.
 Pour lancer ces terminaux, taper `start-ttys`.
@@ -52,55 +53,70 @@ Pour lancer ces terminaux, taper `start-ttys`.
 - Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en java: `ant run-java`
 - Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour GNU/Linux : `ant run-c`
 - Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour MinGW/Windows : `ant run-c-win32`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour macOS X/Darling : `ant run-c-o64`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour macOS/Darling : `ant run-c-o64`
 - Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour GNU/Linux : `ant run-cpp`
 - Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour macOS X/Darling : `ant run-cpp-o64`
+- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour macOS/Darling : `ant run-cpp-o64`
 - Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en java : `ant run-java-2`
 - Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour GNU/Linux : `ant run-c-2`
 - Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour MinGW/Windows : `ant run-c-win32-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour macOS X/Darling : `ant run-c-o64-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour macOS/Darling : `ant run-c-o64-2`
 - Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour GNU/Linux : `ant run-cpp-2`
 - Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour macOS X/Darling : `ant run-cpp-o64-2`
+- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour macOS/Darling : `ant run-cpp-o64-2`
 
 Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent de vérifier le routage correct des réponses aux requêtes.
-**Il est évidemment possible de panacher les langages** : une Banque en Java, un Contrôleur en C, un Distributeur en C++... Les combinaisons sont nombreuses !
+**Il est évidemment possible de panacher les langages et les OS** : une Banque en Java, un Contrôleur en C sous Microsoft Windows, un Distributeur en C++ sous macOS... Les combinaisons sont nombreuses avec 3 composants, 3 langages, 3 OS : 27 cas. Il est également possible de créer des déploiements ou les processus hébergent plus d'un composant, par exemple, les cinq composants en Java sous macOS ou un Distributeur et un Contrôleur dans le même processus sous GNU/Linux connectés à une instance de Banque sous Microsoft Windows plus un Distributeur et un Contrôleur dans le même processus sous macOS, toujours connectés à la même instance de Banque.
 
 **En pas-à-pas**, pour comprendre :
 
 - Les librairies util-xxx et dabtypes-xxx ainsi que les trois composants `Distributeur`, `Banque` et `Controleur` produisent des librairies dynamiques (.so, .dll, .dylib).
-- Les exécutables qui correspondent au `process` du modèle hébergent les factories générées. Ce sont elles qui réalisent les instantiation, conformément au déploiement.
-  
+- Les exécutables qui correspondent au `process` du modèle hébergent les factories générées, ils sont nommés &lt;deploiement>-&lt;processus>-&lt;langage>. Ce sont eux qui réalisent les instantiation, conformément au déploiement.
 
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources`
 1. Compiler dans l'ordre :
-    1. util-c           : `(cd util-c && make)`
-    1. dabtypes-c       : `(cd dabtypes-c && make)`
-    1. Controleur-c     : `(cd Controleur-c && make)`
-    1. util-cpp         : `(cd util-cpp && make)`
-    1. dabtypes-cpp     : `(cd dabtypes-cpp && make)`
-    1. Controleur-cpp   : `(cd Controleur-cpp && make)`
-    1. util-java        : `(cd util-java && ant)`
-    1. dabtypes-java    : `(cd dabtypes-java && ant)`
-    1. Banque-java      : `(cd Banque-java && ant)`
-    1. Distributeur-java: `(cd Distributeur-java && ant)`
+    1. util-c            : `(cd util-c && make)`
+    1. dabtypes-c        : `(cd dabtypes-c && make)`
+    1. Controleur-c      : `(cd Controleur-c && make)`
+    1. Banque-c          : `(cd Banque-c && make)`
+    1. Distributeur-c    : `(cd Distributeur-c && make)`
+    1. isolated-udt1-c   : `(cd isolated-udt1-c && make)`
+    1. isolated-udt2-c   : `(cd isolated-udt2-c && make)`
+    1. isolated-ihm1-c   : `(cd isolated-ihm1-c && make)`
+    1. isolated-ihm2-c   : `(cd isolated-ihm2-c && make)`
+    1. isolated-sc-c     : `(cd isolated-sc-c && make)`
+    1. util-cpp          : `(cd util-cpp && make)`
+    1. dabtypes-cpp      : `(cd dabtypes-cpp && make)`
+    1. Controleur-cpp    : `(cd Controleur-cpp && make)`
+    1. Banque-cpp        : `(cd Banque-cpp && make)`
+    1. Distributeur-cpp  : `(cd Distributeur-cpp && make)`
+    1. isolated-udt1-cpp : `(cd isolated-udt1-cpp  && make)`
+    1. isolated-udt2-cpp : `(cd isolated-udt2-cpp  && make)`
+    1. isolated-ihm1-cpp : `(cd isolated-ihm1-cpp  && make)`
+    1. isolated-ihm2-cpp : `(cd isolated-ihm2-cpp  && make)`
+    1. isolated-sc-cpp   : `(cd isolated-sc-cpp  && make)`
+    1. util-java         : `(cd util-java && ant)`
+    1. dabtypes-java     : `(cd dabtypes-java && ant)`
+    1. Controleur-java   : `(cd Controleur-java && ant)`
+    1. Banque-java       : `(cd Banque-java && ant)`
+    1. Distributeur-java : `(cd Distributeur-java && ant)`
+    1. isolated-udt1-java: `(cd isolated-udt1-java && ant)`
+    1. isolated-udt2-java: `(cd isolated-udt2-java && ant)`
+    1. isolated-ihm1-java: `(cd isolated-ihm1-java && ant)`
+    1. isolated-ihm2-java: `(cd isolated-ihm2-java && ant)`
+    1. isolated-sc-java  : `(cd isolated-sc-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
 
 ## Reste à faire
 
-1. Faire en C ce qui a été fait en Java et C++ : générer le code des composants et des factories afin de permettre de réutiliser les composants dans des déploiements très différents avec un nombre quelconque de composants par processus.
-
-1. Remettre les packages dans l'ordre org.hpms....
-
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants
 
-1. Wizard : même si les classes manuelle sont simples à coder, un wizard Eclipse de génération de classes serait bienvenu. A faire en Java, C et C++.
+1. Wizard : même si le code manuel est simple à coder, un wizard Eclipse de génération de classes **et de makefile** serait bienvenu. A faire en Java pour Java, C et C++.
 
 1. Automate : associer une action au franchissement d'une transition.
 
