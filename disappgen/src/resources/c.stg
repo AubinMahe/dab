@@ -453,6 +453,7 @@ static util_error <prefix>_<ifaceName; format="cname">_responses_dispatch(
 <reqRequests.(ifaceName):{req|
    case <req.name; format="ID">:{
       <types.(req.type)> <req.name>;
+      <types.(req.type)>_get( &<req.name>, in );
       UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<
          ifaceName; format="cname">_response_<
          req.name; format="cname">( This->listener, &<req.name> ));
@@ -463,7 +464,6 @@ static util_error <prefix>_<ifaceName; format="cname">_responses_dispatch(
       break;
    }
    return UTIL_NO_ERROR;
-   (void)in;
 }
 // dispatcherImplResponse -- end
 >>
@@ -509,9 +509,11 @@ dispatcherImplementation(
 #include \<<prefix>/<component.name; format="cname">.h>
 #include \<<prefix>/<component.name; format="cname">_dispatcher.h>
 
-#include \<stdio.h>
 #include \<os/errors.h>
 #include \<util/log.h>
+
+#include \<stdio.h>
+#include \<string.h>
 
 typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 < if( component.timeout )>
@@ -539,21 +541,27 @@ typedef enum <prefix>_<component.name; format="cname">_dispatcher_interface_e {
 }>
 util_error <prefix>_<component.name; format="cname">_dispatcher_init(
    <prefix>_<component.name; format="cname">_dispatcher * This,
-   bool * running,
-   SOCKET socket,
+   bool *               running,
+   SOCKET               socket,
    struct sockaddr_in * local_addr,
-   <prefix>_<component.name; format="cname"> * listener )
+   <prefix>_<component.name; format="cname"> *            listener )
 {
    UTIL_LOG_HERE();
-   UTIL_CHECK_NON_NULL( listener );
+   UTIL_CHECK_NON_NULL( This );
+   UTIL_CHECK_NON_NULL( running );
    UTIL_ASSERT( socket > 0 );
+   UTIL_CHECK_NON_NULL( local_addr );
+   UTIL_CHECK_NON_NULL( listener );
+   memset( This, 0, sizeof( <prefix>_<component.name; format="cname">_dispatcher ));
    This->running    = running;
    This->socket     = socket;
    This->local_addr = *local_addr;
    This->listener   = listener;
+   listener->dispatcher = This;
 < if( hasResponse )>
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, sizeof( This->out_raw ), This->out_raw ));
 < endif>
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }
 
@@ -713,8 +721,6 @@ util_error <prefix>_<component.name; format="cname">_before_dispatch( <
    prefix>_<component.name; format="cname"> * This );
 util_error <prefix>_<component.name; format="cname">_after_dispatch( <
    prefix>_<component.name; format="cname"> * This, bool hasDispatched );
-util_error <prefix>_<component.name; format="cname">_set_dispatcher( <
-   prefix>_<component.name; format="cname"> * This, <prefix>_<component.name; format="cname">_dispatcher * dispatcher );
 <reqData:{iface|<reqData.(iface):{data|
 util_error <prefix>_<component.name; format="cname">_<data.name; format="cname">_published( <
    prefix>_<component.name; format="cname"> * This );
@@ -822,14 +828,14 @@ automatonHeader( prefix, component ) ::= <<
 #include \<<prefix>/<component.name; format="cname">.h>
 #include \<util/automaton.h>
 
-void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
+void <prefix>_<component.name; format="cname">_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor );
 
 >>
 
 
 
 automatonBody( prefix, component, types ) ::= <<
-#include \<<prefix>/automaton.h>
+#include \<<prefix>/<component.name; format="cname">_automaton.h>
 #include \<<types.(component.automaton.stateEnum.name); format="typeToPath">.h>
 #include \<<types.(component.automaton.eventEnum.name); format="typeToPath">.h>
 
@@ -860,7 +866,7 @@ static util_automaton_state_action on_exit[] = {
       prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
 < endif>}>};
 
-void <prefix>_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
+void <prefix>_<component.name; format="cname">_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
    automaton->debug           = false;
    automaton->current         = <types.(component.automaton.stateEnum.name); format="ID">_<component.automaton.initial; format="ID">;
    automaton->arcs            = transitions;
@@ -894,7 +900,7 @@ typedef struct <prefix>_factory_s {
    SOCKET             socket;
    bool               running;
    os_thread          thread;
-   struct sockaddr_in localAddr;
+   struct sockaddr_in local_addr;
 <process.instance:{instance|
    <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher <
       instance.name; format="cname">_dispatcher;}>
@@ -921,6 +927,10 @@ componentFactoryBody(
 ) ::= <<
 // ComponentFactoryBody
 #include "factory.h"
+<process.instance:{instance|
+< if( instance.component.automaton )>
+#include \<<modules.(instance.component)>/<instance.component.name; format="cname">_automaton.h><
+endif>}>
 
 #include \<io/sockets.h>
 #include \<os/sleep.h>
@@ -929,7 +939,7 @@ componentFactoryBody(
 #include \<stdio.h>
 #include \<string.h>
 
-static void * run( <prefix>_factory * This ) {
+static void * <prefix>_factory_run( <prefix>_factory * This ) {
    UTIL_LOG_HERE();
    byte raw[64*1024];
    io_byte_buffer in;
@@ -966,19 +976,25 @@ static void * run( <prefix>_factory * This ) {
       }
    }
    This->running = false;
+   UTIL_LOG_DONE();
    return NULL;
 }
 
 <process.instance:{instance|
 static util_error connect_<instance.name; format="cname">( <prefix>_factory * This ) {
+   UTIL_LOG_HERE();
+// reqData
 <reqData:{iface|<reqData.(iface):{data|
    This-><instance.name; format="argument">.<data.name; format="cname"> = &This-><
-      data.name; format="cname">;}; separator="\n">}; separator="\n">
+      data.name; format="cname">;
+}>}>// offData
 <offData:{iface|<dataConsumer.(iface).(instance.name):{process|
    struct sockaddr_in <iface.name; format="cname">;
    UTIL_ERROR_CHECK( io_datagram_socket_init( "<process.address>", <process.port>, &<iface.name; format="cname"> ));
    UTIL_ERROR_CHECK( <modules.(instance.component)>_<iface.name; format="cname">_data_init( &This-><
-      iface.name; format="cname">_data, This->socket, &<iface.name; format="cname"> ));}>}>
+      iface.name; format="cname">_data, This->socket, &<iface.name; format="cname"> ));
+   This-><instance.name; format="argument">.<iface.name; format="cname"> = &This-><iface.name; format="cname">_data;
+}>}>// process.instance
 <process.instance:{instance|<instance.requires:{requires|
    struct sockaddr_in <requires.interface.name; format="cname">;
    UTIL_ERROR_CHECK( io_datagram_socket_init( "<processes.(instancesByName.(requires.toInstance)).address>", <
@@ -986,10 +1002,28 @@ static util_error connect_<instance.name; format="cname">( <prefix>_factory * Th
    UTIL_ERROR_CHECK( <modules.(instance.component)>_<requires.interface.name; format="cname">_init( &This-><
       requires.interface.name; format="cname">, This->socket, &<requires.interface.name; format="cname"> ));
    This-><instance.name; format="argument">.<requires.interface.name; format="cname"> = &This-><
-      requires.interface.name; format="cname">;}; separator="\n">}; separator="\n">
+      requires.interface.name; format="cname">;
+}>}>// modules.(instance.component)
    UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_init(
-      &This-><instance.name; format="cname">_dispatcher, &This->running, This->socket, &This->localAddr, &This-><
+      &This-><instance.name; format="cname">_dispatcher, &This->running, This->socket, &This->local_addr, &This-><
          instance.name; format="cname"> ));
+// instance.component.timeout
+<instance.component.timeout:{to|
+   static <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<to.name; format="cname">;
+   timeout_arg_<to.name; format="cname">.dispatcher = &This-><instance.name; format="cname">_dispatcher;
+   timeout_arg_<to.name; format="cname">.event      = <
+      modules.(instance.component); format="ID">_<instance.component.name; format="ID">_LOOPBACK_<to.name; format="ID">;
+   UTIL_ERROR_CHECK( util_timeout_init(
+      &This-><instance.name; format="cname">.<to.name; format="cname">,
+      <to.duration><to.unit.toCpp>,
+      (util_timeout_action)<modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_loopback,
+      &timeout_arg_<to.name; format="cname"> ));
+}>// automaton
+< if( instance.component.automaton )>
+   <modules.(instance.component)>_<instance.component.name; format="cname">_automaton_init( &This-><
+     instance.name; format="cname">.automaton, &This-><instance.name; format="cname"> );
+< endif>
+   UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 \}
 }>
@@ -998,13 +1032,13 @@ util_error <prefix>_factory_create( <prefix>_factory * This ) {
    memset( This, 0, sizeof( <prefix>_factory ));
    This->socket = socket( AF_INET, SOCK_DGRAM, 0 );
    UTIL_ASSERT( This->socket > 0 );
-   UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<process.address>", <process.port>, &This->localAddr ));
-<process.instance:{instance|
-   UTIL_ERROR_CHECK( connect_<instance.name; format="cname">( This ));}>
+   UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<process.address>", <process.port>, &This->local_addr ));
 <process.instance:{instance|
    UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_init( &This-><
       instance.name; format="cname"> ));}>
-   UTIL_ERROR_CHECK( os_thread_create( &This->thread, (thread_entry_t)run, This ));
+<process.instance:{instance|
+   UTIL_ERROR_CHECK( connect_<instance.name; format="cname">( This ));}>
+   UTIL_ERROR_CHECK( os_thread_create( &This->thread, (thread_entry_t)<prefix>_factory_run, This ));
    while( ! This->running ) {
       os_sleep( 100 );
    }

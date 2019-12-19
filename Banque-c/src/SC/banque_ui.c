@@ -10,9 +10,11 @@
 
 util_error SC_banque_create_ui( SC_banque * This ) {
    UTIL_LOG_HERE();
+   UTIL_CHECK_NON_NULL( This );
+   UTIL_CHECK_NON_NULL( This->dispatcher );
+   UTIL_CHECK_NON_NULL( This->user_context );
    io_console_init();
    SC_repository * repository = (SC_repository *)This->user_context;
-   UTIL_LOG_ARGS( "repository = %p\n", (void *)repository );
    int c = 0;
    while( c != 'Q' && *This->dispatcher->running ) {
       printf( IO_ED IO_HOME );
@@ -53,6 +55,9 @@ util_error SC_banque_create_ui( SC_banque * This ) {
       if( io_console_kbhit()) {
          c = toupper( io_console_getch());
       }
+   }
+   if( c == 'Q' ) {
+      UTIL_ERROR_CHECK( SC_banque_dispatcher_terminate( This->dispatcher ));
    }
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;

@@ -3,6 +3,9 @@
 	<name>isolated-udt1-c</name>
 	<comment></comment>
 	<projects>
+		<project>Controleur-c</project>
+		<project>dabtypes-c</project>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

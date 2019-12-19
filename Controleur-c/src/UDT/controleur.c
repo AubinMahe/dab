@@ -72,8 +72,10 @@ static void compte_set( compte * This, const DBT_compte * source ) {
 }
 
 util_error UDT_controleur_init( UDT_controleur * This ) {
+   memset( This, 0, sizeof( UDT_controleur ));
+   This->user_context = malloc( sizeof( UDT_business_logic_data ));
+   memset( This->user_context, 0, sizeof( UDT_business_logic_data ));
    return UTIL_NO_ERROR;
-   (void)This;
 }
 
 util_error UDT_controleur_maintenance( UDT_controleur * This, bool maintenance ) {
@@ -89,6 +91,8 @@ util_error UDT_controleur_maintenance( UDT_controleur * This, bool maintenance )
 
 util_error UDT_controleur_recharger_la_caisse( UDT_controleur * This, double montant ) {
    UTIL_LOG_ARGS( "montant = %7.2f", montant );
+   UTIL_CHECK_NON_NULL( This );
+   UTIL_CHECK_NON_NULL( This->unite_de_traitement );
    This->unite_de_traitement->etat_du_dab.solde_caisse += montant;
    if( This->unite_de_traitement->etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
@@ -232,6 +236,7 @@ util_error UDT_controleur_before_dispatch( UDT_controleur * This ) {
 }
 
 util_error UDT_controleur_after_dispatch( UDT_controleur * This, bool hasDispatched ) {
+   UTIL_CHECK_NON_NULL( This->unite_de_traitement );
    UTIL_LOG_ARGS( "state = %s, solde caisse : %7.2f",
       DBT_etat_to_string((DBT_etat)This->automaton.current ), This->unite_de_traitement->etat_du_dab.solde_caisse );
    This->unite_de_traitement->etat_du_dab.etat = (DBT_etat)This->automaton.current;

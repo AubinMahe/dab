@@ -3,6 +3,7 @@
 	<name>dabtypes-c</name>
 	<comment></comment>
 	<projects>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

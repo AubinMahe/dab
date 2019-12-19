@@ -102,53 +102,24 @@
       </concat>
    </target>
 
-   <target name="build-c">
-      <echo message="    -- Compilation C    --" />
-      <antcall target="util-c" />
-      <antcall target="dabtypes-c" />
-      <parallel>
-         <antcall target="Distributeur-c"  />
-         <antcall target="Banque-c"        />
-         <antcall target="Controleur-c"    />
-         <antcall target="isolated-ihm1-c" />
-         <antcall target="isolated-ihm2-c" />
-         <antcall target="isolated-sc-c"   />
-         <antcall target="isolated-udt1-c" />
-         <antcall target="isolated-udt2-c" />
-      </parallel>
-   </target>
-
-   <target name="build-cpp">
-      <echo message="    -- Compilation C++  --" />
-      <antcall target="util-cpp" />
-      <antcall target="dabtypes-cpp" />
-      <parallel>
-         <antcall target="Distributeur-cpp"  />
-         <antcall target="Banque-cpp"        />
-         <antcall target="Controleur-cpp"    />
-         <antcall target="isolated-ihm1-cpp" />
-         <antcall target="isolated-ihm2-cpp" />
-         <antcall target="isolated-sc-cpp"   />
-         <antcall target="isolated-udt1-cpp" />
-         <antcall target="isolated-udt2-cpp" />
-      </parallel>
-   </target>
-
-   <target name="build-java">
-      <echo message="    -- Compilation Java --" />
-      <antcall target="util-java" />
-      <antcall target="dabtypes-java" />
-      <parallel>
-         <antcall target="Distributeur-java"  />
-         <antcall target="Banque-java"        />
-         <antcall target="Controleur-java"    />
-         <antcall target="isolated-ihm1-java" />
-         <antcall target="isolated-ihm2-java" />
-         <antcall target="isolated-sc-java"   />
-         <antcall target="isolated-udt1-java" />
-         <antcall target="isolated-udt2-java" />
-      </parallel>
-   </target>
+   <macrodef name="build">
+      <attribute name="language" />
+      <sequential>
+         <echo message="    -- Compilation @{language} --" />
+         <antcall target="util-@{language}" />
+         <antcall target="dabtypes-@{language}" />
+         <parallel>
+            <antcall target="Distributeur-@{language}"  />
+            <antcall target="Banque-@{language}"        />
+            <antcall target="Controleur-@{language}"    />
+            <antcall target="isolated-ihm1-@{language}" />
+            <antcall target="isolated-ihm2-@{language}" />
+            <antcall target="isolated-sc-@{language}"   />
+            <antcall target="isolated-udt1-@{language}" />
+            <antcall target="isolated-udt2-@{language}" />
+         </parallel>
+      </sequential>
+   </macrodef>
 
    <target name="all" description="Produit tout en parallèle">
       <antcall target="generate-one-component-per-process" />
@@ -161,9 +132,9 @@
          <fileset dir="." includes="**/compile.log" />
       </delete>
       <parallel>
-         <antcall target="build-c" />
-         <antcall target="build-cpp" />
-         <antcall target="build-java" />
+         <build language="c" />
+         <build language="cpp" />
+         <build language="java" />
       </parallel>
       <echo>
 
@@ -352,16 +323,16 @@
    </macrodef>
 
    <target name="clean">
-      <clean-component name="Distributeur"    />
-      <clean-component name="Banque-java"     />
-      <clean-component name="Controleur-java" />
-      <clean-component name="dabtypes-java"   />
-      <clean-component name="disappgen"       />
-      <clean-component name="isolated-ihm1"   />
-      <clean-component name="isolated-ihm2"   />
-      <clean-component name="isolated-sc"     />
-      <clean-component name="isolated-udt1"   />
-      <clean-component name="isolated-udt2"   />
+      <clean-component name="Distributeur"  />
+      <clean-component name="Banque"        />
+      <clean-component name="Controleur"    />
+      <clean-component name="dabtypes"      />
+      <clean-component name="isolated-ihm1" />
+      <clean-component name="isolated-ihm2" />
+      <clean-component name="isolated-sc"   />
+      <clean-component name="isolated-udt1" />
+      <clean-component name="isolated-udt2" />
+      <ant dir="disappgen" target="clean" />
       <delete dir="dab-lib" />
       <delete dir="dab-bin" />
    </target>

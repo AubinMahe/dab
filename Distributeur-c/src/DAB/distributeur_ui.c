@@ -71,6 +71,9 @@ util_error DAB_distributeur_create_ui( DAB_distributeur * This ) {
          }
       }
    }
+   if( c == 'Q' ) {
+      UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));
+   }
    UTIL_LOG_MSG( "sending 'shutdown' to unite_de_traitement" );
    DAB_unite_de_traitement_shutdown( This->unite_de_traitement );
    return UTIL_NO_ERROR;

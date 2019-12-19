@@ -274,13 +274,13 @@ public class CGenerator extends BaseGenerator {
          final ST header = _group.getInstanceOf( "/automatonHeader" );
          header.add( "prefix"   , _moduleName );
          header.add( "component", component );
-         write( "automaton.h", header );
+         write( CRenderer.cname( component.getName()) + "_automaton.h", header );
          final Map<String, String> types = _model.getTypes( Model.C_LANGUAGE );
          final ST body = _group.getInstanceOf( "/automatonBody" );
          body.add( "prefix"   , _moduleName );
          body.add( "component", component );
          body.add( "types"    , types );
-         write( "automaton.c", body );
+         write( CRenderer.cname( component.getName()) + "_automaton.c", body );
       }
    }
 
