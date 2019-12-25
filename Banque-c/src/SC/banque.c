@@ -56,10 +56,11 @@ util_error SC_banque_retrait( SC_banque * This, const char * carte_id, double mo
    return UTIL_NO_ERROR;
 }
 
-util_error SC_banque_shutdown( SC_banque * This ) {
+util_error SC_banque_arret( SC_banque * This ) {
    UTIL_LOG_HERE();
-   UTIL_ERROR_CHECK( SC_banque_dispatcher_terminate( This->dispatcher ));
    free( This->user_context );
+   This->user_context = NULL;
+   UTIL_ERROR_CHECK( SC_banque_dispatcher_terminate( This->dispatcher ));
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }

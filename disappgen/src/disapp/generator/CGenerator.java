@@ -3,11 +3,14 @@ package disapp.generator;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
@@ -150,9 +153,9 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void dispatcherInterface( ComponentType component ) throws IOException {
-      final Map<String, List<Object>>      reqEvents   = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<Object>>      reqEvents   = _model.getRequiredFacets( component );
       final int rawSize = Math.max( _model.getBufferInCapacity( component ), _model.getBufferResponseCapacity( reqEvents ));
-      final Map<String, List<Object>>      events      = _model.getOfferedEventsOrRequests( component );
+      final Map<String, List<Object>>      events      = _model.getOfferedFacets( component );
       final int                            respRawSize = _model.getBufferResponseCapacity( events );
       final ST                             tmpl        = _group.getInstanceOf( "/dispatcherInterface" );
       tmpl.add( "prefix"     , _moduleName );
@@ -168,8 +171,8 @@ public class CGenerator extends BaseGenerator {
       final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
-      final Map<String, List<Object>>          offEvents    = _model.getOfferedEventsOrRequests( component );
-      final Map<String, List<Object>>          reqEvents    = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
+      final Map<String, List<Object>>          reqEvents    = _model.getRequiredFacets( component );
       final Map<String, Map<String, Byte>>     eventIDs     = _model.getEventIDs();
       final SortedSet<String>                  usedTypes    = _model.getUsedTypesBy( ifaces );
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
@@ -195,39 +198,36 @@ public class CGenerator extends BaseGenerator {
    }
 
    private void componentInterface( ComponentType component ) throws IOException {
-      final SortedSet<String> usedTypes        = new TreeSet<>();
-      final Map<String,
-         List<Object>>        eventsOrRequests = new LinkedHashMap<>();
+      final SortedSet<String>         usedTypes     = new TreeSet<>();
+      final Map<String, List<Object>> facetsByIFace = new LinkedHashMap<>();
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
          final InterfaceType     iface     = (InterfaceType)offered.getInterface();
          final String            ifaceName = iface.getName();
          final SortedSet<String> ut        = _model.getUsedTypesBy( ifaceName );
-         final List<Object>      eor       = _model.getFacets().get( ifaceName );
          if( ut != null ) {
             usedTypes.addAll( ut );
          }
-         if( eor != null ) {
-            eventsOrRequests.put( ifaceName, eor );
+         final List<Object> facets = _model.getFacets().get( ifaceName );
+         if( facets != null ) {
+            facetsByIFace.put( ifaceName, facets );
          }
       }
-      final String                             compName        = component.getName();
-      final List<InstanceType>                 instances       = _model.getInstancesOf( "isolated", component );
-      final List<InterfaceType>                requires        = Model.getRequiredInterfacesBy( component );
-      final Map<String, InstanceType>          instancesByName = _model.getInstancesByName( "isolated" );
-      final Map<String, List<Object>>          reqEvents       = _model.getRequiredEventsOrRequests( component );
-      final Map<String, List<RequestType>>     reqRequests     = Model.getRequestMap( reqEvents );
-      final Set<String>                        actions         = _model.getAutomatonActions( component );
-      final Map<InterfaceType, List<DataType>> offData         = _model.getOfferedDataOf   ( component );
-      final Map<InterfaceType, List<DataType>> reqData         = _model.getRequiredDataOf  ( component );
-      final Map<String, String>                types           = _model.getTypes( Model.C_LANGUAGE );
+      final String                             compName    = component.getName();
+      final List<InstanceType>                 instances   = _model.getInstancesOf( "isolated", component );
+      final List<InterfaceType>                requires    = Model.getRequiredInterfacesBy( component );
+      final Map<String, List<Object>>          reqEvents   = _model.getRequiredFacets( component );
+      final Map<String, List<RequestType>>     reqRequests = Model.getRequestMap( reqEvents );
+      final Set<String>                        actions     = _model.getAutomatonActions( component );
+      final Map<InterfaceType, List<DataType>> offData     = _model.getOfferedDataOf   ( component );
+      final Map<InterfaceType, List<DataType>> reqData     = _model.getRequiredDataOf  ( component );
+      final Map<String, String>                types       = _model.getTypes( Model.C_LANGUAGE );
       final ST tmpl = _group.getInstanceOf( "/componentInterface" );
       tmpl.add( "prefix"          , _moduleName );
       tmpl.add( "component"       , component );
       tmpl.add( "requires"        , requires );
-      tmpl.add( "instancesByName" , instancesByName );
       tmpl.add( "instances"       , instances );
       tmpl.add( "usedTypes"       , usedTypes );
-      tmpl.add( "eventsOrRequests", eventsOrRequests );
+      tmpl.add( "eventsOrRequests", facetsByIFace );
       tmpl.add( "reqRequests"     , reqRequests );
       tmpl.add( "actions"         , actions );
       tmpl.add( "data"            , offData );
@@ -301,47 +301,56 @@ public class CGenerator extends BaseGenerator {
       generateMakefileSourcesList( _generatedFiles, _genDir, false );
    }
 
+   private void factoryHeader( ProcessType process ) throws IOException {
+      final Set<ModuleIface>                 requiredIfaces = new LinkedHashSet<>();
+      final Set<ModuleIface>                 dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
+      final Map<String, String>              types          = _model.getTypes( Model.C_LANGUAGE );
+      final Map<ComponentType, String>       modules        = _model.getModules( Model.C_LANGUAGE );
+      _model.getFactoryAttributes( Model.C_LANGUAGE, process, requiredIfaces, dataPublishers, consumedData );
+      final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
+      tmpl.add( "prefix"         , _moduleName );
+      tmpl.add( "process"        , process );
+      tmpl.add( "requiredIfaces" , requiredIfaces );
+      tmpl.add( "dataPublishers" , dataPublishers );
+      tmpl.add( "consumedData"   , consumedData );
+      tmpl.add( "modules"        , modules );
+      tmpl.add( "types"          , types );
+      write( "factory.h", tmpl );
+   }
+
+   private void factoryBody( String deployment, ProcessType process ) throws IOException {
+      final SortedMap<ModuleIface, Set<ProcessType>> proxies        = new TreeMap<>();
+      final Set<ModuleIface>                         dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>>         consumedData   = new LinkedHashMap<>();
+      _model.getFactoryConnections(
+         deployment,
+         Model.C_LANGUAGE,
+         process,
+         proxies,
+         dataPublishers,
+         consumedData );
+      final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
+      final Map<String, String>            types     = _model.getTypes( Model.C_LANGUAGE );
+      final Map<ComponentType, String>     modules   = _model.getModules( Model.C_LANGUAGE );
+      final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
+      tmpl.add( "prefix"        , _moduleName );
+      tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+      tmpl.add( "process"       , process );
+      tmpl.add( "processes"     , processes );
+      tmpl.add( "proxies"       , proxies );
+      tmpl.add( "dataPublishers", dataPublishers );
+      tmpl.add( "consumedData"  , consumedData );
+      tmpl.add( "types"         , types );
+      tmpl.add( "modules"       , modules );
+      write( "factory.c", tmpl );
+   }
+
    public void factory( String deployment, ProcessType process ) throws IOException {
-      final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
-      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance();
-      final Map<String, String>            types           = _model.getTypes( Model.C_LANGUAGE );
-      final Map<ComponentType, String>     modules         = _model.getModules( Model.C_LANGUAGE );
-      for( final InstanceType instance : process.getInstance()) {
-         final ComponentType component = (ComponentType)instance.getComponent();
-         for( final ComponentImplType implementation : component.getImplementation()) {
-            if( implementation.getLanguage().equals( Model.C_LANGUAGE )) {
-               _moduleName = CRenderer.cname( deployment ) + "_" + CRenderer.cname( process.getName());
-               _genDir     = deployment + '-' + process.getName() + "-c/src-gen";
-               final Map<InterfaceType,
-                  Map<String, Set<ProcessType>>>        dataConsumer = _model.getDataConsumer( deployment, component );
-               final Map<InterfaceType, List<DataType>> offData      = _model.getOfferedDataOf ( component );
-               final Map<InterfaceType, List<DataType>> reqData      = _model.getRequiredDataOf( component );
-               ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
-               tmpl.add( "prefix"         , _moduleName );
-               tmpl.add( "process"        , process );
-               tmpl.add( "processes"      , processes );
-               tmpl.add( "offData"        , offData );
-               tmpl.add( "reqData"        , reqData );
-               tmpl.add( "instancesByName", instancesByName );
-               tmpl.add( "dataConsumer"   , dataConsumer );
-               tmpl.add( "modules"        , modules );
-               tmpl.add( "types"          , types );
-               write( "factory.h", tmpl );
-               tmpl = _group.getInstanceOf( "/componentFactoryBody" );
-               tmpl.add( "prefix"         , _moduleName );
-               tmpl.add( "process"        , process );
-               tmpl.add( "processes"      , processes );
-               tmpl.add( "offData"        , offData );
-               tmpl.add( "reqData"        , reqData );
-               tmpl.add( "instancesByName", instancesByName );
-               tmpl.add( "dataConsumer"   , dataConsumer );
-               tmpl.add( "modules"        , modules );
-               tmpl.add( "types"          , types );
-               write( "factory.c", tmpl );
-               return;
-            }
-         }
-      }
+      _moduleName = CRenderer.cname( deployment ) + "_" + CRenderer.cname( process.getName());
+      _genDir     = deployment + '-' + process.getName() + "-c/src-gen";
+      factoryHeader( process );
+      factoryBody  ( deployment, process );
    }
 
    public void generateTypesMakefileSourcesList() throws FileNotFoundException {

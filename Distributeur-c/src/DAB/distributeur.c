@@ -51,10 +51,11 @@ util_error DAB_distributeur_placer_les_billets_dans_la_corbeille( DAB_distribute
    (void)This;
 }
 
-util_error DAB_distributeur_shutdown( DAB_distributeur * This ) {
+util_error DAB_distributeur_arret( DAB_distributeur * This ) {
    UTIL_LOG_HERE();
-   UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));
    free( This->user_context );
+   This->user_context = NULL;
+   UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }

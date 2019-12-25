@@ -171,8 +171,8 @@ public class CppGenerator extends BaseGenerator {
       final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
-      final Map<String, List<Object>>          offEvents    = _model.getOfferedEventsOrRequests( component );
-      final Map<String, List<Object>>          reqEvents    = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
+      final Map<String, List<Object>>          reqEvents    = _model.getRequiredFacets( component );
       final int                                respRawSize  = _model.getBufferResponseCapacity( offEvents );
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
       final Map<String, List<RequestType>>     offRequests  = Model.getRequestMap( offEvents );
@@ -196,8 +196,8 @@ public class CppGenerator extends BaseGenerator {
    private void dispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
       final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
-      final Map<String, List<Object>>          offEvents    = _model.getOfferedEventsOrRequests( component );
-      final Map<String, List<Object>>          reqEvents    = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
+      final Map<String, List<Object>>          reqEvents    = _model.getRequiredFacets( component );
       final Map<String, Map<String, Byte>>     eventIDs     = _model.getEventIDs();
       final SortedSet<String>                  usedTypes    = _model.getUsedTypesBy( ifaces );
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
@@ -334,7 +334,7 @@ public class CppGenerator extends BaseGenerator {
 
    void factory( String deployment, ProcessType process ) throws IOException {
       final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
-      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance();
+      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance( deployment );
       final Map<String, String>            types           = _model.getTypes( Model.CPP_LANGUAGE );
       final Map<ComponentType, String>     modules         = _model.getModules( Model.CPP_LANGUAGE );
       for( final InstanceType instance : process.getInstance()) {

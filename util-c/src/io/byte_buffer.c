@@ -70,6 +70,15 @@ util_error io_byte_buffer_reset( io_byte_buffer * This ) {
    return UTIL_NOT_APPLICABLE;
 }
 
+util_error io_byte_buffer_rewind( io_byte_buffer * This ) {
+   if( ! This ) {
+      return UTIL_NULL_ARG;
+   }
+   This->position = 0;
+   This->mark     = This->capacity + 1;
+   return UTIL_NO_ERROR;
+}
+
 util_error io_byte_buffer_flip( io_byte_buffer * This ) {
    if( ! This ) {
       return UTIL_NULL_ARG;

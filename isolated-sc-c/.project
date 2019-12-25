@@ -3,6 +3,9 @@
 	<name>isolated-sc-c</name>
 	<comment></comment>
 	<projects>
+		<project>Banque-c</project>
+		<project>dabtypes-c</project>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

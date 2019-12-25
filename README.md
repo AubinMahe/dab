@@ -112,6 +112,8 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
 
 ## Reste à faire
 
+1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
+ 
 1. Certaines interactions n'ont pas été prévues :
     * données partagées avec plusieurs écrivains, plusieurs lecteurs
     * événements consommés par plusieurs composants

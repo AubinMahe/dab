@@ -181,13 +181,19 @@
       </xs:restriction>
    </xs:simpleType>
 
-   <xs:complexType name="requiresType">
+   <xs:complexType name="fromInstanceType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:IDREF"   name="interface"   use="required" />
-            <xs:attribute type="instanceID" name="to-instance" use="required" />
+            <xs:attribute type="instanceID" name="name" use="required" />
          </xs:extension>
       </xs:simpleContent>
+   </xs:complexType>
+   
+   <xs:complexType name="requiresType">
+      <xs:sequence>
+         <xs:element type="fromInstanceType" name="from-instance" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:IDREF" name="interface" use="required" />
    </xs:complexType>
 
    <xs:complexType name="instanceType">
@@ -226,6 +232,17 @@
       <xs:attribute type="deploymentName" name="name" use="required" />
    </xs:complexType>
 
+   <xs:element type="deploymentType" name="deployment">
+      <xs:unique name="instance-name">
+         <xs:selector xpath=".//process/instance"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+      <xs:keyref name="requiresFrom" refer="instance-name">
+         <xs:selector xpath=".//deployment/process/instance/requires/from-instance"/>
+         <xs:field xpath="./@name"/>
+      </xs:keyref>
+   </xs:element>
+   
    <xs:complexType name="typesImplType">
       <xs:attribute type="languageType" name="language"    use="required" />
       <xs:attribute type="xs:string"    name="module-name" use="required" />
@@ -243,10 +260,10 @@
 
    <xs:complexType name="disappType">
       <xs:sequence>
-         <xs:element type="typesType"       name="types"       minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="interfaceType"   name="interface"   minOccurs="1" maxOccurs="unbounded" />
-         <xs:element type="componentType"   name="component"   minOccurs="1" maxOccurs="unbounded" />
-         <xs:element type="deploymentType"  name="deployment"  minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="typesType"       name="types"      minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="interfaceType"   name="interface"  minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="componentType"   name="component"  minOccurs="1" maxOccurs="unbounded" />
+         <xs:element                        ref ="deployment" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
    </xs:complexType>
 
@@ -267,6 +284,11 @@
          <xs:field xpath="./@name"/>
       </xs:unique>
 
+      <xs:unique name="literal-name">
+         <xs:selector xpath="./enum/literal"/>
+         <xs:field xpath="./@name"/>
+      </xs:unique>
+
       <xs:unique name="struct-name">
          <xs:selector xpath=".//struct"/>
          <xs:field xpath="./@name"/>
@@ -274,16 +296,6 @@
 
       <xs:unique name="interface-name">
          <xs:selector xpath=".//interface"/>
-         <xs:field xpath="./@name"/>
-      </xs:unique>
-
-      <xs:unique name="instance-name">
-         <xs:selector xpath=".//deployment/instance"/>
-         <xs:field xpath="./@name"/>
-      </xs:unique>
-
-      <xs:unique name="literal-name">
-         <xs:selector xpath="./enum/literal"/>
          <xs:field xpath="./@name"/>
       </xs:unique>
 
@@ -316,7 +328,7 @@
          <xs:selector xpath=".//deployment/instance/requires"/>
          <xs:field xpath="./@to-instance"/>
       </xs:keyref>
-      
+
    </xs:element>
 
 </xs:schema>

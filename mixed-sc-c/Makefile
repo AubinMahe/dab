@@ -1,0 +1,20 @@
+C_SRCS    = src/main.c
+C_SRCSGEN = src-gen/mixed_sc/factory.c
+CINC      = -I ../Banque-c/inc -I ../Banque-c/src-gen
+
+.PHONY: all
+all: ../dab-bin/mixed-sc-c ../dab-bin/mixed-sc-c-win32 ../dab-bin/mixed-sc-c-o64
+
+include ../common.mk
+
+../dab-bin/mixed-sc-c: $(OBJS)
+	@mkdir -p ../dab-bin
+	g++ -o $@ $(OBJS) -L ../dab-lib -lBanque-c -ldabtypes-c -lutil-c -lpthread
+
+../dab-bin/mixed-sc-c-win32: $(OBJSW32)
+	@mkdir -p ../dab-bin
+	i686-w64-mingw32-g++ -o $@ $(OBJSW32) -L ../dab-lib -lBanque-c -ldabtypes-c -lutil-c -lws2_32
+
+../dab-bin/mixed-sc-c-o64: $(OBJSO64)
+	@mkdir -p ../dab-bin
+	o64-clang++ -o $@ $(OBJSO64) -L ../dab-lib -lBanque-c -ldabtypes-c -lutil-c

@@ -3,6 +3,8 @@
 	<name>Controleur-c</name>
 	<comment></comment>
 	<projects>
+		<project>dabtypes-c</project>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

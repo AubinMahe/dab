@@ -93,8 +93,8 @@ util_error UDT_controleur_recharger_la_caisse( UDT_controleur * This, double mon
    UTIL_LOG_ARGS( "montant = %7.2f", montant );
    UTIL_CHECK_NON_NULL( This );
    UTIL_CHECK_NON_NULL( This->unite_de_traitement );
-   This->unite_de_traitement->etat_du_dab.solde_caisse += montant;
-   if( This->unite_de_traitement->etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
+   This->etat_du_dab.solde_caisse += montant;
+   if( This->etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
    }
    return UTIL_NO_ERROR;
@@ -180,7 +180,7 @@ util_error UDT_controleur_montant_saisi( UDT_controleur * This, double montant )
    UDT_business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( UDT_ihm_ejecter_la_carte( This->ihm ));
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->saisie_du_montant ));
-   if( montant > This->unite_de_traitement->etat_du_dab.solde_caisse ) {
+   if( montant > This->etat_du_dab.solde_caisse ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
    }
    else if( montant > d->compte.solde ) {
@@ -198,7 +198,7 @@ util_error UDT_controleur_carte_retiree( UDT_controleur * This ) {
    UDT_business_logic_data * d = This->user_context;
    UTIL_ERROR_CHECK( UDT_site_central_retrait( This->site_central, d->carte.id, d->montantDeLatransactionEnCours ));
    UTIL_ERROR_CHECK( UDT_ihm_ejecter_les_billets( This->ihm, d->montantDeLatransactionEnCours ));
-   This->unite_de_traitement->etat_du_dab.solde_caisse -= d->montantDeLatransactionEnCours;
+   This->etat_du_dab.solde_caisse -= d->montantDeLatransactionEnCours;
    d->montantDeLatransactionEnCours = 0.0;
    UTIL_ERROR_CHECK( util_timeout_cancel( &This->retrait_de_la_carte ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_CARTE_RETIREE ));
@@ -238,11 +238,12 @@ util_error UDT_controleur_before_dispatch( UDT_controleur * This ) {
 util_error UDT_controleur_after_dispatch( UDT_controleur * This, bool hasDispatched ) {
    UTIL_CHECK_NON_NULL( This->unite_de_traitement );
    UTIL_LOG_ARGS( "state = %s, solde caisse : %7.2f",
-      DBT_etat_to_string((DBT_etat)This->automaton.current ), This->unite_de_traitement->etat_du_dab.solde_caisse );
-   This->unite_de_traitement->etat_du_dab.etat = (DBT_etat)This->automaton.current;
-   UTIL_ERROR_CHECK( UDT_unite_de_traitement_data_publish_etat_du_dab( This->unite_de_traitement ));
+      DBT_etat_to_string((DBT_etat)This->automaton.current ), This->etat_du_dab.solde_caisse );
+   This->etat_du_dab.etat = (DBT_etat)This->automaton.current;
+   if( hasDispatched ) {
+      UTIL_ERROR_CHECK( UDT_unite_de_traitement_data_publish_etat_du_dab( This->unite_de_traitement, &This->etat_du_dab ));
+   }
    return UTIL_NO_ERROR;
-   (void)hasDispatched;
 }
 
 util_error UDT_controleur_confisquer_la_carte( UDT_controleur * This ) {
@@ -307,12 +308,14 @@ util_error UDT_controleur_armer_le_timeout_de_retrait_des_billets( UDT_controleu
    return UTIL_NO_ERROR;
 }
 
-util_error UDT_controleur_shutdown( UDT_controleur * This ) {
+util_error UDT_controleur_arret( UDT_controleur * This ) {
    UTIL_LOG_HERE();
-   UTIL_ERROR_CHECK( UDT_ihm_shutdown( This->ihm ));
-   UTIL_ERROR_CHECK( UDT_site_central_shutdown( This->site_central ));
+   UTIL_ERROR_CHECK( UDT_ihm_arret( This->ihm ));
+   UTIL_ERROR_CHECK( UDT_site_central_arret( This->site_central ));
    UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_TERMINATE ));
-   UDT_controleur_dispatcher_terminate( This->dispatcher );
+   free( This->user_context );
+   This->user_context = NULL;
+   UTIL_ERROR_CHECK( UDT_controleur_dispatcher_terminate( This->dispatcher ));
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 }

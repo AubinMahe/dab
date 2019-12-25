@@ -51,30 +51,30 @@ util_error DAB_distributeur_create_ui( DAB_distributeur * This ) {
          c = toupper( io_console_getch());
          UTIL_LOG_ARGS( "Command = %c", (char)c );
          switch( c ) {
-         case '0': UTIL_ERROR_CHECK( DAB_unite_de_traitement_maintenance                      ( This->unite_de_traitement, true   )); break;
-         case '1': UTIL_ERROR_CHECK( DAB_unite_de_traitement_maintenance                      ( This->unite_de_traitement, false  )); break;
-         case '2': UTIL_ERROR_CHECK( DAB_unite_de_traitement_recharger_la_caisse              ( This->unite_de_traitement, +10000 )); break;
-         case '3': UTIL_ERROR_CHECK( DAB_unite_de_traitement_recharger_la_caisse              ( This->unite_de_traitement, -10000 )); break;
-         case '4': UTIL_ERROR_CHECK( DAB_unite_de_traitement_anomalie                         ( This->unite_de_traitement, true   )); break;
-         case '5': UTIL_ERROR_CHECK( DAB_unite_de_traitement_anomalie                         ( This->unite_de_traitement, false  )); break;
-         case '6': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree                    ( This->unite_de_traitement, "A123" )); break;
-         case '7': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree                    ( This->unite_de_traitement, "B456" )); break;
-         case '8': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree                    ( This->unite_de_traitement, "Toto" )); break;
-         case '9': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi                       ( This->unite_de_traitement, "1230" )); break;
-         case 'A': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi                       ( This->unite_de_traitement, "4560" )); break;
-         case 'B': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi                       ( This->unite_de_traitement, "9999" )); break;
-         case 'C': UTIL_ERROR_CHECK( DAB_unite_de_traitement_montant_saisi                    ( This->unite_de_traitement,    120 )); break;
-         case 'D': UTIL_ERROR_CHECK( DAB_unite_de_traitement_montant_saisi                    ( This->unite_de_traitement,   4000 )); break;
-         case 'E': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_retiree                    ( This->unite_de_traitement         )); break;
-         case 'F': UTIL_ERROR_CHECK( DAB_unite_de_traitement_billets_retires                  ( This->unite_de_traitement         )); break;
-         case 'G': UTIL_ERROR_CHECK( DAB_unite_de_traitement_annulation_demandee_par_le_client( This->unite_de_traitement         )); break;
+         case '0': UTIL_ERROR_CHECK( DAB_maintenable_maintenance                ( This->maintenable, true   )); break;
+         case '1': UTIL_ERROR_CHECK( DAB_maintenable_maintenance                ( This->maintenable, false  )); break;
+         case '2': UTIL_ERROR_CHECK( DAB_unite_de_traitement_recharger_la_caisse( This->unite_de_traitement, +10000 )); break;
+         case '3': UTIL_ERROR_CHECK( DAB_unite_de_traitement_recharger_la_caisse( This->unite_de_traitement, -10000 )); break;
+         case '4': UTIL_ERROR_CHECK( DAB_unite_de_traitement_anomalie           ( This->unite_de_traitement, true   )); break;
+         case '5': UTIL_ERROR_CHECK( DAB_unite_de_traitement_anomalie           ( This->unite_de_traitement, false  )); break;
+         case '6': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree      ( This->unite_de_traitement, "A123" )); break;
+         case '7': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree      ( This->unite_de_traitement, "B456" )); break;
+         case '8': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_inseree      ( This->unite_de_traitement, "Toto" )); break;
+         case '9': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi         ( This->unite_de_traitement, "1230" )); break;
+         case 'A': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi         ( This->unite_de_traitement, "4560" )); break;
+         case 'B': UTIL_ERROR_CHECK( DAB_unite_de_traitement_code_saisi         ( This->unite_de_traitement, "9999" )); break;
+         case 'C': UTIL_ERROR_CHECK( DAB_unite_de_traitement_montant_saisi      ( This->unite_de_traitement,    120 )); break;
+         case 'D': UTIL_ERROR_CHECK( DAB_unite_de_traitement_montant_saisi      ( This->unite_de_traitement,   4000 )); break;
+         case 'E': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_retiree      ( This->unite_de_traitement         )); break;
+         case 'F': UTIL_ERROR_CHECK( DAB_unite_de_traitement_billets_retires    ( This->unite_de_traitement         )); break;
+         case 'G': UTIL_ERROR_CHECK( DAB_unite_de_traitement_annulation_demandee_par_le_client( This->unite_de_traitement )); break;
          }
       }
    }
    if( c == 'Q' ) {
       UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));
    }
-   UTIL_LOG_MSG( "sending 'shutdown' to unite_de_traitement" );
-   DAB_unite_de_traitement_shutdown( This->unite_de_traitement );
+   UTIL_LOG_MSG( "sending 'arret' to unite_de_traitement" );
+   DAB_unite_de_traitement_arret( This->unite_de_traitement );
    return UTIL_NO_ERROR;
 }

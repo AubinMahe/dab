@@ -3,6 +3,9 @@
 	<name>isolated-ihm2-c</name>
 	<comment></comment>
 	<projects>
+		<project>dabtypes-c</project>
+		<project>Distributeur-c</project>
+		<project>util-c</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

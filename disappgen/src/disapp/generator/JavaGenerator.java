@@ -128,8 +128,8 @@ public class JavaGenerator extends BaseGenerator {
       final Map<String, Byte>                  offered     = _model.getOfferedInterfaceIDs( offers );
       final Map<String, Byte>                  required    = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, Map<String, Byte>>     eventIDs    = _model.getEventIDs();
-      final Map<String, List<Object>>          offEvents   = _model.getOfferedEventsOrRequests( component );
-      final Map<String, List<Object>>          reqEvents   = _model.getRequiredEventsOrRequests( component );
+      final Map<String, List<Object>>          offEvents   = _model.getOfferedFacets( component );
+      final Map<String, List<Object>>          reqEvents   = _model.getRequiredFacets( component );
       final Map<String, Byte>                  ifacesIDs   = _model.getInterfacesID();
       final SortedSet<String>                  usedTypes   = _model.getUsedTypesBy( offers );
       final Map<String, List<RequestType>>     offRequests = Model.getRequestMap( offEvents );
@@ -259,7 +259,7 @@ public class JavaGenerator extends BaseGenerator {
 
    void factory( String deployment, ProcessType process ) throws IOException {
       final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
-      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance();
+      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance( deployment );
       final Map<String, String>            types           = _model.getTypes( Model.JAVA_LANGUAGE );
       final Map<ComponentType, String>     modules         = _model.getModules( Model.JAVA_LANGUAGE );
       for( final InstanceType instance : process.getInstance()) {

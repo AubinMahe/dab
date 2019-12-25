@@ -33,6 +33,7 @@ util_error io_byte_buffer_array       ( io_byte_buffer * This, byte ** to );
 util_error io_byte_buffer_clear       ( io_byte_buffer * This );
 util_error io_byte_buffer_mark        ( io_byte_buffer * This );
 util_error io_byte_buffer_reset       ( io_byte_buffer * This );
+util_error io_byte_buffer_rewind      ( io_byte_buffer * This );
 util_error io_byte_buffer_flip        ( io_byte_buffer * This );
 util_error io_byte_buffer_get_position( io_byte_buffer * This, size_t * position );
 util_error io_byte_buffer_set_position( io_byte_buffer * This, size_t   position );

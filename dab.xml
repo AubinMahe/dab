@@ -53,16 +53,12 @@
       </event>
       <event name="confisquerLaCarte" />
       <event name="placerLesBilletsDansLaCorbeille" />
-      <event name="shutdown" />
+      <event name="arret" />
    </interface>
 
    <interface name="UniteDeTraitement">
       <data name="etatDuDab" type="dabtypes.EtatDuDab"
          description="Partage des données décrivant l'état du DAB" />
-      <event name="maintenance">
-         <field name="maintenance" type="boolean"
-            description="Maintenance active (true) ou inactive (false)" />
-      </event>
       <event name="rechargerLaCaisse">
          <field name="montant" type="double"
             description="Montant à rajouter dans la caisse" />
@@ -86,7 +82,14 @@
       <event name="carteRetiree" />
       <event name="billetsRetires" />
       <event name="annulationDemandeeParLeClient" />
-      <event name="shutdown" />
+      <event name="arret" />
+   </interface>
+
+   <interface name="Maintenable">
+      <event name="maintenance">
+         <field name="maintenance" type="boolean"
+            description="Maintenance active (true) ou inactive (false)" />
+      </event>
    </interface>
 
    <interface name="SiteCentral">
@@ -107,11 +110,12 @@
          <field name="montant" type="double"
             description="Montant du retrait en €" />
       </event>
-      <event name="shutdown" />
+      <event name="arret" />
    </interface>
 
    <component name="Distributeur">
       <offers interface="IHM" />
+      <requires interface="Maintenable" />
       <requires interface="UniteDeTraitement" />
       <implementation language="C" src-dir="Distributeur-c/src-gen" module-name="DAB" />
       <implementation language="C++" src-dir="Distributeur-cpp/src-gen" module-name="hpms::dab" />
@@ -119,6 +123,7 @@
    </component>
 
    <component name="Controleur">
+      <offers interface="Maintenable" />
       <offers interface="UniteDeTraitement" />
       <requires interface="IHM" />
       <requires interface="SiteCentral" />
@@ -134,6 +139,7 @@
 
    <component name="Banque">
       <offers interface="SiteCentral" />
+      <requires interface="Maintenable" />
       <implementation language="C" src-dir="Banque-c/src-gen" module-name="SC" />
       <implementation language="C++" src-dir="Banque-cpp/src-gen" module-name="hpms::sc" />
       <implementation language="Java" src-dir="Banque-java/src-gen" module-name="hpms.sc" />
@@ -141,50 +147,93 @@
 
    <deployment name="isolated">
       <process name="sc" address="127.0.0.1" port="2416">
-         <instance name="sc" component="Banque" />
+         <instance name="sc" component="Banque">
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+               <from-instance name="udt2" />
+            </requires>
+         </instance>
       </process>
       <process name="udt1" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur">
-            <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM" to-instance="ihm1" />
+            <requires interface="IHM"><from-instance name="ihm1" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
       </process>
       <process name="ihm1" address="127.0.0.1" port="2418">
          <instance name="ihm1" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="udt1" />
+            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
          </instance>
       </process>
       <process name="udt2" address="127.0.0.1" port="2419">
          <instance name="udt2" component="Controleur">
-            <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM" to-instance="ihm2" />
+            <requires interface="IHM"><from-instance name="ihm2" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
       </process>
       <process name="ihm2" address="127.0.0.1" port="2420">
          <instance name="ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="udt2" />
+            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
          </instance>
       </process>
    </deployment>
 
    <deployment name="mixed">
       <process name="sc" address="127.0.0.1" port="2416">
-         <instance name="sc" component="Banque" />
+         <instance name="sc" component="Banque">
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+               <from-instance name="udt2" />
+            </requires>
+         </instance>
       </process>
-      <process name="dab" address="127.0.0.1" port="2417">
+      <process name="dab1" address="127.0.0.1" port="2417">
          <instance name="udt1" component="Controleur">
-            <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM" to-instance="ihm1" />
+            <requires interface="IHM"><from-instance name="ihm2" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
          <instance name="ihm1" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="udt1" />
+            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
          </instance>
+      </process>
+      <process name="dab2" address="127.0.0.1" port="2418">
          <instance name="udt2" component="Controleur">
-            <requires interface="SiteCentral" to-instance="sc" />
-            <requires interface="IHM" to-instance="ihm2" />
+            <requires interface="IHM"><from-instance name="ihm1" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
          <instance name="ihm2" component="Distributeur">
-            <requires interface="UniteDeTraitement" to-instance="udt2" />
+            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
+         </instance>
+      </process>
+   </deployment>
+
+   <deployment name="allin">
+      <process name="one" address="127.0.0.1" port="2416">
+         <instance name="sc" component="Banque">
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+               <from-instance name="udt2" />
+            </requires>
+         </instance>
+         <instance name="udt1" component="Controleur">
+            <requires interface="IHM"><from-instance name="ihm1" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+         </instance>
+         <instance name="ihm1" component="Distributeur">
+            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
+         </instance>
+         <instance name="udt2" component="Controleur">
+            <requires interface="IHM"><from-instance name="ihm2" /></requires>
+            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+         </instance>
+         <instance name="ihm2" component="Distributeur">
+            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
+            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
          </instance>
       </process>
    </deployment>

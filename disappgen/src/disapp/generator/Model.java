@@ -39,6 +39,7 @@ import disapp.generator.model.EnumerationType;
 import disapp.generator.model.EventType;
 import disapp.generator.model.FieldType;
 import disapp.generator.model.FieldtypeType;
+import disapp.generator.model.FromInstanceType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.LiteralType;
@@ -59,27 +60,24 @@ final class Model {
    static protected final String CPP_LANGUAGE  = "C++";
    static protected final String C_LANGUAGE    = "C";
 
-   private final Map<String, InterfaceType>             _interfaces         = new LinkedHashMap<>();
-   private final Map<String, EnumerationType>           _enums              = new LinkedHashMap<>();
-   private final Map<String, StructType>                _structs            = new LinkedHashMap<>();
-   private final Map<String, SortedSet<String>>         _usedTypes          = new LinkedHashMap<>();
-   private final Map<String, List<Object>>              _facetsByName       = new LinkedHashMap<>();
-   private final Map<String, Map<String, InstanceType>> _instancesByName    = new LinkedHashMap<>();
-   private final Map<InstanceType, ProcessType>         _processByInstance  = new LinkedHashMap<>();
-   private final Map<String, Byte>                      _interfacesID       = new LinkedHashMap<>();
-   private final Map<String, Map<String, Byte>>         _eventIDs           = new LinkedHashMap<>();
-   private final Map<ComponentType, Set<String>>        _actions            = new LinkedHashMap<>();
-   private final Map<String, SortedMap<String, String>> _typesModel2Impl    = new HashMap<>();
-   private final Map<ComponentType,
-      Map<InterfaceType,
-         List<DataType>>>                               _offeredData        = new LinkedHashMap<>();
-   private final Map<ComponentType,
-      Map<InterfaceType,
-         List<DataType>>>                               _requiredData       = new LinkedHashMap<>();
-   private final File                                   _source;
-   private final boolean                                _force;
-   private final DisappType                             _application;
-   private final long                                   _lastModified;
+   private final Map<String, InterfaceType>                             _interfaces         = new LinkedHashMap<>();
+   private final Map<String, EnumerationType>                           _enums              = new LinkedHashMap<>();
+   private final Map<String, StructType>                                _structs            = new LinkedHashMap<>();
+   private final Map<String, SortedSet<String>>                         _usedTypes          = new LinkedHashMap<>();
+   private final Map<String, List<Object>>                              _facetsByName       = new LinkedHashMap<>();
+   private final Map<String, Map<String, InstanceType>>                 _instancesByName    = new LinkedHashMap<>();
+   private final Map<String, Map<InstanceType, ProcessType>>            _processByInstance  = new LinkedHashMap<>();
+   private final Map<String, Byte>                                      _interfacesID       = new LinkedHashMap<>();
+   private final Map<String, Map<String, Byte>>                         _eventIDs           = new LinkedHashMap<>();
+   private final Map<ComponentType, Set<String>>                        _actions            = new LinkedHashMap<>();
+   private final Map<String, SortedMap<String, String>>                 _typesModel2Impl    = new HashMap<>();
+   private final Map<String, Map<ComponentType, String>>                _modulesPerLanguage = new HashMap<>();
+   private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _offeredData        = new LinkedHashMap<>();
+   private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _requiredData       = new LinkedHashMap<>();
+   private final File                                                   _source;
+   private final boolean                                                _force;
+   private final DisappType                                             _application;
+   private final long                                                   _lastModified;
 
    @SuppressWarnings("unchecked")
    private static JAXBElement<DisappType> readXIncludeAwareModel( File source ) throws Exception {
@@ -119,9 +117,11 @@ final class Model {
       for( final DeploymentType deployment : _application.getDeployment()) {
          final Map<String, InstanceType> instancesByName = new LinkedHashMap<>();
          _instancesByName.put( deployment.getName(), instancesByName );
+         final Map<InstanceType, ProcessType> processByInstance = new HashMap<>();
+         _processByInstance.put( deployment.getName(), processByInstance );
          for( final ProcessType process : deployment.getProcess()) {
             for( final InstanceType instance : process.getInstance()) {
-               _processByInstance.put( instance, process );
+               processByInstance.put( instance, process );
                instancesByName.put( instance.getName(), instance );
             }
          }
@@ -251,6 +251,19 @@ final class Model {
                }
                typesModel2Impl.put( model, lang );
             }
+         }
+      }
+      initializeModules();
+   }
+
+   private void initializeModules() {
+      for( final ComponentType component : _application.getComponent()) {
+         for( final ComponentImplType implementation : component.getImplementation()) {
+            Map<ComponentType, String> modules = _modulesPerLanguage.get( implementation.getLanguage());
+            if( modules == null ) {
+               _modulesPerLanguage.put( implementation.getLanguage(), modules = new HashMap<>());
+            }
+            modules.put( component, implementation.getModuleName());
          }
       }
    }
@@ -524,7 +537,7 @@ final class Model {
       return _facetsByName;
    }
 
-   Map<String, List<Object>> getOfferedEventsOrRequests( ComponentType component ) {
+   Map<String, List<Object>> getOfferedFacets( ComponentType component ) {
       final Map<String, List<Object>> eventsOrRequestsForOneComponent = new LinkedHashMap<>();
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
          final InterfaceType iface            = (InterfaceType)offered.getInterface();
@@ -535,7 +548,7 @@ final class Model {
       return eventsOrRequestsForOneComponent;
    }
 
-   Map<String, List<Object>> getRequiredEventsOrRequests( ComponentType component ) {
+   Map<String, List<Object>> getRequiredFacets( ComponentType component ) {
       final Map<String, List<Object>> eventsOrRequestsForOneComponent = new LinkedHashMap<>();
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
          final InterfaceType iface            = (InterfaceType)required.getInterface();
@@ -761,14 +774,16 @@ final class Model {
       return null;
    }
 
-   private Set<InstanceType> getReaderOf( String targetDir, InstanceType dataWriter ) {
+   private Set<InstanceType> getReadersOf( String targetDir, InstanceType dataWriter ) {
       final Set<InstanceType> instances = new HashSet<>();
       final DeploymentType deployment = getDeployment( targetDir );
       for( final ProcessType process : deployment.getProcess()) {
          for( final InstanceType dataReader : process.getInstance()) {
             for( final RequiresType requires : dataReader.getRequires()) {
-               if( dataWriter.getName().equals( requires.getToInstance())) {
-                  instances.add( dataReader );
+               for( final FromInstanceType from : requires.getFromInstance()) {
+                  if( dataWriter.getName().equals( from.getName())) {
+                     instances.add( dataReader );
+                  }
                }
             }
          }
@@ -776,7 +791,7 @@ final class Model {
       return instances;
    }
 
-   Map<String, Set<InstanceType>> getDataWriterOf( String deployment, ComponentType component ) {
+   Map<String, Set<InstanceType>> getDataWritersOf( String deployment, ComponentType component ) {
       final Map<String, Set<InstanceType>> retVal = new LinkedHashMap<>();
       for( final InstanceType dataWriter : getInstancesOf( deployment, component )) { // udt1, udt2
          final String writerName = dataWriter.getName();
@@ -787,7 +802,7 @@ final class Model {
                if( offFacet instanceof DataType ) {
                   final Set<InstanceType> instances = new HashSet<>();
                   retVal.put( writerName + '/' + ifaceName, instances );
-                  for( final InstanceType dataReader : getReaderOf( deployment, dataWriter )) {
+                  for( final InstanceType dataReader : getReadersOf( deployment, dataWriter )) {
                      final String                    readerName   = dataReader.getName();
                      final Map<String, InstanceType> instancesMap = _instancesByName.get( deployment );
                      final InstanceType              instance     = instancesMap.get( readerName );
@@ -804,8 +819,8 @@ final class Model {
       return _instancesByName.keySet();
    }
 
-   Map<InstanceType, ProcessType> getProcessByInstance() {
-      return _processByInstance;
+   Map<InstanceType, ProcessType> getProcessByInstance( String deployment ) {
+      return _processByInstance.get( deployment );
    }
 
    Map<String, InstanceType> getInstancesByName( String deployment ) {
@@ -854,12 +869,14 @@ final class Model {
                      if( m == null ) {
                         processes.put( intrfc, m = new HashMap<>());
                      }
-                     final String instanceName = req.getToInstance();
-                     Set<ProcessType> p = m.get( instanceName );
-                     if( p == null ) {
-                        m.put( instanceName, p = new HashSet<>());
+                     for( final FromInstanceType from : req.getFromInstance()) {
+                        final String instanceName = from.getName();
+                        Set<ProcessType> p = m.get( instanceName );
+                        if( p == null ) {
+                           m.put( instanceName, p = new HashSet<>());
+                        }
+                        p.add( process );
                      }
-                     p.add( process );
                   }
                }
             }
@@ -869,16 +886,7 @@ final class Model {
    }
 
    Map<ComponentType, String> getModules( String language ) {
-      final Map<ComponentType, String> modules = new HashMap<>();
-      for( final ComponentType component : _application.getComponent()) {
-         for( final ComponentImplType implementation : component.getImplementation()) {
-            if( implementation.getLanguage().equals( language )) {
-               modules.put( component, implementation.getModuleName());
-               break;
-            }
-         }
-      }
-      return modules;
+      return _modulesPerLanguage.get( language );
    }
 
    String getModuleName( String modelModuleName, String language ) {
@@ -955,5 +963,133 @@ final class Model {
          }
       }
       return types;
+   }
+
+   void getFactoryAttributes(
+      String                           language,
+      ProcessType                      process,
+      Set<ModuleIface>                 requiredIfaces,
+      Set<ModuleIface>                 dataPublishers,
+      Map<InstanceType, Set<DataType>> consumedData   )
+   {
+      final Map<ComponentType, String> modules = getModules( language );
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType component = (ComponentType)instance.getComponent();
+         final String        module    = modules.get( component );
+         for( final RequiresType requires : instance.getRequires()) {
+            final InterfaceType iface = (InterfaceType)requires.getInterface();
+            requiredIfaces.add( new ModuleIface( module, iface, instance.getName()));
+         }
+         final Map<InterfaceType, List<DataType>> offData = getOfferedDataOf( component );
+         if( offData != null ) {
+            for( final InterfaceType iface : offData.keySet()) {
+               dataPublishers.add( new ModuleIface( module, iface, instance.getName()));
+            }
+         }
+         final Map<InterfaceType, List<DataType>> reqData = getRequiredDataOf( component );
+         if( reqData != null ) {
+            final Set<DataType> data = new LinkedHashSet<>();
+            consumedData.put( instance, data );
+            for( final List<DataType> dataList : reqData.values()) {
+               data.addAll( dataList );
+            }
+         }
+      }
+   }
+
+   private static boolean hasOfferedData( InterfaceType iface ) {
+      for( final Object facet : iface.getEventOrRequestOrData()) {
+         if( facet instanceof DataType ) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   private Set<ProcessType> getDataConsumers( String deploymentName, InterfaceType iface, InstanceType publisher ) {
+      final Set<ProcessType> consumers = new LinkedHashSet<>();
+      final DeploymentType deployment = getDeployment( deploymentName );
+      for( final ProcessType process : deployment.getProcess()) {
+         for( final InstanceType consumer : process.getInstance()) {
+            for( final RequiresType requires : consumer.getRequires()) {
+               if( requires.getInterface() == iface ) {
+                  for( final FromInstanceType from : requires.getFromInstance()) {
+                     if( from.getName().equals( publisher.getName())) {
+                        consumers.add( process );
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return consumers;
+   }
+
+   void getFactoryConnections(
+      String                                   deployment,
+      String                                   language,
+      ProcessType                              process,
+      SortedMap<ModuleIface, Set<ProcessType>> proxies,
+      Set<ModuleIface>                         dataPublishers,
+      Map<InstanceType, Set<DataType>>         consumedData   )
+   {
+      final Map<ComponentType, String> modules = getModules( language );
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType                      component = (ComponentType)instance.getComponent();
+         final String                             module    = modules.get( component );
+         final Map<InterfaceType, List<DataType>> offData   = getOfferedDataOf( component );
+         if( offData != null ) {
+            for( final InterfaceType iface : offData.keySet()) {
+               dataPublishers.add( new ModuleIface( module, iface, instance.getName()));
+            }
+         }
+         final Map<InterfaceType, List<DataType>> reqData = getRequiredDataOf( component );
+         if( reqData != null ) {
+            for( final List<DataType> dataList : reqData.values()) {
+               Set<DataType> consumedDataModules = consumedData.get( instance );
+               if( consumedDataModules == null ) {
+                  consumedData.put( instance, consumedDataModules = new HashSet<>());
+               }
+               consumedDataModules.addAll( dataList );
+            }
+         }
+      }
+      final Map<String, InstanceType> instances = getInstancesByName( deployment );
+      for( final InstanceType instance : process.getInstance()) {
+         for( final RequiresType requires : instance.getRequires()) {
+            for( final FromInstanceType from : requires.getFromInstance()) {
+               final String        fn     = from.getName();
+               final InstanceType  srvr   = instances.get( fn );
+               final InterfaceType intrfc =  (InterfaceType)requires.getInterface();
+               final ComponentType comp = (ComponentType)srvr.getComponent();
+               final ProcessType   p    = getProcessByInstance( deployment ).get( srvr );
+               for( final OfferedInterfaceUsageType iu : comp.getOffers()) {
+                  final InterfaceType iface     = (InterfaceType)iu.getInterface();
+                  if( iface != intrfc ) {
+                     continue;
+                  }
+                  final ComponentType component = (ComponentType)instance.getComponent();
+                  final String        module    = modules.get( component );
+                  final ModuleIface   mif       = new ModuleIface( module, iface, instance.getName());
+                  Set<ProcessType> processes = proxies.get( mif );
+                  if( processes == null ) {
+                     proxies.put( mif, processes = new LinkedHashSet<>());
+                  }
+                  processes.add( p );
+               }
+            }
+         }
+         final ComponentType component = (ComponentType)instance.getComponent();
+         for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+            final InterfaceType iface     = (InterfaceType)offered.getInterface();
+            final String        module    = modules.get( component );
+            final boolean       hasData   = hasOfferedData( iface );
+            if( hasData ) {
+               final ModuleIface      mif       = new ModuleIface( module, iface, instance.getName(), true );
+               final Set<ProcessType> processes = getDataConsumers( deployment, iface, instance );
+               proxies.put( mif, processes );
+            }
+         }
+      }
    }
 }

@@ -126,7 +126,7 @@ else>
 endif>}>
 } <prefix>_<struct.name; format="cname">;
 
-util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target );
+util_error <prefix>_<struct.name; format="cname">_put( const <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target );
 util_error <prefix>_<struct.name; format="cname">_get( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * source );
 
 >>
@@ -137,7 +137,7 @@ structBody( prefix, struct, modelName, maxLength, maxStrLength, types ) ::= <<
 #include \<<prefix>/<struct.name; format="cname">.h>
 #include \<stdio.h>
 
-util_error <prefix>_<struct.name; format="cname">_put( <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target ) {
+util_error <prefix>_<struct.name; format="cname">_put( const <prefix>_<struct.name; format="cname"> * This, io_byte_buffer * target ) {
 <struct.field:{field|
    < if(     field.isBoolean )>UTIL_ERROR_CHECK( io_byte_buffer_put_bool  ( target, This-><field.name; format="cname,width"> ));
    < elseif( field.isByte    )>UTIL_ERROR_CHECK( io_byte_buffer_put_byte  ( target, This-><field.name; format="cname,width"> ));
@@ -204,14 +204,19 @@ requiredInterface( prefix, usedTypes, ifaceName, rawSize, iface, types ) ::= <<
 #include \<<types.(type); format="typeToPath">.h>}>
 
 typedef struct <prefix>_<ifaceName; format="cname">_s {
-   SOCKET             socket;
-   struct sockaddr_in target;
-   byte               raw[<rawSize>];
-   io_byte_buffer     out;
+   SOCKET                socket;
+   io_byte_buffer        out;
+   unsigned              targets_count;
+   struct sockaddr_in ** targets;
+   byte                  raw[<rawSize>];
 } <prefix>_<ifaceName; format="cname">;
 
-util_error <prefix>_<ifaceName; format="cname">_init( <prefix>_<ifaceName; format="cname"
-> * This, SOCKET socket, const struct sockaddr_in * target );
+util_error <prefix>_<ifaceName; format="cname">_init(
+   <prefix>_<ifaceName; format="cname"> * This,
+   SOCKET                socket,
+   unsigned              targets_count,
+   struct sockaddr_in ** targets );
+
 <iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
 util_error <prefix>_<ifaceName; format="cname">_<facet.name; format="cname">( <prefix>_<ifaceName; format="cname"> * This<
 if( facet.isRequest )><
@@ -239,11 +244,15 @@ enum <prefix>_event_id {
 
 static const byte <iface.name; format="ID">_ID = <ifaceID>;
 
-util_error <prefix>_<iface.name; format="cname">_init( <prefix>_<iface.name; format="cname"
-> * This, SOCKET socket, const struct sockaddr_in * target ) {
+util_error <prefix>_<iface.name; format="cname">_init(
+   <prefix>_<iface.name; format="cname"> * This,
+   SOCKET                socket,
+   unsigned              targets_count,
+   struct sockaddr_in ** targets ) {
    UTIL_LOG_HERE();
-   This->socket = socket;
-   This->target = *target;
+   This->socket        = socket;
+   This->targets_count = targets_count;
+   This->targets       = targets;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
    return UTIL_NO_ERROR;
 }
@@ -269,7 +278,14 @@ endif> ) {
         byteBufferPut( "", facet.field )><
      endif>
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
-   UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
+   size_t size = 0;
+   UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
+   for( unsigned i = 0; i \< This->targets_count; ++i ) {
+      UTIL_ERROR_CHECK( io_byte_buffer_rewind( &This->out ));
+      struct sockaddr_in * target = This->targets[i];
+      UTIL_LOG_ARGS( "%u byte(s) sent to %s", (unsigned)size, inet_ntoa( This->targets[i]->sin_addr ));
+      UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, target ));
+   \}
    UTIL_LOG_DONE();
    return UTIL_NO_ERROR;
 \}
@@ -323,7 +339,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
 
 util_error <prefix>_<component.name; format="cname">_dispatcher_after_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
-   bool dispatched );
+   bool has_dispatched );
 < if( component.timeout )>
 
 typedef enum <prefix>_<component.name; format="cname">_dispatcher_loopback_event_e {
@@ -392,14 +408,13 @@ static const byte EVENT_<ifaceName; format="ID">_RESPONSES_<facet.name; format="
 < endif>}>
 static util_error <prefix>_<ifaceName; format="cname">_dispatch(
    <prefix>_<component.name; format="cname">_dispatcher * This,
-   io_byte_buffer *     in,<
- if( offRequests.(ifaceName))>
+   io_byte_buffer * in,
+< if( offRequests.(ifaceName))>
    struct sockaddr_in * from,
 < endif>
    <prefix>_<ifaceName; format="cname">_event event,
-   bool *               has_dispatched )
+   bool *           has_dispatched )
 {
-   *has_dispatched = false;
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.isData )>< else>
    case <ifaceName; format="ID">_<facet.name; format="ID">:{
@@ -422,6 +437,7 @@ if( facet.isRequest )
 else>      UTIL_ERROR_CHECK( <prefix>_<component.name; format="cname">_<
           facet.name; format="cname">( This->listener<args( facet.field )> ));
 < endif>
+      *has_dispatched = true;
       break;
       \}
 < endif>}>
@@ -448,7 +464,6 @@ static util_error <prefix>_<ifaceName; format="cname">_responses_dispatch(
    <prefix>_<ifaceName; format="cname">_response event,
    bool *           has_dispatched )
 {
-   *has_dispatched = false;
    switch( event ) {
 <reqRequests.(ifaceName):{req|
    case <req.name; format="ID">:{
@@ -482,7 +497,6 @@ static util_error <prefix>_<iface.name; format="cname">_dispatch(
    <prefix>_<iface.name; format="cname">_data event,
    bool *           has_dispatched )
 {
-   *has_dispatched = false;
    switch( event ) {
 <data.(iface):{dataType|
    case <dataType.name; format="ID">:{
@@ -613,7 +627,6 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    bool *               has_dispatched )
 {
    UTIL_LOG_HERE();
-   *has_dispatched = false;
    switch( intrfc ) {
 < if( component.timeout )>
    case LOOPBACK: UTIL_ERROR_CHECK( loopback_dispatch( This, event, has_dispatched )); break;
@@ -634,7 +647,6 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_dispatch(
    UTIL_LOG_ARGS( "has_dispatched = %s", has_dispatched ? "true" : "false" );
    return UTIL_NO_ERROR;
    (void)from;
-   (void)in;
 }
 
 util_error <prefix>_<component.name; format="cname">_dispatcher_after_dispatch(
@@ -669,7 +681,7 @@ util_error <prefix>_<component.name; format="cname">_dispatcher_loopback( <
 
 
 componentInterface(
-    prefix, component, responses, requires, instancesByName, instances,
+    prefix, component, responses, requires, instances,
     usedTypes, eventsOrRequests, reqRequests, actions, data, reqData, types
 ) ::= <<
 #pragma once
@@ -707,7 +719,8 @@ typedef struct <prefix>_<component.name; format="cname">_s {
    <prefix>_<req.name; format="cname"> * <req.name; format="cname">;
 }><reqData:{iface|<reqData.(iface):{data|
    <types.(data.type)> * <data.name; format="cname">;
-}>}><data:{iface|
+}>}><data :{iface|<data   .(iface):{data|
+   <types.(data.type)> <data.name; format="cname">;}>
    <prefix>_<iface.name; format="cname">_data * <iface.name; format="cname">;
 }>< if( component.automaton )>   util_automaton     automaton;
 < endif><component.timeout:{to|
@@ -759,21 +772,23 @@ dataWriterHeader( prefix, interface, ifaceID, data, rawSize, types  ) ::= <<
 #include \<<types.(dataType.type); format="typeToPath">.h>}>
 
 typedef struct <prefix>_<interface.name; format="cname">_data_s {
-   SOCKET             socket;
-   struct sockaddr_in target;
-   byte               raw[<rawSize>];
-   io_byte_buffer     out;
-
-<data:{dataType|
-   <types.(dataType.type)> <dataType.name; format="cname">;
-}>
+   SOCKET                socket;
+   io_byte_buffer        out;
+   unsigned              targets_count;
+   struct sockaddr_in ** targets;
+   byte                  raw[<rawSize>];
 } <prefix>_<interface.name; format="cname">_data;
 
-util_error <prefix>_<interface.name; format="cname">_data_init( <prefix>_<
-   interface.name; format="cname">_data * This, SOCKET socket, const struct sockaddr_in * target );
+util_error <prefix>_<interface.name; format="cname">_data_init(
+   <prefix>_<interface.name; format="cname">_data * This,
+   SOCKET                socket,
+   unsigned              targets_count,
+   struct sockaddr_in ** targets       );
+
 <data:{dataType|
-util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <
-   prefix>_<interface.name; format="cname">_data * This );
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">(
+   <prefix>_<interface.name; format="cname">_data * This,
+   const <types.(dataType.type)> * <dataType.name; format="cname"> );
 }>
 
 >>
@@ -793,27 +808,39 @@ static const byte <interface.name; format="ID"> = <ifaceID>;
 <data:{dataType|static const byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
 }>
 
-util_error <prefix>_<interface.name; format="cname">_data_init( <
-   prefix>_<interface.name; format="cname">_data * This, SOCKET socket, const struct sockaddr_in * target ) {
-   This->socket = socket;
-   This->target = *target;
+util_error <prefix>_<interface.name; format="cname">_data_init(
+   <prefix>_<interface.name; format="cname">_data * This,
+   SOCKET                socket,
+   unsigned              targets_count,
+   struct sockaddr_in ** targets       )
+{
+   UTIL_LOG_HERE();
+   This->socket        = socket;
+   This->targets_count = targets_count;
+   This->targets       = targets;
    UTIL_ERROR_CHECK( io_byte_buffer_wrap( &This->out, <rawSize>, This->raw ));
    return UTIL_NO_ERROR;
 }
 <data:{dataType|
 
 
-util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">( <
-   prefix>_<interface.name; format="cname">_data * This ) {
+util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name; format="cname">(
+   <prefix>_<interface.name; format="cname">_data * This,
+   const <types.(dataType.type)> * <dataType.name; format="cname"> )
+{
    UTIL_ERROR_CHECK( io_byte_buffer_clear( &This->out ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <interface.name; format="ID"> ));
    UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <dataType.name; format="ID"> ));
-   UTIL_ERROR_CHECK( <types.(dataType.type)>_put( &This-><dataType.name; format="cname">, &This->out ));
+   UTIL_ERROR_CHECK( <types.(dataType.type)>_put( <dataType.name; format="cname">, &This->out ));
    UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
    size_t size = 0;
    UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
-   UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &This->target ));
-   UTIL_LOG_ARGS( "%u byte(s) sent to %s", (unsigned)size, inet_ntoa( This->target.sin_addr ));
+   for( unsigned i = 0; i \< This->targets_count; ++i ) {
+      UTIL_ERROR_CHECK( io_byte_buffer_rewind( &This->out ));
+      struct sockaddr_in * target = This->targets[i];
+      UTIL_LOG_ARGS( "%u byte(s) sent to %s", (unsigned)size, inet_ntoa( This->targets[i]->sin_addr ));
+      UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, target ));
+   \}
    return UTIL_NO_ERROR;
 \}
 }>
@@ -866,7 +893,9 @@ static util_automaton_state_action on_exit[] = {
       prefix>_<component.name; format="cname">_<eoe.value.action; format="cname"> \},
 < endif>}>};
 
-void <prefix>_<component.name; format="cname">_automaton_init( util_automaton * automaton, <prefix>_<component.name; format="cname"> * actor ) {
+void <prefix>_<component.name; format="cname">_automaton_init( util_automaton * automaton, <
+   prefix>_<component.name; format="cname"> * actor ) {
+   UTIL_LOG_HERE();
    automaton->debug           = false;
    automaton->current         = <types.(component.automaton.stateEnum.name); format="ID">_<component.automaton.initial; format="ID">;
    automaton->arcs            = transitions;
@@ -885,33 +914,44 @@ void <prefix>_<component.name; format="cname">_automaton_init( util_automaton * 
 
 
 componentFactoryHeader(
-   prefix, process, processes, offData, reqData, instancesByName, dataConsumer, modules, types
+   prefix, process, requiredIfaces, dataPublishers, consumedData, modules, types
 ) ::= <<
 #pragma once
 // ComponentFactoryHeader
-
 #include \<io/datagram_socket.h>
 #include \<os/thread.h>
-
-<process.instance:{instance|#include \<<modules.(instance.component)>/<instance.component.name; format="cname">.h\>}; separator="\n">
-
+<process.instance:{instance|
+#include \<<modules.(instance.component)>/<instance.component.name; format="cname">.h\>
+}>
 typedef struct <prefix>_factory_s {
 
    SOCKET             socket;
    bool               running;
    os_thread          thread;
    struct sockaddr_in local_addr;
-<process.instance:{instance|
-   <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher <
-      instance.name; format="cname">_dispatcher;}>
+
+   //-- instances --
 <process.instance:{instance|
    <modules.(instance.component)>_<instance.component.name; format="cname"> <instance.name; format="cname">;
-<instance.requires:{requires|
-   <modules.(instance.component)>_<requires.interface.name; format="cname"> <requires.interface.name; format="cname">;}>}>
-   <reqData:{iface|<reqData.(iface):{data|<types.(data.type)> <data.name; format="cname">;}>}>
-<process.instance:{instance|<offData:{iface|<dataConsumer.(iface).(instance.name):{process|
-   <modules.(instance.component)>_<iface.name; format="cname">_data <iface.name; format="cname">_data;}>}>}>
-
+}>
+   //-- dispatcher --
+<process.instance:{instance|
+   <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher <
+      instance.name; format="cname">_dispatcher;
+}>
+   //-- requires --
+<requiredIfaces:{requires|
+   <requires.module>_<requires.name; format="cname"> <requires.name; format="cname">_for_<requires.instance; format="cname">;
+}>
+   //-- data published --
+<dataPublishers:{pair|
+   <pair.module>_<pair.name; format="cname">_data <pair.name; format="cname">_data_for_<pair.instance; format="cname">;
+}>
+   //-- data consumed --
+<consumedData:{instance|
+<consumedData.(instance):{data|
+   <types.(data.type)> <data.name; format="cname">_of_<instance.name; format="cname">;
+}>}>
 } <prefix>_factory;
 
 util_error <prefix>_factory_create ( <prefix>_factory * This );
@@ -922,9 +962,108 @@ util_error <prefix>_factory_destroy( <prefix>_factory * This );
 
 
 
-componentFactoryBody(
-   prefix, process, instancesCount, processes, offData, reqData, instancesByName, dataConsumer, modules, types
-) ::= <<
+componentFactoryBodyInstancesInit() ::= <<
+//-- instances init --
+<process.instance:{instance|
+UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_init( &This-><
+      instance.name; format="cname"> ));
+}>
+>>
+
+
+
+componentFactoryBodyProxiesInit() ::= <<
+//-- proxies init --
+<deployment.process:{process|
+static struct sockaddr_in <process.name; format="cname">;
+UTIL_ERROR_CHECK( io_datagram_socket_init( "<process.address>", <process.port>, &<process.name> ));
+}>
+<proxies:{pair|
+static struct sockaddr_in * <pair.name; format="cname">_for_<pair.instance; format="cname">_targets[] = { <
+proxies.(pair):{process|&<process.name; format="cname">}; separator=", "> \};
+UTIL_ERROR_CHECK( <pair.module>_<pair.name; format="cname">_init( &This-><
+   pair.name; format="cname">_for_<pair.instance; format="cname">, This->socket, <
+   length(proxies.(pair))>, <pair.name; format="cname">_for_<pair.instance; format="cname">_targets ));
+}>
+>>
+
+
+
+componentFactoryBodyAutomaton() ::= <<
+//-- automaton --
+<process.instance:{instance|
+< if( instance.component.automaton )>
+<modules.(instance.component)>_<instance.component.name; format="cname">_automaton_init( &This-><
+   instance.name; format="cname">.automaton, &This-><instance.name; format="cname"> );
+< endif>
+}>
+>>
+
+
+
+componentFactoryBodyTimeouts() ::= <<
+//-- timeouts --
+<process.instance:{instance|
+<instance.component.timeout:{to|
+static <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<
+to.name; format="cname">_<instance.name; format="cname">;
+timeout_arg_<to.name; format="cname">_<instance.name; format="cname">.dispatcher = &This-><instance.name; format="cname">_dispatcher;
+timeout_arg_<to.name; format="cname">_<instance.name; format="cname">.event      = <
+   modules.(instance.component); format="ID">_<instance.component.name; format="ID">_LOOPBACK_<to.name; format="ID">;
+UTIL_ERROR_CHECK( util_timeout_init(
+   &This-><instance.name; format="cname">.<to.name; format="cname">,
+   <to.duration><to.unit.toCpp>,
+   (util_timeout_action)<modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_loopback,
+   &timeout_arg_<to.name; format="cname">_<instance.name; format="cname"> ));
+}>}>
+>>
+
+
+
+componentFactoryBodyDataPublishers() ::= <<
+//-- data publishers --
+<dataPublishers:{pair|
+This-><pair.instance; format="argument">.<pair.name; format="cname"> = &This-><
+    pair.name; format="cname">_data_for_<pair.instance; format="cname">;
+}>
+>>
+
+
+
+componentFactoryBodyDataConsumed() ::= <<
+//-- data consumed --
+<process.instance:{instance|
+<consumedData.(instance):{data|
+This-><instance.name; format="argument">.<data.name; format="cname"> = &This-><
+    data.name; format="cname">_of_<instance.name; format="argument">;
+}>}>
+>>
+
+
+
+componentFactoryBodyInstancesConnect() ::= <<
+//-- instances connect --
+<process.instance:{instance|
+<instance.requires:{pair|
+This-><instance.name; format="argument">.<pair.interface.name; format="cname"> = &This-><
+    pair.interface.name; format="cname">_for_<instance.name; format="argument">;
+}>}>
+>>
+
+
+
+componentFactoryBodyDispatchers() ::= <<
+//-- dispatchers --
+<process.instance:{instance|
+UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_init(
+   &This-><instance.name; format="cname">_dispatcher, &This->running, This->socket, &This->local_addr, &This-><
+      instance.name; format="cname"> ));
+}>
+>>
+
+
+
+componentFactoryBody( prefix, deployment, process, processes, proxies, dataPublishers, consumedData, types, modules ) ::= <<
 // ComponentFactoryBody
 #include "factory.h"
 <process.instance:{instance|
@@ -960,19 +1099,19 @@ static void * <prefix>_factory_run( <prefix>_factory * This ) {
 <process.instance:{instance|
          <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_before_dispatch( &This-><
             instance.name; format="cname">_dispatcher );}>
-         bool dispatched = false;
+         bool has_dispatched = false;
          while( true ) {
 <process.instance:{instance|
             <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_dispatch( &This-><
-               instance.name; format="cname">_dispatcher, intrfc, event, &from, &in, &dispatched );}>
-            if( dispatched ) {
+               instance.name; format="cname">_dispatcher, intrfc, event, &from, &in, &has_dispatched );}>
+            if( has_dispatched ) {
                break;
             }
             break;
          }
 <process.instance:{instance|
          <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_after_dispatch( &This-><
-            instance.name; format="cname">_dispatcher, dispatched );}>
+            instance.name; format="cname">_dispatcher, has_dispatched );}>
       }
    }
    This->running = false;
@@ -980,64 +1119,21 @@ static void * <prefix>_factory_run( <prefix>_factory * This ) {
    return NULL;
 }
 
-<process.instance:{instance|
-static util_error connect_<instance.name; format="cname">( <prefix>_factory * This ) {
-   UTIL_LOG_HERE();
-// reqData
-<reqData:{iface|<reqData.(iface):{data|
-   This-><instance.name; format="argument">.<data.name; format="cname"> = &This-><
-      data.name; format="cname">;
-}>}>// offData
-<offData:{iface|<dataConsumer.(iface).(instance.name):{process|
-   struct sockaddr_in <iface.name; format="cname">;
-   UTIL_ERROR_CHECK( io_datagram_socket_init( "<process.address>", <process.port>, &<iface.name; format="cname"> ));
-   UTIL_ERROR_CHECK( <modules.(instance.component)>_<iface.name; format="cname">_data_init( &This-><
-      iface.name; format="cname">_data, This->socket, &<iface.name; format="cname"> ));
-   This-><instance.name; format="argument">.<iface.name; format="cname"> = &This-><iface.name; format="cname">_data;
-}>}>// process.instance
-<process.instance:{instance|<instance.requires:{requires|
-   struct sockaddr_in <requires.interface.name; format="cname">;
-   UTIL_ERROR_CHECK( io_datagram_socket_init( "<processes.(instancesByName.(requires.toInstance)).address>", <
-      processes.(instancesByName.(requires.toInstance)).port>, &<requires.interface.name; format="cname"> ));
-   UTIL_ERROR_CHECK( <modules.(instance.component)>_<requires.interface.name; format="cname">_init( &This-><
-      requires.interface.name; format="cname">, This->socket, &<requires.interface.name; format="cname"> ));
-   This-><instance.name; format="argument">.<requires.interface.name; format="cname"> = &This-><
-      requires.interface.name; format="cname">;
-}>}>// modules.(instance.component)
-   UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_init(
-      &This-><instance.name; format="cname">_dispatcher, &This->running, This->socket, &This->local_addr, &This-><
-         instance.name; format="cname"> ));
-// instance.component.timeout
-<instance.component.timeout:{to|
-   static <modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_timeout_arg timeout_arg_<to.name; format="cname">;
-   timeout_arg_<to.name; format="cname">.dispatcher = &This-><instance.name; format="cname">_dispatcher;
-   timeout_arg_<to.name; format="cname">.event      = <
-      modules.(instance.component); format="ID">_<instance.component.name; format="ID">_LOOPBACK_<to.name; format="ID">;
-   UTIL_ERROR_CHECK( util_timeout_init(
-      &This-><instance.name; format="cname">.<to.name; format="cname">,
-      <to.duration><to.unit.toCpp>,
-      (util_timeout_action)<modules.(instance.component)>_<instance.component.name; format="cname">_dispatcher_loopback,
-      &timeout_arg_<to.name; format="cname"> ));
-}>// automaton
-< if( instance.component.automaton )>
-   <modules.(instance.component)>_<instance.component.name; format="cname">_automaton_init( &This-><
-     instance.name; format="cname">.automaton, &This-><instance.name; format="cname"> );
-< endif>
-   UTIL_LOG_DONE();
-   return UTIL_NO_ERROR;
-\}
-}>
 util_error <prefix>_factory_create( <prefix>_factory * This ) {
    UTIL_LOG_HERE();
    memset( This, 0, sizeof( <prefix>_factory ));
    This->socket = socket( AF_INET, SOCK_DGRAM, 0 );
    UTIL_ASSERT( This->socket > 0 );
    UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<process.address>", <process.port>, &This->local_addr ));
-<process.instance:{instance|
-   UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; format="cname">_init( &This-><
-      instance.name; format="cname"> ));}>
-<process.instance:{instance|
-   UTIL_ERROR_CHECK( connect_<instance.name; format="cname">( This ));}>
+
+   <componentFactoryBodyInstancesInit()>
+   <componentFactoryBodyProxiesInit()>
+   <componentFactoryBodyAutomaton()>
+   <componentFactoryBodyTimeouts()>
+   <componentFactoryBodyDataPublishers()>
+   <componentFactoryBodyDataConsumed()>
+   <componentFactoryBodyInstancesConnect()>
+   <componentFactoryBodyDispatchers()>
    UTIL_ERROR_CHECK( os_thread_create( &This->thread, (thread_entry_t)<prefix>_factory_run, This ));
    while( ! This->running ) {
       os_sleep( 100 );
