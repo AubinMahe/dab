@@ -21,20 +21,20 @@ public class Main {
       if( dep == null ) {
          throw new IllegalStateException( "'" + deployment + "' is not a valid deployment name" );
       }
-//      final JavaGenerator java = new JavaGenerator( _model );
+      final JavaGenerator java = new JavaGenerator( _model );
       final CGenerator    c    = new CGenerator   ( _model );
 //      final CppGenerator  cpp  = new CppGenerator ( _model );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final ComponentImplType implementation : component.getImplementation()) {
             switch( implementation.getLanguage()) {
-//            case "Java": java.component( component, implementation ); break;
+            case "Java": java.component( component, implementation ); break;
             case "C"   : c   .generateComponent( component, implementation ); break;
 //            case "C++" : cpp .generateComponent( component, implementation ); break;
             }
          }
       }
       for( final ProcessType process : dep.getProcess()) {
-//         java.factory( deployment, process );
+         java.factory( deployment, process );
          c   .factory( deployment, process );
 //         cpp .factory( deployment, process );
       }

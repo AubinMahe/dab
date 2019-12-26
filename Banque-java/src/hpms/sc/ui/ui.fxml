@@ -12,6 +12,9 @@
    <stylesheets>
       <java.net.URL value="@ui.css"/> 
    </stylesheets>
+   <top>
+   <HBox><CheckBox fx:id="_maintenance" text="%maintenance-title" onAction="#maintenance" /></HBox>
+   </top>
    <center>
       <SplitPane orientation="HORIZONTAL" dividerPositions="0.6">
          <TableView fx:id="_cartes" editable="true" prefHeight="180">

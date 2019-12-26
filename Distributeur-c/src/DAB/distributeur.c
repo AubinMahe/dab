@@ -53,6 +53,7 @@ util_error DAB_distributeur_placer_les_billets_dans_la_corbeille( DAB_distribute
 
 util_error DAB_distributeur_arret( DAB_distributeur * This ) {
    UTIL_LOG_HERE();
+   UTIL_ERROR_CHECK( DAB_unite_de_traitement_arret( This->unite_de_traitement ));
    free( This->user_context );
    This->user_context = NULL;
    UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));

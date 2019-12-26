@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
@@ -301,56 +299,40 @@ public class CGenerator extends BaseGenerator {
       generateMakefileSourcesList( _generatedFiles, _genDir, false );
    }
 
-   private void factoryHeader( ProcessType process ) throws IOException {
-      final Set<ModuleIface>                 requiredIfaces = new LinkedHashSet<>();
-      final Set<ModuleIface>                 dataPublishers = new LinkedHashSet<>();
-      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
-      final Map<String, String>              types          = _model.getTypes( Model.C_LANGUAGE );
-      final Map<ComponentType, String>       modules        = _model.getModules( Model.C_LANGUAGE );
-      _model.getFactoryAttributes( Model.C_LANGUAGE, process, requiredIfaces, dataPublishers, consumedData );
-      final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
-      tmpl.add( "prefix"         , _moduleName );
-      tmpl.add( "process"        , process );
-      tmpl.add( "requiredIfaces" , requiredIfaces );
-      tmpl.add( "dataPublishers" , dataPublishers );
-      tmpl.add( "consumedData"   , consumedData );
-      tmpl.add( "modules"        , modules );
-      tmpl.add( "types"          , types );
-      write( "factory.h", tmpl );
-   }
-
-   private void factoryBody( String deployment, ProcessType process ) throws IOException {
-      final SortedMap<ModuleIface, Set<ProcessType>> proxies        = new TreeMap<>();
-      final Set<ModuleIface>                         dataPublishers = new LinkedHashSet<>();
-      final Map<InstanceType, Set<DataType>>         consumedData   = new LinkedHashMap<>();
-      _model.getFactoryConnections(
-         deployment,
-         Model.C_LANGUAGE,
-         process,
-         proxies,
-         dataPublishers,
-         consumedData );
-      final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
-      final Map<String, String>            types     = _model.getTypes( Model.C_LANGUAGE );
-      final Map<ComponentType, String>     modules   = _model.getModules( Model.C_LANGUAGE );
-      final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
-      tmpl.add( "prefix"        , _moduleName );
-      tmpl.add( "deployment"    , _model.getDeployment( deployment ));
-      tmpl.add( "process"       , process );
-      tmpl.add( "processes"     , processes );
-      tmpl.add( "proxies"       , proxies );
-      tmpl.add( "dataPublishers", dataPublishers );
-      tmpl.add( "consumedData"  , consumedData );
-      tmpl.add( "types"         , types );
-      tmpl.add( "modules"       , modules );
-      write( "factory.c", tmpl );
-   }
-
    public void factory( String deployment, ProcessType process ) throws IOException {
       _moduleName = CRenderer.cname( deployment ) + "_" + CRenderer.cname( process.getName());
       _genDir     = deployment + '-' + process.getName() + "-c/src-gen";
-      factoryHeader( process );
-      factoryBody  ( deployment, process );
+      final Set<Proxy>                       proxies        = new LinkedHashSet<>();
+      final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
+      final Map<ComponentType, String>       modules        = _model.getModules( Model.C_LANGUAGE );
+      final Map<String, String>              types          = _model.getTypes( Model.C_LANGUAGE );
+      _model.getFactoryConnections( Model.C_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+      {
+         final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
+         tmpl.add( "prefix"      , _moduleName );
+         tmpl.add( "process"     , process );
+         tmpl.add( "proxies"     , proxies );
+         tmpl.add( "consumedData", consumedData );
+         tmpl.add( "modules"     , modules );
+         tmpl.add( "types"       , types );
+         write( "factory.h", tmpl );
+      }{
+         final Map<String, Byte>              ids       = _model.getIDs( deployment );
+         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
+         final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
+         tmpl.add( "prefix"        , _moduleName );
+         tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+         tmpl.add( "process"       , process );
+         tmpl.add( "processes"     , processes );
+         tmpl.add( "proxies"       , proxies );
+         tmpl.add( "dataPublishers", dataPublishers );
+         tmpl.add( "consumedData"  , consumedData );
+         tmpl.add( "types"         , types );
+         tmpl.add( "modules"       , modules );
+         tmpl.add( "ids"           , ids );
+         write( "factory.c", tmpl );
+      }
    }
 
    public void generateTypesMakefileSourcesList() throws FileNotFoundException {

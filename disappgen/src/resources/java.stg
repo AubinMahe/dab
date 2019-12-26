@@ -82,6 +82,7 @@ byteBufferPut( fields ) ::= <<
 
 enum( package, enum ) ::= <<
 package <package>;
+// enum
 
 import java.nio.ByteBuffer;
 
@@ -97,6 +98,7 @@ public enum <enum.name> {
 
 struct( package, struct, maxLength, maxStrLength, types ) ::= <<
 package <package>;
+// struct
 
 import java.nio.ByteBuffer;
 
@@ -151,6 +153,7 @@ public class <struct.name> {
 
 responses( package, ifaceName, requests, types ) ::= <<
 package <package>;
+// responses
 
 import java.io.IOException;
 
@@ -184,14 +187,15 @@ endif>) throws IOException;< endif>
 
 
 
-requiredImplementation( package, usedTypes, ifaceName, rawSize, iface, ifaceID, imports ) ::= <<
+requiredImplementation( package, ifaceName, rawSize, iface, ifaceID, imports, hasRequest ) ::= <<
 package <package>;
-//requiredImplementation
+// requiredImplementation
+
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
+import da.Targets;
 import io.ByteBufferHelper;
 
 <imports:{type|import <type>;
@@ -203,12 +207,14 @@ public class <ifaceName> implements I<ifaceName> {
    <iface.eventOrRequestOrData:{facet|private static final byte <facet.name; format="ID"> = <i>;
 }>
    private final DatagramChannel _channel;
-   private final SocketAddress   _target;
-   private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
+   private final byte            _from;
+   private final Targets[]       _targets;
+   private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize>< if( hasRequest )> + 1< endif> );
 
-   public <ifaceName>( DatagramChannel channel, SocketAddress target ) {
+   public <ifaceName>( DatagramChannel channel, byte from, Targets ... targets ) {
       _channel = channel;
-      _target  = target;
+      _from    = from;
+      _targets = targets;
    }
 <iface.eventOrRequestOrData:{facet|< if( facet.isData )>< else>
 
@@ -219,19 +225,25 @@ if( facet.isRequest )><
 else><
     signature( facet.field )><
 endif>) throws IOException {
-      _out.clear();
-      _out.put( <iface.name; format="ID"> );
-      _out.put( <facet.name; format="ID"> );
-      <
-if( facet.isRequest )><
-      byteBufferPut( facet.arguments.field )><
-else><
-      byteBufferPut( facet.field )><
+      for( final Targets targets : _targets ) {
+         for( final byte to : targets._instances ) {
+            _out.clear();
+            _out.put( <iface.name; format="ID"> );
+            _out.put( <facet.name; format="ID"> );
+            _out.put( to );<
+if( facet.isRequest )>
+            _out.put( _from );
+            <byteBufferPut( facet.arguments.field )><
+else>
+            <byteBufferPut( facet.field )><
 endif>
-      _out.flip();
-      final int size = _out.remaining();
-      _channel.send( _out, _target );
-      System.err.printf( "<ifaceName>.<facet.name>|%d byte(s) sent to %s\n", size, _target );
+            _out.flip();
+            final int size = _out.remaining();
+            _channel.send( _out, targets._process );
+            System.err.printf( "<ifaceName>.<facet.name>|%d byte(s) sent from instance %d to instance %d @ %s\n",
+               size, _from, to, targets._process );
+         \}
+      \}
    \}< endif>
 }>
 }
@@ -239,7 +251,7 @@ endif>
 
 
 
-offeredInterface( package, ifaceName, usedTypes, facets, types ) ::= <<
+offeredInterface( package, ifaceName, facets, types ) ::= <<
 package <package>;
 // offeredInterface
 
@@ -285,7 +297,7 @@ byteBufferGet( field ) ::= <<
 
 
 dispatcherImplOneInterface() ::= <<
-//dispatcherImplOneInterface -- begin
+// dispatcherImplOneInterface -- begin
 private static enum <ifaceName>Event {
 
    <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
@@ -316,8 +328,8 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
    switch( event ) {
 <events.(ifaceName):{facet|< if( facet.isData )>< else>
    case <facet.name; format="ID">:{
-      < if( facet.isRequest )><facet.arguments.field:{field|<
-         byteBufferGet( field )>}>< 
+      < if( facet.isRequest )>final byte fromInstance = in.get();
+      <facet.arguments.field:{field|<byteBufferGet( field )>}; separator="\n">< 
       elseif( facet.field )><facet.field:{field|<
          byteBufferGet( field )>}><
       endif><
@@ -327,10 +339,11 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
       _out.clear();
       _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
       _out.put( EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> );
+      _out.put( fromInstance );
       <facet.name>.put( _out );
       _out.flip();
       _channel.send( _out, from );
-      System.err.printf( "<ifaceName>.<facet.name>|response sent to %s\n", from );
+      System.err.printf( "<ifaceName>.<facet.name>|response sent to instance %d @%s\n", fromInstance, from );
       < else
 >      _component.<facet.name>(<args( facet.field )>);
       < endif>
@@ -340,7 +353,7 @@ private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < e
       return false;
    }
 }
-//dispatcherImplOneInterface -- end
+// dispatcherImplOneInterface -- end
 >>
 
 
@@ -429,11 +442,11 @@ private boolean dispatch( <iface.name>Data event, ByteBuffer in ) throws IOExcep
 
 
 dispatcherImplementation(
-   package, component, offers, requires, events, eventIDs, ifacesIDs,
-   usedTypes, rawSize, respRawSize, offRequests, reqRequests, data, types
+   package, component, offers, requires, events, eventIDs, ifacesIDs, rawSize, respRawSize, offRequests, reqRequests, data, types
 ) ::= <<
 package <package>;
-//dispatcherImplementation
+// dispatcherImplementation
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -441,7 +454,7 @@ import java.nio.channels.DatagramChannel;
 
 import io.ByteBufferHelper;
 
-public class <component.name>Dispatcher implements da.IDispatcher {
+public class <component.name>Dispatcher {
 
    < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
 < endif>
@@ -514,20 +527,22 @@ public class <component.name>Dispatcher implements da.IDispatcher {
    }
 
 < if( component.timeout )>   void loopback( LoopbackEvent event ) throws IOException {
-      final ByteBuffer out = ByteBuffer.allocate( 2 );
+      final ByteBuffer out = ByteBuffer.allocate( 3 );
       out.put( INTRFC_LOOPBACK );
       out.put((byte)event._value );
+      out.put( _component._instanceID );
       out.flip();
       _channel.send( out, _channel.getLocalAddress());
    }
 
-< endif>   @Override
-   public void beforeDispatch() throws IOException {
+< endif>   public void beforeDispatch() throws IOException {
       _component.beforeDispatch();
    }
    
-   @Override
-   public boolean hasDispatched( byte intrfc, byte event, SocketAddress from, ByteBuffer in ) throws IOException {
+   public boolean hasDispatched( byte intrfc, byte event, byte instance, SocketAddress from, ByteBuffer in ) throws IOException {
+      if( instance != _component._instanceID ) {
+         return false;
+      }
       switch( intrfc ) {
 < if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
 < endif><offers.keys:{ifaceName|
@@ -541,7 +556,6 @@ public class <component.name>Dispatcher implements da.IDispatcher {
       return false;
    }
 
-   @Override
    public void afterDispatch( boolean dispatched ) throws IOException {
       _component.afterDispatch( dispatched );
    }
@@ -550,9 +564,9 @@ public class <component.name>Dispatcher implements da.IDispatcher {
 
 
 
-componentImplementation( package, component, requires, actions, offData, reqData, responses, imports ) ::= <<
+componentImplementation( package, component, ifaces, requires, actions, offData, reqData, responses, imports, types ) ::= <<
 package <package>;
-//componentImplementation
+// componentImplementation
 
 import java.io.IOException;
 < if( component.timeout )>
@@ -562,27 +576,25 @@ import util.Timeout;
 < endif>
 <imports:{type|import <type>;
 }>
-
-public abstract class <component.name>Component implements <
-component.offers:{o|I<o.interface.name>}><
-responses:{iface|< if(component.offers)>, < endif>I<iface.name>Responses}><
-reqData:{iface|, I<iface.name>Data}> {
+public abstract class <component.name>Component implements <ifaces:{iface|I<iface>}; separator=", "> {
 
 <component.timeout:{to|
    private static final Duration <to.name; format="ID">_DURATION = Duration.of<to.unit.toJava; format="cap">( <to.duration> );
 }>
+   protected final byte _instanceID;
 < if( component.timeout )>
    private <component.name>Dispatcher _dispatcher;
 
 < endif>
 <requires:{iface|
    protected I<iface.name> _<iface.name; format="argument">;
-}><offData:{iface|
-   protected <iface.name>Data _<iface.name; format="argument">Data;
+}><offData:{iface|<offData.(iface):{data|<data:{dataType|
+   protected final <types.(dataType.type)> _<dataType.name; format="argument"> = new <types.(dataType.type)>(); // offered data
+}>}>   protected <iface.name>Data _<iface.name; format="argument">Data; // data publisher
 }><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
 < endif><reqData:{iface|<reqData.(iface):{data|
-   protected <data.name; format="cap"> _<data.name; format="argument">;
+   protected final <data.name; format="cap"> _<data.name; format="argument"> = new <data.name; format="cap">(); // required data
 }>}><component.timeout:{to|
    protected final Timeout _<to.name> = new Timeout( <to.name; format="ID">_DURATION, () -> loopback( <
       component.name>Dispatcher.LoopbackEvent.<to.name; format="ID"> ));
@@ -591,6 +603,10 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 }>
    <actions:{action|protected abstract void <action>();
 }>
+   public <component.name>Component( byte instanceID ) {
+      _instanceID = instanceID;
+   }
+
    public void init() {}
 
 < if( component.timeout )>
@@ -619,10 +635,6 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
    \}
 }><reqData:{iface|<reqData.(iface):{data|
 
-   public void connect( <data.name; format="cap"> <data.name; format="argument"> ) {
-      _<data.name; format="argument"> = <data.name; format="argument">;
-   \}
-
    public <data.name; format="cap"> get<data.name; format="cap">() {
       return _<data.name; format="argument">;
    \}}>}>
@@ -645,42 +657,47 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 
 dataWriter( package, interface, ifaceID, data, dataID, rawSize, types ) ::= <<
 package <package>;
-
 // dataWriter
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+
+import da.Targets;
 
 public class <interface.name>Data {
 
    private static final byte <interface.name; format="ID"> = <ifaceID>;
-
 <data:{dataType|
    private static final byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
-
-   public final <types.(dataType.type)> _<dataType.name> = new <types.(dataType.type)>();
 }>
    private final DatagramChannel _channel;
-   private final SocketAddress   _target;
+   private final byte            _from;
+   private final Targets[]       _targets;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
 
-   public UniteDeTraitementData( DatagramChannel channel, SocketAddress target ) {
+   public <interface.name>Data( DatagramChannel channel, byte from, Targets ... targets ) {
       _channel = channel;
-      _target  = target;
+      _from    = from;
+      _targets = targets;
    }
 
 <data:{dataType|
-   public void publish<dataType.name; format="cap">() throws IOException {
-      _out.clear();
-      _out.put( <interface.name; format="ID"> );
-      _out.put( <dataType.name; format="ID"> );
-      _<dataType.name; format="argument">.put( _out );
-      _out.flip();
-      final int size = _out.remaining();
-      _channel.send( _out, _target );
-      System.err.printf( "%s.publish<dataType.name; format="cap">|%d byte(s) sent to %s\n", getClass().getName(), size, _target );
+   public void publish<dataType.name; format="cap">( <types.(dataType.type)> data ) throws IOException {
+      for( final Targets targets : _targets ) {
+         for( final byte to : targets._instances ) {
+            _out.clear();
+            _out.put( <interface.name; format="ID"> );
+            _out.put( <dataType.name; format="ID"> );
+            _out.put( to );
+            data.put( _out );
+            _out.flip();
+            final int size = _out.remaining();
+            _channel.send( _out, targets._process );
+            System.err.printf( "<interface.name>Data.publish|%d byte(s) sent from instance %d to instance %d @ %s\n",
+               size, _from, to, targets._process );
+         \}
+      \}
    \}
 }>}
 >>
@@ -689,7 +706,6 @@ public class <interface.name>Data {
 
 dataReader( package, interface, data  ) ::= <<
 package <package>;
-
 // dataReader
 
 import java.io.IOException;
@@ -705,6 +721,7 @@ public interface I<interface.name>Data {
 
 automaton( package, component, stateFullName, stateShortName, eventFullName, eventShortName ) ::= <<
 package <package>;
+// automaton
 
 import <stateFullName>;
 import <eventFullName>;
@@ -732,9 +749,59 @@ public class Automaton extends util.Automaton\<<stateShortName>, <eventShortName
 
 
 
-componentFactory( package, process, instancesCount, processes, offData, reqData, instancesByName, dataConsumer, modules, types ) ::= <<
+targetList( to ) ::= <<
+>>
+
+
+
+componentFactoryProxiesInit() ::= <<
+//-- proxies init --
+<deployment.process:{process|
+final InetSocketAddress <process.name; format="argument"> = new InetSocketAddress( "<process.address>", <process.port> );
+}><proxies:{proxy|
+final <proxy.module>.<proxy.interface> <proxy.interface; format="argument">For<proxy.from; format="cap"> =
+   new <proxy.module>.<proxy.interface>( _channel, <proxy.from; format="ID">, <
+proxy.to:{p|new Targets( <p; format="argument">, <
+proxy.to.(p):{to|<to; format="ID">}; separator=", "> )}; separator=", "> );
+}>
+>>
+
+
+
+componentFactoryDispatchersInit() ::= <<
+//-- dispatchers init --
+<process.instance:{instance|
+_<instance.name; format="argument">Dispatcher = new <
+ modules.(instance.component)>.<instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> );
+}>
+>>
+
+
+
+componentFactoryInstancesConnect() ::= <<
+//-- instances connect --
+<process.instance:{instance|
+<instance.requires:{pair|_<instance.name; format="argument">.connect( <
+    pair.interface.name; format="argument">For<instance.name; format="cap"> );
+}>}>
+>>
+
+
+
+componentFactoryDataPublishers() ::= <<
+//-- data publishers --
+<dataPublishers:{proxy|_<proxy.from>.connect( <proxy.interface; format="argument">For<proxy.from; format="cap"> );};
+ separator="\n">
+>>
+
+
+
+componentFactory(
+   package, deployment, process, processes, proxies, dataPublishers, consumedData, types, modules, ids
+) ::= <<
 package <package>;
-// ComponentFactory
+// componentFactory
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -742,50 +809,41 @@ import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.HashSet;
-import java.util.Set;
+
+import da.Targets;
 
 public final class ComponentFactory extends Thread {
 
-   private final da.IDispatcher[] _dispatchers = new da.IDispatcher[<instancesCount>];
-   private final DatagramChannel  _channel;
+   //-- instances ID --
+   <ids:{instance|private static final byte <instance; format="ID"> = <ids.(instance)>;}; separator="\n">
 
+   private final DatagramChannel  _channel;
+   //-- instances init --
 <process.instance:{instance|
    private final <modules.(instance.component)>.<instance.component.name> _<instance.name; format="argument"
-      > = new <modules.(instance.component)>.<instance.component.name>();
+      > = new <modules.(instance.component)>.<instance.component.name>( <instance.name; format="ID"> );
+}>
+   //-- dispatchers --
+<process.instance:{instance|
+   private final <modules.(instance.component)>.<instance.component.name>Dispatcher _<instance.name>Dispatcher;
 }>
    public ComponentFactory() throws IOException {
       _channel = DatagramChannel
          .open     ( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
          .bind     ( new InetSocketAddress( "<process.address>", <process.port> ));
-<process.instance:{instance|
-      connect<instance.name; format="cap">();
-}><process.instance:{instance|
-      _<instance.name; format="argument">.init();
-}>      setName( getClass().getName());
+
+      <componentFactoryProxiesInit()>
+      <componentFactoryDispatchersInit()>
+      <componentFactoryInstancesConnect()>
+      <componentFactoryDataPublishers()>
+
+      setName( getClass().getName());
       setDaemon( true );
       start();
    }
 
 <process.instance:{instance|
-   private void connect<instance.name; format="cap">() {
-<reqData:{iface|<reqData.(iface):{data|
-      final <types.(data.type)> <data.name; format="argument"> = new <types.(data.type)>();
-      _<instance.name; format="argument">.connect( <data.name; format="argument"> );
-}>}><offData:{iface|
-<dataConsumer.(iface).(instance.name):{process|
-      _<instance.name; format="argument">.connect( new <modules.(instance.component)>.<
-         iface.name>Data( _channel, new InetSocketAddress( "<process.address>", <process.port> )));
-}>}><
-process.instance:{instance|<instance.requires:{requires|
-      _<instance.name; format="argument">.connect( new <
-         modules.(instance.component)>.<requires.interface.name>( _channel, new InetSocketAddress( "<
-         processes.(instancesByName.(requires.toInstance)).address>", <processes.(instancesByName.(requires.toInstance)).port> )));
-}>}>      _dispatchers[<i0>] = new <
-             modules.(instance.component)>.<instance.component.name>Dispatcher( _channel, _<instance.name; format="argument"> );
-   \}
-
    public <modules.(instance.component)>.<instance.component.name> get<instance.name; format="cap">() {
       return _<instance.name; format="argument">;
    \}
@@ -798,20 +856,22 @@ process.instance:{instance|<instance.requires:{requires|
             in.clear();
             final SocketAddress from = _channel.receive( in );
             in.flip();
-            final byte intrfc = in.get();
-            final byte event  = in.get();
-            for( final da.IDispatcher dispatcher : _dispatchers ) {
-               dispatcher.beforeDispatch();
+            if( in.remaining() >= 3 ) {
+               final byte intrfc   = in.get();
+               final byte event    = in.get();
+               final byte instance = in.get();
+               System.err.printf( "%s.run|intrfc = %d, event = %d, instance = %d\n", getClass().getName(), intrfc, event, instance );
+               <process.instance:{instance|_<instance.name; format="argument">Dispatcher.beforeDispatch();}; separator="\n">
+               while( true ) {
+<process.instance:{instance|
+                  if( _<instance.name; format="argument">Dispatcher.hasDispatched( intrfc, event, instance, from, in )) {
+                     _<instance.name; format="argument">Dispatcher.afterDispatch( true );
+                     break;
+                  \}
+}>               }
             }
-            boolean dispatched = false;
-            for( final da.IDispatcher dispatcher : _dispatchers ) {
-               if( dispatcher.hasDispatched( intrfc, event, from, in )) {
-                  dispatched = true;
-                  break;
-               }
-            }
-            for( final da.IDispatcher dispatcher : _dispatchers ) {
-               dispatcher.afterDispatch( dispatched );
+            else {
+               System.err.printf( "%s.run|expected at least 3 bytes, %d received\n", getClass().getName(), in.remaining());
             }
          }
          catch( final IOException e ) {

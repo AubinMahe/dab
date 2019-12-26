@@ -112,13 +112,11 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
 
 ## Reste à faire
 
+1. Les diffusions de 1 vers plusieurs sont gérées en C et en Java, la génération C++ est en cours...
+
 1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
  
-1. Certaines interactions n'ont pas été prévues :
-    * données partagées avec plusieurs écrivains, plusieurs lecteurs
-    * événements consommés par plusieurs composants
-
-1. Wizard : même si le code manuel est simple à coder, un wizard Eclipse de génération de classes **et de makefile** serait bienvenu. A faire en Java pour Java, C et C++.
+1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de classes **et de makefile** serait bienvenu. A faire en Java pour Java, C et C++.
 
 1. Automate : associer une action au franchissement d'une transition.
 

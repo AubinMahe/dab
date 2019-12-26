@@ -1,6 +1,8 @@
 package disapp.generator;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -95,7 +97,6 @@ public class JavaGenerator extends BaseGenerator {
          _model.getImports( usedTypes, imports );
          final ST tmpl = _group.getInstanceOf( "/requiredImplementation" );
          tmpl.add( "package"  , _moduleName );
-         tmpl.add( "usedTypes", usedTypes );
          tmpl.add( "ifaceName", ifaceName );
          tmpl.add( "rawSize"  , rawSize );
          tmpl.add( "iface"    , iface );
@@ -110,13 +111,11 @@ public class JavaGenerator extends BaseGenerator {
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
          final InterfaceType       iface     = (InterfaceType)offered.getInterface();
          final String              ifaceName = iface.getName();
-         final SortedSet<String>   usedTypes = _model.getUsedTypesBy( ifaceName );
          final List<Object>        facets    = _model.getFacets().get( ifaceName );
          final Map<String, String> types     = _model.getTypes( Model.JAVA_LANGUAGE );
          final ST                  tmpl      = _group.getInstanceOf( "/offeredInterface" );
          tmpl.add( "package"  , _moduleName );
          tmpl.add( "ifaceName", ifaceName );
-         tmpl.add( "usedTypes", usedTypes );
          tmpl.add( "facets"   , facets );
          tmpl.add( "types"    , types );
          write( 'I' + ifaceName + ".java", tmpl );
@@ -131,7 +130,6 @@ public class JavaGenerator extends BaseGenerator {
       final Map<String, List<Object>>          offEvents   = _model.getOfferedFacets( component );
       final Map<String, List<Object>>          reqEvents   = _model.getRequiredFacets( component );
       final Map<String, Byte>                  ifacesIDs   = _model.getInterfacesID();
-      final SortedSet<String>                  usedTypes   = _model.getUsedTypesBy( offers );
       final Map<String, List<RequestType>>     offRequests = Model.getRequestMap( offEvents );
       final Map<String, List<RequestType>>     reqRequests = Model.getRequestMap( reqEvents );
       final int                                respRawSize = _model.getBufferResponseCapacity( offEvents );
@@ -146,7 +144,6 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "events"       , offEvents );
       tmpl.add( "eventIDs"     , eventIDs );
       tmpl.add( "ifacesIDs"    , ifacesIDs );
-      tmpl.add( "usedTypes"    , usedTypes );
       tmpl.add( "rawSize"      , rawSize );
       tmpl.add( "respRawSize"  , respRawSize );
       tmpl.add( "offRequests"  , offRequests );
@@ -164,17 +161,32 @@ public class JavaGenerator extends BaseGenerator {
       final Map<InterfaceType, List<DataType>>    reqData   = _model.getRequiredDataOf  ( component );
       final Map<InterfaceType, List<RequestType>> responses = Model.getResponses( component );
       final SortedSet<String>                     imports   = new TreeSet<>();
+      final Set<String>                           ifaces    = new LinkedHashSet<>();
+      final Map<String, String>                   types     = _model.getTypes( Model.JAVA_LANGUAGE );
+      for( final OfferedInterfaceUsageType oiut : component.getOffers()) {
+         ifaces.add(((InterfaceType)oiut.getInterface()).getName());
+      }
+      for( final InterfaceType response : responses.keySet()) {
+         ifaces.add( response.getName() + "Responses" );
+      }
+      if( reqData != null ) {
+         for( final InterfaceType response : reqData.keySet()) {
+            ifaces.add( response.getName() + "Data" );
+         }
+      }
       _model.getImports( offData, imports );
       _model.getImports( reqData, imports );
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
       tmpl.add( "package"  , _moduleName );
       tmpl.add( "component", component );
+      tmpl.add( "ifaces"   , ifaces );
       tmpl.add( "requires" , requires );
       tmpl.add( "actions"  , actions );
       tmpl.add( "offData"  , offData );
       tmpl.add( "reqData"  , reqData );
       tmpl.add( "responses", responses );
       tmpl.add( "imports"  , imports );
+      tmpl.add( "types"    , types );
       write( component.getName() + "Component.java", tmpl );
    }
 
@@ -258,35 +270,27 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    void factory( String deployment, ProcessType process ) throws IOException {
-      final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
-      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance( deployment );
-      final Map<String, String>            types           = _model.getTypes( Model.JAVA_LANGUAGE );
-      final Map<ComponentType, String>     modules         = _model.getModules( Model.JAVA_LANGUAGE );
-      for( final InstanceType instance : process.getInstance()) {
-         final ComponentType component = (ComponentType)instance.getComponent();
-         for( final ComponentImplType implementation : component.getImplementation()) {
-            if( implementation.getLanguage().equals( Model.JAVA_LANGUAGE )) {
-               _moduleName = deployment + '.' + process.getName();
-               _genDir     = deployment + '-' + process.getName() + "-java/src-gen";
-               final Map<InterfaceType,
-                  Map<String, Set<ProcessType>>>        dataConsumer = _model.getDataConsumer( deployment, component );
-               final Map<InterfaceType, List<DataType>> offData      = _model.getOfferedDataOf ( component );
-               final Map<InterfaceType, List<DataType>> reqData      = _model.getRequiredDataOf( component );
-               final ST tmpl = _group.getInstanceOf( "/componentFactory" );
-               tmpl.add( "package"        , _moduleName );
-               tmpl.add( "process"        , process );
-               tmpl.add( "instancesCount" , process.getInstance().size());
-               tmpl.add( "processes"      , processes );
-               tmpl.add( "offData"        , offData );
-               tmpl.add( "reqData"        , reqData );
-               tmpl.add( "instancesByName", instancesByName );
-               tmpl.add( "dataConsumer"   , dataConsumer );
-               tmpl.add( "modules"        , modules );
-               tmpl.add( "types"          , types );
-               write( "ComponentFactory.java", tmpl );
-               return;
-            }
-         }
-      }
+      _moduleName = deployment + '.' + process.getName();
+      _genDir     = deployment + '-' + process.getName() + "-java/src-gen";
+      final Map<InstanceType, ProcessType>   processes      = _model.getProcessByInstance( deployment );
+      final Map<String, String>              types          = _model.getTypes( Model.JAVA_LANGUAGE );
+      final Map<ComponentType, String>       modules        = _model.getModules( Model.JAVA_LANGUAGE );
+      final Map<String, Byte>                ids            = _model.getIDs( deployment );
+      final Set<Proxy>                       proxies        = new LinkedHashSet<>();
+      final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
+      _model.getFactoryConnections( Model.JAVA_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+      final ST tmpl = _group.getInstanceOf( "/componentFactory" );
+      tmpl.add( "package"       , _moduleName );
+      tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+      tmpl.add( "process"       , process );
+      tmpl.add( "processes"     , processes );
+      tmpl.add( "proxies"       , proxies );
+      tmpl.add( "dataPublishers", dataPublishers );
+      tmpl.add( "consumedData"  , consumedData );
+      tmpl.add( "types"         , types );
+      tmpl.add( "modules"       , modules );
+      tmpl.add( "ids"           , ids );
+      write( "ComponentFactory.java", tmpl );
    }
 }

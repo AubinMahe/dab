@@ -1,29 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Controleur" default="jar">
-
-   <property name="jutil"    location="../dab-lib/util.jar" />
-   <property name="dabtypes" location="../dab-lib/hpms.dabtypes.jar" />
-   <property name="jar"      location="../dab-lib/${ant.project.name}.jar" />
-
-   <target name="clean">
-      <delete dir="build" />
-      <delete dir="build-tests" />
-      <delete file="${jar}" />
-   </target>
-
-   <target name="javac">
-      <mkdir dir="build" />
-      <javac
-         destdir          ="build"
-         includeantruntime="false"
-         classpath="${jutil}:${dabtypes}">
-         <src path="src" />
-         <src path="src-gen" />
-      </javac>
-   </target>
-
-   <target name="jar" depends="javac">
-      <jar destfile="${jar}" basedir="build" />
-   </target>
-
+<project name="Controleur" default="jar-component">
+   <import file="../ant-common.xml" />
 </project>

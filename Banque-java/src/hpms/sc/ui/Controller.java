@@ -13,6 +13,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -32,6 +33,8 @@ import javafx.util.converter.IntegerStringConverter;
  */
 public class Controller implements IRepository, IController<Banque> {
 
+   private Banque _component;
+   @FXML private CheckBox          _maintenance;
    @FXML private TableView<Carte>  _cartes;
    @FXML private TableView<Compte> _comptes;
 
@@ -118,6 +121,11 @@ public class Controller implements IRepository, IController<Banque> {
       _cartes.getItems().get(4).setExpirationYear ((short) 2022 );
    }
 
+   @FXML
+   private void maintenance() throws IOException {
+      _component.getMaintenable().maintenance( _maintenance.isSelected());
+   }
+
    public void done( Stage stage ) {
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       prefs.putDouble( "x", stage.getX());
@@ -126,6 +134,7 @@ public class Controller implements IRepository, IController<Banque> {
 
    @Override
    public void init( Stage stage, String name, Banque component ) throws BackingStoreException, IOException {
+      _component = component;
       final Preferences prefs = Preferences.userNodeForPackage( getClass());
       if( prefs.nodeExists( "" )) {
          stage.setX( prefs.getDouble( "x", -4.0 ));

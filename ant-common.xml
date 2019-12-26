@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="common">
+   <description>
+
+      Ce fichier est conçu pour être importé par la directive "import" de Apache-Ant
+      depuis un build.xml situé dans un sous répertoire du dossier racine,
+      c'est pourquoi les chemins sont relatifs à celui-ci.
+
+   </description>
+
+   <property name="jfx-path" value="/usr/lib/jvm/openjfx-sdk-13/lib" />
+   <path id="jfx">
+      <fileset dir="${jfx-path}" includes="*.jar" />
+   </path>
+
+   <property name="jutil"           location="../dab-lib/util.jar" />
+   <property name="dabtypes"        location="../dab-lib/hpms.dabtypes.jar" />
+   <property name="Banque"          location="../dab-lib/Banque.jar" />
+   <property name="Controleur"      location="../dab-lib/Controleur.jar" />
+   <property name="Distributeur"    location="../dab-lib/Distributeur.jar" />
+   <property name="component-jar"   location="../dab-lib/${ant.project.name}.jar" />
+   <property name="application-jar" location="../dab-bin/${ant.project.name}.jar" />
+
+   <target name="clean">
+      <delete dir="build" />
+      <delete dir="build-tests" />
+      <delete file="${component-jar}" />
+      <delete file="${application-jar}" />
+   </target>
+
+   <target name="javac-component">
+      <mkdir dir="build" />
+      <javac
+         destdir          ="build"
+         includeantruntime="false">
+         <classpath location="${jutil}" />
+         <classpath location="${dabtypes}" />
+         <classpath refid="jfx" />
+         <src path="src" />
+         <src path="src-gen" />
+      </javac>
+   </target>
+
+   <target name="jar-component" depends="javac-component">
+      <copy todir="build">
+         <fileset
+            dir     ="src"
+            includes="**/*.fxml,**/*.png,**/*.css,**/*.properties" />
+      </copy>
+      <jar destfile="${component-jar}" basedir="build" />
+   </target>
+
+   <target name="javac-application">
+      <mkdir dir="build" />
+      <javac
+         destdir          ="build"
+         includeantruntime="false"
+         classpath="${jutil}:${dabtypes}:${Banque}:${Controleur}:${Distributeur}">
+         <classpath refid="jfx" />
+         <src path="src" />
+         <src path="src-gen" />
+      </javac>
+   </target>
+
+   <macrodef name="jar-application">
+      <attribute name="main-class" />
+      <attribute name="components" />
+      <sequential>
+         <jar destfile="${application-jar}" basedir="build">
+            <manifest>
+               <attribute name="Main-Class" value="@{main-class}" />
+               <attribute name="Class-Path"
+                  value="../dab-lib/util.jar ../dab-lib/hpms.dabtypes.jar @{components}" />
+               <attribute name="Implementation-Title"   value="${ant.project.name}" />
+               <attribute name="Implementation-Version" value="1.0.0" />
+               <attribute name="Implementation-Vendor"  value="HPMS" />
+            </manifest>
+         </jar>
+      </sequential>
+   </macrodef>
+
+</project>

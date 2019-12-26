@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="isolated-sc" default="jar-application">
+<project name="allin-one" default="jar-application">
    <import file="../ant-common.xml" />
    <target name="jar-application" depends="javac-application">
       <jar-application
-         main-class="hpms.sc.ui.Main"
-         components="${Banque}" />
+         main-class="hpms.udt.Main"
+         components="${Banque} ${Distributeur} ${Controleur}" />
    </target>
 </project>

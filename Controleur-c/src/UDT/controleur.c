@@ -91,8 +91,6 @@ util_error UDT_controleur_maintenance( UDT_controleur * This, bool maintenance )
 
 util_error UDT_controleur_recharger_la_caisse( UDT_controleur * This, double montant ) {
    UTIL_LOG_ARGS( "montant = %7.2f", montant );
-   UTIL_CHECK_NON_NULL( This );
-   UTIL_CHECK_NON_NULL( This->unite_de_traitement );
    This->etat_du_dab.solde_caisse += montant;
    if( This->etat_du_dab.solde_caisse < UDT_RETRAIT_MAX ) {
       UTIL_ERROR_CHECK( util_automaton_process( &This->automaton, DBT_EVENEMENT_SOLDE_CAISSE_INSUFFISANT ));
@@ -236,12 +234,12 @@ util_error UDT_controleur_before_dispatch( UDT_controleur * This ) {
 }
 
 util_error UDT_controleur_after_dispatch( UDT_controleur * This, bool hasDispatched ) {
-   UTIL_CHECK_NON_NULL( This->unite_de_traitement );
+   UTIL_CHECK_NON_NULL( This->unite_de_traitement_data );
    UTIL_LOG_ARGS( "state = %s, solde caisse : %7.2f",
       DBT_etat_to_string((DBT_etat)This->automaton.current ), This->etat_du_dab.solde_caisse );
    This->etat_du_dab.etat = (DBT_etat)This->automaton.current;
    if( hasDispatched ) {
-      UTIL_ERROR_CHECK( UDT_unite_de_traitement_data_publish_etat_du_dab( This->unite_de_traitement, &This->etat_du_dab ));
+      UTIL_ERROR_CHECK( UDT_unite_de_traitement_data_publish_etat_du_dab( This->unite_de_traitement_data, &This->etat_du_dab ));
    }
    return UTIL_NO_ERROR;
 }

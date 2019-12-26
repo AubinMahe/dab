@@ -15,8 +15,8 @@ util_error DAB_distributeur_create_ui( DAB_distributeur * This ) {
    while( c != 'Q' && This->dispatcher->running ) {
       printf( IO_ED IO_HOME );
       printf( "+-------------------------------------------\n\r\r" );
-      printf( "| Etat du controlleur : %s\n\r\r", DBT_etat_to_string( This->etat_du_dab->etat ));
-      printf( "| Solde caisse        : %7.2f\n\r\r", This->etat_du_dab->solde_caisse );
+      printf( "| Etat du controlleur : %s\n\r\r", DBT_etat_to_string( This->etat_du_dab.etat ));
+      printf( "| Solde caisse        : %7.2f\n\r\r", This->etat_du_dab.solde_caisse );
       bl->refresh = false;
       printf( "+-------------------------------------------\n\r\r" );
       printf( "|\n\r\r" );
@@ -68,13 +68,10 @@ util_error DAB_distributeur_create_ui( DAB_distributeur * This ) {
          case 'E': UTIL_ERROR_CHECK( DAB_unite_de_traitement_carte_retiree      ( This->unite_de_traitement         )); break;
          case 'F': UTIL_ERROR_CHECK( DAB_unite_de_traitement_billets_retires    ( This->unite_de_traitement         )); break;
          case 'G': UTIL_ERROR_CHECK( DAB_unite_de_traitement_annulation_demandee_par_le_client( This->unite_de_traitement )); break;
+         case 'Q': UTIL_ERROR_CHECK( DAB_unite_de_traitement_arret              ( This->unite_de_traitement         ));
+                   UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate      ( This->dispatcher ));                  break;
          }
       }
    }
-   if( c == 'Q' ) {
-      UTIL_ERROR_CHECK( DAB_distributeur_dispatcher_terminate( This->dispatcher ));
-   }
-   UTIL_LOG_MSG( "sending 'arret' to unite_de_traitement" );
-   DAB_unite_de_traitement_arret( This->unite_de_traitement );
    return UTIL_NO_ERROR;
 }

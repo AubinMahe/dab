@@ -166,6 +166,16 @@
       <antcall target="generate-allinone" />
    </target>
 
+   <target name="build-c">
+      <build language="c" />
+   </target>
+   <target name="build-cpp">
+      <build language="cpp" />
+   </target>
+   <target name="build-java">
+      <build language="java" />
+   </target>
+
    <target name="all" description="Produit tout en parallèle">
       <antcall target="generate-all" />
       <echo>
@@ -177,11 +187,11 @@
          <fileset dir="." includes="**/compile.log" />
       </delete>
       <parallel>
-         <build language="c" />
+         <antcall target="build-c" />
 <!--
          <build language="cpp" />
-         <build language="java" />
 -->
+         <antcall target="build-java" />
       </parallel>
       <echo>
 

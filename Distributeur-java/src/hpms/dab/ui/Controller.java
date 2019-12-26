@@ -146,7 +146,7 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
    }
 
    @Override
-   public void shutdown( ) {
+   public void arret( ) {
       ((Stage)_status.getScene().getWindow()).close();
    }
 
@@ -155,7 +155,7 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
          final Preferences prefs = Preferences.userNodeForPackage( getClass());
          prefs.putDouble( instanceName + "-x", stage.getX());
          prefs.putDouble( instanceName + "-y", stage.getY());
-         _component.getUniteDeTraitement().shutdown();
+         _component.getUniteDeTraitement().arret();
       }
       catch( final IOException e ){
          e.printStackTrace();
@@ -219,7 +219,7 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
 
    @FXML
    private void maintenance() throws IOException {
-      _component.getUniteDeTraitement().maintenance( _maintenance.isSelected());
+      _component.getMaintenable().maintenance( _maintenance.isSelected());
    }
 
    @FXML

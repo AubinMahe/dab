@@ -1,19 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="util" default="jar">
-
-   <property name="jar"      value="../dab-lib/${ant.project.name}.jar" />
-   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" />
-
-   <path id="jfx">
-      <fileset dir="${jfx-path}" includes="*.jar" />
-   </path>
-
-   <target name="clean">
-      <delete dir="build" />
-      <delete file="${jar}" />
-   </target>
-
-   <target name="javac">
+<project name="util" default="jar-component">
+   <import file="../ant-common.xml" />
+   <target name="javac-component">
       <mkdir dir="build" />
       <javac
          destdir          ="build"
@@ -22,9 +10,4 @@
          <classpath refid="jfx" />
       </javac>
    </target>
-
-   <target name="jar" depends="javac">
-      <jar destfile="${jar}" basedir="build" />
-   </target>
-
 </project>

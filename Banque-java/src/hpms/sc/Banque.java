@@ -6,6 +6,10 @@ public final class Banque extends BanqueComponent {
 
    private IRepository _repository;
 
+   public Banque( byte instanceID ) {
+      super( instanceID );
+   }
+
    public void setRepository ( IRepository repository ) {
       _repository = repository;
    }
@@ -51,7 +55,7 @@ public final class Banque extends BanqueComponent {
    }
 
    @Override
-   public void shutdown() {
+   public void arret() {
       _repository.close();
    }
 }

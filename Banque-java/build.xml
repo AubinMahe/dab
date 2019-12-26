@@ -1,40 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Banque" default="jar">
-
-   <property name="jfx-path" location="/usr/lib/jvm/openjfx-sdk-13/lib" />
-   <property name="jutil"    location="../dab-lib/util.jar" />
-   <property name="dabtypes" location="../dab-lib/hpms.dabtypes.jar" />
-   <property name="jar"      location="../dab-lib/${ant.project.name}.jar" />
-
-   <path id="jfx">
-      <fileset dir="${jfx-path}" includes="*.jar" />
-   </path>
-
-   <target name="clean">
-      <delete dir="build" />
-      <delete file="${jar}" />
-   </target>
-
-   <target name="javac">
-      <mkdir dir="build" />
-      <javac
-         destdir          ="build"
-         includeantruntime="false">
-         <classpath location="${jutil}" />
-         <classpath location="${dabtypes}" />
-         <classpath refid="jfx" />
-         <src path="src" />
-         <src path="src-gen" />
-      </javac>
-   </target>
-
-   <target name="jar" depends="javac">
-      <copy todir="build">
-         <fileset
-            dir     ="src"
-            includes="**/*.fxml,**/*.png,**/*.css,**/*.properties" />
-      </copy>
-      <jar destfile="${jar}" basedir="build" />
-   </target>
-
+<project name="Banque" default="jar-component">
+   <import file="../ant-common.xml" />
 </project>

@@ -1,35 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="isolated-udt1" default="jar">
-
-   <property name="jutil"      location="../dab-lib/util.jar" />
-   <property name="dabtypes"   location="../dab-lib/hpms.dabtypes.jar" />
-   <property name="Controleur" location="../dab-lib/Controleur.jar" />
-   <property name="jar"        location="../dab-bin/${ant.project.name}.jar" />
-
-   <target name="clean">
-      <delete dir="build" />
-      <delete dir="build-tests" />
-      <delete file="${jar}" />
-   </target>
-
-   <target name="javac">
-      <mkdir dir="build" />
-      <javac
-         destdir          ="build"
-         includeantruntime="false"
-         classpath="${jutil}:${dabtypes}:${Controleur}">
-         <src path="src" />
-         <src path="src-gen" />
-      </javac>
-   </target>
-
-   <target name="jar" depends="javac">
-      <jar destfile="${jar}" basedir="build">
-         <manifest>
-            <attribute name="Main-Class" value="hpms.udt.Main" />
-            <attribute name="Class-Path" value="../dab-lib/util.jar ../dab-lib/hpms.dabtypes.jar ../dab-lib/Controleur.jar" />
-         </manifest>
-      </jar>
+<project name="isolated-udt1" default="jar-application">
+   <import file="../ant-common.xml" />
+   <target name="jar-application" depends="javac-application">
+      <jar-application
+         main-class="hpms.udt.Main"
+         components="${Controleur}" />
    </target>
 
    <path id="junit.platform.libs.classpath">
@@ -40,7 +15,7 @@
        <fileset dir="../lib/jupiter/" includes="*.jar" />
    </path>
 
-   <target name="compile-test" description="" depends="javac">
+   <target name="compile-test" description="" depends="javac-application">
       <mkdir dir="build-tests" />
       <javac
          srcdir           ="test"
@@ -52,7 +27,7 @@
        </javac>
    </target>
    
-   <target name="tests" description="">
+   <target name="tests" description="Lance les tests JUnit">
       <taskdef
          name     ="junitlauncher"
          classname="org.apache.tools.ant.taskdefs.optional.junitlauncher.JUnitLauncherTask">

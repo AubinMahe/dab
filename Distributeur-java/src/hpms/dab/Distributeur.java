@@ -9,6 +9,10 @@ public class Distributeur extends hpms.dab.DistributeurComponent {
 
    private Controller _controller;
 
+   public Distributeur( byte instanceID ) {
+      super( instanceID );
+   }
+
    public void setController( Controller controller ) {
       _controller = controller;
    }
@@ -34,8 +38,8 @@ public class Distributeur extends hpms.dab.DistributeurComponent {
    }
 
    @Override
-   public void shutdown() throws IOException {
-      Platform.runLater( _controller::shutdown );
+   public void arret() throws IOException {
+      Platform.runLater( _controller::arret );
    }
 
    @Override

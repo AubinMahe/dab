@@ -14,12 +14,12 @@ include ../common.mk
 
 ../dab-bin/allin-one-c: $(OBJS)
 	@mkdir -p ../dab-bin
-	g++                  -o $@ $(OBJS)    -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c -lpthread
+	gcc                  -o $@ $(OBJS)    -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c -lpthread
 
 ../dab-bin/allin-one-c-win32: $(OBJSW32)
 	@mkdir -p ../dab-bin
-	i686-w64-mingw32-g++ -o $@ $(OBJSW32) -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c -lws2_32
+	i686-w64-mingw32-gcc -o $@ $(OBJSW32) -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c -lws2_32
 
 ../dab-bin/allin-one-c-o64: $(OBJSO64)
 	@mkdir -p ../dab-bin
-	o64-clang++          -o $@ $(OBJSO64) -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c
+	o64-clang            -o $@ $(OBJSO64) -L ../dab-lib -lBanque-c -lControleur-c -lDistributeur-c -ldabtypes-c -lutil-c
