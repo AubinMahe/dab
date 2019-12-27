@@ -112,7 +112,8 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
 
 ## Reste à faire
 
-1. Les diffusions de 1 vers plusieurs sont gérées en C et en Java, la génération C++ est en cours...
+1. Écrire des tests de non-régression pour les 3 langages et les 3 déploiements : ajouter une nouvelle implémentation du composant Distributeur qui exécute un script. La validation du comportement des composants Controleur et Banque sera effectuée par analyse des logs d'exécution.
+Le premier essai montre un défaut : le modèle permet de spécifier plusieurs implémentations par langage mais le générateur de factory n'utilise que la dernière déclarée. Un paramétrage de la génération de factory est nécessaire, afin de spécifier l'implémentation de chaque instance.
 
 1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
  

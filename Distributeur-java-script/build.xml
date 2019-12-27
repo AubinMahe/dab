@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Distributeur-script" default="jar-component">
+   <import file="../ant-common.xml" />
+</project>
