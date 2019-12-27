@@ -17,7 +17,7 @@ namespace hpms::sc {
       virtual void informations( const char * carteID, hpms::dabtypes::Information & response );
       virtual void incrNbEssais( const char * carteID );
       virtual void retrait( const char * carteID, const double & montant );
-      virtual void shutdown( void );
+      virtual void arret( void );
       virtual void afterDispatch( bool dispatched );
 
    public:

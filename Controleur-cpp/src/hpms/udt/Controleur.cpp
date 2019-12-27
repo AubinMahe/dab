@@ -23,8 +23,8 @@ void Controleur::maintenance( bool maintenance ) {
 
 void Controleur::rechargerLaCaisse( const double & montant ) {
    UTIL_LOG_ARGS( "montant = %7.2f €", montant );
-   getUniteDeTraitementData()._etatDuDab.soldeCaisse += montant;
-   if( getUniteDeTraitementData()._etatDuDab.soldeCaisse < 1000 ) {
+   _etatDuDab.soldeCaisse += montant;
+   if( _etatDuDab.soldeCaisse < 1000 ) {
       _automaton.process( hpms::dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
    }
 }
@@ -102,7 +102,7 @@ void Controleur::codeSaisi( const char * code ) {
 void Controleur::montantSaisi( const double & montant ) {
    UTIL_LOG_ARGS( "montant = %7.2f €", montant );
    _iHM->ejecterLaCarte();
-   if( montant > getUniteDeTraitementData()._etatDuDab.soldeCaisse ) {
+   if( montant > _etatDuDab.soldeCaisse ) {
       _automaton.process( hpms::dabtypes::Evenement::SOLDE_CAISSE_INSUFFISANT );
    }
    else if( montant > _compte.getSolde()) {
@@ -118,7 +118,7 @@ void Controleur::carteRetiree( void ) {
    UTIL_LOG_HERE();
    _siteCentral->retrait( _carte.getId(), _montantDeLatransactionEnCours );
    _iHM->ejecterLesBillets( _montantDeLatransactionEnCours );
-   getUniteDeTraitementData()._etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
+   _etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
    _montantDeLatransactionEnCours = 0.0;
    _automaton.process( hpms::dabtypes::Evenement::CARTE_RETIREE );
 }
@@ -135,10 +135,10 @@ void Controleur::annulationDemandeeParLeClient() {
    _automaton.process( hpms::dabtypes::Evenement::ANNULATION_CLIENT );
 }
 
-void Controleur::shutdown( void ) {
+void Controleur::arret( void ) {
    UTIL_LOG_HERE();
-   _iHM->shutdown();
-   _siteCentral->shutdown();
+   _iHM->arret();
+   _siteCentral->arret();
    _automaton.process( hpms::dabtypes::Evenement::TERMINATE );
    _dispatcher->terminate();
 }
@@ -148,9 +148,9 @@ void Controleur::shutdown( void ) {
  * L'état de l'automate à sans doute été mis à jour, il faut donc le publier.
  */
 void Controleur::afterDispatch( bool dispatched ) {
-   getUniteDeTraitementData()._etatDuDab.etat = _automaton.getCurrentState();
-   UTIL_LOG_ARGS( "etat = %s", hpms::dabtypes::toString( getUniteDeTraitementData()._etatDuDab.etat ));
-   getUniteDeTraitementData().publishEtatDuDab();
+   _etatDuDab.etat = _automaton.getCurrentState();
+   UTIL_LOG_ARGS( "etat = %s", hpms::dabtypes::toString( _etatDuDab.etat ));
+   _uniteDeTraitementData->publishEtatDuDab( _etatDuDab );
    (void)dispatched;
 }
 

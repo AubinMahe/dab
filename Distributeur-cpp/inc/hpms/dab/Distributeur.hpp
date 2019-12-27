@@ -25,7 +25,7 @@ namespace hpms::dab {
       virtual void ejecterLesBillets( const double & montant );
       virtual void confisquerLaCarte( void );
       virtual void placerLesBilletsDansLaCorbeille( void );
-      virtual void shutdown( void );
+      virtual void arret( void );
       virtual void etatDuDabPublished( void );
       virtual void afterDispatch( bool dispatched );
 

@@ -65,8 +65,8 @@ void DistributeurUI::run( void ) {
       if( console.kbhit() && _distributeur.isRunning()) {
          c = toupper( console.getch());
          switch( c ) {
-         case '0': _distributeur.getUniteDeTraitement().maintenance                  ( true   ); break;
-         case '1': _distributeur.getUniteDeTraitement().maintenance                  ( false  ); break;
+         case '0': _distributeur.getMaintenable      ().maintenance                  ( true   ); break;
+         case '1': _distributeur.getMaintenable      ().maintenance                  ( false  ); break;
          case '2': _distributeur.getUniteDeTraitement().rechargerLaCaisse            ( +10000 ); break;
          case '3': _distributeur.getUniteDeTraitement().rechargerLaCaisse            ( -10000 ); break;
          case '4': _distributeur.getUniteDeTraitement().anomalie                     ( true   ); break;
@@ -85,8 +85,8 @@ void DistributeurUI::run( void ) {
          }
       }
    }
-   UTIL_LOG_MSG( "sending shutdown to UniteDeTraitement" );
-   _distributeur.getUniteDeTraitement().shutdown();
+   UTIL_LOG_MSG( "sending arret to UniteDeTraitement" );
+   _distributeur.getUniteDeTraitement().arret();
    _distributeur.terminate();
    UTIL_LOG_DONE();
 }

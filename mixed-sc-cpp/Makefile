@@ -1,6 +1,6 @@
-C_SRCS    = src/main.cpp
-C_SRCSGEN = src-gen/mixed_sc/factory.cpp
-CINC      = -I ../Banque-cpp/inc -I ../Banque-cpp/src-gen
+CPP_SRCS    = src/main.cpp
+CPP_SRCSGEN = src-gen/mixed/sc/ComponentFactory.cpp
+CPPINC      = -I ../Banque-cpp/inc -I ../Banque-cpp/src-gen
 
 .PHONY: all
 all: ../dab-bin/mixed-sc-cpp ../dab-bin/mixed-sc-cpp-win32 ../dab-bin/mixed-sc-cpp-o64

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>dabtypes-cpp</name>
+	<name>mixed-dab2-cpp</name>
 	<comment></comment>
 	<projects>
+		<project>Controleur-cpp</project>
+		<project>dabtypes-cpp</project>
+		<project>Distributeur-cpp</project>
 		<project>util-cpp</project>
 	</projects>
 	<buildSpec>

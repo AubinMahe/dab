@@ -188,9 +188,7 @@
       </delete>
       <parallel>
          <antcall target="build-c" />
-<!--
-         <build language="cpp" />
--->
+         <antcall target="build-cpp" />
          <antcall target="build-java" />
       </parallel>
       <echo>

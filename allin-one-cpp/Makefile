@@ -1,9 +1,10 @@
-C_SRCS    = src/main.cpp
-C_SRCSGEN = src-gen/allin_one/factory.cpp
-CINC      =\
+CPP_SRCS    = src/main.cpp
+CPP_SRCSGEN = src-gen/allin/one/ComponentFactory.cpp
+CPPINC      =\
  -I ../Banque-cpp/inc\
  -I ../Banque-cpp/src-gen\
  -I ../Controleur-cpp/src-gen\
+ -I ../Controleur-cpp/inc\
  -I ../Distributeur-cpp/inc\
  -I ../Distributeur-cpp/src-gen
 

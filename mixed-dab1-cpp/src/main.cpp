@@ -1,4 +1,4 @@
-#include <isolated/ihm1/ComponentFactory.hpp>
+#include <mixed/dab1/ComponentFactory.hpp>
 
 #include <util/Log.hpp>
 
@@ -11,7 +11,7 @@ int main( void ) {
    try {
       fprintf( stderr, "\n" );
       UTIL_LOG_HERE();
-      isolated::ihm1::ComponentFactory factory;
+      mixed::dab1::ComponentFactory factory;
       hpms::dab::Distributeur & component( factory.getIhm1());
       hpms::dab::DistributeurUI ui( component );
       component.setUI( ui );

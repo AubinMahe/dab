@@ -20,8 +20,8 @@ Distributeur::~Distributeur( void ) {
 
 void Distributeur::init( void ) {
    UTIL_LOG_HERE();
-   _etatDuDab->etat        = dabtypes::Etat::MAINTENANCE;
-   _etatDuDab->soldeCaisse = 0.0;
+   _etatDuDab.etat        = dabtypes::Etat::MAINTENANCE;
+   _etatDuDab.soldeCaisse = 0.0;
 }
 
 void Distributeur::etatDuDabPublished( void ) {
@@ -44,7 +44,7 @@ void Distributeur::placerLesBilletsDansLaCorbeille( void ) {
    UTIL_LOG_HERE();
 }
 
-void Distributeur::shutdown( void ) {
+void Distributeur::arret( void ) {
    UTIL_LOG_HERE();
    _dispatcher->terminate();
 }

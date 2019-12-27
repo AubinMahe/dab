@@ -269,22 +269,19 @@ endif> ) {
          UTIL_ERROR_CHECK( io_byte_buffer_clear   ( &This->out ));
          UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<iface.name; format="ID">_ID ));
          UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, <prefix; format="ID">_<facet.name; format="ID"> ));
-         UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, to ));<
-if( facet.isRequest )>
-         UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, This->from ));
-         <byteBufferPut( "", facet.arguments.field )><
-elseif( facet.isData )>
-Là, ce serait assez étonnant qu'on y passe vu qu'il y a déjà un test isData au dessus et qu'on est dans le 'else'...
-              <byteBufferPut( "&This->", facet )><
-elseif( facet.field )><
-              byteBufferPut( "", facet.field )><
+         UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, to ));
+         <
+if( facet.isRequest )
+        >UTIL_ERROR_CHECK( io_byte_buffer_put_byte( &This->out, This->from ));
+<        byteBufferPut( "", facet.arguments.field )><
+else><   byteBufferPut( "", facet.field )><
 endif>
          UTIL_ERROR_CHECK( io_byte_buffer_flip( &This->out ));
          size_t size = 0;
          UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
          UTIL_LOG_ARGS( "%u byte(s) sent from instance %d to instance %d @ %s",
-            (unsigned)size, This->from, to, inet_ntoa( targets->process->sin_addr ));
-         UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, targets->process ));
+            (unsigned)size, This->from, to, inet_ntoa( targets->process.sin_addr ));
+         UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &targets->process ));
       \}
    \}
    UTIL_LOG_DONE();
@@ -782,10 +779,10 @@ dataWriterHeader( prefix, interface, ifaceID, data, rawSize, types  ) ::= <<
 
 #include \<da/targets.h>
 #include \<io/datagram_socket.h>
+
 <data:{dataType|
-
-#include \<<types.(dataType.type); format="typeToPath">.h>}>
-
+#include \<<types.(dataType.type); format="typeToPath">.h>
+}>
 typedef struct <prefix>_<interface.name; format="cname">_data_s {
    SOCKET         socket;
    byte           from;
@@ -860,8 +857,8 @@ util_error <prefix>_<interface.name; format="cname">_data_publish_<dataType.name
          size_t size = 0;
          UTIL_ERROR_CHECK( io_byte_buffer_remaining( &This->out, &size ));
          UTIL_LOG_ARGS( "%u byte(s) sent from instance %d to instance %d @ %s",
-            (unsigned)size, This->from, to, inet_ntoa( targets->process->sin_addr ));
-         UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, targets->process ));
+            (unsigned)size, This->from, to, inet_ntoa( targets->process.sin_addr ));
+         UTIL_ERROR_CHECK( io_datagram_socket_send_to( This->socket, &This->out, &targets->process ));
       \}
    \}
    UTIL_LOG_DONE();
@@ -986,7 +983,7 @@ UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; forma
 
 
 factoryInitProxy( ndx, to ) ::= <<
-<to:{t|targets[<ndx>].instances[<i0>] = <prefix; format="ID">_<t; format="ID">;
+<to:{t|targets[<ndx>].instances[<i0>]    = <prefix; format="ID">_<t; format="ID">;
 }>
 >>
 
@@ -995,14 +992,18 @@ factoryInitProxy( ndx, to ) ::= <<
 componentFactoryBodyProxiesInit() ::= <<
 //-- proxies init --
 <deployment.process:{process|
-static struct sockaddr_in <process.name; format="cname">;
+struct sockaddr_in <process.name; format="cname">;
 UTIL_ERROR_CHECK( io_datagram_socket_init( "<process.address>", <process.port>, &<process.name> ));
 }><proxies:{proxy|
 {
    <proxy.to:{process|
 static byte       to<i0>[< length( proxy.to.(process))>];
-}>   static da_targets targets[] = {<proxy.to:{process|{ &<process>, < length(proxy.to.(process))>, to<i0> \}}; separator=", ">\};
-   <proxy.to:{process|<factoryInitProxy( i0, proxy.to.(process) )
+}>   static da_targets targets[< length( proxy.to )>];
+<proxy.to:{process|
+   targets[<i0>].process         = <process>;
+   targets[<i0>].instances_count = < length(proxy.to.(process))>;
+   targets[<i0>].instances       = to<i0>;
+}>   <proxy.to:{process|<factoryInitProxy( i0, proxy.to.(process) )
 >}>   UTIL_ERROR_CHECK( <proxy.module>_<proxy.interface; format="cname">_init( &This-><
       proxy.interface; format="cname">_for_<proxy.from; format="cname">, This->socket, <prefix; format="ID">_<
       proxy.from; format="ID">, < length(proxy.to)>, targets ));
@@ -1147,11 +1148,7 @@ static void * run( void * arg ) {
    return NULL;
 }
 
-//-- instances ID --
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
-<ids:{instance|static const byte <prefix; format="ID">_<instance; format="ID"> = <ids.(instance)>;}; separator="\n">
-#pragma GCC diagnostic pop
+<ids:{instance|#define <prefix; format="ID">_<instance; format="ID"> ((byte)<ids.(instance)>)}; separator="\n">
 
 util_error <prefix>_factory_create( <prefix>_factory * This ) {
    UTIL_LOG_HERE();

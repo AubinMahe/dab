@@ -36,7 +36,7 @@ namespace hpms::udt {
 
       virtual void annulationDemandeeParLeClient();
 
-      virtual void shutdown( void );
+      virtual void arret( void );
 
    public:
 

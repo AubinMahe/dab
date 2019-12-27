@@ -23,7 +23,7 @@ public class BaseRenderer extends StringRenderer {
             sb.append( '_' );
          }
       }
-      return sb.toString();
+      return sb.toString().replaceAll( "::", "_" );
    }
 
    public static String lowerCamelCase( String name ) {

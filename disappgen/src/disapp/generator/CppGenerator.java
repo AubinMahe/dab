@@ -2,6 +2,8 @@ package disapp.generator;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -273,6 +275,7 @@ public class CppGenerator extends BaseGenerator {
                body.add( "data"     , data );
                body.add( "dataID"   , _model.getEventIDs().get( ifaceName ));
                body.add( "rawSize"  , rawSize );
+               body.add( "types"    , types );
                write( ifaceName + "Data.cpp", body );
             }
          }
@@ -333,47 +336,39 @@ public class CppGenerator extends BaseGenerator {
    }
 
    void factory( String deployment, ProcessType process ) throws IOException {
-      final Map<String, InstanceType>      instancesByName = _model.getInstancesByName( deployment );
-      final Map<InstanceType, ProcessType> processes       = _model.getProcessByInstance( deployment );
-      final Map<String, String>            types           = _model.getTypes( Model.CPP_LANGUAGE );
-      final Map<ComponentType, String>     modules         = _model.getModules( Model.CPP_LANGUAGE );
-      for( final InstanceType instance : process.getInstance()) {
-         final ComponentType component = (ComponentType)instance.getComponent();
-         for( final ComponentImplType implementation : component.getImplementation()) {
-            if( implementation.getLanguage().equals( Model.CPP_LANGUAGE )) {
-               _moduleName = deployment + "::" + process.getName();
-               _genDir     = deployment + '-' + process.getName() + "-cpp/src-gen";
-               final Map<InterfaceType,
-                  Map<String, Set<ProcessType>>>        dataConsumer = _model.getDataConsumer( deployment, component );
-               final Map<InterfaceType, List<DataType>> offData      = _model.getOfferedDataOf ( component );
-               final Map<InterfaceType, List<DataType>> reqData      = _model.getRequiredDataOf( component );
-               ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
-               tmpl.add( "namespace"      , _moduleName );
-               tmpl.add( "process"        , process );
-               tmpl.add( "instancesCount" , process.getInstance().size());
-               tmpl.add( "processes"      , processes );
-               tmpl.add( "offData"        , offData );
-               tmpl.add( "reqData"        , reqData );
-               tmpl.add( "instancesByName", instancesByName );
-               tmpl.add( "dataConsumer"   , dataConsumer );
-               tmpl.add( "modules"        , modules );
-               tmpl.add( "types"          , types );
-               write( "ComponentFactory.hpp", tmpl );
-               tmpl = _group.getInstanceOf( "/componentFactoryBody" );
-               tmpl.add( "namespace"      , _moduleName );
-               tmpl.add( "process"        , process );
-               tmpl.add( "instancesCount" , process.getInstance().size());
-               tmpl.add( "processes"      , processes );
-               tmpl.add( "offData"        , offData );
-               tmpl.add( "reqData"        , reqData );
-               tmpl.add( "instancesByName", instancesByName );
-               tmpl.add( "dataConsumer"   , dataConsumer );
-               tmpl.add( "modules"        , modules );
-               tmpl.add( "types"          , types );
-               write( "ComponentFactory.cpp", tmpl );
-               return;
-            }
-         }
+      _moduleName = deployment + "::" + process.getName();
+      _genDir     = deployment + '-' + process.getName() + "-cpp/src-gen";
+      final Set<Proxy>                       proxies        = new LinkedHashSet<>();
+      final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
+      final Map<ComponentType, String>       modules        = _model.getModules( Model.CPP_LANGUAGE );
+      final Map<String, String>              types          = _model.getTypes( Model.CPP_LANGUAGE );
+      _model.getFactoryConnections( Model.CPP_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+      {
+         final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
+         tmpl.add( "namespace"   , _moduleName );
+         tmpl.add( "process"     , process );
+         tmpl.add( "proxies"     , proxies );
+         tmpl.add( "consumedData", consumedData );
+         tmpl.add( "modules"     , modules );
+         tmpl.add( "types"       , types );
+         write( "ComponentFactory.hpp", tmpl );
+      }
+      {
+         final Map<String, Byte>              ids       = _model.getIDs( deployment );
+         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
+         final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
+         tmpl.add( "namespace"      , _moduleName );
+         tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+         tmpl.add( "process"       , process );
+         tmpl.add( "processes"     , processes );
+         tmpl.add( "proxies"       , proxies );
+         tmpl.add( "dataPublishers", dataPublishers );
+         tmpl.add( "consumedData"  , consumedData );
+         tmpl.add( "types"         , types );
+         tmpl.add( "modules"       , modules );
+         tmpl.add( "ids"           , ids );
+         write( "ComponentFactory.cpp", tmpl );
       }
    }
 

@@ -51,7 +51,7 @@ void Banque::retrait( const char * carteID, const double & montant ) {
    }
 }
 
-void Banque::shutdown( void ) {
+void Banque::arret( void ) {
    UTIL_LOG_HERE();
    _dispatcher->terminate();
 }

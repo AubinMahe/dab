@@ -13,9 +13,15 @@
                         						
                         <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/osioutil"/>
                         						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/util-cpp"/>
+                        						
                         <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/osioutil/Debug"/>
                         						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/util-cpp/Debug"/>
+                        						
                         <entry flags="RESOLVED" kind="libraryFile" name="osioutil" srcPrefixMapping="" srcRootPath=""/>
+                        						
+                        <entry flags="RESOLVED" kind="libraryFile" name="util-cpp" srcPrefixMapping="" srcRootPath=""/>
                         					
                     </externalSetting>
                     				
@@ -32,6 +38,8 @@
                     <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
                     					
                     <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
                     				
                 </extensions>
                 			
@@ -39,7 +47,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.debug.976516454" name="Debug" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="cdt.managedbuild.config.gnu.lib.debug">
+                <configuration artifactExtension="so" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.debug.976516454" name="Debug" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="cdt.managedbuild.config.gnu.lib.debug">
                     					
                     <folderInfo id="cdt.managedbuild.config.gnu.lib.debug.976516454." name="/" resourcePath="">
                         						
@@ -73,6 +81,8 @@
                                 								
                                 <option id="gnu.cpp.compiler.option.warnings.wconversion.2067868583" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
+                                <option id="gnu.cpp.compiler.option.other.pic.1332369017" superClass="gnu.cpp.compiler.option.other.pic" value="true" valueType="boolean"/>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1444043662" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							
                             </tool>
@@ -93,9 +103,17 @@
                                 							
                             </tool>
                             							
-                            <tool id="cdt.managedbuild.tool.gnu.c.linker.base.1902484990" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
+                            <tool id="cdt.managedbuild.tool.gnu.c.linker.base.1902484990" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
+                                								
+                                <option defaultValue="true" id="gnu.c.link.option.shared.759510612" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+                                							
+                            </tool>
                             							
-                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1492164436" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
+                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1492164436" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
+                                								
+                                <option defaultValue="true" id="gnu.cpp.link.option.shared.2050501932" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
+                                							
+                            </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.1020759861" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
                                 								
@@ -131,9 +149,15 @@
                         						
                         <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/osioutil"/>
                         						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/util-cpp"/>
+                        						
                         <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/osioutil/Release"/>
                         						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/util-cpp"/>
+                        						
                         <entry flags="RESOLVED" kind="libraryFile" name="osioutil" srcPrefixMapping="" srcRootPath=""/>
+                        						
+                        <entry flags="RESOLVED" kind="libraryFile" name="util-cpp" srcPrefixMapping="" srcRootPath=""/>
                         					
                     </externalSetting>
                     				
@@ -150,6 +174,8 @@
                     <extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
                     					
                     <extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+                    					
+                    <extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
                     				
                 </extensions>
                 			
@@ -157,7 +183,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.release.845249900" name="Release" optionalBuildProperties="" parent="cdt.managedbuild.config.gnu.lib.release">
+                <configuration artifactExtension="so" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.release.845249900" name="Release" optionalBuildProperties="" parent="cdt.managedbuild.config.gnu.lib.release">
                     					
                     <folderInfo id="cdt.managedbuild.config.gnu.lib.release.845249900." name="/" resourcePath="">
                         						
@@ -203,9 +229,17 @@
                                 							
                             </tool>
                             							
-                            <tool id="cdt.managedbuild.tool.gnu.c.linker.base.281307546" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
+                            <tool id="cdt.managedbuild.tool.gnu.c.linker.base.281307546" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
+                                								
+                                <option defaultValue="true" id="gnu.c.link.option.shared.649186854" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+                                							
+                            </tool>
                             							
-                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1692135669" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
+                            <tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1692135669" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
+                                								
+                                <option defaultValue="true" id="gnu.cpp.link.option.shared.1374971794" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
+                                							
+                            </tool>
                             							
                             <tool id="cdt.managedbuild.tool.gnu.assembler.lib.release.2059078594" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.release">
                                 								

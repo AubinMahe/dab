@@ -1,4 +1,4 @@
 #!/bin/bash
 
-find . -name compile.log | xargs grep -iE 'error:|warning:|Stop.'
+find . -name compile.log | xargs grep -iE 'error:|erreur|attention|warning:|Stop.|Arrêt.'
 exit 0

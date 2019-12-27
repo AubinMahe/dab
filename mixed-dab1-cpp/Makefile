@@ -1,6 +1,6 @@
-C_SRCS    = src/main.cpp
-C_SRCSGEN = src-gen/mixed_dab1/factory.cpp
-CINC      = -I ../Controleur-cpp/inc -I ../Controleur-cpp/src-gen -I ../Distributeur-cpp/inc -I ../Distributeur-cpp/src-gen
+CPP_SRCS    = src/main.cpp
+CPP_SRCSGEN = src-gen/mixed/dab1/ComponentFactory.cpp
+CPPINC      = -I ../Controleur-cpp/inc -I ../Controleur-cpp/src-gen -I ../Distributeur-cpp/inc -I ../Distributeur-cpp/src-gen
 
 .PHONY: all
 all: ../dab-bin/mixed-dab1-cpp ../dab-bin/mixed-dab1-cpp-win32 ../dab-bin/mixed-dab1-cpp-o64
