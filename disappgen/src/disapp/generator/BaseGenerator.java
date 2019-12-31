@@ -19,6 +19,7 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 import org.stringtemplate.v4.misc.STMessage;
 
+import disapp.generator.genmodel.TypeImplType;
 import disapp.generator.model.AutomatonType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
@@ -33,7 +34,6 @@ import disapp.generator.model.OfferedInterfaceUsageType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.StructType;
-import disapp.generator.model.TypesImplType;
 import disapp.generator.model.TypesType;
 
 abstract class BaseGenerator {
@@ -89,15 +89,15 @@ abstract class BaseGenerator {
       _group.registerModelAdaptor( RequestType    .class, eoroda );
       _group.registerModelAdaptor( DataType       .class, eoroda );
       for( final TypesType types : _model.getApplication().getTypes()) {
-         for( final TypesImplType impl : types.getImplementation()) {
+         for( final TypeImplType impl : _model.getTypesImpls( types.getName())) {
             if( impl.getLanguage().equals( language )) {
-               _genDirTypes.put( types.getModuleName(), impl.getSrcDir());
+               _genDirTypes.put( types.getName(), impl.getSrcDir());
             }
          }
       }
    }
 
-   abstract protected void gEnum ( String xUser ) throws IOException;
+   abstract protected void enumGen ( String xUser ) throws IOException;
    abstract protected void struct( String xUser ) throws IOException;
 
    private void generateTypesUsedBy( InterfaceType iface ) throws IOException {
@@ -105,7 +105,7 @@ abstract class BaseGenerator {
       if( used != null ) {
          for( final String typeName : used ) {
             if( _model.isEnum( typeName )) {
-               gEnum( typeName );
+               enumGen( typeName );
             }
             else if( _model.isStruct( typeName )){
                struct( typeName );
@@ -123,8 +123,8 @@ abstract class BaseGenerator {
       }
       final AutomatonType automaton = component.getAutomaton();
       if( automaton != null ) {
-         gEnum( automaton.getStateEnum().getName());
-         gEnum( automaton.getEventEnum().getName());
+         enumGen( automaton.getStateEnum().getName());
+         enumGen( automaton.getEventEnum().getName());
       }
    }
 

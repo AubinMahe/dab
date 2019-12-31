@@ -2,7 +2,8 @@
 <distributed-application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:noNamespaceSchemaLocation="distributed-application.xsd"
    xmlns:xi="http://www.w3.org/2001/XInclude">
-   <types module-name="dabtypes">
+
+   <types name="dabtypes">
 
       <struct name="Carte">
          <field name="id" type="string" length="4"
@@ -40,9 +41,6 @@
             description="Montant de la caisse en €" />
       </struct>
 
-      <implementation language="C" src-dir="dabtypes-c/src-gen" module-name="DBT" />
-      <implementation language="C++" src-dir="dabtypes-cpp/src-gen" module-name="hpms::dabtypes" />
-      <implementation language="Java" src-dir="dabtypes-java/src-gen" module-name="hpms.dabtypes" />
    </types>
 
    <interface name="IHM">
@@ -117,10 +115,6 @@
       <offers interface="IHM" />
       <requires interface="Maintenable" />
       <requires interface="UniteDeTraitement" />
-      <implementation language="C" src-dir="Distributeur-c/src-gen" module-name="DAB" />
-      <implementation language="C++" src-dir="Distributeur-cpp/src-gen" module-name="hpms::dab" />
-      <implementation language="Java" src-dir="Distributeur-java/src-gen" module-name="hpms.dab" />
-      <implementation language="Java" src-dir="Distributeur-java-script/src-gen" module-name="hpms.dab" />
    </component>
 
    <component name="Controleur">
@@ -133,21 +127,15 @@
       <timeout name="retraitDeLaCarte" duration="10" unit="seconds" />
       <timeout name="retraitDesBillets" duration="10" unit="seconds" />
       <xi:include href="./Controleur.automaton" />
-      <implementation language="C" src-dir="Controleur-c/src-gen" module-name="UDT" />
-      <implementation language="C++" src-dir="Controleur-cpp/src-gen" module-name="hpms::udt" />
-      <implementation language="Java" src-dir="Controleur-java/src-gen" module-name="hpms.udt" />
    </component>
 
    <component name="Banque">
       <offers interface="SiteCentral" />
       <requires interface="Maintenable" />
-      <implementation language="C" src-dir="Banque-c/src-gen" module-name="SC" />
-      <implementation language="C++" src-dir="Banque-cpp/src-gen" module-name="hpms::sc" />
-      <implementation language="Java" src-dir="Banque-java/src-gen" module-name="hpms.sc" />
    </component>
 
    <deployment name="isolated">
-      <process name="sc" address="127.0.0.1" port="2416">
+      <process name="sc">
          <instance name="sc" component="Banque">
             <requires interface="Maintenable">
                <from-instance name="udt1" />
@@ -155,25 +143,25 @@
             </requires>
          </instance>
       </process>
-      <process name="udt1" address="127.0.0.1" port="2417">
+      <process name="udt1">
          <instance name="udt1" component="Controleur">
             <requires interface="IHM"><from-instance name="ihm1" /></requires>
             <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
       </process>
-      <process name="ihm1" address="127.0.0.1" port="2418">
+      <process name="ihm1">
          <instance name="ihm1" component="Distributeur">
             <requires interface="Maintenable"><from-instance name="udt1" /></requires>
             <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
          </instance>
       </process>
-      <process name="udt2" address="127.0.0.1" port="2419">
+      <process name="udt2">
          <instance name="udt2" component="Controleur">
             <requires interface="IHM"><from-instance name="ihm2" /></requires>
             <requires interface="SiteCentral"><from-instance name="sc" /></requires>
          </instance>
       </process>
-      <process name="ihm2" address="127.0.0.1" port="2420">
+      <process name="ihm2">
          <instance name="ihm2" component="Distributeur">
             <requires interface="Maintenable"><from-instance name="udt2" /></requires>
             <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
@@ -182,7 +170,7 @@
    </deployment>
 
    <deployment name="mixed">
-      <process name="sc" address="127.0.0.1" port="2416">
+      <process name="sc">
          <instance name="sc" component="Banque">
             <requires interface="Maintenable">
                <from-instance name="udt1" />
@@ -190,7 +178,7 @@
             </requires>
          </instance>
       </process>
-      <process name="dab1" address="127.0.0.1" port="2417">
+      <process name="dab1">
          <instance name="udt1" component="Controleur">
             <requires interface="IHM"><from-instance name="ihm2" /></requires>
             <requires interface="SiteCentral"><from-instance name="sc" /></requires>
@@ -200,7 +188,7 @@
             <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
          </instance>
       </process>
-      <process name="dab2" address="127.0.0.1" port="2418">
+      <process name="dab2">
          <instance name="udt2" component="Controleur">
             <requires interface="IHM"><from-instance name="ihm1" /></requires>
             <requires interface="SiteCentral"><from-instance name="sc" /></requires>
@@ -213,7 +201,7 @@
    </deployment>
 
    <deployment name="allin">
-      <process name="one" address="127.0.0.1" port="2416">
+      <process name="one">
          <instance name="sc" component="Banque">
             <requires interface="Maintenable">
                <from-instance name="udt1" />

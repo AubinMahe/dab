@@ -4,10 +4,12 @@ import java.io.IOException;
 
 public final class Banque extends BanqueComponent {
 
+   private static final long BANQUE_DELAI_DE_TRAITEMENT = 3000;
+
    private IRepository _repository;
 
-   public Banque( byte instanceID ) {
-      super( instanceID );
+   public Banque( byte instanceID, da.IMainLoop mainLoop ) {
+      super( instanceID, mainLoop );
    }
 
    public void setRepository ( IRepository repository ) {
@@ -20,7 +22,8 @@ public final class Banque extends BanqueComponent {
       final ICarte  iCarte  = _repository.getCarte ( carteID );
       final ICompte iCompte = _repository.getCompte( carteID );
       if(( iCarte != null )&&( iCompte != null )) {
-         try { Thread.sleep( 3000 ); } catch( final InterruptedException x ) {/**/}
+         _repository.printStatusOf( carteID );
+         try { Thread.sleep( BANQUE_DELAI_DE_TRAITEMENT ); } catch( final InterruptedException x ) {/**/}
          iCarte .copyTo( response.carte );
          iCompte.copyTo( response.compte );
       }
@@ -42,6 +45,7 @@ public final class Banque extends BanqueComponent {
       final ICarte carte = _repository.getCarte( carteID );
       if( carte != null ) {
          carte.incrNbEssais();
+         _repository.printStatusOf( carteID );
       }
    }
 
@@ -51,6 +55,7 @@ public final class Banque extends BanqueComponent {
       final ICompte compte = _repository.getCompte( carteID );
       if( compte != null ) {
          compte.retrait( montant );
+         _repository.printStatusOf( carteID );
       }
    }
 

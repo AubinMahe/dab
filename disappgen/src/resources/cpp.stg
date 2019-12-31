@@ -395,9 +395,9 @@ namespace <namespace> {
 
    public:
 
-      void terminate( void );
-
       bool isRunning( void ) const { return _running; }
+
+      void terminate( void );
 
    public:
 
@@ -680,6 +680,7 @@ void <component.name>Dispatcher::loopback( const LoopbackEvent & event ) {
 componentHeader( namespace, component, requires, actions, offData, reqData, responses, includes, types ) ::= <<
 #pragma once
 // componentHeader
+
 #include \<io/DatagramSocket.hpp>
 < if( component.timeout )>
 
@@ -727,14 +728,14 @@ endif><component.timeout:{to|,
          return _dispatcher->isRunning();
       }
 
+      void terminate( void ) const {
+         _dispatcher->terminate();
+      }
+
 <reqData:{iface|<reqData.(iface):{data|
       const <types.(data.type)> & get<data.name; format="cap">( void ) const { return _<data.name; format="argument">; \}
       <types.(data.type)> &       get<data.name; format="cap">( void )       { return _<data.name; format="argument">; \}
 }>}>
-      void terminate( void ) const {
-         return _dispatcher->terminate();
-      }
-
       <actions:{action|virtual void <action>( void ) = 0;
 }>
       <component.timeout:{to|virtual void <to.name>Elapsed( void ) = 0;
@@ -748,14 +749,20 @@ endif><component.timeout:{to|,
       virtual void afterDispatch( bool dispatched ) {
          (void)dispatched;
       }
-
 <requires:{iface|
+
+
       void connect( <iface.name> & <iface.name; format="argument"> ) {
          _<iface.name; format="argument"> = &<iface.name; format="argument">;
       \}
 
       <iface.name> & get<iface.name>( void ) {
          return *_<iface.name; format="argument">;
+      \}
+}>
+<offData:{iface|
+      void connect( <iface.name>Data & <iface.name; format="argument"> ) {
+         _<iface.name; format="argument">Data = &<iface.name; format="argument">;
       \}
 }>
 < if( component.timeout )>
@@ -1063,7 +1070,7 @@ _<instance.name; format="argument">Dispatcher = new <modules.(instance.component
 
 componentFactoryBodyProxiesInit() ::= <<
 //-- proxies init --
-<deployment.process:{process|
+<processesImpl:{process|
 sockaddr_in <process.name; format="argument">;
 io::DatagramSocket::init( "<process.address>", <process.port>, <process.name> );
 }><proxies:{proxy|
@@ -1078,18 +1085,15 @@ io::DatagramSocket::init( "<process.address>", <process.port>, <process.name> );
 }>   <proxy.to:{process|<factoryInitProxy( i0, proxy.to.(process) )
 >}>   _<proxy.interface; format="argument">For<proxy.from; format="cap"> = new <
 proxy.module>::<proxy.interface>( _socket, INSTANCES_<proxy.from; format="ID">, <length(proxy.to)>, targets );
+   _<proxy.from; format="argument">.connect( *_<proxy.interface; format="argument">For<proxy.from; format="cap"> );
 \}
 }>
 >>
 
 
 
-componentFactoryBodyInstancesConnect() ::= <<
-//-- instances connect --
+componentFactoryBodyInstancesInit() ::= <<
 <process.instance:{instance|
-<instance.requires:{pair|
-_<instance.name; format="argument">.connect( *_<pair.interface.name; format="argument">For<instance.name; format="cap"> );
-}>
 //-- instances init --
 _<instance.name; format="argument">.init();
 }>
@@ -1098,7 +1102,8 @@ _<instance.name; format="argument">.init();
 
 
 componentFactoryBody(
-   namespace, deployment, process, processes, proxies, dataPublishers, consumedData, types, modules, ids
+   namespace, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
+   proxies, dataPublishers, consumedData, types, modules, ids
 ) ::= <<
 // ComponentFactoryBody
 
@@ -1122,11 +1127,11 @@ ComponentFactory::ComponentFactory( void ) :
    _<proxy.interface; format="argument">For<proxy.from; format="cap">( 0 )}>
 {
    UTIL_LOG_HERE();
-   _socket.bind( "<process.address>", <process.port> );
+   _socket.bind( "<processImpl.address>", <processImpl.port> );
 
    <componentFactoryBodyDispatchersInit()>
    <componentFactoryBodyProxiesInit()>
-   <componentFactoryBodyInstancesConnect()>
+   <componentFactoryBodyInstancesInit()>
    //-- lancement du thread d'écoute du réseau --
    _thread = new os::Thread( _run, this );
    while( ! _running ) {

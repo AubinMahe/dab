@@ -1,5 +1,5 @@
 C_SRCS    = src/main.c
-C_SRCSGEN = src-gen/mixed_dab2/factory.c
+C_SRCSGEN = src-gen/MIXDAB2/factory.c
 CINC      = -I ../Controleur-c/inc -I ../Controleur-c/src-gen -I ../Distributeur-c/inc -I ../Distributeur-c/src-gen
 
 .PHONY: all

@@ -28,8 +28,13 @@ import javax.xml.transform.sax.SAXSource;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
+import disapp.generator.genmodel.CompImplRefType;
+import disapp.generator.genmodel.CompImplType;
+import disapp.generator.genmodel.DisappGenType;
+import disapp.generator.genmodel.FactoryType;
+import disapp.generator.genmodel.ProcessRefType;
+import disapp.generator.genmodel.TypeImplType;
 import disapp.generator.model.AutomatonType;
-import disapp.generator.model.ComponentImplType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
 import disapp.generator.model.DeploymentType;
@@ -51,7 +56,6 @@ import disapp.generator.model.RequiresType;
 import disapp.generator.model.ShortcutType;
 import disapp.generator.model.StructType;
 import disapp.generator.model.TransitionType;
-import disapp.generator.model.TypesImplType;
 import disapp.generator.model.TypesType;
 
 final class Model {
@@ -71,17 +75,18 @@ final class Model {
    private final Map<String, Map<String, Byte>>                         _eventIDs           = new LinkedHashMap<>();
    private final Map<ComponentType, Set<String>>                        _actions            = new LinkedHashMap<>();
    private final Map<String, SortedMap<String, String>>                 _typesModel2Impl    = new HashMap<>();
-   private final Map<String, Map<ComponentType, String>>                _modulesPerLanguage = new HashMap<>();
+   private final Map<String, Map<ComponentType, Map<String, String>>>   _modulesPerLanguage = new HashMap<>();
    private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _offeredData        = new LinkedHashMap<>();
    private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _requiredData       = new LinkedHashMap<>();
    private final File                                                   _source;
    private final boolean                                                _force;
    private final DisappType                                             _application;
+   private final DisappGenType                                          _generation;
    private final long                                                   _lastModified;
 
    @SuppressWarnings("unchecked")
-   private static JAXBElement<DisappType> readXIncludeAwareModel( File source ) throws Exception {
-      JAXBElement<DisappType> elt = null;
+   private static <T> JAXBElement<T> readXIncludeAwareModel( File source, String pckg ) throws Exception {
+      JAXBElement<T> elt = null;
       final SAXParserFactory spf = SAXParserFactory.newInstance();
       spf.setXIncludeAware( true );
       spf.setNamespaceAware( true );
@@ -89,25 +94,27 @@ final class Model {
       final XMLReader xr = spf.newSAXParser().getXMLReader();
       try( final Reader reader = new FileReader( source )) {
          final SAXSource src = new SAXSource( xr, new InputSource( reader ));
-         final JAXBContext jaxbContext = JAXBContext.newInstance( "disapp.generator.model" );
+         final JAXBContext jaxbContext = JAXBContext.newInstance( pckg );
          final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-         elt = (JAXBElement<DisappType>)unmarshaller.unmarshal( src );
+         elt = (JAXBElement<T>)unmarshaller.unmarshal( src );
       }
       return elt;
    }
 
-   Model( File source, boolean force ) throws Exception {
-      final JAXBElement<DisappType> elt = readXIncludeAwareModel( source );
+   Model( File source, File genModel, boolean force ) throws Exception {
+      final JAXBElement<DisappType>    elt = readXIncludeAwareModel( source, "disapp.generator.model" );
+      final JAXBElement<DisappGenType> gen = readXIncludeAwareModel( genModel, "disapp.generator.genmodel" );
       _source       = source;
       _force        = force;
       _application  = elt.getValue();
+      _generation   = gen.getValue();
       _lastModified = _source.lastModified();
       for( final TypesType types : _application.getTypes()) {
          for( final EnumerationType enm : types.getEnumeration()) {
-            _enums.put( types.getModuleName() + '.' + enm.getName(), enm );
+            _enums.put( types.getName() + '.' + enm.getName(), enm );
          }
          for( final StructType struct : types.getStruct()) {
-            _structs.put( types.getModuleName() + '.' + struct.getName(), struct );
+            _structs.put( types.getName() + '.' + struct.getName(), struct );
          }
       }
       for( final InterfaceType iface : _application.getInterface()) {
@@ -217,13 +224,13 @@ final class Model {
       }
       for( final TypesType types : _application.getTypes()) {
          for( final EnumerationType type : types.getEnumeration()) {
-            for( final TypesImplType impl : types.getImplementation()) {
+            for( final TypeImplType impl : getTypesImpls( types.getName())) {
                SortedMap<String, String> typesModel2Impl = _typesModel2Impl.get( impl.getLanguage());
                if( typesModel2Impl == null ) {
                   _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
                }
                final String language = impl.getLanguage();
-               final String model    = types.getModuleName() + '.' + type.getName();
+               final String model    = types.getName() + '.' + type.getName();
                final String lang;
                switch( language ) {
                case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
@@ -235,13 +242,13 @@ final class Model {
             }
          }
          for( final StructType type : types.getStruct()) {
-            for( final TypesImplType impl : types.getImplementation()) {
+            for( final TypeImplType impl : getTypesImpls( types.getName())) {
                SortedMap<String, String> typesModel2Impl = _typesModel2Impl.get( impl.getLanguage());
                if( typesModel2Impl == null ) {
                   _typesModel2Impl.put( impl.getLanguage(), typesModel2Impl = new TreeMap<>());
                }
                final String language = impl.getLanguage();
-               final String model    = types.getModuleName() + '.' + type.getName();
+               final String model    = types.getName() + '.' + type.getName();
                final String lang;
                switch( language ) {
                case JAVA_LANGUAGE: lang = impl.getModuleName() + '.'  + type.getName(); break;
@@ -253,19 +260,55 @@ final class Model {
             }
          }
       }
-      initializeModules();
-   }
-
-   private void initializeModules() {
       for( final ComponentType component : _application.getComponent()) {
-         for( final ComponentImplType implementation : component.getImplementation()) {
-            Map<ComponentType, String> modules = _modulesPerLanguage.get( implementation.getLanguage());
+         for( final CompImplType implementation : getCompImpls( component.getName())) {
+            Map<ComponentType, Map<String, String>> modules = _modulesPerLanguage.get( implementation.getLanguage());
             if( modules == null ) {
                _modulesPerLanguage.put( implementation.getLanguage(), modules = new HashMap<>());
             }
-            modules.put( component, implementation.getModuleName());
+            Map<String, String> names = modules.get( component );
+            if( names == null ) {
+               modules.put( component, names = new HashMap<>());
+            }
+            names.put( implementation.getName(), implementation.getModuleName());
          }
       }
+   }
+
+   List<TypeImplType> getTypesImpls( String typesName ) {
+      for( final disapp.generator.genmodel.TypesType types : _generation.getTypes()) {
+         if( types.getName().equals( typesName )) {
+            return types.getTypeImpl();
+         }
+      }
+      throw new IllegalStateException( typesName + " isn't a valid generation types name" );
+   }
+
+   List<CompImplType> getCompImpls( String compName ) {
+      for( final disapp.generator.genmodel.ComponentType comp : _generation.getComponent()) {
+         if( comp.getName().equals( compName )) {
+            return comp.getCompImpl();
+         }
+      }
+      throw new IllegalStateException( compName + " isn't a valid generation component name" );
+   }
+
+   disapp.generator.genmodel.DeploymentType getDeploymentImpl( String deploymentName ) {
+      for( final disapp.generator.genmodel.DeploymentType deployment : _generation.getDeployment()) {
+         if( deployment.getName().equals( deploymentName )) {
+            return deployment;
+         }
+      }
+      throw new IllegalStateException( deploymentName + " isn't a valid generation deployment name" );
+   }
+
+   static ProcessType getProcess( DeploymentType dep, String processName ) {
+      for( final ProcessType process : dep.getProcess()) {
+         if( process.getName().equals( processName )) {
+            return process;
+         }
+      }
+      throw new IllegalStateException( processName + " isn't a valid process name in deployment " + dep.getName());
    }
 
    static String toString( FieldType field ) {
@@ -308,7 +351,7 @@ final class Model {
          _enums.put( event, enumeration );
          final String moduleName = event.substring( 0, event.lastIndexOf( '.' ));
          for( final TypesType types : _application.getTypes()) {
-            if( types.getModuleName().equals( moduleName )) {
+            if( types.getName().equals( moduleName )) {
                types.getEnumeration().add( enumeration );
                break;
             }
@@ -348,7 +391,7 @@ final class Model {
          _enums.put( state, enumeration );
          final String moduleName = state.substring( 0, state.lastIndexOf( '.' ));
          for( final TypesType types : _application.getTypes()) {
-            if( types.getModuleName().equals( moduleName )) {
+            if( types.getName().equals( moduleName )) {
                types.getEnumeration().add( enumeration );
                break;
             }
@@ -844,14 +887,14 @@ final class Model {
       return processes;
    }
 
-   Map<ComponentType, String> getModules( String language ) {
+   Map<ComponentType, Map<String, String>> getModules( String language ) {
       return _modulesPerLanguage.get( language );
    }
 
    String getModuleName( String modelModuleName, String language ) {
       for( final TypesType types : _application.getTypes()) {
-         if( types.getModuleName().equals( modelModuleName )) {
-            for( final TypesImplType impl : types.getImplementation()) {
+         if( types.getName().equals( modelModuleName )) {
+            for( final TypeImplType impl : getTypesImpls( types.getName())) {
                if( impl.getLanguage().equals( language )) {
                   return impl.getModuleName();
                }
@@ -947,23 +990,55 @@ final class Model {
       return consumers;
    }
 
+   private disapp.generator.genmodel.ComponentType getComponentOf( CompImplRefType cir ) {
+      for( final disapp.generator.genmodel.ComponentType comp : _generation.getComponent()) {
+         for( final CompImplType compImpl : comp.getCompImpl()) {
+            if( compImpl == cir.getName()) {
+               return comp;
+            }
+         }
+      }
+      throw new IllegalArgumentException();
+   }
+
    void getFactoryConnections(
-      String                           language,
+      FactoryType                      factory,
       String                           deployment,
       ProcessType                      process,
       Set<Proxy>                       proxies,
       Set<Proxy>                       dataPublishers,
-      Map<InstanceType, Set<DataType>> consumedData   )
+      Map<InstanceType, Set<DataType>> consumedData,
+      Map<ComponentType, String>       modulesOut    )
    {
       proxies       .clear();
       dataPublishers.clear();
       consumedData  .clear();
-      final Map<String, InstanceType>      instancesByName   = _instancesByName.get( deployment );
-      final Map<InstanceType, ProcessType> processByInstance = getProcessByInstance( deployment );
-      final Map<ComponentType, String> modules = getModules( language );
+      final Map<String, InstanceType>               instancesByName   = _instancesByName.get( deployment );
+      final Map<InstanceType, ProcessType>          processByInstance = getProcessByInstance( deployment );
+      final Map<ComponentType, Map<String, String>> modules = getModules( factory.getLanguage());
       for( final InstanceType instance : process.getInstance()) {
-         final ComponentType component = (ComponentType)instance.getComponent();
-         final String module = modules.get( component );
+         final ComponentType       component = (ComponentType)instance.getComponent();
+         final Map<String, String> names     = modules.get( component );
+         String module = null;
+         if( names.size() == 1 ) {
+            module = names.values().iterator().next();
+         }
+         else {
+            for( final CompImplRefType cir : factory.getCompImplRef()) {
+               final disapp.generator.genmodel.ComponentType ct = getComponentOf( cir );
+               if( ct.getName().equals( component.getName())) {
+                  module = ((CompImplType)cir.getName()).getModuleName();
+                  break;
+               }
+            }
+         }
+         if( module == null ) {
+            throw new IllegalStateException(
+               "in deployment " + deployment + " and process " + process.getName()  +
+               ", component " + component.getName() + " has several implementations in " + factory.getLanguage() +
+               " but no comp-impl-ref" );
+         }
+         modulesOut.put( component, module );
          for( final RequiresType requires : instance.getRequires()) {
             final Map<String, SortedSet<String>> instancesPerProcess = new LinkedHashMap<>();
             for( final FromInstanceType fit : requires.getFromInstance()) {
@@ -982,7 +1057,7 @@ final class Model {
          if( offData != null ) {
             for( final InterfaceType iface : offData.keySet()) {
                final Map<String, SortedSet<String>> instancesPerProcess = getDataConsumers( deployment, iface, instance );
-               final String name = iface.getName() + (( language == Model.C_LANGUAGE ) ? "_data" : "Data" );
+               final String name = iface.getName() + (( factory.getLanguage() == Model.C_LANGUAGE ) ? "_data" : "Data" );
                final Proxy dataProxy = new Proxy( module, name, instance.getName(), instancesPerProcess );
                dataPublishers.add( dataProxy );
                proxies.add( dataProxy );
@@ -1001,7 +1076,7 @@ final class Model {
       }
    }
 
-   public Map<String, Byte> getIDs( String deployment ) {
+   Map<String, Byte> getIDs( String deployment ) {
       final Map<String, Byte> retVal = new LinkedHashMap<>();
       byte id = 0;
       for( final ProcessType process : getDeployment( deployment ).getProcess()) {
@@ -1010,5 +1085,36 @@ final class Model {
          }
       }
       return retVal;
+   }
+
+   private disapp.generator.genmodel.ProcessType getProcessImpl( String deploymentName, String processName ) {
+      for( final disapp.generator.genmodel.DeploymentType deployment : _generation.getDeployment()) {
+         if( deployment.getName().equals( deploymentName )) {
+            for( final Object o : deployment.getProcessOrProcessRef()) {
+               if( o instanceof disapp.generator.genmodel.ProcessType ) {
+                  final disapp.generator.genmodel.ProcessType process = (disapp.generator.genmodel.ProcessType)o;
+                  if( process.getName().equals( processName )) {
+                     return process;
+                  }
+               }
+            }
+         }
+      }
+      throw new IllegalArgumentException( "Process '" + processName + "' not found into deployment '" + deploymentName + "'" );
+   }
+
+   Set<disapp.generator.genmodel.ProcessType> getProcessesImpl( String deploymentName ) {
+      final Set<disapp.generator.genmodel.ProcessType> processes = new LinkedHashSet<>();
+      final disapp.generator.genmodel.DeploymentType deployment = getDeploymentImpl( deploymentName );
+      for( final Object o : deployment.getProcessOrProcessRef()) {
+         if( o instanceof disapp.generator.genmodel.ProcessType ) {
+            processes.add((disapp.generator.genmodel.ProcessType)o );
+         }
+         else {
+            final ProcessRefType ref = (ProcessRefType)o;
+            processes.add( getProcessImpl( ref.getDeployment(), ref.getProcess()));
+         }
+      }
+      return processes;
    }
 }

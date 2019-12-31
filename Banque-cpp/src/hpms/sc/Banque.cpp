@@ -11,10 +11,12 @@ using namespace hpms::sc;
 
 void Banque::informations( const char * carteID, hpms::dabtypes::Information & response ) {
    UTIL_LOG_ARGS( "carteID = %s", carteID );
-   hpms::dabtypes::Carte * carte = _repository.getCarte( carteID );
+   const hpms::dabtypes::Carte * carte = _repository.getCarte( carteID );
    if( carte ) {
-      hpms::dabtypes::Compte * compte = _repository.getCompte( carteID );
+      const hpms::dabtypes::Compte * compte = _repository.getCompte( carteID );
       if( compte ) {
+         _repository.printStatusOf( carteID );
+         os::sleep( 3000 );
          response.carte  = *carte;
          response.compte = *compte;
       }
@@ -25,15 +27,15 @@ void Banque::informations( const char * carteID, hpms::dabtypes::Information & r
    else {
       UTIL_LOG_MSG( "unknown!" );
    }
-   os::sleep( 3000 );
    UTIL_LOG_DONE();
 }
 
 void Banque::incrNbEssais( const char * carteID ) {
    UTIL_LOG_ARGS( "carteID = %s\n", carteID );
-   hpms::dabtypes::Carte * carte = _repository.getCarte( carteID );
+   hpms::dabtypes::Carte * carte = (hpms::dabtypes::Carte *)_repository.getCarte( carteID );
    if( carte ) {
       carte->nbEssais++;
+      _repository.printStatusOf( carteID );
    }
    else {
       UTIL_LOG_MSG( "unknown!" );
@@ -42,9 +44,10 @@ void Banque::incrNbEssais( const char * carteID ) {
 
 void Banque::retrait( const char * carteID, const double & montant ) {
    UTIL_LOG_ARGS( "carteID = %s, montant = %7.2f", carteID, montant );
-   hpms::dabtypes::Compte * compte = _repository.getCompte( carteID );
+   hpms::dabtypes::Compte * compte = (hpms::dabtypes::Compte *)_repository.getCompte( carteID );
    if( compte ) {
       compte->solde -= montant;
+      _repository.printStatusOf( carteID );
    }
    else {
       UTIL_LOG_MSG( "unknown!" );

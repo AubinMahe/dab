@@ -48,25 +48,25 @@ Repository::Repository( void ) {
    _cartes_compte[4].compte = &(_comptes[1]);
 }
 
-hpms::dabtypes::Carte * Repository::getCarte( const char * carte_id ) {
-   UTIL_LOG_ARGS( "id = %s", carte_id );
+const hpms::dabtypes::Carte * Repository::getCarte( const char * carteID ) const {
+   UTIL_LOG_ARGS( "id = %s", carteID );
    for( unsigned row = 0, count = sizeof( _cartes )/sizeof( _cartes[0] ); row < count; ++row ) {
-      if( 0 == strncmp( _cartes[row].id, carte_id, 4 )) {
+      if( 0 == strncmp( _cartes[row].id, carteID, 4 )) {
          return _cartes + row;
       }
    }
-   UTIL_LOG_ARGS( "id = %s not found", carte_id );
+   UTIL_LOG_ARGS( "id = %s not found", carteID );
    return nullptr;
 }
 
-hpms::dabtypes::Compte * Repository::getCompte( const char * carte_id ) {
-   UTIL_LOG_ARGS( "id = %s", carte_id );
+const hpms::dabtypes::Compte * Repository::getCompte( const char * carteID ) const {
+   UTIL_LOG_ARGS( "id = %s", carteID );
    for( unsigned row = 0, count = sizeof( _cartes_compte )/sizeof( _cartes_compte[0] ); row < count; ++row ) {
-      if( 0 == strncmp( _cartes_compte[row].carte->id, carte_id, 4 )) {
+      if( 0 == strncmp( _cartes_compte[row].carte->id, carteID, 4 )) {
          return _cartes_compte[row].compte;
       }
    }
-   UTIL_LOG_ARGS( "id = %s not found", carte_id );
+   UTIL_LOG_ARGS( "id = %s not found", carteID );
    return nullptr;
 }
 
@@ -78,4 +78,12 @@ const hpms::dabtypes::Carte * Repository::getCartes( unsigned & count ) const {
 const hpms::dabtypes::Compte * Repository::getComptes( unsigned & count ) const {
    count = sizeof( _comptes ) / sizeof( _comptes[0] );
    return _comptes;
+}
+
+void Repository::printStatusOf( const char * carteID ) const {
+   const hpms::dabtypes::Carte  * carte  = getCarte( carteID );
+   const hpms::dabtypes::Compte * compte = getCompte( carteID );
+   fprintf( stderr, "TEST|nbEssais = %d\n"   , carte ->nbEssais );
+   fprintf( stderr, "TEST|solde    = %7.2f\n", compte->solde );
+   fflush( stderr );
 }

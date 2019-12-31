@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="allin-one" default="jar-application">
    <import file="../ant-common.xml" />
+   <target name="javac-application">
+      <javac-application components="${Banque}:${Controleur}:${Distributeur}" />
+   </target>
    <target name="jar-application" depends="javac-application">
       <jar-application
          main-class="hpms.udt.Main"

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   attributeFormDefault="unqualified"
+   elementFormDefault="qualified">
+
+   <xs:include schemaLocation="distributed-application-common.xsd" />
+
+   <xs:complexType name="typeImplType">
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="typesType">
+      <xs:sequence>
+         <xs:element type="typeImplType"   name="type-impl" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:ID" name="name" />
+   </xs:complexType>
+
+   <xs:complexType name="compImplType">
+      <xs:attribute type="xs:ID"        name="name"        use="required" />
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="componentType">
+      <xs:sequence>
+         <xs:element type="compImplType" name="comp-impl" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="xs:ID" name="name" use="required" />
+   </xs:complexType>
+   
+   <xs:simpleType name="portNumberType">
+      <xs:restriction base="xs:int">
+         <xs:minInclusive value="1" />
+         <xs:maxInclusive value="65535" />
+      </xs:restriction>
+   </xs:simpleType>
+   
+   <xs:complexType name="compImplRefType">
+      <xs:attribute type="xs:IDREF"     name="name"        use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="factoryType">
+      <xs:sequence>
+         <xs:element type="compImplRefType" name="comp-impl-ref" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="processType">
+      <xs:sequence>
+         <xs:element type="factoryType" name="factory" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="processName"    name="name"    use="required" />
+      <xs:attribute type="xs:string"      name="address" use="required" />
+      <xs:attribute type="portNumberType" name="port"    use="required" />
+   </xs:complexType>
+
+   <xs:simpleType name="dottedPath">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[^.]+\.[^.]+" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="processRefType">
+      <xs:attribute type="deploymentName" name="deployment" use="required" />
+      <xs:attribute type="processName"    name="process" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="deploymentType">
+      <xs:sequence>
+	      <xs:choice minOccurs="0" maxOccurs="unbounded">
+	         <xs:element type="processType"    name="process" />
+	         <xs:element type="processRefType" name="process-ref" />
+	      </xs:choice>
+      </xs:sequence>
+      <xs:attribute type="deploymentName" name="name" use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="typesImplType">
+      <xs:attribute type="languageType" name="language"    use="required" />
+      <xs:attribute type="xs:string"    name="module-name" use="required" />
+      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
+   </xs:complexType>
+
+   <xs:complexType name="disappGenType">
+      <xs:sequence>
+         <xs:element type="typesType"      name="types"      minOccurs="0" maxOccurs="unbounded" />
+         <xs:element type="componentType"  name="component"  minOccurs="1" maxOccurs="unbounded" />
+         <xs:element type="deploymentType" name="deployment" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:element name="distributed-application-generation" type="disappGenType" />
+
+</xs:schema>

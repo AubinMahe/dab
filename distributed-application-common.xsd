@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   attributeFormDefault="unqualified"
+   elementFormDefault="qualified">
+
+   <xs:simpleType name="languageType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="Java" />
+         <xs:enumeration value="C" />
+         <xs:enumeration value="C++" />
+      </xs:restriction>
+   </xs:simpleType>
+   
+   <xs:simpleType name="processName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="instanceID">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="deploymentName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+</xs:schema>

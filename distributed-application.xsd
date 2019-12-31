@@ -4,6 +4,7 @@
    attributeFormDefault="unqualified"
    elementFormDefault="qualified">
 
+   <xs:include schemaLocation="distributed-application-common.xsd" />
    <xs:include schemaLocation="distributed-application-automaton.xsd" />
 
    <xs:simpleType name="enumType">
@@ -47,14 +48,6 @@
       </xs:restriction>
    </xs:simpleType>
 
-   <xs:simpleType name="languageType">
-      <xs:restriction base="xs:string">
-         <xs:enumeration value="Java" />
-         <xs:enumeration value="C" />
-         <xs:enumeration value="C++" />
-      </xs:restriction>
-   </xs:simpleType>
-   
    <xs:simpleType name="dottedPath">
       <xs:restriction base="xs:string">
          <xs:pattern value="[^.]+\.[^.]+" />
@@ -131,12 +124,6 @@
       <xs:attribute type="xs:IDREF" name="interface" use="required" />
    </xs:complexType>
    
-   <xs:complexType name="componentImplType">
-      <xs:attribute type="languageType" name="language"    use="required" />
-      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
-      <xs:attribute type="xs:string"    name="module-name" use="required" />
-   </xs:complexType>
-
    <xs:simpleType name="durationUnits">
       <xs:restriction base="xs:string">
          <xs:enumeration value="days" />
@@ -163,24 +150,10 @@
          <xs:element type="requiredInterfaceUsageType" name="requires"       minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="timeoutType"                name="timeout"        minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="automatonType"              name="automaton"      minOccurs="0" maxOccurs="1" />
-         <xs:element type="componentImplType"          name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
    
-   <xs:simpleType name="portNumberType">
-      <xs:restriction base="xs:int">
-         <xs:minInclusive value="1" />
-         <xs:maxInclusive value="65535" />
-      </xs:restriction>
-   </xs:simpleType>
-   
-   <xs:simpleType name="instanceID">
-      <xs:restriction base="xs:string">
-         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
-      </xs:restriction>
-   </xs:simpleType>
-
    <xs:complexType name="fromInstanceType">
       <xs:simpleContent>
          <xs:extension base="xs:string">
@@ -204,26 +177,12 @@
       <xs:attribute type="xs:IDREF"   name="component" use="required" />
    </xs:complexType>
 
-   <xs:simpleType name="processName">
-      <xs:restriction base="xs:string">
-         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
-      </xs:restriction>
-   </xs:simpleType>
-
    <xs:complexType name="processType">
       <xs:sequence>
          <xs:element type="instanceType" name="instance" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute type="processName"    name="name"    use="required" />
-      <xs:attribute type="xs:string"      name="address" use="required" />
-      <xs:attribute type="portNumberType" name="port"    use="required" />
    </xs:complexType>
-
-   <xs:simpleType name="deploymentName">
-      <xs:restriction base="xs:string">
-         <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>
-      </xs:restriction>
-   </xs:simpleType>
 
    <xs:complexType name="deploymentType">
       <xs:sequence>
@@ -243,19 +202,12 @@
       </xs:keyref>
    </xs:element>
    
-   <xs:complexType name="typesImplType">
-      <xs:attribute type="languageType" name="language"    use="required" />
-      <xs:attribute type="xs:string"    name="module-name" use="required" />
-      <xs:attribute type="xs:string"    name="src-dir"     use="required" />
-   </xs:complexType>
-
    <xs:complexType name="typesType">
       <xs:sequence>
          <xs:element type="enumerationType" name="enumeration" minOccurs="0" maxOccurs="unbounded" />
          <xs:element type="structType"      name="struct"      minOccurs="0" maxOccurs="unbounded" />
-         <xs:element type="typesImplType"   name="implementation" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
-      <xs:attribute type="xs:ID" name="module-name" />
+      <xs:attribute type="xs:ID" name="name" />
    </xs:complexType>
 
    <xs:complexType name="disappType">

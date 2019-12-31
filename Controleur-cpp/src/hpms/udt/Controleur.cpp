@@ -9,6 +9,8 @@ using namespace hpms::udt;
 Controleur::Controleur( void ) {
    UTIL_LOG_HERE();
    _automaton.setDebug( true );
+   _etatDuDab.etat = dabtypes::Etat::MAINTENANCE;
+   _etatDuDab.soldeCaisse = 0.0;
 }
 
 void Controleur::maintenance( bool maintenance ) {

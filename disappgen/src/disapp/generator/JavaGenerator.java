@@ -12,10 +12,12 @@ import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
 
+import disapp.generator.genmodel.CompImplType;
+import disapp.generator.genmodel.FactoryType;
 import disapp.generator.model.AutomatonType;
-import disapp.generator.model.ComponentImplType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
+import disapp.generator.model.DeploymentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
@@ -32,7 +34,7 @@ public class JavaGenerator extends BaseGenerator {
    }
 
    @Override
-   protected void gEnum( String name ) throws IOException {
+   protected void enumGen( String name ) throws IOException {
       final EnumerationType enm = _model.getEnum( name );
       final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String          implModuleName  = _model.getModuleName( modelModuleName, Model.JAVA_LANGUAGE );
@@ -254,7 +256,7 @@ public class JavaGenerator extends BaseGenerator {
       }
    }
 
-   void component( ComponentType component, ComponentImplType implementation ) throws IOException {
+   void component( ComponentType component, CompImplType implementation ) throws IOException {
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
@@ -269,22 +271,33 @@ public class JavaGenerator extends BaseGenerator {
       automaton               ( component );
    }
 
-   void factory( String deployment, ProcessType process ) throws IOException {
-      _moduleName = deployment + '.' + process.getName();
-      _genDir     = deployment + '-' + process.getName() + "-java/src-gen";
-      final Map<InstanceType, ProcessType>   processes      = _model.getProcessByInstance( deployment );
-      final Map<String, String>              types          = _model.getTypes( Model.JAVA_LANGUAGE );
-      final Map<ComponentType, String>       modules        = _model.getModules( Model.JAVA_LANGUAGE );
-      final Map<String, Byte>                ids            = _model.getIDs( deployment );
-      final Set<Proxy>                       proxies        = new LinkedHashSet<>();
-      final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
-      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
-      _model.getFactoryConnections( Model.JAVA_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+   void factory(
+      DeploymentType                           deployment,
+      disapp.generator.genmodel.DeploymentType deploymentImpl,
+      ProcessType                              process,
+      disapp.generator.genmodel.ProcessType    processImpl,
+      FactoryType                              factory      ) throws IOException
+   {
+      final String                                     dep            = deployment.getName();
+      final Map<InstanceType, ProcessType>             processes      = _model.getProcessByInstance( dep );
+      final Map<String, String>                        types          = _model.getTypes( Model.JAVA_LANGUAGE );
+      final Map<String, Byte>                          ids            = _model.getIDs( dep );
+      final Set<Proxy>                                 proxies        = new LinkedHashSet<>();
+      final Set<Proxy>                                 dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>>           consumedData   = new LinkedHashMap<>();
+      final Map<ComponentType, String>                 modules        = new LinkedHashMap<>();
+      final Set<disapp.generator.genmodel.ProcessType> processesImpl  = _model.getProcessesImpl( deployment.getName());
+      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      _moduleName = factory.getModuleName();
+      _genDir     = factory.getSrcDir();
       final ST tmpl = _group.getInstanceOf( "/componentFactory" );
       tmpl.add( "package"       , _moduleName );
-      tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+      tmpl.add( "deployment"    , deployment );
+      tmpl.add( "deploymentImpl", deploymentImpl );
       tmpl.add( "process"       , process );
+      tmpl.add( "processImpl"   , processImpl );
       tmpl.add( "processes"     , processes );
+      tmpl.add( "processesImpl" , processesImpl );
       tmpl.add( "proxies"       , proxies );
       tmpl.add( "dataPublishers", dataPublishers );
       tmpl.add( "consumedData"  , consumedData );

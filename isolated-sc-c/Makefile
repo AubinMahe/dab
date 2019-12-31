@@ -1,5 +1,5 @@
 C_SRCS    = src/main.c
-C_SRCSGEN = src-gen/isolated_sc/factory.c
+C_SRCSGEN = src-gen/ISOSC/factory.c
 CINC      = -I ../Banque-c/inc -I ../Banque-c/src-gen
 
 .PHONY: all

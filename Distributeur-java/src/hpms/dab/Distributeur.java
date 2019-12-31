@@ -3,14 +3,16 @@ package hpms.dab;
 import java.io.IOException;
 
 import hpms.dab.ui.Controller;
+import hpms.dabtypes.Etat;
 import javafx.application.Platform;
 
 public class Distributeur extends hpms.dab.DistributeurComponent {
 
    private Controller _controller;
 
-   public Distributeur( byte instanceID ) {
-      super( instanceID );
+   public Distributeur( byte instanceID, da.IMainLoop mainLoop ) {
+      super( instanceID, mainLoop );
+      _etatDuDab.etat = Etat.MAINTENANCE;
    }
 
    public void setController( Controller controller ) {

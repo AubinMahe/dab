@@ -12,9 +12,11 @@ import java.util.SortedSet;
 
 import org.stringtemplate.v4.ST;
 
-import disapp.generator.model.ComponentImplType;
+import disapp.generator.genmodel.CompImplType;
+import disapp.generator.genmodel.FactoryType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
+import disapp.generator.model.DeploymentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
@@ -57,12 +59,12 @@ public class CppGenerator extends BaseGenerator {
    }
 
    @Override
-   protected void gEnum( String name ) throws IOException {
+   protected void enumGen( String name ) throws IOException {
       enumHeader( name );
       enumBody  ( name );
    }
 
-   private void generateStructHeader( String name ) throws IOException {
+   private void structHeader( String name ) throws IOException {
       final StructType          struct          = _model.getStruct( name );
       final String              modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String              implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
@@ -77,7 +79,7 @@ public class CppGenerator extends BaseGenerator {
       writeType( modelModuleName, subPath, filename, tmpl );
    }
 
-   private void generateStructBody( String modelName ) throws IOException {
+   private void structBody( String modelName ) throws IOException {
       final StructType          struct          = _model.getStruct( modelName );
       final String              modelModuleName = modelName.substring( 0, modelName.lastIndexOf( '.' ));
       final String              implModuleName  = _model.getModuleName( modelModuleName, Model.CPP_LANGUAGE );
@@ -95,8 +97,8 @@ public class CppGenerator extends BaseGenerator {
 
    @Override
    protected void struct( String name ) throws IOException {
-      generateStructHeader( name );
-      generateStructBody  ( name );
+      structHeader( name );
+      structBody  ( name );
    }
 
    private void responsesHeader( ComponentType component ) throws IOException {
@@ -316,7 +318,7 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   void generateComponent( ComponentType component, ComponentImplType implementation ) throws IOException {
+   void component( ComponentType component, CompImplType implementation ) throws IOException {
       _generatedFiles.clear();
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
@@ -335,15 +337,22 @@ public class CppGenerator extends BaseGenerator {
       generateMakefileSourcesList( _generatedFiles, _genDir, true );
    }
 
-   void factory( String deployment, ProcessType process ) throws IOException {
-      _moduleName = deployment + "::" + process.getName();
-      _genDir     = deployment + '-' + process.getName() + "-cpp/src-gen";
+   void factory(
+      DeploymentType                           deployment,
+      disapp.generator.genmodel.DeploymentType deploymentImpl,
+      ProcessType                              process,
+      disapp.generator.genmodel.ProcessType    processImpl,
+      FactoryType                              factory      ) throws IOException
+   {
+      final String                           dep            = deployment.getName();
       final Set<Proxy>                       proxies        = new LinkedHashSet<>();
       final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
       final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
-      final Map<ComponentType, String>       modules        = _model.getModules( Model.CPP_LANGUAGE );
+      final Map<ComponentType, String>       modules        = new LinkedHashMap<>();
       final Map<String, String>              types          = _model.getTypes( Model.CPP_LANGUAGE );
-      _model.getFactoryConnections( Model.CPP_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      _moduleName = factory.getModuleName();
+      _genDir     = factory.getSrcDir();
       {
          final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
          tmpl.add( "namespace"   , _moduleName );
@@ -355,13 +364,17 @@ public class CppGenerator extends BaseGenerator {
          write( "ComponentFactory.hpp", tmpl );
       }
       {
-         final Map<String, Byte>              ids       = _model.getIDs( deployment );
-         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
+         final Map<String, Byte>                          ids           = _model.getIDs( dep );
+         final Map<InstanceType, ProcessType>             processes     = _model.getProcessByInstance( dep );
+         final Set<disapp.generator.genmodel.ProcessType> processesImpl = _model.getProcessesImpl( deployment.getName());
          final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
-         tmpl.add( "namespace"      , _moduleName );
-         tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+         tmpl.add( "namespace"     , _moduleName );
+         tmpl.add( "deployment"    , deployment );
+         tmpl.add( "deploymentImpl", deploymentImpl );
          tmpl.add( "process"       , process );
+         tmpl.add( "processImpl"   , processImpl );
          tmpl.add( "processes"     , processes );
+         tmpl.add( "processesImpl" , processesImpl );
          tmpl.add( "proxies"       , proxies );
          tmpl.add( "dataPublishers", dataPublishers );
          tmpl.add( "consumedData"  , consumedData );
@@ -372,7 +385,7 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   public void generateTypesMakefileSourcesList() throws FileNotFoundException {
+   public void typesMakefileSourcesList() throws FileNotFoundException {
       for( final String genDir : _genDirTypes.values()) {
          generateMakefileSourcesList( _generatedTypes, genDir, true );
       }

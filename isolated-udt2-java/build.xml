@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="isolated-udt2" default="jar-application">
    <import file="../ant-common.xml" />
+   <target name="javac-application">
+      <javac-application components="${Controleur}" />
+   </target>
    <target name="jar-application" depends="javac-application">
       <jar-application
          main-class="hpms.udt.Main"

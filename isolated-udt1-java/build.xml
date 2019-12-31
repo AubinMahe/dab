@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="isolated-udt1" default="jar-application">
    <import file="../ant-common.xml" />
+   <target name="javac-application">
+      <javac-application components="${Controleur}" />
+   </target>
    <target name="jar-application" depends="javac-application">
       <jar-application
          main-class="hpms.udt.Main"
@@ -26,7 +29,7 @@
          <classpath path="build" />
        </javac>
    </target>
-   
+
    <target name="tests" description="Lance les tests JUnit">
       <taskdef
          name     ="junitlauncher"

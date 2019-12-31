@@ -991,7 +991,7 @@ factoryInitProxy( ndx, to ) ::= <<
 
 componentFactoryBodyProxiesInit() ::= <<
 //-- proxies init --
-<deployment.process:{process|
+<processesImpl:{process|
 struct sockaddr_in <process.name; format="cname">;
 UTIL_ERROR_CHECK( io_datagram_socket_init( "<process.address>", <process.port>, &<process.name> ));
 }><proxies:{proxy|
@@ -1076,7 +1076,10 @@ UTIL_ERROR_CHECK( <modules.(instance.component)>_<instance.component.name; forma
 
 
 
-componentFactoryBody( prefix, deployment, process, processes, proxies, dataPublishers, consumedData, types, modules, ids ) ::= <<
+componentFactoryBody(
+    prefix, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
+    proxies, dataPublishers, consumedData, types, modules, ids
+) ::= <<
 // ComponentFactoryBody
 
 #include "factory.h"
@@ -1155,7 +1158,7 @@ util_error <prefix>_factory_create( <prefix>_factory * This ) {
    memset( This, 0, sizeof( <prefix>_factory ));
    This->socket = socket( AF_INET, SOCK_DGRAM, 0 );
    UTIL_ASSERT( This->socket > 0 );
-   UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<process.address>", <process.port>, &This->local_addr ));
+   UTIL_ERROR_CHECK( io_datagram_socket_bind( This->socket, "<processImpl.address>", <processImpl.port>, &This->local_addr ));
 
    <componentFactoryBodyInstancesInit()>
    <componentFactoryBodyProxiesInit()>

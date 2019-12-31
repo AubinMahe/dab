@@ -13,9 +13,11 @@ import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
 
-import disapp.generator.model.ComponentImplType;
+import disapp.generator.genmodel.CompImplType;
+import disapp.generator.genmodel.FactoryType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
+import disapp.generator.model.DeploymentType;
 import disapp.generator.model.EnumerationType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
@@ -31,7 +33,7 @@ public class CGenerator extends BaseGenerator {
       super( model, Model.C_LANGUAGE, "c.stg", new CRenderer());
    }
 
-   private void generateEnumHeader( String name ) throws IOException {
+   private void enumHeader( String name ) throws IOException {
       final EnumerationType enm             = _model.getEnum( name );
       final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String          implModuleName  = _model.getModuleName( modelModuleName, Model.C_LANGUAGE );
@@ -43,7 +45,7 @@ public class CGenerator extends BaseGenerator {
       writeType( modelModuleName, implModuleName, filename, tmpl );
    }
 
-   private void generateEnumBody( String name ) throws IOException {
+   private void enumBody( String name ) throws IOException {
       final EnumerationType enm             = _model.getEnum( name );
       final String          modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String          implModuleName  = _model.getModuleName( modelModuleName, Model.C_LANGUAGE );
@@ -56,12 +58,12 @@ public class CGenerator extends BaseGenerator {
    }
 
    @Override
-   protected void gEnum( String name ) throws IOException {
-      generateEnumHeader( name );
-      generateEnumBody  ( name );
+   protected void enumGen( String name ) throws IOException {
+      enumHeader( name );
+      enumBody  ( name );
    }
 
-   private void generateStructHeader( String name ) throws IOException {
+   private void structHeader( String name ) throws IOException {
       final StructType          struct          = _model.getStruct( name );
       final String              modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String              implModuleName  = _model.getModuleName( modelModuleName, Model.C_LANGUAGE );
@@ -75,7 +77,7 @@ public class CGenerator extends BaseGenerator {
       writeType( modelModuleName, implModuleName, filename, tmpl );
    }
 
-   private void generateStructBody( String name ) throws IOException {
+   private void structBody( String name ) throws IOException {
       final StructType          struct          = _model.getStruct( name );
       final String              modelModuleName = name.substring( 0, name.lastIndexOf( '.' ));
       final String              implModuleName  = _model.getModuleName( modelModuleName, Model.C_LANGUAGE );
@@ -92,8 +94,8 @@ public class CGenerator extends BaseGenerator {
 
    @Override
    protected void struct( String name ) throws IOException {
-      generateStructHeader( name );
-      generateStructBody  ( name );
+      structHeader( name );
+      structBody  ( name );
    }
 
    private void responsesHeader( ComponentType component ) throws IOException {
@@ -282,7 +284,7 @@ public class CGenerator extends BaseGenerator {
       }
    }
 
-   void generateComponent( ComponentType component, ComponentImplType implementation ) throws IOException {
+   void component( ComponentType component, CompImplType implementation ) throws IOException {
       _genDir     = implementation.getSrcDir();
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
@@ -299,15 +301,22 @@ public class CGenerator extends BaseGenerator {
       generateMakefileSourcesList( _generatedFiles, _genDir, false );
    }
 
-   public void factory( String deployment, ProcessType process ) throws IOException {
-      _moduleName = CRenderer.cname( deployment ) + "_" + CRenderer.cname( process.getName());
-      _genDir     = deployment + '-' + process.getName() + "-c/src-gen";
+   public void factory(
+      DeploymentType                           deployment,
+      disapp.generator.genmodel.DeploymentType deploymentImpl,
+      ProcessType                              process,
+      disapp.generator.genmodel.ProcessType    processImpl,
+      FactoryType                              factory      ) throws IOException
+   {
+      final String                           dep            = deployment.getName();
       final Set<Proxy>                       proxies        = new LinkedHashSet<>();
       final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
       final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
-      final Map<ComponentType, String>       modules        = _model.getModules( Model.C_LANGUAGE );
+      final Map<ComponentType, String>       modules        = new LinkedHashMap<>();
       final Map<String, String>              types          = _model.getTypes( Model.C_LANGUAGE );
-      _model.getFactoryConnections( Model.C_LANGUAGE, deployment, process, proxies, dataPublishers, consumedData );
+      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      _moduleName = factory.getModuleName();
+      _genDir     = factory.getSrcDir();
       {
          final ST tmpl = _group.getInstanceOf( "/componentFactoryHeader" );
          tmpl.add( "prefix"      , _moduleName );
@@ -318,13 +327,17 @@ public class CGenerator extends BaseGenerator {
          tmpl.add( "types"       , types );
          write( "factory.h", tmpl );
       }{
-         final Map<String, Byte>              ids       = _model.getIDs( deployment );
-         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( deployment );
+         final Map<String, Byte>                          ids            = _model.getIDs( dep );
+         final Map<InstanceType, ProcessType>             processes     = _model.getProcessByInstance( dep );
+         final Set<disapp.generator.genmodel.ProcessType> processesImpl = _model.getProcessesImpl( deployment.getName());
          final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
          tmpl.add( "prefix"        , _moduleName );
-         tmpl.add( "deployment"    , _model.getDeployment( deployment ));
+         tmpl.add( "deployment"    , deployment );
+         tmpl.add( "deploymentImpl", deploymentImpl );
          tmpl.add( "process"       , process );
+         tmpl.add( "processImpl"   , processImpl );
          tmpl.add( "processes"     , processes );
+         tmpl.add( "processesImpl" , processesImpl );
          tmpl.add( "proxies"       , proxies );
          tmpl.add( "dataPublishers", dataPublishers );
          tmpl.add( "consumedData"  , consumedData );
@@ -335,7 +348,7 @@ public class CGenerator extends BaseGenerator {
       }
    }
 
-   public void generateTypesMakefileSourcesList() throws FileNotFoundException {
+   public void typesMakefileSourcesList() throws FileNotFoundException {
       for( final String genDir : _genDirTypes.values()) {
          generateMakefileSourcesList( _generatedTypes, genDir, false );
       }

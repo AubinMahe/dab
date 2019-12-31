@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="distributed-application-run">
+   <description>
+      
+      Ce projet ANT est importé dans build.xml, il ne doit pas être utilisé seul.
+
+   </description>
+
+   <target name="start-ttys"
+      description="Lance deux consoles destinées à recevoir les logs des composants IHM car ils effacent le display régulièrement">
+      <exec executable="xterm" spawn="true"><arg line="-geometry 159x40+0+40" /></exec>
+      <exec executable="xterm" spawn="true"><arg line="-geometry 159x40-0+40" /></exec>
+   </target>
+
+   <macrodef name="run">
+      <attribute name="deployment" />
+      <attribute name="process" />
+      <attribute name="language" />
+      <attribute name="os"    default="" />
+      <attribute name="tests" default="" />
+      <sequential>
+         <exec executable="bash">
+            <arg value="scripts/run.sh" />
+            <arg value="@{deployment}-@{process}-@{language}@{os}" />
+            <arg value="@{tests}" />
+         </exec>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="run-tests">
+      <attribute name="language" />
+      <attribute name="os" default="" />
+      <sequential>
+         <run deployment="isolated" process="sc"   language="@{language}" os="@{os}" tests="true" />
+         <run deployment="isolated" process="udt1" language="@{language}" os="@{os}" tests="true" />
+         <exec executable="bash">
+            <arg value="scripts/run-java.sh" />
+            <arg value="isolated-ihm1-scripted" />
+            <arg value="100" />
+            <arg value="dab-bin/isolated-sc-@{language}.log" />
+            <arg value="dab-bin/isolated-udt1-@{language}.log" />
+         </exec>
+      </sequential>
+   </macrodef>
+
+   <!-- C -->
+   <target name="isolated-sc-c" />
+   <target name="isolated-ihm1-c" />
+   <target name="isolated-ihm2-c" />
+   <target name="isolated-udt1-c" />
+   <target name="isolated-udt2-c" />
+   <target name="mixed-dab1-c" />
+   <target name="mixed-dab2-c" />
+   <!-- C++ -->
+   <target name="isolated-sc-cpp" />
+   <target name="isolated-ihm1-cpp" />
+   <target name="isolated-ihm2-cpp" />
+   <target name="isolated-udt1-cpp" />
+   <target name="isolated-udt2-cpp" />
+   <target name="mixed-dab1-cpp" />
+   <target name="mixed-dab2-cpp" />
+   <!-- Java -->
+   <target name="isolated-sc-java" />
+   <target name="isolated-ihm1-java" />
+   <target name="isolated-ihm1-scripted-java" />
+   <target name="isolated-ihm2-java" />
+   <target name="isolated-udt1-java" />
+   <target name="isolated-udt2-java" />
+   <target name="mixed-dab1-java" />
+   <target name="mixed-dab2-java" />
+
+   <!-- #########################################  C  ######################################### -->
+   
+   <target name="runiso-c" depends="isolated-sc-c,isolated-ihm1-c,isolated-udt1-c">
+      <run deployment="isolated" process="sc"   language="c" />
+      <run deployment="isolated" process="ihm1" language="c" />
+      <run deployment="isolated" process="udt1" language="c" />
+   </target>
+
+   <target name="runiso-c-win32" depends="isolated-ihm1-c,isolated-udt1-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="c" os="-win32" />
+      <run deployment="isolated" process="udt1" language="c" os="-win32" />
+   </target>
+
+   <target name="runiso-c-darwin" depends="isolated-ihm1-c,isolated-udt1-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="c" os="-o64" />
+      <run deployment="isolated" process="udt1" language="c" os="-o64" />
+   </target>
+
+   <target name="runiso-c-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" />
+      <run deployment="isolated" process="ihm1" language="c" />
+      <run deployment="isolated" process="ihm2" language="c" />
+      <run deployment="isolated" process="udt1" language="c" />
+      <run deployment="isolated" process="udt2" language="c" />
+   </target>
+
+   <target name="runiso-c-win32-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="c" os="-win32" />
+      <run deployment="isolated" process="ihm2" language="c" os="-win32" />
+      <run deployment="isolated" process="udt1" language="c" os="-win32" />
+      <run deployment="isolated" process="udt2" language="c" os="-win32" />
+   </target>
+
+   <target name="runiso-c-darwin-2" depends="isolated-ihm1-c,isolated-ihm2-c,isolated-udt1-c,isolated-udt2-c,isolated-sc-c">
+      <run deployment="isolated" process="sc"   language="c" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="c" os="-o64" />
+      <run deployment="isolated" process="ihm2" language="c" os="-o64" />
+      <run deployment="isolated" process="udt1" language="c" os="-o64" />
+      <run deployment="isolated" process="udt2" language="c" os="-o64" />
+   </target>
+
+   <target name="runmix-c" depends="isolated-sc-c,mixed-dab1-c,mixed-dab2-c">
+      <run deployment="isolated" process="sc"   language="c" />
+      <run deployment="mixed"    process="dab1" language="c" />
+      <run deployment="mixed"    process="dab2" language="c" />
+   </target>
+
+   <!-- ########################################  C++  ######################################## -->
+   
+   <target name="runiso-cpp" depends="isolated-sc-cpp,isolated-ihm1-cpp,isolated-udt1-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" />
+      <run deployment="isolated" process="ihm1" language="cpp" />
+      <run deployment="isolated" process="udt1" language="cpp" />
+   </target>
+
+   <target name="runiso-cpp-win32" depends="isolated-sc-cpp,isolated-ihm1-cpp,isolated-udt1-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-win32" />
+   </target>
+
+   <target name="runiso-cpp-darwin" depends="isolated-ihm1-cpp,isolated-udt1-cpp,isolated-sc-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-o64" />
+   </target>
+
+   <target name="runiso-cpp-2" depends="isolated-sc-cpp,isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" />
+      <run deployment="isolated" process="ihm1" language="cpp" />
+      <run deployment="isolated" process="ihm2" language="cpp" />
+      <run deployment="isolated" process="udt1" language="cpp" />
+      <run deployment="isolated" process="udt2" language="cpp" />
+   </target>
+
+   <target name="runiso-cpp-win32-2" depends="isolated-sc-cpp,isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="ihm2" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-win32" />
+      <run deployment="isolated" process="udt2" language="cpp" os="-win32" />
+   </target>
+
+   <target name="runiso-cpp-darwin-2" depends="isolated-sc-cpp,isolated-ihm1-cpp,isolated-ihm2-cpp,isolated-udt1-cpp,isolated-udt2-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="ihm2" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt1" language="cpp" os="-o64" />
+      <run deployment="isolated" process="udt2" language="cpp" os="-o64" />
+   </target>
+
+   <target name="runmix-cpp" depends="isolated-sc-cpp,mixed-dab1-cpp,mixed-dab2-cpp">
+      <run deployment="isolated" process="sc"   language="cpp" />
+      <run deployment="mixed"    process="ihm1" language="cpp" />
+      <run deployment="mixed"    process="udt1" language="cpp" />
+   </target>
+
+   <!-- ########################################  Java  ######################################## -->
+   
+   <target name="runiso-java" depends="isolated-sc-java,isolated-ihm1-java,isolated-udt1-java">
+      <run deployment="isolated" process="sc"   language="java" />
+      <run deployment="isolated" process="ihm1" language="java" />
+      <run deployment="isolated" process="udt1" language="java" />
+   </target>
+
+   <target name="runiso-java-2" depends="isolated-sc-java,isolated-ihm1-java,isolated-ihm2-java,isolated-udt1-java,isolated-udt2-java">
+      <run deployment="isolated" process="sc"   language="java" />
+      <run deployment="isolated" process="ihm1" language="java" />
+      <run deployment="isolated" process="ihm2" language="java" />
+      <run deployment="isolated" process="udt1" language="java" />
+      <run deployment="isolated" process="udt2" language="java" />
+   </target>
+
+   <target name="runmix-java" depends="isolated-sc-java,mixed-dab1-java,mixed-dab2-java">
+      <run deployment="isolated" process="sc"   language="java" />
+      <run deployment="mixed"    process="dab1" language="java" />
+      <run deployment="mixed"    process="dab2" language="java" />
+   </target>
+
+   <!-- ########################################  Functional tests  ######################################## -->
+   
+   <target name="run-functional-tests-c" depends="isolated-sc-c,isolated-ihm1-scripted-java,isolated-udt1-c">
+      <run-tests language="c" />
+   </target>
+
+   <target name="run-functional-tests-cpp" depends="isolated-sc-cpp,isolated-ihm1-scripted-java,isolated-udt1-cpp">
+      <run-tests language="cpp" />
+   </target>
+
+   <target name="run-functional-tests-java" depends="isolated-sc-java,isolated-ihm1-scripted-java,isolated-udt1-java">
+      <run-tests language="java" />
+   </target>
+
+</project>

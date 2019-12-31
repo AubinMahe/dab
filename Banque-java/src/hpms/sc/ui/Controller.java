@@ -180,4 +180,13 @@ public class Controller implements IRepository, IController<Banque> {
    public void close() {
       Platform.runLater(() -> ((Stage)_cartes.getScene().getWindow()).close());
    }
+
+   @Override
+   public void printStatusOf( String carteID ) {
+      final Carte  carte  = getCarte( carteID );
+      final Compte compte = getCompte( carteID );
+      System.err.printf( "TEST|nbEssais = %d\n", carte.getNbEssais());
+      System.err.printf( "TEST|solde    = %7.2f\n", compte.getSolde());
+      System.err.flush();
+   }
 }

@@ -13,13 +13,14 @@
       <fileset dir="${jfx-path}" includes="*.jar" />
    </path>
 
-   <property name="jutil"           location="../dab-lib/util.jar" />
-   <property name="dabtypes"        location="../dab-lib/hpms.dabtypes.jar" />
-   <property name="Banque"          location="../dab-lib/Banque.jar" />
-   <property name="Controleur"      location="../dab-lib/Controleur.jar" />
-   <property name="Distributeur"    location="../dab-lib/Distributeur.jar" />
-   <property name="component-jar"   location="../dab-lib/${ant.project.name}.jar" />
-   <property name="application-jar" location="../dab-bin/${ant.project.name}.jar" />
+   <property name="jutil"                 location="../dab-lib/util.jar" />
+   <property name="dabtypes"              location="../dab-lib/hpms.dabtypes.jar" />
+   <property name="Banque"                location="../dab-lib/Banque.jar" />
+   <property name="Controleur"            location="../dab-lib/Controleur.jar" />
+   <property name="Distributeur"          location="../dab-lib/Distributeur.jar" />
+   <property name="Distributeur-scripted" location="../dab-lib/Distributeur-scripted.jar" />
+   <property name="component-jar"         location="../dab-lib/${ant.project.name}.jar" />
+   <property name="application-jar"       location="../dab-bin/${ant.project.name}.jar" />
 
    <target name="clean">
       <delete dir="build" />
@@ -50,17 +51,20 @@
       <jar destfile="${component-jar}" basedir="build" />
    </target>
 
-   <target name="javac-application">
-      <mkdir dir="build" />
-      <javac
-         destdir          ="build"
-         includeantruntime="false"
-         classpath="${jutil}:${dabtypes}:${Banque}:${Controleur}:${Distributeur}">
-         <classpath refid="jfx" />
-         <src path="src" />
-         <src path="src-gen" />
-      </javac>
-   </target>
+   <macrodef name="javac-application">
+      <attribute name="components" />
+      <sequential>
+         <mkdir dir="build" />
+         <javac
+            destdir          ="build"
+            includeantruntime="false"
+            classpath="${jutil}:${dabtypes}:@{components}">
+            <classpath refid="jfx" />
+            <src path="src" />
+            <src path="src-gen" />
+         </javac>
+      </sequential>
+   </macrodef>
 
    <macrodef name="jar-application">
       <attribute name="main-class" />

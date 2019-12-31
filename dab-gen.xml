@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<distributed-application-generation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:noNamespaceSchemaLocation="distributed-application-generation.xsd"
+   xmlns:xi="http://www.w3.org/2001/XInclude">
+
+   <types name="dabtypes">
+      <type-impl language="C"    src-dir="dabtypes-c/src-gen"    module-name="DBT" />
+      <type-impl language="C++"  src-dir="dabtypes-cpp/src-gen"  module-name="hpms::dabtypes" />
+      <type-impl language="Java" src-dir="dabtypes-java/src-gen" module-name="hpms.dabtypes" />
+   </types>
+
+   <component name="Distributeur">
+      <comp-impl name="distributeur-c"        language="C"    src-dir="Distributeur-c/src-gen"             module-name="DAB" />
+      <comp-impl name="distributeur-cpp"      language="C++"  src-dir="Distributeur-cpp/src-gen"           module-name="hpms::dab" />
+      <comp-impl name="distributeur-java"     language="Java" src-dir="Distributeur-java/src-gen"          module-name="hpms.dab" />
+      <comp-impl name="distributeur-scripted" language="Java" src-dir="Distributeur-scripted-java/src-gen" module-name="hpms.scripted.dab" />
+   </component>
+
+   <component name="Controleur">
+      <comp-impl name="controleur-c"    language="C"    src-dir="Controleur-c/src-gen"    module-name="UDT" />
+      <comp-impl name="controleur-cpp"  language="C++"  src-dir="Controleur-cpp/src-gen"  module-name="hpms::udt" />
+      <comp-impl name="controleur-java" language="Java" src-dir="Controleur-java/src-gen" module-name="hpms.udt" />
+   </component> 
+
+   <component name="Banque">
+      <comp-impl name="banque-c"    language="C"    src-dir="Banque-c/src-gen"    module-name="SC" />
+      <comp-impl name="banque-cpp"  language="C++"  src-dir="Banque-cpp/src-gen"  module-name="hpms::sc" />
+      <comp-impl name="banque-java" language="Java" src-dir="Banque-java/src-gen" module-name="hpms.sc" />
+   </component>
+
+   <deployment name="isolated">
+      <process name="sc" address="127.0.0.1" port="2416">
+         <factory language="C"    src-dir="isolated-sc-c/src-gen"    module-name="ISOSC" />
+         <factory language="C++"  src-dir="isolated-sc-cpp/src-gen"  module-name="isolated::sc" />
+         <factory language="Java" src-dir="isolated-sc-java/src-gen" module-name="isolated.sc" />
+      </process>
+      <process name="udt1" address="127.0.0.1" port="2417">
+         <factory language="C"    src-dir="isolated-udt1-c/src-gen"    module-name="ISOUDT1" />
+         <factory language="C++"  src-dir="isolated-udt1-cpp/src-gen"  module-name="isolated::udt1" />
+         <factory language="Java" src-dir="isolated-udt1-java/src-gen" module-name="isolated.udt1" />
+      </process>
+      <process name="ihm1" address="127.0.0.1" port="2418">
+         <factory language="C"    src-dir="isolated-ihm1-c/src-gen"    module-name="ISOIHM1" />
+         <factory language="C++"  src-dir="isolated-ihm1-cpp/src-gen"  module-name="isolated::ihm1" />
+         <factory language="Java" src-dir="isolated-ihm1-java/src-gen" module-name="isolated.ihm1">
+            <comp-impl-ref name="distributeur-java" />
+         </factory>
+         <factory language="Java" src-dir="isolated-ihm1-scripted-java/src-gen" module-name="isolated.scripted.ihm1">
+            <comp-impl-ref name="distributeur-scripted" />
+         </factory>
+      </process>
+      <process name="udt2" address="127.0.0.1" port="2419">
+         <factory language="C"    src-dir="isolated-udt2-c/src-gen"    module-name="ISOUDT2" />
+         <factory language="C++"  src-dir="isolated-udt2-cpp/src-gen"  module-name="isolated::udt2" />
+         <factory language="Java" src-dir="isolated-udt2-java/src-gen" module-name="isolated.udt2" />
+      </process>
+      <process name="ihm2" address="127.0.0.1" port="2420">
+         <factory language="C"    src-dir="isolated-ihm2-c/src-gen"    module-name="ISOIHM2" />
+         <factory language="C++"  src-dir="isolated-ihm2-cpp/src-gen"  module-name="isolated::ihm2" />
+         <factory language="Java" src-dir="isolated-ihm2-java/src-gen" module-name="isolated.ihm2">
+            <comp-impl-ref name="distributeur-java" />
+         </factory>
+      </process>
+   </deployment>
+
+   <deployment name="mixed">
+      <process-ref deployment="isolated" process="sc" />
+      <process name="dab1" address="127.0.0.1" port="2417">
+         <factory language="C"    src-dir="mixed-dab1-c/src-gen"    module-name="MIXDAB1" />
+         <factory language="C++"  src-dir="mixed-dab1-cpp/src-gen"  module-name="mixed::dab1" />
+         <factory language="Java" src-dir="mixed-dab1-java/src-gen" module-name="mixed.dab1">
+            <comp-impl-ref name="distributeur-java" />
+         </factory>
+      </process>
+      <process name="dab2" address="127.0.0.1" port="2418">
+         <factory language="C"    src-dir="mixed-dab2-c/src-gen"    module-name="MIXDAB2" />
+         <factory language="C++"  src-dir="mixed-dab2-cpp/src-gen"  module-name="mixed::dab2" />
+         <factory language="Java" src-dir="mixed-dab2-java/src-gen" module-name="mixed.dab2">
+            <comp-impl-ref name="distributeur-java" />
+         </factory>
+      </process>
+   </deployment>
+
+   <deployment name="allin">
+      <process name="one" address="127.0.0.1" port="2416">
+         <factory language="C"    src-dir="allin-one-c/src-gen"    module-name="ALLINONE" />
+         <factory language="C++"  src-dir="allin-one-cpp/src-gen"  module-name="allin::one" />
+         <factory language="Java" src-dir="allin-one-java/src-gen" module-name="allin.one">
+            <comp-impl-ref name="distributeur-java" />
+         </factory>
+      </process>
+   </deployment>
+
+</distributed-application-generation>

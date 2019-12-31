@@ -581,7 +581,8 @@ public abstract class <component.name>Component implements <ifaces:{iface|I<ifac
 <component.timeout:{to|
    private static final Duration <to.name; format="ID">_DURATION = Duration.of<to.unit.toJava; format="cap">( <to.duration> );
 }>
-   protected final byte _instanceID;
+   protected final byte         _instanceID;
+   protected final da.IMainLoop _mainLoop;
 < if( component.timeout )>
    private <component.name>Dispatcher _dispatcher;
 
@@ -603,8 +604,9 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
 }>
    <actions:{action|protected abstract void <action>();
 }>
-   public <component.name>Component( byte instanceID ) {
+   public <component.name>Component( byte instanceID, da.IMainLoop mainLoop ) {
       _instanceID = instanceID;
+      _mainLoop   = mainLoop;
    }
 
    public void init() {}
@@ -756,7 +758,7 @@ targetList( to ) ::= <<
 
 componentFactoryProxiesInit() ::= <<
 //-- proxies init --
-<deployment.process:{process|
+<processesImpl:{process|
 final InetSocketAddress <process.name; format="argument"> = new InetSocketAddress( "<process.address>", <process.port> );
 }><proxies:{proxy|
 final <proxy.module>.<proxy.interface> <proxy.interface; format="argument">For<proxy.from; format="cap"> =
@@ -797,7 +799,8 @@ componentFactoryDataPublishers() ::= <<
 
 
 componentFactory(
-   package, deployment, process, processes, proxies, dataPublishers, consumedData, types, modules, ids
+   package, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
+   proxies, dataPublishers, consumedData, types, modules, ids
 ) ::= <<
 package <package>;
 // componentFactory
@@ -812,26 +815,28 @@ import java.nio.channels.DatagramChannel;
 
 import da.Targets;
 
-public final class ComponentFactory extends Thread {
+public final class ComponentFactory extends Thread implements da.IMainLoop {
 
    //-- instances ID --
    <ids:{instance|private static final byte <instance; format="ID"> = <ids.(instance)>;}; separator="\n">
 
-   private final DatagramChannel  _channel;
+   private final DatagramChannel _channel;
+   private /* */ boolean         _running;
    //-- instances init --
 <process.instance:{instance|
    private final <modules.(instance.component)>.<instance.component.name> _<instance.name; format="argument"
-      > = new <modules.(instance.component)>.<instance.component.name>( <instance.name; format="ID"> );
+      > = new <modules.(instance.component)>.<instance.component.name>( <instance.name; format="ID">, this );
 }>
    //-- dispatchers --
 <process.instance:{instance|
    private final <modules.(instance.component)>.<instance.component.name>Dispatcher _<instance.name>Dispatcher;
 }>
    public ComponentFactory() throws IOException {
+      _running = false;
       _channel = DatagramChannel
          .open     ( StandardProtocolFamily.INET )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-         .bind     ( new InetSocketAddress( "<process.address>", <process.port> ));
+         .bind     ( new InetSocketAddress( "<processImpl.address>", <processImpl.port> ));
 
       <componentFactoryProxiesInit()>
       <componentFactoryDispatchersInit()>
@@ -843,6 +848,17 @@ public final class ComponentFactory extends Thread {
       start();
    }
 
+   @Override
+   public boolean isRunning() {
+      return _running;
+   }
+
+   @Override
+   public void terminate() throws IOException {
+      _running = false;
+      _channel.close();
+   }
+
 <process.instance:{instance|
    public <modules.(instance.component)>.<instance.component.name> get<instance.name; format="cap">() {
       return _<instance.name; format="argument">;
@@ -851,7 +867,8 @@ public final class ComponentFactory extends Thread {
 }>   @Override
    public final void run() {
       final ByteBuffer in = ByteBuffer.allocate( 64*1024 );
-      for(;;) {
+      _running = true;
+      while( _running ) {
          try {
             in.clear();
             final SocketAddress from = _channel.receive( in );
@@ -876,7 +893,7 @@ public final class ComponentFactory extends Thread {
          }
          catch( final IOException e ) {
             e.printStackTrace();
-            System.exit( 1 );
+            _running = false;
          }
       }
    }

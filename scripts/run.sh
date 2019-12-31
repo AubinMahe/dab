@@ -1,10 +1,10 @@
-#/bin/bash
+#!/bin/bash
 
 #set -x
 
 SCRIPT_HOME=$(dirname $0)
 
-if [ $# -ne 1 ]
+if [[ $# -ne 1 && $# -ne 2 ]]
 then
    echo "One argument expected: <deployment-name>-<process-name>[-<language-name>[-{win32|o64}]], it must be a compiled executable in dab-bin directory"
    echo "Deployments and processes names are specified in dab.xml"
@@ -48,16 +48,22 @@ if [[ ! "$IMPL" =~ ^(c|cpp|java)$ ]]; then
    exit 1
 fi
 
+HOLD=""
+if [ $# -eq 1 ]
+then
+   HOLD="-hold"
+fi
+
 if [ "$IMPL" == "java" ]
 then
    case $PROCESS in
-      isolated-ihm1) xterm -title "IHM-1"     -geometry 100x30+-9+211 -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      isolated-ihm2) xterm -title "IHM-2"     -geometry 100x30--9+211 -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      isolated-udt1) xterm -title "UDT-1"     -geometry 100x30+-9-16  -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      isolated-udt2) xterm -title "UDT-2"     -geometry 100x30--9-16  -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      isolated-sc)   xterm -title "Banque"    -geometry 100x30-649-0  -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      mixed-sc)      xterm -title "Banque"    -geometry 100x30-649-0  -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
-      mixed-dab)     xterm -title "IHMs+UDTs" -geometry 100x30+-9-0   -hold -e ${SCRIPT_HOME}/run-java.sh $PROCESS & ;;
+      isolated-ihm1) xterm -title "IHM-1"     -geometry 100x30+-9+211 ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      isolated-ihm2) xterm -title "IHM-2"     -geometry 100x30--9+211 ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      isolated-udt1) xterm -title "UDT-1"     -geometry 100x30+-9-16  ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      isolated-udt2) xterm -title "UDT-2"     -geometry 100x30--9-16  ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      isolated-sc)   xterm -title "Banque"    -geometry 100x30-649-0  ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      mixed-sc)      xterm -title "Banque"    -geometry 100x30-649-0  ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
+      mixed-dab)     xterm -title "IHMs+UDTs" -geometry 100x30+-9-0   ${HOLD} -e ${SCRIPT_HOME}/run-java.sh $PROCESS $2 & ;;
       *) echo "Unexpected deployment and process: '$PROCESS'" ; exit 1 ;;
    esac
 else
@@ -69,11 +75,11 @@ else
    ControleurLocation=227x30+276 
    BanqueLocation=45x30-0
    case $PROCESS in
-      isolated-ihm1) xterm -title "DAB-1 $IMPL"  -geometry ${DistributeurLocation}-16  -hold -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH & ;;
-      isolated-ihm2) xterm -title "DAB-2 $IMPL"  -geometry ${DistributeurLocation}-200 -hold -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH & ;;
-      isolated-udt1) xterm -title "UDT-1 $IMPL"  -geometry ${ControleurLocation}-16    -hold -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH & ;;
-      isolated-udt2) xterm -title "UDT-2 $IMPL"  -geometry ${ControleurLocation}-200   -hold -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH & ;;
-      isolated-sc)   xterm -title "Banque $IMPL" -geometry ${BanqueLocation}-16        -hold -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH & ;;
+      isolated-ihm1) xterm -title "DAB-1 $IMPL"  -geometry ${DistributeurLocation}-16  ${HOLD} -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH $2 & ;;
+      isolated-ihm2) xterm -title "DAB-2 $IMPL"  -geometry ${DistributeurLocation}-200 ${HOLD} -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH $2 & ;;
+      isolated-udt1) xterm -title "UDT-1 $IMPL"  -geometry ${ControleurLocation}-16    ${HOLD} -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH $2 & ;;
+      isolated-udt2) xterm -title "UDT-2 $IMPL"  -geometry ${ControleurLocation}-200   ${HOLD} -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH $2 & ;;
+      isolated-sc)   xterm -title "Banque $IMPL" -geometry ${BanqueLocation}-16        ${HOLD} -e ${SCRIPT_HOME}/$OS.sh $PROCESS_PATH $2 & ;;
       *) echo "Unexpected deployment and process: '$PROCESS'" ; exit 1 ;;
    esac
 fi

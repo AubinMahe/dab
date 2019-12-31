@@ -1,5 +1,5 @@
 C_SRCS    = src/main.c
-C_SRCSGEN = src-gen/isolated_ihm1/factory.c
+C_SRCSGEN = src-gen/ISOIHM1/factory.c
 CINC      = -I ../Distributeur-c/inc -I ../Distributeur-c/src-gen
 
 .PHONY: all

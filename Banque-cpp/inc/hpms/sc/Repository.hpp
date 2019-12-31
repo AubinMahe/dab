@@ -12,11 +12,13 @@ namespace hpms::sc {
 
    public:
 
-      hpms::dabtypes::Carte *  getCarte ( const char * carte_id );
-      hpms::dabtypes::Compte * getCompte( const char * carte_id );
+      const hpms::dabtypes::Carte *  getCarte ( const char * carte_id ) const;
+      const hpms::dabtypes::Compte * getCompte( const char * carte_id ) const;
 
       const hpms::dabtypes::Carte *  getCartes ( unsigned & count ) const;
       const hpms::dabtypes::Compte * getComptes( unsigned & count ) const;
+
+      void printStatusOf( const char * carteID ) const;
 
    private:
 

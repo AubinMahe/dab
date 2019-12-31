@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="mixed-dab1" default="jar-application">
+<project name="isolated-ihm1-scripted" default="jar-application">
    <import file="../ant-common.xml" />
    <target name="javac-application">
-      <javac-application components="${Controleur}:${Distributeur}" />
+      <javac-application components="${Distributeur-scripted}" />
    </target>
    <target name="jar-application" depends="javac-application">
       <jar-application
-         main-class="hpms.dab.ui.Main"
-         components="${Controleur} ${Distributeur}" />
+         main-class="hpms.dab.scripted.Main"
+         components="${Distributeur-scripted}" />
    </target>
 </project>

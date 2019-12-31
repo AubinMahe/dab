@@ -1,5 +1,5 @@
 C_SRCS    = src/main.c
-C_SRCSGEN = src-gen/allin_one/factory.c
+C_SRCSGEN = src-gen/ALLINONE/factory.c
 CINC      =\
  -I ../Banque-c/inc\
  -I ../Banque-c/src-gen\

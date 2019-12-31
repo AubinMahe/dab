@@ -13,8 +13,8 @@ public final class Controleur extends ControleurComponent {
    private final Compte _compte = new Compte();
    private /* */ double _montantDeLatransactionEnCours = 0.0;
 
-   public Controleur( byte instanceID ) {
-      super( instanceID );
+   public Controleur( byte instanceID, da.IMainLoop mainLoop ) {
+      super( instanceID, mainLoop );
    }
 
    @Override
@@ -69,7 +69,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void informationsResponse( hpms.dabtypes.Information information ) throws IOException {
-      final hpms.dabtypes.Carte carte = information.carte;
+      final hpms.dabtypes.Carte  carte  = information.carte;
       final hpms.dabtypes.Compte compte = information.compte;
       _carte .set( carte );
       _compte.set( compte );
