@@ -26,6 +26,10 @@ Sauf pour Java, les librairies n'ont pas recourt à l'allocation dynamique de m�
 
 La génération de code, réalisée en Java, s'appuie sur un modèle commun et trois modèles `StringTemplate` spécifiques des trois langages cibles. La liste des sources générée est également produite pour faciliter l'écriture des *makefiles* au moyen d'un quatrième modèle `StringTemplate`.
 
+## Modèle de génération ##
+
+Le modèle de composants est dans [dab.xml](dab.xml) alors que le modèle de génération est dans [dab-gen.xml](dab-gen.xml). Ce dernier modèle spécifie ce qui est relatif aux langages, aux codages. Il est lui-même décrit par le schéma [distributed-application-generation.xsd](distributed-application-generation.xsd).
+
 ## Les projets :
 
 - **Banque** : une application IHM en C, C++ ou Java qui montre l'état des comptes bancaires et des cartes de crédit
@@ -109,11 +113,11 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
     1. isolated-sc-java  : `(cd isolated-sc-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
+## Tests de non régression ##
+
+Les tests de non-régression pour les 3 langages et les 3 déploiements sont réalisés à l'aide d'une implémentation du composant Distributeur qui exécute un scénario cadencé par le temps et les événements. La validation du comportement des composants Controleur et Banque est effectuée par analyse des logs d'exécution. Le testeur est en Java mais permet de tester les trois implémentations.
 
 ## Reste à faire
-
-1. Écrire des tests de non-régression pour les 3 langages et les 3 déploiements : ajouter une nouvelle implémentation du composant Distributeur qui exécute un script. La validation du comportement des composants Controleur et Banque sera effectuée par analyse des logs d'exécution.
-Le premier essai montre un défaut : le modèle permet de spécifier plusieurs implémentations par langage mais le générateur de factory n'utilise que la dernière déclarée. Un paramétrage de la génération de factory est nécessaire, afin de spécifier l'implémentation de chaque instance.
 
 1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
  
