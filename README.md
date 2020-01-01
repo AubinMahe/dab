@@ -15,7 +15,7 @@ La régularité de l'architecture sous-tend la régularité du code, une grande 
 Dans le diagramme de classe UML du composant 'Distributeur' (IHM) ci-dessous, seul la classe `Distributeur` est manuelle :
 
 ![UML class diagram](dab-class-diagram.png "Diagramme de classe UML du composant 'Distributeur' (IHM)")
- 
+
 Il a été développé quelques bibliothèques de classes (Java et C++) et de fonctions C afin de :
 - Rendre homogène le traitement des messages et des événements quel que soit le langage cible : <a href="https://fr.wikipedia.org/wiki/C_(langage)">C</a>, <a href="https://fr.wikipedia.org/wiki/C%2B%2B">C++</a> et <a href="https://fr.wikipedia.org/wiki/Java_(langage)">Java</a>.
 - Faciliter le portage entre les OS <a href="https://fr.wikipedia.org/wiki/Linux">GNU/Linux</a>, <a href="https://fr.wikipedia.org/wiki/Microsoft_Windows">Microsoft Windows</a> et <a href="https://fr.wikipedia.org/wiki/MacOS">macOS</a>
@@ -28,7 +28,8 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 
 ## Modèle de génération ##
 
-Le modèle de composants est dans [dab.xml](dab.xml) alors que le modèle de génération est dans [dab-gen.xml](dab-gen.xml). Ce dernier modèle spécifie ce qui est relatif aux langages, aux codages. Il est lui-même décrit par le schéma [distributed-application-generation.xsd](distributed-application-generation.xsd).
+Le modèle logique de composants est dans [dab.xml](dab.xml) alors que le modèle physique de génération d'artefact - avec des variations suivants les langages C, C++ ou Java - et de paramètrage des processus (adresses, port) est dans [dab-gen.xml](dab-gen.xml). Il est lui-même décrit par le schéma [distributed-application-generation.xsd](distributed-application-generation.xsd).
+Chaque composant donne lieu à la génération d'une librairie dynamique alors que les factories sont des exécutables. Ce sont ces dernières qui assument le paramètrage des processus.
 
 ## Les projets :
 
@@ -91,6 +92,9 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
     1. isolated-ihm1-c   : `(cd isolated-ihm1-c && make)`
     1. isolated-ihm2-c   : `(cd isolated-ihm2-c && make)`
     1. isolated-sc-c     : `(cd isolated-sc-c && make)`
+    1. mixed-dab1-c      : `(cd mixed-dab1-c && make)`
+    1. mixed-dab2-c      : `(cd mixed-dab2-c && make)`
+    1. allin-one-c       : `(cd allin-one-c && make)`
     1. util-cpp          : `(cd util-cpp && make)`
     1. dabtypes-cpp      : `(cd dabtypes-cpp && make)`
     1. Controleur-cpp    : `(cd Controleur-cpp && make)`
@@ -101,6 +105,9 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
     1. isolated-ihm1-cpp : `(cd isolated-ihm1-cpp  && make)`
     1. isolated-ihm2-cpp : `(cd isolated-ihm2-cpp  && make)`
     1. isolated-sc-cpp   : `(cd isolated-sc-cpp  && make)`
+    1. mixed-dab1-cpp    : `(cd mixed-dab1-cpp && make)`
+    1. mixed-dab2-cpp    : `(cd mixed-dab2-cpp && make)`
+    1. allin-one-cpp     : `(cd allin-one-cpp && make)`
     1. util-java         : `(cd util-java && ant)`
     1. dabtypes-java     : `(cd dabtypes-java && ant)`
     1. Controleur-java   : `(cd Controleur-java && ant)`
@@ -111,17 +118,25 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
     1. isolated-ihm1-java: `(cd isolated-ihm1-java && ant)`
     1. isolated-ihm2-java: `(cd isolated-ihm2-java && ant)`
     1. isolated-sc-java  : `(cd isolated-sc-java && ant)`
+    1. mixed-dab1-java   : `(cd mixed-dab1-java && ant)`
+    1. mixed-dab2-java   : `(cd mixed-dab2-java && ant)`
+    1. allin-one-java    : `(cd allin-one-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
+
 ## Tests de non régression ##
 
-Les tests de non-régression pour les 3 langages et les 3 déploiements sont réalisés à l'aide d'une implémentation du composant Distributeur qui exécute un scénario cadencé par le temps et les événements. La validation du comportement des composants Controleur et Banque est effectuée par analyse des logs d'exécution. Le testeur est en Java mais permet de tester les trois implémentations.
+Les tests de non-régression pour les 3 langages et les 3 déploiements sont réalisés à l'aide d'une implémentation du composant Distributeur qui exécute un scénario cadencé par le temps et les événements. La validation du comportement des composants Controleur et Banque est effectuée par analyse des logs d'exécution. Le testeur est en Java mais permet de tester les trois implémentations C, C++ et Java.
 
 ## Reste à faire
 
 1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
- 
-1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de classes **et de makefile** serait bienvenu. A faire en Java pour Java, C et C++.
+
+1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraichies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique.
+
+1. Dans la continuité du point précédent, il serait possible d'offrir plusieurs file d'attente et de ventiler les messages reçus en fonction de leur priorité. Les messages seraient alors *activant* pour une file ou pour toutes.
+
+1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de classes **et de makefile** serait bienvenu. A faire en Java pour C, C++ et Java.
 
 1. Automate : associer une action au franchissement d'une transition.
 

@@ -23,24 +23,17 @@ types dabtypes
       etat        dabtypes.Etat "Etat courant de l'automate du composant Controleur"
       soldeCaisse double        "Montant de la caisse en €"
 
-   generation
-      C    as 'DBT'            in "dabtypes-c/src-gen"
-      C++  as 'hpms::dabtypes' in "dabtypes-cpp/src-gen"
-      Java as 'hpms.dabtypes'  in "dabtypes-java/src-gen"
-
 interface IHM
    event ejecterLaCarte
    event ejecterLesBillets
       montant double            "Montant à donner à l'utilisateur du DAB"
    event confisquerLaCarte
    event placerLesBilletsDansLaCorbeille
-   event shutdown
+   event arret
 
 interface UniteDeTraitement
    data etatDuDab               "Partage des données décrivant l'état du DAB"
       dabtypes.EtatDuDab        
-   event maintenance            
-      maintenance boolean       "Maintenance active (true) ou inactive (false)"
    event rechargerLaCaisse      
       montant double            "Montant à rajouter dans la caisse"
    event anomalie               
@@ -54,7 +47,11 @@ interface UniteDeTraitement
    event carteRetiree
    event billetsRetires
    event annulationDemandeeParLeClient
-   event shutdown
+   event arret
+
+interface Maintenable
+   event maintenance
+      maintenance boolean "Maintenance active (true) ou inactive (false)"
 
 interface SiteCentral
    request informations         "Requête asynchrone auprès du site central qui retourne les informations de carte et de compte à partir de l'id de carte"
@@ -67,75 +64,94 @@ interface SiteCentral
    event retrait                
       carteID string[4]         "Identifiant de la carte"
       montant double            "Montant du retrait en €"
-   event shutdown
+   event arret
 
-component Distributeur 
+component Distributeur
    offers   IHM
-   requires UniteDeTraitement
-   generation
-      C    as 'DAB'       in "distributeur-c/src-gen"
-      C++  as 'hpms::dab' in "distributeur-cpp/src-gen"
-      Java as 'hpms.dab'  in "distributeur-java/src-gen"
+   requires Maintenable UniteDeTraitement
 
 component Controleur
-   offers   UniteDeTraitement
+   offers   Maintenable UniteDeTraitement
    requires IHM SiteCentral
    timeout
       saisieDuCode      30 seconds
       saisieDuMontant   30 seconds
       retraitDeLaCarte  10 seconds
       retraitDesBillets 10 seconds
-   uses an automaton 
-   generation
-      C    as 'UDT'       in "udt-c/src-gen"
-      C++  as 'hpms::udt' in "udt-cpp/src-gen"
-      Java as 'hpms.udt'  in "udt-java/src-gen"
+   uses an automaton
 
 component Banque
    offers SiteCentral
-   generation
-      C    as 'SC'       in "sc-c/src-gen"
-      C++  as 'hpms::sc' in "sc-cpp/src-gen"
-      Java as 'hpms.sc'  in "sc-java/src-gen"
+   requires Maintenable
 
 deployment isolated
-   process sc 127.0.0.1:2416
+   process sc
       instance sc of Banque
-   process udt1 127.0.0.1:2417
+         requires
+            Maintenable from { udt1, udt2 }
+   process udt1
       instance udt1 of Controleur
          requires
-            SiteCentral sc
-            IHM         ihm1
-   process ihm1 127.0.0.1:2418
+            IHM         from ihm1
+            SiteCentral from sc
+   process ihm1
       instance ihm1 of Distributeur
          requires
-            UniteDeTraitement udt1
-   process udt2 127.0.0.1:2419
+            Maintenable from udt1
+            UniteDeTraitement from udt1
+   process udt2
       instance udt2 of Controleur
          requires
-            SiteCentral sc
-            IHM         ihm2
-   process ihm2 127.0.0.1:2420
+            IHM         from ihm2
+            SiteCentral from sc
+   process ihm2
       instance ihm2 of Distributeur
          requires
-            UniteDeTraitement udt2
+            Maintenable from udt2
+            UniteDeTraitement from udt2
 
 deployment mixed
-   process sc 127.0.0.1:2416
+   process sc
       instance sc of Banque
-   process dab 127.0.0.1:2417
+         requires
+            Maintenable from { udt1, udt2 }
+   process dab1
       instance udt1 of Controleur
          requires
-            SiteCentral sc
-            IHM         ihm1
+            IHM         from ihm2
+            SiteCentral from sc
       instance ihm1 of Distributeur
          requires
-            UniteDeTraitement udt1
+            Maintenable from udt2
+            UniteDeTraitement from udt2
+   process dab2
       instance udt2 of Controleur
          requires
-            SiteCentral sc
-            IHM         ihm2
+            IHM         from ihm1
+            SiteCentral from sc
       instance ihm2 of Distributeur
          requires
-            UniteDeTraitement udt2
- 
+            Maintenable from udt1
+            UniteDeTraitement from udt1
+
+deployment allin
+   process one
+      instance sc of Banque
+         requires
+            Maintenable from { udt1, udt2 }
+      instance udt1 of Controleur
+         requires
+            IHM         from ihm1
+            SiteCentral from sc
+      instance ihm1 of Distributeur
+         requires
+            Maintenable from udt1
+            UniteDeTraitement from udt1
+      instance udt2 of Controleur
+         requires
+            IHM         from ihm2
+            SiteCentral from sc
+      instance ihm2 of Distributeur
+         requires
+            Maintenable from udt2
+            UniteDeTraitement from udt2

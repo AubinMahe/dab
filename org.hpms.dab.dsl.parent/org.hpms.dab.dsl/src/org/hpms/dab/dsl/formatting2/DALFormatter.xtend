@@ -20,6 +20,5 @@ class DALFormatter extends AbstractFormatter2 {
 		for( enumType : types.enums ) {
 			enumType.format
 		}
-		types.generation.format
 	}
 }

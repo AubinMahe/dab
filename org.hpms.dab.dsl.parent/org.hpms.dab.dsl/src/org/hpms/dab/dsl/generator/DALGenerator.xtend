@@ -34,7 +34,7 @@ class DALGenerator extends AbstractGenerator {
    »'''
 
    private def description( String indent, String description ) {
-      if( description === null || description.isBlank ) {
+      if( description === null || description.isEmpty ) {
          return "";
       }
       return '''
@@ -48,7 +48,7 @@ class DALGenerator extends AbstractGenerator {
          xsi:noNamespaceSchemaLocation="distributed-application.xsd"
          xmlns:xi="http://www.w3.org/2001/XInclude">
       «IF ! ( model.types.structs.empty && model.types.structs.empty )
-»   <types module-name="«model.types.name»">
+»   <types name="«model.types.name»">
             «FOR clazz : model.types.structs»
 
                <struct name="«clazz.name»">
@@ -67,10 +67,6 @@ class DALGenerator extends AbstractGenerator {
                   «ENDFOR»
                   </enumeration>
                «ENDIF»
-            «ENDFOR»
-
-            «FOR language : model.types.generation.languages»
-               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name.substring( 1, language.name.length - 1 )»" />
             «ENDFOR»
          </types>
 
@@ -110,7 +106,7 @@ class DALGenerator extends AbstractGenerator {
 
       «ENDFOR»
       «FOR component : model.components
-»   <component name="«component.name»" after-dispatch-needed="«component.afterDispatch»">
+»   <component name="«component.name»">
             «FOR offer : component.offers»
                <offers interface="«offer.intrfc.name»" />
             «ENDFOR»
@@ -123,23 +119,24 @@ class DALGenerator extends AbstractGenerator {
             «IF component.usesAutomaton»
                <xi:include href="./«component.name».automaton" />
             «ENDIF»
-            «FOR language : component.generation.languages»
-               <implementation language="«language.lang»" src-dir="«language.sources»" module-name="«language.name.substring( 1, language.name.length - 1 )»" />
-            «ENDFOR»
          </component>
 
       «ENDFOR»
       «FOR deployment : model.deployments
 »   <deployment name="«deployment.name»">
             «FOR process : deployment.processes»
-               <process name="«process.name»" address="«IF process.hostname !== null»«process.hostname»«ELSE»«process.ip»«ENDIF»" port="«process.port»">
+               <process name="«process.name»">
                   «FOR instance : process.instances»
                      «IF instance.requires.isEmpty»
                         <instance name="«instance.name»" component="«instance.component.name»" />
                      «ELSE»
                         <instance name="«instance.name»" component="«instance.component.name»">
                            «FOR require : instance.requires»
-                              <requires interface="«require.intrfc.name»" to-instance="«require.instance.name»" />
+                              <requires interface="«require.intrfc.name»">
+                                 «FOR from : require.instances»
+                                    <from-instance name="«from.name»" />
+                                 «ENDFOR»
+                              </requires>
                            «ENDFOR»
                         </instance>
                      «ENDIF»

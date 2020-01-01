@@ -20,7 +20,7 @@ import org.hpms.dab.dsl.dal.instance
 class DALScopeProvider extends AbstractDALScopeProvider {
 
    override getScope(EObject context, EReference reference) {
-      if( context instanceof connection && reference == DalPackage.Literals.CONNECTION__INSTANCE ) {
+      if( context instanceof connection && reference == DalPackage.Literals.CONNECTION__INSTANCES ) {
          val deployment = EcoreUtil2.getContainerOfType( context, deployment );
          val candidates = EcoreUtil2.getAllContentsOfType( deployment, instance )
          return Scopes.scopeFor( candidates )

@@ -1,0 +1,66 @@
+types dabtypes
+   C    in "dabtypes-c/src-gen"    module DBT
+   C++  in "dabtypes-cpp/src-gen"  module hpms::dabtypes
+   Java in "dabtypes-java/src-gen" module hpms.dabtypes
+
+component Distributeur
+   C     distributeur-c        in "Distributeur-c/src-gen"             module DAB
+   C++   distributeur-cpp      in "Distributeur-cpp/src-gen"           module hpms::dab
+   Java  distributeur-java     in "Distributeur-java/src-gen"          module hpms.dab
+   Java  distributeur-scripted in "Distributeur-scripted-java/src-gen" module hpms.scripted.dab
+
+component Controleur
+   C    controleur-c    in"Controleur-c/src-gen"    module UDT
+   C++  controleur-cpp  in"Controleur-cpp/src-gen"  module hpms::udt
+   Java controleur-java in"Controleur-java/src-gen" module hpms.udt
+
+component Banque
+   C    banque-c    in "Banque-c/src-gen"    module SC
+   C++  banque-cpp  in "Banque-cpp/src-gen"  module hpms::sc
+   Java banque-java in "Banque-java/src-gen" module hpms.sc
+
+deployment isolated
+   process sc 127.0.0.1:2416
+      C    in "isolated-sc-c/src-gen"    module ISOSC
+      C++  in "isolated-sc-cpp/src-gen"  module isolated::sc
+      Java in "isolated-sc-java/src-gen" module isolated.sc
+   process udt1 127.0.0.1:2417
+      C    in "isolated-udt1-c/src-gen"    module ISOUDT1
+      C++  in "isolated-udt1-cpp/src-gen"  module isolated::udt1
+      Java in "isolated-udt1-java/src-gen" module isolated.udt1
+   process ihm1 127.0.0.1:2418
+      C    in "isolated-ihm1-c/src-gen"    module ISOUIHM1
+      C++  in "isolated-ihm1-cpp/src-gen"  module isolated::ihm1
+      Java in "isolated-ihm1-java/src-gen" module isolated.ihm1
+         component distributeur-java
+      Java in "isolated-ihm1-scripted-java/src-gen" module isolated.scripted.ihm1
+         component distributeur-scripted
+   process udt2 127.0.0.1:2419
+      C    in "isolated-udt2-c/src-gen"    module ISOUDT1
+      C++  in "isolated-udt2-cpp/src-gen"  module isolated::udt2
+      Java in "isolated-udt2-java/src-gen" module isolated.udt2
+   process ihm2 127.0.0.1:2420
+      C    in "isolated-ihm2-c/src-gen"    module ISOUIHM1
+      C++  in "isolated-ihm2-cpp/src-gen"  module isolated::ihm2
+      Java in "isolated-ihm2-java/src-gen" module isolated.ihm2
+         component distributeur-java
+
+deployment mixed
+   process sc as defined in isolated
+   process dab1 127.0.0.1:2417
+      C    in "isolated-dab1-c/src-gen"    module MIXDAB1
+      C++  in "isolated-dab1-cpp/src-gen"  module isolated::dab1
+      Java in "isolated-dab1-java/src-gen" module isolated.dab1
+         component distributeur-java
+   process dab2 127.0.0.1:2418
+      C    in "isolated-dab2-c/src-gen"    module MIXDAB2
+      C++  in "isolated-dab2-cpp/src-gen"  module isolated::dab2
+      Java in "isolated-dab2-java/src-gen" module isolated.dab2
+         component distributeur-java
+
+deployment allin
+   process one 127.0.0.1:2416
+      C    in "allin-one-c/src-gen"    module ALLINONE
+      C++  in "allin-one-cpp/src-gen"  module allin::one
+      Java in "allin-one-java/src-gen" module allin.one
+         component distributeur-java

@@ -16,7 +16,6 @@ types :
    ( description = STRING )?
    ( structs += struct
    | enums   += enumType  )+
-   generation = generation
 ;
 struct returns UserType :
    isClass ?= 'class' name = ID
@@ -51,17 +50,6 @@ type :
    |type = 'double'
    |type = 'string' '[' length = INT ']'
    |user = QName
-;
-generation :
-   'generation' ( languages += language )+
-;
-language :
-   (
-        lang = 'C'    'as' name = CPREFIX
-      | lang = 'C++'  'as' name = NAMESPACE
-      | lang = 'Java' 'as' name = PACKAGE
-   )
-   'in' sources = STRING
 ;
 interfaceType :
    'interface' name = ID
@@ -100,12 +88,10 @@ facet :
 component :
    'component' name = ID
    ( description = STRING )?
-   ( afterDispatch ?= 'after-dispatch' 'is' 'needed' )?
    ('offers'   ( offers   += offer   )+ )?
    ('requires' ( requires += require )+ )?
    ('timeout'  ( timeouts += timeout )* )?
    ( usesAutomaton ?= 'uses' 'an' 'automaton' )?
-   generation = generation
 ;
 offer:
    intrfc = [interfaceType|ID]
@@ -130,7 +116,6 @@ deployment:
 process:
    'process' name = ID
    ( description = STRING )?
-   ( ip = IP | hostname = HOSTNAME ) ':' port = INT
    ( instances += instance )+
 ;
 instance:
@@ -140,22 +125,14 @@ instance:
    ('requires' ( requires += connection )+ )?
 ;
 connection:
-   intrfc = [interfaceType|ID] instance = [instance|ID]
-;
-terminal BYTE:
-    ('1' '2' ('0'..'7'))
-   |('1' ('0'..'1') ('0'..'9'))
-   |(('1'..'9') ('0'..'9'))
-   |('0'..'9')
+   intrfc = [interfaceType|ID] 'from'
+   (
+          instances += [instance|ID]
+   |( '{' instances += [instance|ID] ( ',' instances += [instance|ID] )+ '}' )
+   )
 ;
 terminal INT returns ecore::EInt: ('0'..'9')+;
 terminal ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
-terminal CPREFIX  : "'" ('A'..'Z') ('A'..'Z'|'0'..'9')* "'" ;
-terminal NAMESPACE: "'" (('a'..'z') ('a'..'z'|'0'..'9')*)('::'(('a'..'z') ('a'..'z'|'0'..'9')*))* "'" ;
-terminal PACKAGE  : "'" (('a'..'z') ('a'..'z'|'0'..'9')*)('.' (('a'..'z') ('a'..'z'|'0'..'9')*))* "'";
-terminal LABEL: ('a'..'z'|'0'..'9') ('a'..'z'|'-'|'0'..'9')*;
-terminal HOSTNAME: '"' LABEL ( '.' LABEL )* '"';
-terminal IP: BYTE '.' BYTE '.' BYTE '.' BYTE;
 terminal STRING:
    '"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
    "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
@@ -163,4 +140,3 @@ terminal STRING:
 terminal ML_COMMENT : '/*' -> '*/';
 terminal SL_COMMENT : '//' !('\n'|'\r')* ('\r'? '\n')?;
 terminal WS         : (' '|'\t'|'\r'|'\n')+;
-//terminal ANY_OTHER: .;

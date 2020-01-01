@@ -145,26 +145,42 @@
       </process>
       <process name="udt1">
          <instance name="udt1" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm1" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm1" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
       </process>
       <process name="ihm1">
          <instance name="ihm1" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt1" />
+            </requires>
          </instance>
       </process>
       <process name="udt2">
          <instance name="udt2" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm2" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm2" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
       </process>
       <process name="ihm2">
          <instance name="ihm2" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt2" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt2" />
+            </requires>
          </instance>
       </process>
    </deployment>
@@ -180,22 +196,38 @@
       </process>
       <process name="dab1">
          <instance name="udt1" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm2" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm2" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
          <instance name="ihm1" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt2" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt2" />
+            </requires>
          </instance>
       </process>
       <process name="dab2">
          <instance name="udt2" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm1" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm1" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
          <instance name="ihm2" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt1" />
+            </requires>
          </instance>
       </process>
    </deployment>
@@ -209,20 +241,36 @@
             </requires>
          </instance>
          <instance name="udt1" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm1" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm1" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
          <instance name="ihm1" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt1" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt1" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt1" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt1" />
+            </requires>
          </instance>
          <instance name="udt2" component="Controleur">
-            <requires interface="IHM"><from-instance name="ihm2" /></requires>
-            <requires interface="SiteCentral"><from-instance name="sc" /></requires>
+            <requires interface="IHM">
+               <from-instance name="ihm2" />
+            </requires>
+            <requires interface="SiteCentral">
+               <from-instance name="sc" />
+            </requires>
          </instance>
          <instance name="ihm2" component="Distributeur">
-            <requires interface="Maintenable"><from-instance name="udt2" /></requires>
-            <requires interface="UniteDeTraitement"><from-instance name="udt2" /></requires>
+            <requires interface="Maintenable">
+               <from-instance name="udt2" />
+            </requires>
+            <requires interface="UniteDeTraitement">
+               <from-instance name="udt2" />
+            </requires>
          </instance>
       </process>
    </deployment>
