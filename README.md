@@ -1,4 +1,4 @@
-# Distributeur automatique de billets distribué - Support pédagogique
+# Framework de systèmes distribués en C, C++ et Java
 
 ## Architecture et framework
 
@@ -20,8 +20,8 @@ Il a été développé quelques bibliothèques de classes (Java et C++) et de fo
 - Rendre homogène le traitement des messages et des événements quel que soit le langage cible : <a href="https://fr.wikipedia.org/wiki/C_(langage)">C</a>, <a href="https://fr.wikipedia.org/wiki/C%2B%2B">C++</a> et <a href="https://fr.wikipedia.org/wiki/Java_(langage)">Java</a>.
 - Faciliter le portage entre les OS <a href="https://fr.wikipedia.org/wiki/Linux">GNU/Linux</a>, <a href="https://fr.wikipedia.org/wiki/Microsoft_Windows">Microsoft Windows</a> et <a href="https://fr.wikipedia.org/wiki/MacOS">macOS</a>
 
-Sauf pour Java, les librairies n'ont pas recourt à l'allocation dynamique de mémoire. C'est pour cette raison que, en C++ :
-- la classe `std::string` a finalement été remplacée par des chaînes de longueurs fixes et pré allouées (le modèle spécifie les longueurs)
+Sauf pour Java, les librairies n'ont pas recours à l'allocation dynamique de mémoire. C'est pour cette raison que, en C++ :
+- la classe `std::string` a finalement été remplacée par des chaînes de longueurs fixes et pré-allouées (le modèle spécifie les longueurs)
 - les exceptions standard de `stdexcept` ont été remplacées par des exceptions spécifiques dérivées de `std::exception` dotées de fonctionnalités de localisation plus avancées notamment la gestion de la pile d'appel *à la Java*.
 
 La génération de code, réalisée en Java, s'appuie sur un modèle commun et trois modèles `StringTemplate` spécifiques des trois langages cibles. La liste des sources générée est également produite pour faciliter l'écriture des *makefiles* au moyen d'un quatrième modèle `StringTemplate`.
@@ -29,25 +29,46 @@ La génération de code, réalisée en Java, s'appuie sur un modèle commun et t
 ## Modèle de génération ##
 
 Le modèle logique de composants est dans [dab.xml](dab.xml) alors que le modèle physique de génération d'artefact - avec des variations suivants les langages C, C++ ou Java - et de paramètrage des processus (adresses, port) est dans [dab-gen.xml](dab-gen.xml). Il est lui-même décrit par le schéma [distributed-application-generation.xsd](distributed-application-generation.xsd).
-Chaque composant donne lieu à la génération d'une librairie dynamique alors que les factories sont des exécutables. Ce sont ces dernières qui assument le paramètrage des processus.
+Chaque composant donne lieu à la génération d'une librairie dynamique alors que les *factories* sont des exécutables. Ce sont ces dernières qui assument le paramétrage des processus.
 
 ## Les projets :
+
+Le cas mis en œuvre est un distributeur automatique de billets distribué naïf, qui déploie les composants suivants :
 
 - **Banque** : une application IHM en C, C++ ou Java qui montre l'état des comptes bancaires et des cartes de crédit
 - **Contrôleur** : l'application où est implémentée la logique du système, hors IHM en C, C++ ou Java
 - **Distributeur** : une application IHM en C, C++ ou Java qui permet de simuler l'usage d'un distributeur automatique de billet par un utilisateur final.
 
+## Les déploiements :
+
+- **isolated** est un projet où chaque composant est dans son propre processus, il permet :
+    - Des communications et des partages de données entre hôtes distants
+    - Un panachage à volonté des langages utilisés
+   
+- **mixed** isole le composant banque et déploie deux processus regroupant une unité de traitement et une IHM, croisés
+
+- **allin** déploie tous les composants au sein d'un seul processus, mono-langage.
+
+## Tests de non régression #
+Les tests de non-régression pour les 3 langages et les 3 déploiements sont réalisés à l'aide d'une implémentation du composant Distributeur qui exécute un scénario cadencé par le temps et les événements. La validation du comportement des composants `Controleur` et `Banque` est effectuée par analyse automatique des logs d'exécution par le testeur `Distributeur`. Le testeur est en Java mais permet de tester les trois implémentations C, C++ et Java.
+
 ## Construire et exécuter les projets :
 
-**Pour construire** le projet, il est nécessaire de disposer de :
+**Pour construire** les projets, il est nécessaire de disposer de :
 - **Java**, dont la version doit être supérieure ou égale à 8, [OpenJDK](https://adoptopenjdk.net/) *latest* est vivement recommandé.
 - Du compilateur **[JAXB](https://javaee.github.io/jaxb-v2/)** `xjc`, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install xjc`
-- Du compilateur **[C11 et C++17](https://gcc.gnu.org/)** pour GNU/Linux et compilateur croisé, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc gcc-mingw-w64`
-- Du [compilateur croisé Linux/macOS](https://github.com/tpoechtrager/osxcross)
-- De [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires MS-Windows et de son équivalent pour macOS : [DarlingHQ](https://www.darlinghq.org/)
+- Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
 - De l'outil de production **[Apache Ant](https://ant.apache.org/)**, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install ant`
 - De l'outil de production **[GNU Make](https://www.gnu.org/software/make/)** qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install make`
-- Les **bibliothèques JAXB** nécessaires, [qui ne sont plus fournies avec le JDK 11](https://www.jesperdj.com/2018/09/30/jaxb-on-java-9-10-11-and-beyond/) sont dans [lib](lib).
+- Des compilateurs C11 et C++17 **[gcc](https://gcc.gnu.org/)**, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc`
+- Des compilateurs croisés C11 et C++17 pour Windows **[gcc-mingw32](https://gcc.gnu.org/)**, qu'on installe sous GNU/Linux Debian/Ubuntu/Mint par `sudo apt install gcc-mingw-w64`
+- Des compilateurs croisés C11 et C++17 pour macOS **[clang-o64](https://github.com/tpoechtrager/osxcross)**, issu de [clang](https://clang.llvm.org/) 
+
+**Pour exécuter** les projets, les outils suivants sont nécessaires :
+- [WineHQ](https://www.winehq.org/) pour exécuter sous Linux des binaires Windows
+- [DarlingHQ](https://www.darlinghq.org/) pour exécuter sous macOS 
+
+On peut aussi exécuter les binaires cross-compilés directement sous l'OS cible, si on en dispose.
 
 **Pour les impatients**, se placer à la racine du projet et entrer `ant` pour construire toutes les versions : Java, C et C++ pour les cibles GNU/Linux, MinGW/Windows et macOS.
 
@@ -55,28 +76,28 @@ Chaque composant donne lieu à la génération d'une librairie dynamique alors q
 Pour lancer ces terminaux, taper `start-ttys`.
 
 **Différents déploiements** exécutables :
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en java: `ant run-java`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour GNU/Linux : `ant run-c`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour MinGW/Windows : `ant run-c-win32`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C pour macOS/Darling : `ant run-c-o64`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour GNU/Linux : `ant run-cpp`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32`
-- Pour exécuter 1 Banque, 1 Distributeur et 1 Contrôleur en C++ pour macOS/Darling : `ant run-cpp-o64`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en java : `ant run-java-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour GNU/Linux : `ant run-c-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour MinGW/Windows : `ant run-c-win32-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C pour macOS/Darling : `ant run-c-o64-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour GNU/Linux : `ant run-cpp-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
-- Pour exécuter 1 Banque, 2 Distributeur et 2 Contrôleur en C++ pour macOS/Darling : `ant run-cpp-o64-2`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en java: `ant run-java`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour GNU/Linux : `ant run-c`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour MinGW/Windows : `ant run-c-win32`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour macOS/Darling : `ant run-c-o64`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour GNU/Linux : `ant run-cpp`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour MinGW/Windows : `ant run-cpp-win32`
+- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour macOS/Darling : `ant run-cpp-o64`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en java : `ant run-java-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour GNU/Linux : `ant run-c-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour MinGW/Windows : `ant run-c-win32-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour macOS/Darling : `ant run-c-o64-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour GNU/Linux : `ant run-cpp-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
+- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour macOS/Darling : `ant run-cpp-o64-2`
 
-Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent de vérifier le routage correct des réponses aux requêtes.
+Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permettent de vérifier le routage correct des réponses aux requêtes.
 **Il est évidemment possible de panacher les langages et les OS** : une Banque en Java, un Contrôleur en C sous Microsoft Windows, un Distributeur en C++ sous macOS... Les combinaisons sont nombreuses avec 3 composants, 3 langages, 3 OS : 27 cas. Il est également possible de créer des déploiements ou les processus hébergent plus d'un composant, par exemple, les cinq composants en Java sous macOS ou un Distributeur et un Contrôleur dans le même processus sous GNU/Linux connectés à une instance de Banque sous Microsoft Windows plus un Distributeur et un Contrôleur dans le même processus sous macOS, toujours connectés à la même instance de Banque.
 
 **En pas-à-pas**, pour comprendre :
 
 - Les librairies util-xxx et dabtypes-xxx ainsi que les trois composants `Distributeur`, `Banque` et `Controleur` produisent des librairies dynamiques (.so, .dll, .dylib).
-- Les exécutables qui correspondent au `process` du modèle hébergent les factories générées, ils sont nommés &lt;deploiement>-&lt;processus>-&lt;langage>. Ce sont eux qui réalisent les instantiation, conformément au déploiement.
+- Les exécutables qui correspondent au `process` du modèle hébergent les factories générées, ils sont nommés &lt;deploiement>-&lt;processus>-&lt;langage>. Ce sont eux qui réalisent les instanciations, conformément au déploiement.
 
 1. Générer le code JAXB à partir du schéma [distributed-application.xsd](distributed-application.xsd) : `(cd disappgen && ant jaxb-gen)`
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
@@ -124,19 +145,22 @@ Les déploiements à plusieurs Distributeur et plusieurs Contrôleur permettent 
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
 
-## Tests de non régression ##
-
-Les tests de non-régression pour les 3 langages et les 3 déploiements sont réalisés à l'aide d'une implémentation du composant Distributeur qui exécute un scénario cadencé par le temps et les événements. La validation du comportement des composants Controleur et Banque est effectuée par analyse des logs d'exécution. Le testeur est en Java mais permet de tester les trois implémentations C, C++ et Java.
-
 ## Reste à faire
 
-1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et/ou au moyen d'un checker exécuté en aval de la génération
+1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et au moyen d'un checker exécuté en aval de la génération
 
-1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraichies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique.
+1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraîchies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique.
 
-1. Dans la continuité du point précédent, il serait possible d'offrir plusieurs file d'attente et de ventiler les messages reçus en fonction de leur priorité. Les messages seraient alors *activant* pour une file ou pour toutes.
+1. Dans la continuité du point précédent, il serait possible d'offrir plusieurs files d'attente et de ventiler les messages reçus en fonction de leur priorité. Les messages seraient alors *activant* pour une file ou pour toutes.
 
-1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de classes **et de makefile** serait bienvenu. A faire en Java pour C, C++ et Java.
+1. Si on sait gérer une ou plusieurs files d'attente ou pourrait revoir le threading :
+    - La version actuelle reçoit les messages, les ventile et exécute le code métier dans le même thread, ce qui n'est pas satisfaisant en cas d'attente applicative bloquante (c'est le cas pendant 3 secondes dans le composant `Banque` pour simuler le temps de recherche et de communication sur réseaux WAN sécurisés).
+    - On doit envisager au moins deux threads : l'un reçoit les messages et les ventile dans la bonne file d'attente, l'autre exécute le code applicatif.
+    - On pourrait modéliser le threading de façon à permettre un thread par requête, un thread par composant ou un thread par processus.
+
+1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de composant serait bienvenu. À faire en Java pour C, C++ et Java.
+
+1. La génération des **makefile** semble possible. Envisager un mode où si le fichier existe, on ne l'écrase pas, afin de préserver les réglages personnels.
 
 1. Automate : associer une action au franchissement d'une transition.
 
@@ -144,5 +168,4 @@ Les tests de non-régression pour les 3 langages et les 3 déploiements sont ré
 
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
 
-1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, c'est à dire au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...
-
+1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...
