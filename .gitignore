@@ -1,5 +1,6 @@
 inc-gen/
 src-gen/
+src-gen-mod/
 BUILD/
 BUILD-mingw32/
 BUILD-o64/

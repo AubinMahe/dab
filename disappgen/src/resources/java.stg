@@ -28,14 +28,7 @@ type( field ) ::= <<
 
 
 signature( fields ) ::= <<
-< first( fields ):{field|<trim((type(field)))> <field.name>}><
-  rest ( fields ):{field|, <trim((type(field)))> <field.name>}>
->>
-
-
-
-args( fields ) ::= <<
-< if( fields )> < first( fields ):{field|<field.name>}>< rest( fields ):{field|, <field.name>}> < endif>
+<fields:{field|<trim((type(field)))> <field.name>}; separator=", ">
 >>
 
 
@@ -111,6 +104,13 @@ public class <struct.name> {
 < else><type( field )> <field.name>;
 < endif>
 }>
+   public void set( <struct.name> source ) {
+      <struct.field:{field|
+< if( field.isStruct  )><field.name>.set( source.<field.name> );
+< else><field.name> = source.<field.name>;
+< endif>
+}>   }
+
    public void put( ByteBuffer target ) {
       <struct.field:{field|
 < if(     field.isBoolean )>ByteBufferHelper.putBoolean( target, <field.name> );
@@ -146,6 +146,159 @@ public class <struct.name> {
 < elseif( field.isStruct  )><field.name; format="width">.get( source );
 < endif>
 }>   }
+}
+>>
+
+
+
+interfacesEnum( package, interfaces ) ::= <<
+package <package>;
+
+import java.nio.ByteBuffer;
+
+public enum Interfaces {
+
+   LOOPBACK( 0 ),
+   <interfaces:{ifaceName|<ifaceName; format="ID">( <interfaces.(ifaceName)> )}; separator=",\n">
+   ;
+
+   private final byte _value;
+
+   Interfaces( int value ) {
+      _value = (byte)value;
+   }
+
+   static public Interfaces valueOf( int value ) {
+      for( final Interfaces e : values()) {
+         if( e._value == value ) {
+            return e;
+         }
+      }
+      return null;
+   }
+
+   public void put( ByteBuffer target ) {
+      target.put( _value );
+   }
+}
+>>
+
+
+
+eventsEnum( package, ifaceName, className, facets, types, isEvent ) ::= <<
+package <package>;
+
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Deque;
+
+import io.ByteBufferHelper;
+
+public enum <className> {
+
+   <facets:{facet|<facet.name; format="ID">( <i> )}; separator=",\n">
+   ;
+
+   private final byte _value;
+
+   <className>( int value ) {
+      _value = (byte)value;
+   }
+
+   static public <className> valueOf( int value ) {
+      for( final <className> e : values()) {
+         if( e._value == value ) {
+            return e;
+         }
+      }
+      return null;
+   }
+< if( isEvent )>
+<facets:{facet|
+< if( facet.isRequest )>
+   public static void <facet.name>( <signature(facet.arguments.field)>, byte from, byte to, ByteBuffer _out ) {
+< else>
+   public static void <facet.name>( <signature(facet.field)>< if(facet.field)>, < endif>byte to, ByteBuffer _out ) {
+< endif>
+      _out.clear();
+      Interfaces.<className; format="ID">.put( _out );
+      _out.put( <facet.name; format="ID">._value );
+      _out.put( to );
+< if( facet.isRequest )>
+      _out.put( from );
+      <byteBufferPut( facet.arguments.field )>
+< else>
+      <byteBufferPut( facet.field )>
+< endif>
+      _out.flip();
+   \}
+}>
+< else>
+<facets:{facet|
+   // Request response or data published
+   public static void <facet.name>( <types.(facet.type)> <facet.name>, byte to, ByteBuffer _out ) {
+      _out.clear();
+      Interfaces.<className; format="ID">.put( _out );
+      _out.put( <facet.name; format="ID">._value );
+      _out.put( to );
+      <facet.name>.put( _out );
+      _out.flip();
+   \}
+}>
+< endif>
+
+   public static boolean enqueue(
+      SocketAddress                         from,
+      byte                                  event,
+      byte                                  instance,
+      ByteBuffer                            in,
+      Deque\<da.FacetMessage\<Interfaces, ?\>\> mainQueue )
+   {
+      final <className> evt = <className>.valueOf( event );
+      if( evt == null ) {
+         System.err.printf( "<className>.enqueue|%d is out of range\n", event );
+      }
+      else {
+         switch( evt ) {
+<facets:{facet|
+         case <facet.name; format="ID">:{
+< if( facet.isData )>
+            <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
+            <facet.name>.get( in );
+            mainQueue.add< if( facet.isImmediate )>First< endif>( new da.FacetMessage1\<>( from, Interfaces.<
+                (concat(ifaceName,"Data")); format="ID">, evt, instance, <facet.name> ));
+            return <facet.isActivatingOrImmediate>; \}
+< elseif( facet.isRequest )><
+if( isEvent )>
+            final byte fromInstance = in.get();
+            <facet.arguments.field:{field|<byteBufferGet( field )
+>}>            var msg = new da.FacetMessage< length(facet.arguments.field)>\<>( from, Interfaces.<
+                    (concat(ifaceName,"Event")); format="ID">, evt, instance, <
+                    facet.arguments.field:{field|<field.name>}; separator=", "> );
+            msg._fromInstance = fromInstance;
+            mainQueue.add< if( facet.isImmediate )>First< endif>( msg );
+< else>
+            <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
+            <facet.name>.get( in );
+            mainQueue.add< if( facet.isImmediate )>First< endif>( new da.FacetMessage1\<>( from, Interfaces.<
+                (concat(ifaceName,"Request")); format="ID">, evt, instance, <facet.name> ));
+< endif>
+            return <facet.isActivatingOrImmediate>;\}
+< elseif( facet.field )>
+            <facet.field:{field|<byteBufferGet( field )>}
+>            mainQueue.add< if( facet.isImmediate )>First< endif>( new da.FacetMessage< length(facet.field)>\<>( from, Interfaces.<
+                (concat(ifaceName,"Event")); format="ID">, evt, instance, <
+                facet.field:{field|<field.name>}; separator=", "> ));
+            return <facet.isActivatingOrImmediate>;\}
+< else>
+            mainQueue.add< if( facet.isImmediate )>First< endif>( new da.FacetMessage\<>( from, Interfaces.<
+                (concat(ifaceName,"Event")); format="ID">, evt, instance ));
+            return <facet.isActivatingOrImmediate>;\}
+< endif>
+}>         }
+      }
+      return false;
+   }
 }
 >>
 
@@ -187,7 +340,7 @@ endif>) throws IOException;< endif>
 
 
 
-requiredImplementation( package, ifaceName, rawSize, iface, ifaceID, imports, hasRequest ) ::= <<
+requiredImplementation( package, internalPckg, iface, rawSize, imports, hasRequest ) ::= <<
 package <package>;
 // requiredImplementation
 
@@ -200,18 +353,14 @@ import io.ByteBufferHelper;
 
 <imports:{type|import <type>;
 }>
-public class <ifaceName> implements I<ifaceName> {
+public class <iface.name> implements I<iface.name> {
 
-   private static final byte <iface.name; format="ID"> = <ifaceID>;
-
-   <iface.eventOrRequestOrData:{facet|private static final byte <facet.name; format="ID"> = <i>;
-}>
    private final DatagramChannel _channel;
    private final byte            _from;
    private final Targets[]       _targets;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize>< if( hasRequest )> + 1< endif> );
 
-   public <ifaceName>( DatagramChannel channel, byte from, Targets ... targets ) {
+   public <iface.name>( DatagramChannel channel, byte from, Targets ... targets ) {
       _channel = channel;
       _from    = from;
       _targets = targets;
@@ -227,20 +376,17 @@ else><
 endif>) throws IOException {
       for( final Targets targets : _targets ) {
          for( final byte to : targets._instances ) {
-            _out.clear();
-            _out.put( <iface.name; format="ID"> );
-            _out.put( <facet.name; format="ID"> );
-            _out.put( to );<
-if( facet.isRequest )>
-            _out.put( _from );
-            <byteBufferPut( facet.arguments.field )><
-else>
-            <byteBufferPut( facet.field )><
-endif>
-            _out.flip();
+            <internalPckg>.<concat( iface.name, "Event" )>.<facet.name>( <
+if( facet.isRequest )><
+                facet.arguments.field:{field|<field.name>}; separator=","><
+                if( facet.arguments.field )>, < endif>_from, to, _out );
+< else><
+                facet          .field:{field|<field.name>}; separator=","><
+                if( facet          .field )>, < endif>to, _out );
+< endif>
             final int size = _out.remaining();
             _channel.send( _out, targets._process );
-            System.err.printf( "<ifaceName>.<facet.name>|%d byte(s) sent from instance %d to instance %d @ %s\n",
+            System.err.printf( "<iface.name>.<facet.name>|%d byte(s) sent from instance %d to instance %d @ %s\n",
                size, _from, to, targets._process );
          \}
       \}
@@ -296,153 +442,173 @@ byteBufferGet( field ) ::= <<
 
 
 
+args( fields ) ::= <<
+< if( fields )> <fields:{field|msg.getArg<i>()}; separator=","> < endif>
+>>
+
+
+
 dispatcherImplOneInterface() ::= <<
-// dispatcherImplOneInterface -- begin
-private static enum <ifaceName>Event {
-
-   <events.(ifaceName):{event|<event.name; format="ID">( <i> ),
-}>   ;
-
-   private final int _value;
-
-   <ifaceName>Event( int value ) {
-      _value = value;
-   }
-
-   static <ifaceName>Event valueOf( int value ) {
-      for( final <ifaceName>Event e : values()) {
-         if( e._value == value ) {
-            return e;
-         }
-      }
-      return null;
-   }
-}
-
-<events.(ifaceName):{facet|< if( facet.isRequest )>
-private static final byte EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> = <
-                                              eventIDs.(ifaceName).(facet.name)>;
-< endif>}>
-private boolean dispatch( < if( offRequests.(ifaceName))>SocketAddress from, < endif><ifaceName>Event event, ByteBuffer in ) throws IOException {
+// dispatcherImplOneInterface
+private boolean dispatch( <iface.name>Event event, FacetMessage\<Interfaces, ?> msg ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
-<events.(ifaceName):{facet|< if( facet.isData )>< else>
+<events.(iface.name):{facet|<
+if( facet.isData )><
+elseif( facet.isRequest )>
    case <facet.name; format="ID">:{
-      < if( facet.isRequest )>final byte fromInstance = in.get();
-      <facet.arguments.field:{field|<byteBufferGet( field )>}; separator="\n">< 
-      elseif( facet.field )><facet.field:{field|<
-         byteBufferGet( field )>}><
-      endif><
-      if( facet.isRequest )
->      final <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
-      _component.<facet.name>( <args( facet.arguments.field )>, <facet.name> );
-      _out.clear();
-      _out.put( INTRFC_<ifaceName; format="ID">_RESPONSES );
-      _out.put( EVENT_<ifaceName; format="ID">_RESPONSE_<facet.name; format="ID"> );
-      _out.put( fromInstance );
-      <facet.name>.put( _out );
-      _out.flip();
-      _channel.send( _out, from );
-      System.err.printf( "<ifaceName>.<facet.name>|response sent to instance %d @%s\n", fromInstance, from );
-      < else
->      _component.<facet.name>(<args( facet.field )>);
-      < endif>
-      return true;\}
+< if( facet.threadingPolicyIsDedicated )>
+      new Thread(() -> { try {
+< endif>
+      <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
+      _component.<facet.name>( msg.getArg1(), <facet.name> );
+      <internalPckg>.<iface.name>Request.<facet.name>( <facet.name>, msg._fromInstance, _out );
+      final int size = _out.remaining();
+      _channel.send( _out, msg._from );
+      System.err.printf( "%s.dispatch|%d byte(s) sent from instance %d to instance %d @ %s\n",
+         getClass().getName(), size, _component._instanceID, msg._fromInstance, msg._from );
+< if( facet.threadingPolicyIsDedicated )>
+      \} catch( Throwable t ) { t.printStackTrace(); \}\}).start();
+< endif>
+      return true;\}<
+else>
+   case <facet.name; format="ID">:
+< if( facet.threadingPolicyIsDedicated )>
+      new Thread(() -> { try {
+< endif>
+      _component.<facet.name>(<args( facet.field )>)
+< if( facet.threadingPolicyIsDedicated )>
+      \} catch( Throwable t ) { t.printStackTrace(); \}\}).start()
+< endif>;
+      return true;
 < endif>}>   default:
       System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
       return false;
    }
 }
-// dispatcherImplOneInterface -- end
 >>
 
 
 
 dispatcherImplResponse() ::= <<
-// dispatcherImplResponse -- begin
-private static enum <ifaceName>Response {
-
-   <reqRequests.(ifaceName):{req|<req.name; format="ID">( <i> ),
-}>   ;
-
-   private final int _value;
-
-   <ifaceName>Response( int value ) {
-      _value = value;
-   }
-
-   static <ifaceName>Response valueOf( int value ) {
-      for( final <ifaceName>Response e : values()) {
-         if( e._value == value ) {
-            return e;
-         }
-      }
-      return null;
-   }
-}
-
-private boolean dispatch( <ifaceName>Response event, ByteBuffer in ) throws IOException {
+// dispatcherImplResponse
+private boolean dispatch( <ifaceName>Request event, FacetMessage\<Interfaces, ?> msg ) throws IOException {
    System.err.println( getClass().getName() + "|event = " + event );
    switch( event ) {
 <reqRequests.(ifaceName):{facet|
-   case <facet.name; format="ID">:{
-      final <types.(facet.type)> <facet.name> = new <types.(facet.type)>();
-      <facet.name>.get( in );
-      _component.<facet.name>Response( <facet.name> );
-      return true;\}
+   case <facet.name; format="ID">:
+      _component.<facet.name>Response(<args( facet.arguments.field )>);
+      return true;
 }>   default:
       System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
       return false;
    }
 }
-// dispatcherImplResponse -- end
 >>
 
 
 
 dispatcherImplData() ::= <<
-// dispatcherImplData -- begin
-private static enum <iface.name>Data {
+// dispatcherImplData
+private boolean dispatch( <iface.name>Data event, FacetMessage\<Interfaces, ?> msg ) throws IOException {
+   System.err.println( getClass().getName() + "|event = " + event );
+   switch( event ) {
+<data.(iface):{facet|
+   case <facet.name; format="ID">:
+< if( facet.threadingPolicyIsDedicated )>
+      new Thread(() -> { try {
+         _component.get<facet.name; format="cap">().set( msg.getArg1());
+         _component.<facet.name; format="argument">Published();
+      \} catch( Throwable t ) { t.printStackTrace(); \}\}).start();
+< else>
+      _component.get<facet.name; format="cap">().set( msg.getArg1());
+      _component.<facet.name; format="argument">Published();
+< endif>
+      return true;
+}>   default:
+      System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
+      return false;
+   }
+}
+>>
 
-   <data.(iface):{dataType|<dataType.name; format="ID">( <eventIDs.(iface.name).(dataType.name)> ),
-}>   ;
 
-   private final int _value;
 
-   <iface.name>Data( int value ) {
-      _value = value;
+dispatcherImplTimeout() ::= <<
+// dispatcherImplTimeout
+public static enum LoopbackEvent {
+
+   <component.timeout:{to|<to.name; format="ID">( <i> ),
+}>      ;
+
+   private final byte _value;
+
+   LoopbackEvent( int value ) {
+      _value = (byte)value;
    }
 
-   static <iface.name>Data valueOf( int value ) {
-      for( final <iface.name>Data e : values()) {
+   static LoopbackEvent valueOf( int value ) {
+      for( final LoopbackEvent e : values()) {
          if( e._value == value ) {
             return e;
          }
       }
       return null;
    }
-}
 
-private boolean dispatch( <iface.name>Data event, ByteBuffer in ) throws IOException {
-   System.err.println( getClass().getName() + "|event = " + event );
-   switch( event ) {
-<data.(iface):{dataType|
-   case <dataType.name; format="ID">:{
-      _component.get<dataType.name; format="cap">().get( in );
-      _component.<dataType.name; format="argument">Published();
-      return true;\}
-}>   default:
-      System.err.printf( "%s.dispatch|Unexpected event: %s\n", getClass().getName(), event );
+   public void put( ByteBuffer target ) {
+      target.put( _value );
+   }
+
+   public static boolean enqueue(
+      SocketAddress                         from,
+      byte                                  event,
+      byte                                  instance,
+      Deque\<da.FacetMessage\<Interfaces, ?\>\> mainQueue )
+   {
+      final LoopbackEvent evt = LoopbackEvent.valueOf( event );
+      if( evt == null ) {
+         System.err.printf( "LoopbackEvent.enqueue|%d is out of range\n", event );
+      }
+      else {
+         switch( evt ) {
+<component.timeout:{to|
+         case <to.name; format="ID">:{
+            mainQueue.add( new da.FacetMessage\<>( from, Interfaces.LOOPBACK, evt, instance ));
+            return true;\}
+}>            }
+      }
       return false;
    }
 }
-// dispatcherImplData -- end
+
+private boolean dispatch( LoopbackEvent event ) throws IOException {
+   switch( event ) {
+<component.timeout:{to|
+   case <to.name; format="ID">:{
+      _component.<to.name; format="argument">Elapsed();
+      return true;\}
+}>      default:
+      System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
+      return false;
+   }
+}
+
+void loopback( LoopbackEvent event ) throws IOException {
+   final ByteBuffer out = ByteBuffer.allocate( 3 );
+   Interfaces.LOOPBACK.put( out );
+   event.put( out );
+   out.put( _component._instanceID );
+   out.flip();
+   _channel.send( out, _channel.getLocalAddress());
+}
 >>
 
 
 
 dispatcherImplementation(
-   package, component, offers, requires, events, eventIDs, ifacesIDs, rawSize, respRawSize, offRequests, reqRequests, data, types
+   package, internalPckg, component, offers, events,
+   rawSize, respRawSize, offRequests, reqRequests, data, types
 ) ::= <<
 package <package>;
 // dispatcherImplementation
@@ -451,72 +617,24 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.Deque;
+
+import da.FacetMessage;
+import <internalPckg>.Interfaces;
+<offers     :{iface    |import <internalPckg>.<iface.name>Event;}  ; separator="\n">
+<reqRequests:{ifaceName|import <internalPckg>.<ifaceName >Request;}; separator="\n">
+<data       :{iface    |import <internalPckg>.<iface.name>Data;}   ; separator="\n">
 
 import io.ByteBufferHelper;
 
 public class <component.name>Dispatcher {
 
-   < if( component.timeout )>private static final byte INTRFC_LOOPBACK = 0;
-< endif>
-<offers.keys:{ifaceName|
-   private static final byte INTRFC_<ifaceName; format="ID,width"> = <offers.(ifaceName)>;
-   < if( offRequests.(ifaceName))>private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
-      ifacesIDs.( concat( ifaceName, "Response" ))>;
-< endif>
-}>   < reqRequests:{ifaceName|private static final byte INTRFC_<ifaceName; format="ID">_RESPONSES = <
-        ifacesIDs.( concat( ifaceName, "Response" ))>;
-}>
    private final DatagramChannel _channel;
    private final <component.name>Component _component;
 < if( offRequests )
 >   private final ByteBuffer      _out = ByteBuffer.allocate( <respRawSize> );
 < endif>
 
-
-<offers.keys:{ifaceName|
-   <dispatcherImplOneInterface()>
-}>
-<reqRequests:{ifaceName|
-   <dispatcherImplResponse()>
-}>
-<data:{iface|
-
-   private static final byte INTRFC_<iface.name; format="ID"> = <requires.(iface.name)>;
-   <dispatcherImplData()>
-}>< if( component.timeout )>
-   protected static enum LoopbackEvent {
-      <component.timeout:{to|<to.name; format="ID">( <i> ),
-}>      ;
-
-      private final int _value;
-
-      LoopbackEvent( int value ) {
-         _value = value;
-      }
-
-      static LoopbackEvent valueOf( int value ) {
-         for( final LoopbackEvent e : values()) {
-            if( e._value == value ) {
-               return e;
-            }
-         }
-         return null;
-      }
-   }
-
-   private boolean dispatch( LoopbackEvent event ) throws IOException {
-      switch( event ) {
-<component.timeout:{to|
-      case <to.name; format="ID">:{
-         _component.<to.name; format="argument">Elapsed();
-         return true;\}
-}>      default:
-         System.err.printf( "%s.run|Unexpected event: %s\n", getClass().getName(), event );
-         return false;
-      }
-   }
-
-< endif>
 
    public <component.name>Dispatcher( DatagramChannel channel, <component.name>Component component ) {
       _channel   = channel;
@@ -526,38 +644,33 @@ public class <component.name>Dispatcher {
 < endif>
    }
 
-< if( component.timeout )>   void loopback( LoopbackEvent event ) throws IOException {
-      final ByteBuffer out = ByteBuffer.allocate( 3 );
-      out.put( INTRFC_LOOPBACK );
-      out.put((byte)event._value );
-      out.put( _component._instanceID );
-      out.flip();
-      _channel.send( out, _channel.getLocalAddress());
-   }
+   <offers     :{iface    |<dispatcherImplOneInterface()>}; separator="\n\n">
+   <reqRequests:{ifaceName|<dispatcherImplResponse()>}    ; separator="\n\n">
+   <data       :{iface    |<dispatcherImplData()>}        ; separator="\n\n">
+   < if( component.timeout )><dispatcherImplTimeout()>< endif>
 
-< endif>   public void beforeDispatch() throws IOException {
-      _component.beforeDispatch();
-   }
-   
-   public boolean hasDispatched( byte intrfc, byte event, byte instance, SocketAddress from, ByteBuffer in ) throws IOException {
-      if( instance != _component._instanceID ) {
+   public boolean hasDispatched( FacetMessage\<Interfaces, ?> message ) throws IOException {
+      if( message._instance != _component._instanceID ) {
          return false;
       }
-      switch( intrfc ) {
-< if( component.timeout )>      case INTRFC_LOOPBACK: return dispatch( LoopbackEvent.valueOf( event ));
-< endif><offers.keys:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">: return dispatch( <
-         if( offRequests.(ifaceName))>from, < endif><ifaceName>Event.valueOf( event ), in );
-}><reqRequests:{ifaceName|
-      case INTRFC_<ifaceName; format="ID">_RESPONSES: return dispatch( <ifaceName>Response.valueOf( event ), in );
-}><data:{iface|
-      case INTRFC_<iface.name; format="ID">: return dispatch( <iface.name>Data.valueOf( event ), in );
+      switch( message._interface ) {
+< if( component.timeout )
+>      case LOOPBACK: return dispatch((LoopbackEvent)message._event );
+< endif><
+offers     :{iface|
+      case <(concat(iface.name, "Event"  )); format="ID">: return dispatch((<iface.name>Event)message._event, message );
+}><
+data       :{iface|
+      case <(concat(iface.name, "Data"   )); format="ID">: return dispatch((<iface.name>Data)message._event, message );
+}><
+reqRequests:{ifaceName|
+      case <(concat(ifaceName , "Request")); format="ID">: return dispatch((<ifaceName>Request)message._event, message );
 }>      }
       return false;
    }
 
-   public void afterDispatch( boolean dispatched ) throws IOException {
-      _component.afterDispatch( dispatched );
+   public void afterDispatch() throws IOException {
+      _component.afterDispatch();
    }
 }
 >>
@@ -591,7 +704,7 @@ public abstract class <component.name>Component implements <ifaces:{iface|I<ifac
    protected I<iface.name> _<iface.name; format="argument">;
 }><offData:{iface|<offData.(iface):{data|<data:{dataType|
    protected final <types.(dataType.type)> _<dataType.name; format="argument"> = new <types.(dataType.type)>(); // offered data
-}>}>   protected <iface.name>Data _<iface.name; format="argument">Data; // data publisher
+}>}>   protected <iface.name>Publisher _<iface.name; format="argument">Publisher; // data publisher
 }><
 if( component.automaton )>   protected final Automaton _automaton = new Automaton( this );
 < endif><reqData:{iface|<reqData.(iface):{data|
@@ -641,23 +754,21 @@ if( component.automaton )>   protected final Automaton _automaton = new Automato
       return _<data.name; format="argument">;
    \}}>}>
 <offData:{iface|
-   public void connect( <iface.name>Data data ) {
-      _<iface.name; format="argument">Data = data;
+   public void connect( <iface.name>Publisher publisher ) {
+      _<iface.name; format="argument">Publisher = publisher;
    \}
 
-   public <iface.name>Data get<iface.name; format="cap">Data() {
-      return _<iface.name; format="argument">Data;
+   public <iface.name>Publisher get<iface.name; format="cap">Publisher() {
+      return _<iface.name; format="argument">Publisher;
    \}}>
 
-   protected void beforeDispatch() throws IOException {}
-   
-   protected void afterDispatch( boolean dispatched ) throws IOException {}
+   protected void afterDispatch() throws IOException {}
 }
 >>
 
 
 
-dataWriter( package, interface, ifaceID, data, dataID, rawSize, types ) ::= <<
+dataWriter( package, internalPckg, interface, data, rawSize, types ) ::= <<
 package <package>;
 // dataWriter
 
@@ -666,19 +777,17 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 import da.Targets;
+import <internalPckg>.Interfaces;
+import <internalPckg>.<interface.name>Data;
 
-public class <interface.name>Data {
+public class <interface.name>Publisher {
 
-   private static final byte <interface.name; format="ID"> = <ifaceID>;
-<data:{dataType|
-   private static final byte <dataType.name; format="ID"> = <dataID.(dataType.name)>;
-}>
    private final DatagramChannel _channel;
    private final byte            _from;
    private final Targets[]       _targets;
    private final ByteBuffer      _out = ByteBuffer.allocate( <rawSize> );
 
-   public <interface.name>Data( DatagramChannel channel, byte from, Targets ... targets ) {
+   public <interface.name>Publisher( DatagramChannel channel, byte from, Targets ... targets ) {
       _channel = channel;
       _from    = from;
       _targets = targets;
@@ -688,16 +797,11 @@ public class <interface.name>Data {
    public void publish<dataType.name; format="cap">( <types.(dataType.type)> data ) throws IOException {
       for( final Targets targets : _targets ) {
          for( final byte to : targets._instances ) {
-            _out.clear();
-            _out.put( <interface.name; format="ID"> );
-            _out.put( <dataType.name; format="ID"> );
-            _out.put( to );
-            data.put( _out );
-            _out.flip();
+            <interface.name>Data.<dataType.name>( data, to, _out );
             final int size = _out.remaining();
             _channel.send( _out, targets._process );
-            System.err.printf( "<interface.name>Data.publish|%d byte(s) sent from instance %d to instance %d @ %s\n",
-               size, _from, to, targets._process );
+            System.err.printf( "%s.publish|%d byte(s) sent from instance %d to instance %d @ %s\n",
+               getClass().getName(), size, _from, to, targets._process );
          \}
       \}
    \}
@@ -799,8 +903,8 @@ componentFactoryDataPublishers() ::= <<
 
 
 componentFactory(
-   package, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
-   proxies, dataPublishers, consumedData, types, modules, ids
+   package, internalPckg, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
+   interfaces, data, requests, components, proxies, dataPublishers, consumedData, types, modules, ids
 ) ::= <<
 package <package>;
 // componentFactory
@@ -812,16 +916,26 @@ import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Deque;
 
+import da.FacetMessage;
 import da.Targets;
+
+import <internalPckg>.Interfaces;
+<interfaces:{iface  |import <internalPckg>.<iface.name>Event;}  ; separator="\n">
+<requests  :{request|import <internalPckg>.<request   >Request;}; separator="\n">
+<data      :{iface  |import <internalPckg>.<iface.name>Data;}   ; separator="\n">
 
 public final class ComponentFactory extends Thread implements da.IMainLoop {
 
    //-- instances ID --
    <ids:{instance|private static final byte <instance; format="ID"> = <ids.(instance)>;}; separator="\n">
 
-   private final DatagramChannel _channel;
-   private /* */ boolean         _running;
+   private final Deque\<FacetMessage\<Interfaces, ?\>\> _mainQueue = new LinkedList\<>();
+   private final DatagramChannel                    _channel;
+   private /* */ boolean                            _running;
    //-- instances init --
 <process.instance:{instance|
    private final <modules.(instance.component)>.<instance.component.name> _<instance.name; format="argument"
@@ -842,6 +956,10 @@ public final class ComponentFactory extends Thread implements da.IMainLoop {
       <componentFactoryDispatchersInit()>
       <componentFactoryInstancesConnect()>
       <componentFactoryDataPublishers()>
+
+      final Thread executor = new Thread( this::execute, getClass().getName() + "-executor" );
+      executor.setDaemon( true );
+      executor.start();
 
       setName( getClass().getName());
       setDaemon( true );
@@ -864,10 +982,48 @@ public final class ComponentFactory extends Thread implements da.IMainLoop {
       return _<instance.name; format="argument">;
    \}
 
-}>   @Override
+}>   private void execute() {
+      _running = true;
+      while( _running ) {
+         try {
+            boolean hasDispatched = false;
+            int size = 0;
+            synchronized( _mainQueue ) {
+               if( _mainQueue.isEmpty()) {
+                  _mainQueue.wait();
+               }
+               size = _mainQueue.size();
+            }
+            while( size > 0 ) {
+               FacetMessage\<Interfaces, ?> message;
+               synchronized( _mainQueue ) {
+                  message = _mainQueue.removeFirst();
+                  size    = _mainQueue.size();
+               }
+               while( true ) {
+<process.instance:{instance|
+                  if( _<instance.name>Dispatcher.hasDispatched( message )) {
+                     hasDispatched = true;
+                     break;
+                  \}
+}>                  break;
+               \}
+            \}
+            if( hasDispatched ) {
+<process.instance:{instance|
+               _<instance.name>Dispatcher.afterDispatch();
+}>            \}
+         }
+         catch( final Throwable t ) {
+            t.printStackTrace();
+            _running = false;
+         }
+      }
+   }
+
+   @Override
    public final void run() {
       final ByteBuffer in = ByteBuffer.allocate( 64*1024 );
-      _running = true;
       while( _running ) {
          try {
             in.clear();
@@ -877,15 +1033,39 @@ public final class ComponentFactory extends Thread implements da.IMainLoop {
                final byte intrfc   = in.get();
                final byte event    = in.get();
                final byte instance = in.get();
-               System.err.printf( "%s.run|intrfc = %d, event = %d, instance = %d\n", getClass().getName(), intrfc, event, instance );
-               <process.instance:{instance|_<instance.name; format="argument">Dispatcher.beforeDispatch();}; separator="\n">
-               while( true ) {
-<process.instance:{instance|
-                  if( _<instance.name; format="argument">Dispatcher.hasDispatched( intrfc, event, instance, from, in )) {
-                     _<instance.name; format="argument">Dispatcher.afterDispatch( true );
-                     break;
-                  \}
-}>               }
+               System.err.printf( "%s.run|intrfc = %d, event = %d, instance = %d from %s\n",
+                  getClass().getName(), intrfc, event, instance, from.toString());
+               final Interfaces intrfcs = Interfaces.valueOf( intrfc );
+               if( intrfcs != null ) {
+                  boolean activate = false;
+                  synchronized( _mainQueue ) {
+                     switch( intrfcs ) {
+                     case LOOPBACK:
+<components:{component|<
+if( component.timeout )>
+                        activate = <modules.(component)>.<component.name>Dispatcher.LoopbackEvent.enqueue( from, event, instance, _mainQueue );
+< endif>}>                        break;
+<interfaces:{iface|
+                     case <(concat(iface.name, "Event")); format="ID">:// offered interface
+                        activate = <iface.name>Event.enqueue( from, event, instance, in, _mainQueue );
+                        break;
+}><data:{iface|
+                     case <(concat(iface.name, "Data" )); format="ID">:// consumed data
+                        activate = <iface.name>Data.enqueue( from, event, instance, in, _mainQueue );
+                        break;
+}><requests:{request|
+                     case <(concat(request, "Request" )); format="ID">:// responses (Request)
+                        activate = <request>Request.enqueue( from, event, instance, in, _mainQueue );
+                        break;
+}>                     }
+                  }
+                  if( activate ) {
+                     synchronized( _mainQueue ) { _mainQueue.notify(); }
+                  }
+               }
+               else {
+                  System.err.printf( "%s.run|Interface %d is out of range\n", getClass().getName(), intrfc );
+               }
             }
             else {
                System.err.printf( "%s.run|expected at least 3 bytes, %d received\n", getClass().getName(), in.remaining());

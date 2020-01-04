@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="da.enums" default="jar-component">
+   <import file="../ant-common.xml" />
+   <target name="javac-component">
+      <mkdir dir="build" />
+      <mkdir dir="src" />
+      <javac
+         destdir          ="build"
+         includeantruntime="false">
+         <classpath location="${jutil}" />
+         <classpath location="${dabtypes}" />
+         <src path="src-gen" />
+      </javac>
+   </target>
+</project>

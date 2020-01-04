@@ -8,6 +8,7 @@ public class FacetMessage<I extends Enum<I>, F extends Enum<F>> {
    public final I             _interface;
    public final F             _event;
    public final byte          _instance;
+   public /* */ byte          _fromInstance; // Requester instance ID
 
    public FacetMessage( SocketAddress from, I intrfc, F event, byte instance ) {
       _from      = from;

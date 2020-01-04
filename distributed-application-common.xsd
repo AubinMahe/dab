@@ -11,7 +11,25 @@
          <xs:enumeration value="C++" />
       </xs:restriction>
    </xs:simpleType>
+
+   <xs:simpleType name="enumLiteral">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[A-Z][A-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="facetName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
    
+   <xs:simpleType name="argumentName">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[a-z][a-zA-Z0-9_]+"/>
+      </xs:restriction>
+   </xs:simpleType>
+
    <xs:simpleType name="processName">
       <xs:restriction base="xs:string">
          <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]+"/>

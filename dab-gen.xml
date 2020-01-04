@@ -3,6 +3,12 @@
    xsi:noNamespaceSchemaLocation="distributed-application-generation.xsd"
    xmlns:xi="http://www.w3.org/2001/XInclude">
 
+   <types name="internal-types">
+      <type-impl language="C"    src-dir="daenums-c/src-gen"    module-name="DAENM" />
+      <type-impl language="C++"  src-dir="daenums-cpp/src-gen"  module-name="da::enums" />
+      <type-impl language="Java" src-dir="daenums-java/src-gen" module-name="da.enums" />
+   </types>
+
    <types name="dabtypes">
       <type-impl language="C"    src-dir="dabtypes-c/src-gen"    module-name="DBT" />
       <type-impl language="C++"  src-dir="dabtypes-cpp/src-gen"  module-name="hpms::dabtypes" />
@@ -30,9 +36,9 @@
 
    <deployment name="isolated">
       <process name="sc" address="127.0.0.1" port="2416">
-         <factory language="C"    src-dir="isolated-sc-c/src-gen"    module-name="ISOSC" />
-         <factory language="C++"  src-dir="isolated-sc-cpp/src-gen"  module-name="isolated::sc" />
-         <factory language="Java" src-dir="isolated-sc-java/src-gen" module-name="isolated.sc" />
+         <factory language="C"    src-dir="isolated-sc-c/src-gen"      module-name="ISOSC" />
+         <factory language="C++"  src-dir="isolated-sc-cpp/src-gen"    module-name="isolated::sc" />
+         <factory language="Java" src-dir="isolated-sc-java/src-gen"   module-name="isolated.sc" />
       </process>
       <process name="udt1" address="127.0.0.1" port="2417">
          <factory language="C"    src-dir="isolated-udt1-c/src-gen"    module-name="ISOUDT1" />

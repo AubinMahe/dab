@@ -168,7 +168,7 @@ public class CGenerator extends BaseGenerator {
 
    private void dispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
-      final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>                  interfaceIDs = null;//_model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
@@ -214,7 +214,7 @@ public class CGenerator extends BaseGenerator {
       }
       final String                             compName    = component.getName();
       final List<InstanceType>                 instances   = _model.getInstancesOf( "isolated", component );
-      final List<InterfaceType>                requires    = Model.getRequiredInterfacesBy( component );
+      final Set<InterfaceType>                 requires    = Model.getRequiredInterfacesBy( component );
       final Map<String, List<Object>>          reqEvents   = _model.getRequiredFacets( component );
       final Map<String, List<RequestType>>     reqRequests = Model.getRequestMap( reqEvents );
       final Set<String>                        actions     = _model.getAutomatonActions( component );

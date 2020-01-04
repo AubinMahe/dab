@@ -25,7 +25,6 @@ import javafx.stage.Stage;
 public class Controller implements IIHM, IUniteDeTraitementData, IController<Distributeur> {
 
    private Distributeur _component;
-   private Etat         _etat   = Etat.MAINTENANCE;
    private String       _text   = "";
    private String       _saisie = "";
    private double       _dernierMontantSaisi = 0.0;
@@ -48,12 +47,13 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
 
    @Override
    public void etatDuDabPublished() {
-      _etat = _component.getEtatDuDab().etat;
+      System.err.printf( "%s.etatDuDabPublished|etat = %s, soldeCaisse = %7.2f\n", getClass().getName(),
+         _component.getEtatDuDab().etat, _component.getEtatDuDab().soldeCaisse );
       _caisse.setText( "Caisse : " + NumberFormat.getCurrencyInstance().format( _component.getEtatDuDab().soldeCaisse ));
       _status.setText( "DAB en service" );
-      switch( _etat ) {
+      switch( _component.getEtatDuDab().etat ) {
       default:
-         System.err.printf( "Etat DAB inattendu : %s\n", _etat );
+         System.err.printf( "Etat DAB inattendu : %s\n", _component.getEtatDuDab().etat );
          //$FALL-THROUGH$
       case HORS_SERVICE:
          _status.setText( "DAB hors service"   );
@@ -94,23 +94,23 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
          setScreenText( "Veuillez prendre les billets..." );
          break;
       }
-      final boolean maintenance =     _etat == Etat.MAINTENANCE;
-      _insererCarte     .setDisable(  _etat != Etat.EN_SERVICE );
+      final boolean maintenance =     _component.getEtatDuDab().etat == Etat.MAINTENANCE;
+      _insererCarte     .setDisable(  _component.getEtatDuDab().etat != Etat.EN_SERVICE );
       _maintenanceIHM   .setDisable( ! maintenance );
       _screen           .setDisable(   maintenance );
       _numpad           .setDisable(   maintenance );
       _right            .setDisable(   maintenance );
-      _prendreLaCarte   .setDisable(( _etat != Etat.RETRAIT_CARTE_BILLETS      )
-         &&                         ( _etat != Etat.RETRAIT_CARTE_SOLDE_CAISSE )
-         &&                         ( _etat != Etat.RETRAIT_CARTE_SOLDE_COMPTE ));
-      _prendreLesBillets.setDisable(  _etat != Etat.RETRAIT_BILLETS );
+      _prendreLaCarte   .setDisable(( _component.getEtatDuDab().etat != Etat.RETRAIT_CARTE_BILLETS      )
+         &&                         ( _component.getEtatDuDab().etat != Etat.RETRAIT_CARTE_SOLDE_CAISSE )
+         &&                         ( _component.getEtatDuDab().etat != Etat.RETRAIT_CARTE_SOLDE_COMPTE ));
+      _prendreLesBillets.setDisable(  _component.getEtatDuDab().etat != Etat.RETRAIT_BILLETS );
    }
 
    private void refreshScreen() {
       final boolean saisieCode =
-         ( _etat == Etat.SAISIE_CODE_1 )||
-         ( _etat == Etat.SAISIE_CODE_2 )||
-         ( _etat == Etat.SAISIE_CODE_3 );
+         ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_1 )||
+         ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_2 )||
+         ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_3 );
       final String user = saisieCode ? _saisie.replaceAll( ".", "*" ) : _saisie;
       _screen.setText( _text + user );
    }
@@ -122,25 +122,25 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
 
    @Override
    public void ejecterLaCarte() {
-      System.err.println( "Ejection de la carte..." );
+      System.err.printf( "%s.ejecterLaCarte\n", getClass().getName());
    }
 
    @Override
    public void ejecterLesBillets( double montant ) {
-      System.err.println( "Ejection des billets..." );
+      System.err.printf( "%s.ejecterLesBillets\n", getClass().getName());
    }
 
    @Override
    public void confisquerLaCarte( ) {
-      System.err.println( "Placement de la carte dans le magasin interne." );
+      System.err.printf( "%s.confisquerLaCarte\n", getClass().getName());
       _magasin.getItems().add( "Carte n°" + _carteID.getText());
       _carteID.setText( "" );
    }
 
    @Override
    public void placerLesBilletsDansLaCorbeille() {
-      System.err.println(
-         "Placement des billets oubliés dans la corbeille interne : " + _dernierMontantSaisi + ", carte " + _carteID.getText());
+      System.err.printf( "%s.placerLesBilletsDansLaCorbeille|%7.2f, carte : %s\n", getClass().getName(),
+         _dernierMontantSaisi, _carteID.getText());
       _corbeille.getItems().add( _dernierMontantSaisi + " €, carte n°" + _carteID.getText());
       _carteID.setText( "" );
    }
@@ -195,13 +195,13 @@ public class Controller implements IIHM, IUniteDeTraitementData, IController<Dis
             break;
          case "Entrer":
             final boolean saisieCode =
-               ( _etat == Etat.SAISIE_CODE_1 )||
-               ( _etat == Etat.SAISIE_CODE_2 )||
-               ( _etat == Etat.SAISIE_CODE_3 );
+               ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_1 )||
+               ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_2 )||
+               ( _component.getEtatDuDab().etat == Etat.SAISIE_CODE_3 );
             if( saisieCode ) {
                _component.getUniteDeTraitement().codeSaisi( _saisie );
             }
-            else if( _etat == Etat.SAISIE_MONTANT ) {
+            else if( _component.getEtatDuDab().etat == Etat.SAISIE_MONTANT ) {
                _dernierMontantSaisi = Double.parseDouble( _saisie );
                _component.getUniteDeTraitement().montantSaisi( _dernierMontantSaisi );
             }

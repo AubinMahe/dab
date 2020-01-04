@@ -19,7 +19,7 @@
    </xs:simpleType>
 
    <xs:complexType name="literalType">
-      <xs:attribute type="xs:NCName" name="name" use="required" />
+      <xs:attribute type="enumLiteral" name="name" use="required" />
    </xs:complexType>
 
    <xs:complexType name="enumerationType">
@@ -55,15 +55,11 @@
    </xs:simpleType>
    
    <xs:complexType name="fieldType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="xs:NCName"          name="name"         use="required" />
-            <xs:attribute type="fieldtypeType"      name="type"         use="required" />
-            <xs:attribute type="dottedPath"         name="userType"     use="optional" />
-            <xs:attribute type="xs:positiveInteger" name="length"       use="optional" />
-            <xs:attribute type="xs:string"          name="description"  use="optional" />
-         </xs:extension>
-      </xs:simpleContent>
+      <xs:attribute type="argumentName"       name="name"         use="required" />
+      <xs:attribute type="fieldtypeType"      name="type"         use="required" />
+      <xs:attribute type="dottedPath"         name="userType"     use="optional" />
+      <xs:attribute type="xs:positiveInteger" name="length"       use="optional" />
+      <xs:attribute type="xs:string"          name="description"  use="optional" />
    </xs:complexType>
 
    <xs:complexType name="structType">
@@ -73,36 +69,53 @@
       <xs:attribute type="xs:ID" name="name" use="required" />
    </xs:complexType>
    
-   <xs:complexType name="eventType">
-      <xs:sequence>
-         <xs:element type="fieldType" name="field" minOccurs="0" maxOccurs="unbounded" />
-      </xs:sequence>
-      <xs:attribute type="xs:NCName" name="name" use="required" />
-   </xs:complexType>
-   
    <xs:complexType name="argumentsType">
       <xs:sequence>
          <xs:element type="fieldType" name="field" minOccurs="1" maxOccurs="unbounded" />
       </xs:sequence>
    </xs:complexType>
 
+   <xs:simpleType name="queuingPolicy">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="queued" />
+         <xs:enumeration value="activating" />
+         <xs:enumeration value="immediate" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="threadingPolicy">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="shared" />
+         <xs:enumeration value="dedicated" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="eventType">
+      <xs:sequence>
+         <xs:element type="fieldType" name="field" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute type="facetName"       name="name"             use="required" />
+      <xs:attribute type="queuingPolicy"   name="queuing-policy"   use="optional" default="activating"/>
+      <xs:attribute type="threadingPolicy" name="threading-policy" use="optional" default="shared"/>
+   </xs:complexType>
+   
    <xs:complexType name="requestType">
       <xs:sequence>
          <xs:element type="argumentsType" name="arguments" minOccurs="0" maxOccurs="1" />
       </xs:sequence>
-      <xs:attribute type="xs:NCName"  name="name"        use="required" />
-      <xs:attribute type="dottedPath" name="type"        use="required" />
-      <xs:attribute type="xs:string"  name="description" use="optional" />
+      <xs:attribute type="facetName"       name="name"             use="required" />
+      <xs:attribute type="dottedPath"      name="type"             use="required" />
+      <xs:attribute type="queuingPolicy"   name="queuing-policy"   use="optional" default="activating"/>
+      <xs:attribute type="threadingPolicy" name="threading-policy" use="optional" default="shared"/>
+      <xs:attribute type="xs:string"       name="description"      use="optional" />
    </xs:complexType>
 
    <xs:complexType name="dataType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="xs:NCName"  name="name"        use="required" />
-            <xs:attribute type="dottedPath" name="type"        use="required" />
-            <xs:attribute type="xs:string"  name="description" use="optional" />
-         </xs:extension>
-      </xs:simpleContent>
+      <xs:attribute type="facetName"       name="name"             use="required" />
+      <xs:attribute type="dottedPath"      name="type"             use="required" />
+      <xs:attribute type="queuingPolicy"   name="queuing-policy"   use="optional" default="activating"/>
+      <xs:attribute type="threadingPolicy" name="threading-policy" use="optional" default="shared"/>
+      <xs:attribute type="xs:string"       name="description"      use="optional" />
    </xs:complexType>
 
    <xs:complexType name="interfaceType">
@@ -135,13 +148,9 @@
    </xs:simpleType>
 
    <xs:complexType name="timeoutType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="xs:NCName"          name="name"     use="required" />
-            <xs:attribute type="xs:positiveInteger" name="duration" use="required" />
-            <xs:attribute type="durationUnits"      name="unit"     use="optional" default="seconds" />
-         </xs:extension>
-      </xs:simpleContent>
+      <xs:attribute type="argumentName"       name="name"     use="required" />
+      <xs:attribute type="xs:positiveInteger" name="duration" use="required" />
+      <xs:attribute type="durationUnits"      name="unit"     use="optional" default="seconds" />
    </xs:complexType>
    
    <xs:complexType name="componentType">
@@ -155,11 +164,7 @@
    </xs:complexType>
    
    <xs:complexType name="fromInstanceType">
-      <xs:simpleContent>
-         <xs:extension base="xs:string">
-            <xs:attribute type="instanceID" name="name" use="required" />
-         </xs:extension>
-      </xs:simpleContent>
+      <xs:attribute type="instanceID" name="name" use="required" />
    </xs:complexType>
    
    <xs:complexType name="requiresType">

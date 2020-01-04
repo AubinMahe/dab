@@ -147,16 +147,15 @@ Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permette
 
 ## Reste à faire
 
-1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et au moyen d'un checker exécuté en aval de la génération
-
-1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraîchies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique.
-
-1. Dans la continuité du point précédent, il serait possible d'offrir plusieurs files d'attente et de ventiler les messages reçus en fonction de leur priorité. Les messages seraient alors *activant* pour une file ou pour toutes.
+1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraîchies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique. **La version LATEST offre ces fonctionnalités, mais uniquement en JAVA**, C et C++ sont désactivés, le temps de les mettre à niveau.
 
 1. Si on sait gérer une ou plusieurs files d'attente ou pourrait revoir le threading :
     - La version actuelle reçoit les messages, les ventile et exécute le code métier dans le même thread, ce qui n'est pas satisfaisant en cas d'attente applicative bloquante (c'est le cas pendant 3 secondes dans le composant `Banque` pour simuler le temps de recherche et de communication sur réseaux WAN sécurisés).
     - On doit envisager au moins deux threads : l'un reçoit les messages et les ventile dans la bonne file d'attente, l'autre exécute le code applicatif.
     - On pourrait modéliser le threading de façon à permettre un thread par requête, un thread par composant ou un thread par processus.
+    - **La version LATEST offre ces fonctionnalités, mais uniquement en JAVA**, C et C++ sont désactivés, le temps de les mettre à niveau.
+
+1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et au moyen d'un checker exécuté en aval de la génération
 
 1. Même si le code manuel est simple à coder, un **wizard Eclipse** de génération de composant serait bienvenu. À faire en Java pour C, C++ et Java.
 
@@ -164,8 +163,14 @@ Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permette
 
 1. Automate : associer une action au franchissement d'une transition.
 
+1. Ajouter un nouveau langage : JavaScript dans le navigateur, pour développer les IHM en HTML5/CSS3. Ajouter un adaptateur d'interface UDP vers web-socket.
+
+1. Ajouter un nouveau langage : Python.
+
 ## Boite à idées, à débattre...
 
 1. Adopter un modèle d'exécution non plus asynchrone et temps-réel comme à présent mais plutôt cyclique et par pas de temps discret, avec une méthode d'activation qui donne la main dans un ordre déterminé aux différents acteurs, chronomètres compris. Cela permettrait de rendre l'exécution plus contrôlable en environnement de test.
+
+1. Il serait possible d'offrir plusieurs files d'attente et de ventiler les messages reçus en fonction de leur priorité. Les messages seraient alors *activant* pour une file ou pour toutes. Pas facile de trouver un bon exemple pour valider le concept...
 
 1. On sent qu'il serait possible de mener une campagne de tests exhaustive de chaque composant avec [JUnit](https://junit.org/junit5/), [CUnit](http://cunit.sourceforge.net/) ou [CppUnit](http://wiki.c2.com/?CppUnit). Une surcouche de ces frameworks de test en *boite noire*, au niveau *réseau UDP* est à développer pour en tirer le maximum de profit. A voir si ça ne revient pas à écrire totalement l'application... Pour un exemple simple comme le dab, l'application de test serait plus riche que l'application nominale...

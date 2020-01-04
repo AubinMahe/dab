@@ -97,8 +97,8 @@ abstract class BaseGenerator {
       }
    }
 
-   abstract protected void enumGen ( String xUser ) throws IOException;
-   abstract protected void struct( String xUser ) throws IOException;
+   abstract protected void enumGen( String xUser ) throws IOException;
+   abstract protected void struct ( String xUser ) throws IOException;
 
    private void generateTypesUsedBy( InterfaceType iface ) throws IOException {
       final SortedSet<String> used = _model.getUsedTypesBy( iface.getName());

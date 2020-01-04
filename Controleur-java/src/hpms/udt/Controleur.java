@@ -61,6 +61,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void carteInseree( String id ) throws IOException {
+      System.err.printf( "%s.carteInseree|id = %s\n", getClass().getName(), id );
       _carte .invalidate();
       _compte.invalidate();
       _siteCentral.informations( id );
@@ -71,6 +72,7 @@ public final class Controleur extends ControleurComponent {
    public void informationsResponse( hpms.dabtypes.Information information ) throws IOException {
       final hpms.dabtypes.Carte  carte  = information.carte;
       final hpms.dabtypes.Compte compte = information.compte;
+      System.err.printf( "%s.informationsResponse|carte = %s, solde = %7.2f\n", getClass().getName(), carte.id, compte.solde );
       _carte .set( carte );
       _compte.set( compte );
       if( _carte.isValid() && _compte.isValid()) {
@@ -97,6 +99,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void codeSaisi( String code ) throws IOException {
+      System.err.printf( "%s.codeSaisi|code = %s\n", getClass().getName(), code );
       if( ! _carte._isValid ) {
          _automaton.process( Evenement.CARTE_INVALIDE );
       }
@@ -121,6 +124,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void montantSaisi( double montant ) throws IOException {
+      System.err.printf( "%s.montantSaisi|montant = %7.2f\n", getClass().getName(), montant );
       _iHM.ejecterLaCarte();
       if( montant > _etatDuDab.soldeCaisse ) {
          _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
@@ -136,6 +140,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void carteRetiree() throws IOException {
+      System.err.printf( "%s.carteRetiree\n", getClass().getName());
       _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
       _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
       _etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
@@ -145,11 +150,13 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void billetsRetires() {
+      System.err.printf( "%s.billetsRetires\n", getClass().getName() );
       _automaton.process( Evenement.BILLETS_RETIRES );
    }
 
    @Override
    public void annulationDemandeeParLeClient() throws IOException {
+      System.err.printf( "%s.annulationDemandeeParLeClient\n", getClass().getName() );
       _montantDeLatransactionEnCours = 0.0;
       _iHM.ejecterLaCarte();
       _automaton.process( Evenement.ANNULATION_CLIENT );
@@ -164,9 +171,9 @@ public final class Controleur extends ControleurComponent {
    }
 
    @Override
-   protected void afterDispatch( boolean dispatched ) throws IOException {
+   protected void afterDispatch() throws IOException {
       _etatDuDab.etat = _automaton.getCurrentState();
-      _uniteDeTraitementData.publishEtatDuDab( _etatDuDab );
+      _uniteDeTraitementPublisher.publishEtatDuDab( _etatDuDab );
    }
 
    private void confisquerLaCarte() {

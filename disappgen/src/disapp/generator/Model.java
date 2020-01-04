@@ -3,7 +3,6 @@ package disapp.generator;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -60,9 +59,12 @@ import disapp.generator.model.TypesType;
 
 final class Model {
 
-   static protected final String JAVA_LANGUAGE = "Java";
-   static protected final String CPP_LANGUAGE  = "C++";
-   static protected final String C_LANGUAGE    = "C";
+   static final String JAVA_LANGUAGE                = "Java";
+   static final String CPP_LANGUAGE                 = "C++";
+   static final String C_LANGUAGE                   = "C";
+   static final String IFACE_CLASSIFICATION_EVENT   = "Event";
+   static final String IFACE_CLASSIFICATION_REQUEST = "Request";
+   static final String IFACE_CLASSIFICATION_DATA    = "Data";
 
    private final Map<String, InterfaceType>                             _interfaces         = new LinkedHashMap<>();
    private final Map<String, EnumerationType>                           _enums              = new LinkedHashMap<>();
@@ -78,6 +80,9 @@ final class Model {
    private final Map<String, Map<ComponentType, Map<String, String>>>   _modulesPerLanguage = new HashMap<>();
    private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _offeredData        = new LinkedHashMap<>();
    private final Map<ComponentType, Map<InterfaceType, List<DataType>>> _requiredData       = new LinkedHashMap<>();
+   private final Map<InterfaceType, List<EventType>>                    _events             = new LinkedHashMap<>();
+   private final Map<InterfaceType, List<RequestType>>                  _requests           = new LinkedHashMap<>();
+   private final Map<InterfaceType, List<DataType>>                     _data               = new LinkedHashMap<>();
    private final File                                                   _source;
    private final boolean                                                _force;
    private final DisappType                                             _application;
@@ -213,14 +218,33 @@ final class Model {
          }
       }
       byte ifaceID = 0;
-      for( final Entry<String, InterfaceType> e : _interfaces.entrySet()) {
-         final String name = e.getKey();
-         _interfacesID.put( name, ++ifaceID );
-         for( final Object facet : e.getValue().getEventOrRequestOrData()) {
-            if( facet instanceof RequestType ) {
-               _interfacesID.put( name + "Response", ++ifaceID );
+      for( final InterfaceType iface : _application.getInterface()) {
+         final List<EventType>   events    = new LinkedList<>();
+         final List<RequestType> requests  = new LinkedList<>();
+         final List<DataType>    data      = new LinkedList<>();
+         for( final Object facet : iface.getEventOrRequestOrData()) {
+            if( facet instanceof EventType ) {
+               events.add((EventType)facet );
+            }
+            else if( facet instanceof RequestType ) {
+               requests.add((RequestType)facet );
+            }
+            else if( facet instanceof DataType ) {
+               data.add((DataType)facet );
             }
          }
+         if( ! events.isEmpty()) {
+            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_EVENT  , ++ifaceID );
+         }
+         if( ! requests.isEmpty()) {
+            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_REQUEST, ++ifaceID );
+         }
+         if( ! data.isEmpty()) {
+            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_DATA   , ++ifaceID );
+         }
+         _events  .put( iface, events );
+         _requests.put( iface, requests );
+         _data    .put( iface, data );
       }
       for( final TypesType types : _application.getTypes()) {
          for( final EnumerationType type : types.getEnumeration()) {
@@ -314,8 +338,8 @@ final class Model {
    static String toString( FieldType field ) {
       return "Name: "      + field.getName() +
          ", description: " + field.getDescription() +
-         ", value: "       + field.getValue() +
          ", type: "        + field.getType() +
+         ", length: "      + field.getLength().intValue() +
          ", userType: "    + field.getUserType();
    }
 
@@ -403,14 +427,16 @@ final class Model {
       return _eventIDs;
    }
 
-   static List<RequestType> getRequestsOf( InterfaceType iface ) {
-      final List<RequestType> requests = new ArrayList<>( iface.getEventOrRequestOrData().size());
-      for( final Object facet : iface.getEventOrRequestOrData()) {
-         if( facet instanceof RequestType ) {
-            requests.add((RequestType)facet );
-         }
-      }
-      return requests;
+   List<EventType> getEventsOf( InterfaceType iface ) {
+      return _events.get( iface );
+   }
+
+   List<RequestType> getRequestsOf( InterfaceType iface ) {
+      return _requests.get( iface );
+   }
+
+   List<DataType> getDataOf( InterfaceType iface ) {
+      return _data.get( iface );
    }
 
    private void typesUsedBy( String ifaceName, String typeName ) {
@@ -469,9 +495,6 @@ final class Model {
             throw new IllegalStateException( "unexpected class: " + facet.getClass());
          }
       }
-      for( final RequestType request : getRequestsOf( iface )) {
-         typesUsedBy( ifaceName, request.getArguments().getField());
-      }
    }
 
    private void typesUsedBy( ComponentType component ) {
@@ -489,6 +512,10 @@ final class Model {
 
    DisappType getApplication() {
       return _application;
+   }
+
+   DisappGenType getGeneration() {
+      return _generation;
    }
 
    InterfaceType getInterface( String name ) {
@@ -517,12 +544,20 @@ final class Model {
       return ifaces;
    }
 
-   Map<String, Byte> getOfferedInterfaceIDs( List<OfferedInterfaceUsageType> offers ) {
-      final Map<String, Byte> ifaces = new LinkedHashMap<>();
-      for( final OfferedInterfaceUsageType ifaceUsage : offers ) {
-         final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
-         final String        ifaceName = iface.getName();
-         ifaces.put( ifaceName, getInterfaceID( ifaceName ));
+   static List<InterfaceType> getOfferedInterfaces( ComponentType component ) {
+      final List<InterfaceType> ifaces = new LinkedList<>();
+      for( final OfferedInterfaceUsageType ifaceUsage : component.getOffers()) {
+         final InterfaceType iface = (InterfaceType)ifaceUsage.getInterface();
+         ifaces.add( iface );
+      }
+      return ifaces;
+   }
+
+   static List<InterfaceType> getRequiredInterfaces( ComponentType component ) {
+      final List<InterfaceType> ifaces = new LinkedList<>();
+      for( final RequiredInterfaceUsageType ifaceUsage : component.getRequires()) {
+         final InterfaceType iface = (InterfaceType)ifaceUsage.getInterface();
+         ifaces.add( iface );
       }
       return ifaces;
    }
@@ -781,11 +816,51 @@ final class Model {
       return responsesByIface;
    }
 
-   static List<InterfaceType> getRequiredInterfacesBy( ComponentType component ) {
-      final List<InterfaceType> interfaces = new LinkedList<>();
-      for( final RequiredInterfaceUsageType instance : component.getRequires()) {
-         final InterfaceType intrfc = (InterfaceType)instance.getInterface();
+   static Set<InterfaceType> getRequiredInterfacesBy( ComponentType component ) {
+      final Set<InterfaceType> interfaces = new LinkedHashSet<>();
+      for( final RequiredInterfaceUsageType req : component.getRequires()) {
+         final InterfaceType intrfc = (InterfaceType)req.getInterface();
          interfaces.add( intrfc );
+      }
+      return interfaces;
+   }
+
+   static Set<InterfaceType> getOfferedInterfacesBy( ProcessType process ) {
+      final Set<InterfaceType> interfaces = new LinkedHashSet<>();
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType component = (ComponentType)instance.getComponent();
+         for( final OfferedInterfaceUsageType offered : component.getOffers()) {
+            final InterfaceType intrfc = (InterfaceType)offered.getInterface();
+            interfaces.add( intrfc );
+         }
+      }
+      return interfaces;
+   }
+
+   static SortedSet<String> getRequiredRequestInterfacesBy( ProcessType process ) {
+      final SortedSet<String> requests = new TreeSet<>();
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType component = (ComponentType)instance.getComponent();
+         for( final RequiredInterfaceUsageType req : component.getRequires()) {
+            final InterfaceType iface = (InterfaceType)req.getInterface();
+            for( final Object facet : iface.getEventOrRequestOrData()) {
+               if( facet instanceof RequestType ) {
+                  requests.add( iface.getName());
+               }
+            }
+         }
+      }
+      return requests;
+   }
+
+   Set<InterfaceType> getRequiredDataInterfacesBy( ProcessType process ) {
+      final Set<InterfaceType> interfaces = new LinkedHashSet<>();
+      for( final InstanceType instance : process.getInstance()) {
+         final ComponentType component = (ComponentType)instance.getComponent();
+         final Map<InterfaceType, List<DataType>> data = getRequiredDataOf( component );
+         if( data != null ) {
+            interfaces.addAll( data.keySet());
+         }
       }
       return interfaces;
    }
@@ -902,6 +977,15 @@ final class Model {
          }
       }
       throw new IllegalStateException( modelModuleName + " isn't defined for the language " + language );
+   }
+
+   static TypeImplType getModuleName( disapp.generator.genmodel.TypesType types, String language ) {
+      for( final TypeImplType impl : types.getTypeImpl()) {
+         if( impl.getLanguage().equals( language )) {
+            return impl;
+         }
+      }
+      throw new IllegalStateException( "'" + language + "' isn't a valid language " );
    }
 
    void getImports( Map<InterfaceType, List<DataType>> dataMap, SortedSet<String> imports ) {
@@ -1057,7 +1141,7 @@ final class Model {
          if( offData != null ) {
             for( final InterfaceType iface : offData.keySet()) {
                final Map<String, SortedSet<String>> instancesPerProcess = getDataConsumers( deployment, iface, instance );
-               final String name = iface.getName() + (( factory.getLanguage() == Model.C_LANGUAGE ) ? "_data" : "Data" );
+               final String name = iface.getName() + (( factory.getLanguage() == Model.C_LANGUAGE ) ? "_data" : "Publisher" );
                final Proxy dataProxy = new Proxy( module, name, instance.getName(), instancesPerProcess );
                dataPublishers.add( dataProxy );
                proxies.add( dataProxy );
@@ -1116,5 +1200,37 @@ final class Model {
          }
       }
       return processes;
+   }
+
+   public disapp.generator.genmodel.TypesType getGenInternalTypes() {
+      for( final disapp.generator.genmodel.TypesType types : _generation.getTypes()) {
+         if( types.getName().equals( "internal-types" )) {
+            return types;
+         }
+      }
+      throw new IllegalStateException( "'internal-types' generation type not found" );
+   }
+
+   Map<String, Set<String>> getComponentsPerInterface() {
+      final Map<String, Set<String>> retVal = new LinkedHashMap<>();
+      for( final ComponentType component : _application.getComponent()) {
+         for( final RequiredInterfaceUsageType req : component.getRequires()) {
+            final InterfaceType iface = (InterfaceType)req.getInterface();
+            Set<String> components = retVal.get( iface.getName());
+            if( components == null ) {
+               retVal.put( iface.getName(), components = new LinkedHashSet<>());
+            }
+            components.add( component.getName());
+         }
+      }
+      return retVal;
+   }
+
+   static Set<ComponentType> getComponentsOf( ProcessType process ) {
+      final Set<ComponentType> components = new LinkedHashSet<>();
+      for( final InstanceType instance : process.getInstance()) {
+         components.add((ComponentType)instance.getComponent());
+      }
+      return components;
    }
 }

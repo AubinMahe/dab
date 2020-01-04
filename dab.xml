@@ -44,19 +44,19 @@
    </types>
 
    <interface name="IHM">
-      <event name="ejecterLaCarte" />
-      <event name="ejecterLesBillets">
+      <event name="ejecterLaCarte"                     queuing-policy="queued" />
+      <event name="ejecterLesBillets"                  queuing-policy="queued" >
          <field name="montant" type="double"
             description="Montant à donner à l'utilisateur du DAB" />
       </event>
-      <event name="confisquerLaCarte" />
-      <event name="placerLesBilletsDansLaCorbeille" />
-      <event name="arret" />
+      <event name="confisquerLaCarte"                  queuing-policy="queued" />
+      <event name="placerLesBilletsDansLaCorbeille"    queuing-policy="queued" />
+      <event name="arret"                              queuing-policy="immediate" />
    </interface>
 
    <interface name="UniteDeTraitement">
-      <data name="etatDuDab" type="dabtypes.EtatDuDab"
-         description="Partage des données décrivant l'état du DAB" />
+      <data name="etatDuDab" type="dabtypes.EtatDuDab" queuing-policy="activating" 
+         description="Partage des données décrivant l'état du DAB"/>
       <event name="rechargerLaCaisse">
          <field name="montant" type="double"
             description="Montant à rajouter dans la caisse" />
@@ -80,7 +80,7 @@
       <event name="carteRetiree" />
       <event name="billetsRetires" />
       <event name="annulationDemandeeParLeClient" />
-      <event name="arret" />
+      <event name="arret"                              queuing-policy="immediate" />
    </interface>
 
    <interface name="Maintenable">
@@ -91,7 +91,7 @@
    </interface>
 
    <interface name="SiteCentral">
-      <request name="informations" type="dabtypes.Information"
+      <request name="informations" type="dabtypes.Information" threading-policy="dedicated"
          description="Requête asynchrone auprès du site central qui retourne les informations de carte et de compte à partir de l'id de carte">
          <arguments>
             <field name="carteID" type="string" length="4"
@@ -108,7 +108,7 @@
          <field name="montant" type="double"
             description="Montant du retrait en €" />
       </event>
-      <event name="arret" />
+      <event name="arret"                              queuing-policy="immediate" />
    </interface>
 
    <component name="Distributeur">

@@ -172,7 +172,7 @@ public class CppGenerator extends BaseGenerator {
 
    private void dispatcherInterface( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
-      final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>                  interfaceIDs = null;//_model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
@@ -199,7 +199,7 @@ public class CppGenerator extends BaseGenerator {
 
    private void dispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
-      final Map<String, Byte>                  interfaceIDs = _model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>                  interfaceIDs = null;//_model.getOfferedInterfaceIDs( ifaces );
       final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
       final Map<String, List<Object>>          reqEvents    = _model.getRequiredFacets( component );
       final Map<String, Map<String, Byte>>     eventIDs     = _model.getEventIDs();
@@ -226,7 +226,7 @@ public class CppGenerator extends BaseGenerator {
    }
 
    private void componentHeader( ComponentType component ) throws IOException {
-      final List<InterfaceType>                   requires  = Model.getRequiredInterfacesBy( component );
+      final Set<InterfaceType>                   requires  = Model.getRequiredInterfacesBy( component );
       final Set<String>                           actions   = _model.getAutomatonActions( component );
       final Map<InterfaceType, List<DataType>>    offData   = _model.getOfferedDataOf   ( component );
       final Map<InterfaceType, List<DataType>>    reqData   = _model.getRequiredDataOf  ( component );
