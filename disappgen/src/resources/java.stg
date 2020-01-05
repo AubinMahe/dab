@@ -590,8 +590,8 @@ public static enum LoopbackEvent {
    }
 
    public static boolean enqueue(
-      SocketAddress                                    from,
-      byte                                             event,
+      SocketAddress                                     from,
+      byte                                              event,
       InstanceID                                        instance,
       Deque\<da.FacetMessage\<Interfaces, ?, InstanceID\>\> mainQueue )
    {
@@ -624,9 +624,10 @@ private boolean dispatch( LoopbackEvent event ) throws IOException {
 }
 
 void loopback( LoopbackEvent event ) throws IOException {
-   final ByteBuffer out = ByteBuffer.allocate( 3 );
+   final ByteBuffer out = ByteBuffer.allocate( 4 );
    Interfaces.LOOPBACK.put( out );
    event.put( out );
+   _component._instanceID.put( out );
    _component._instanceID.put( out );
    out.flip();
    _channel.send( out, _channel.getLocalAddress());
