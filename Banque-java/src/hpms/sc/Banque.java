@@ -2,13 +2,15 @@ package hpms.sc;
 
 import java.io.IOException;
 
+import da.enums.Instances;
+
 public final class Banque extends BanqueComponent {
 
    private static final long BANQUE_DELAI_DE_TRAITEMENT = 3000;
 
    private IRepository _repository;
 
-   public Banque( byte instanceID, da.IMainLoop mainLoop ) {
+   public Banque( Instances instanceID, da.IMainLoop mainLoop ) {
       super( instanceID, mainLoop );
    }
 

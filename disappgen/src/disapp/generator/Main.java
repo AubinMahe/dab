@@ -25,8 +25,7 @@ public class Main {
       final JavaGenerator java = new JavaGenerator( _model );
 //      final CGenerator    c    = new CGenerator   ( _model );
 //      final CppGenerator  cpp  = new CppGenerator ( _model );
-      java.interfacesEnum();
-      java.eventsEnum();
+      java.internalTypes( deployment );
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final CompImplType implementation : _model.getCompImpls( component.getName())) {
             switch( implementation.getLanguage()) {

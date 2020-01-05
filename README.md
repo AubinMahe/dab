@@ -76,25 +76,16 @@ On peut aussi exécuter les binaires cross-compilés directement sous l'OS cible
 Pour lancer ces terminaux, taper `start-ttys`.
 
 **Différents déploiements** exécutables :
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en java: `ant run-java`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour GNU/Linux : `ant run-c`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour MinGW/Windows : `ant run-c-win32`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C pour macOS/Darling : `ant run-c-o64`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour GNU/Linux : `ant run-cpp`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour MinGW/Windows : `ant run-cpp-win32`
-- Pour exécuter 1 `Banque`, 1 `Distributeur` et 1 `Controleur` en C++ pour macOS/Darling : `ant run-cpp-o64`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en java : `ant run-java-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour GNU/Linux : `ant run-c-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour MinGW/Windows : `ant run-c-win32-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C pour macOS/Darling : `ant run-c-o64-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour GNU/Linux : `ant run-cpp-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour MinGW/Windows : `ant run-cpp-win32-2`
-- Pour exécuter 1 `Banque`, 2 `Distributeur` et 2 `Controleur` en C++ pour macOS/Darling : `ant run-cpp-o64-2`
+- Pour exécuter le process `xxx` du déploiement `isolated` implémenté avec le langage `yyy`, taper : `ant runiso-xxx-yyy`
+- Pour exécuter le process `xxx` du déploiement `mixed`    implémenté avec le langage `yyy`, taper : `ant runmix-xxx-java`
+- Pour exécuter le process `one` du déploiement `allin`    implémenté avec le langage `java` (le seul qui est vraiment fonctionnel), taper : `ant runallin-one-java`
+- Pour exécuter les tests de non régression du langage `yyy`, taper : `ant run-functional-tests-yyy`
+- **Rappel** :
+    - Les instances du modèles [dab.xml](dab.xml) sont : `sc`, `udt1`, `udt2`, `ihm1`, `ihm2`, `dab1`, `dab2`
+    - Les langages supportés sont nommés `java`, `c` et `cpp`
 
 Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permettent de vérifier le routage correct des réponses aux requêtes.
 **Il est évidemment possible de panacher les langages et les OS** : une Banque en Java, un Contrôleur en C sous Microsoft Windows, un Distributeur en C++ sous macOS... Les combinaisons sont nombreuses avec 3 composants, 3 langages, 3 OS : 27 cas. Il est également possible de créer des déploiements ou les processus hébergent plus d'un composant, par exemple, les cinq composants en Java sous macOS ou un Distributeur et un Contrôleur dans le même processus sous GNU/Linux connectés à une instance de Banque sous Microsoft Windows plus un Distributeur et un Contrôleur dans le même processus sous macOS, toujours connectés à la même instance de Banque.
-
-**En pas-à-pas**, pour comprendre :
 
 - Les librairies util-xxx et dabtypes-xxx ainsi que les trois composants `Distributeur`, `Banque` et `Controleur` produisent des librairies dynamiques (.so, .dll, .dylib).
 - Les exécutables qui correspondent au `process` du modèle hébergent les factories générées, ils sont nommés &lt;deploiement>-&lt;processus>-&lt;langage>. Ce sont eux qui réalisent les instanciations, conformément au déploiement.
@@ -103,45 +94,17 @@ Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permette
 1. Compiler et packager le générateur de code : `(cd disappgen && ant jar)`
 1. Générer le code de l'application à partir du document XML [dab.xml](dab.xml) : `ant generate-all-sources`
 1. Compiler dans l'ordre :
-    1. util-c            : `(cd util-c && make)`
-    1. dabtypes-c        : `(cd dabtypes-c && make)`
-    1. Controleur-c      : `(cd Controleur-c && make)`
-    1. Banque-c          : `(cd Banque-c && make)`
-    1. Distributeur-c    : `(cd Distributeur-c && make)`
-    1. isolated-udt1-c   : `(cd isolated-udt1-c && make)`
-    1. isolated-udt2-c   : `(cd isolated-udt2-c && make)`
-    1. isolated-ihm1-c   : `(cd isolated-ihm1-c && make)`
-    1. isolated-ihm2-c   : `(cd isolated-ihm2-c && make)`
-    1. isolated-sc-c     : `(cd isolated-sc-c && make)`
-    1. mixed-dab1-c      : `(cd mixed-dab1-c && make)`
-    1. mixed-dab2-c      : `(cd mixed-dab2-c && make)`
-    1. allin-one-c       : `(cd allin-one-c && make)`
-    1. util-cpp          : `(cd util-cpp && make)`
-    1. dabtypes-cpp      : `(cd dabtypes-cpp && make)`
-    1. Controleur-cpp    : `(cd Controleur-cpp && make)`
-    1. Banque-cpp        : `(cd Banque-cpp && make)`
-    1. Distributeur-cpp  : `(cd Distributeur-cpp && make)`
-    1. isolated-udt1-cpp : `(cd isolated-udt1-cpp  && make)`
-    1. isolated-udt2-cpp : `(cd isolated-udt2-cpp  && make)`
-    1. isolated-ihm1-cpp : `(cd isolated-ihm1-cpp  && make)`
-    1. isolated-ihm2-cpp : `(cd isolated-ihm2-cpp  && make)`
-    1. isolated-sc-cpp   : `(cd isolated-sc-cpp  && make)`
-    1. mixed-dab1-cpp    : `(cd mixed-dab1-cpp && make)`
-    1. mixed-dab2-cpp    : `(cd mixed-dab2-cpp && make)`
-    1. allin-one-cpp     : `(cd allin-one-cpp && make)`
-    1. util-java         : `(cd util-java && ant)`
-    1. dabtypes-java     : `(cd dabtypes-java && ant)`
-    1. Controleur-java   : `(cd Controleur-java && ant)`
-    1. Banque-java       : `(cd Banque-java && ant)`
-    1. Distributeur-java : `(cd Distributeur-java && ant)`
-    1. isolated-udt1-java: `(cd isolated-udt1-java && ant)`
-    1. isolated-udt2-java: `(cd isolated-udt2-java && ant)`
-    1. isolated-ihm1-java: `(cd isolated-ihm1-java && ant)`
-    1. isolated-ihm2-java: `(cd isolated-ihm2-java && ant)`
-    1. isolated-sc-java  : `(cd isolated-sc-java && ant)`
-    1. mixed-dab1-java   : `(cd mixed-dab1-java && ant)`
-    1. mixed-dab2-java   : `(cd mixed-dab2-java && ant)`
-    1. allin-one-java    : `(cd allin-one-java && ant)`
+    1. util-c                         : `(cd util-c && make)`
+    1. util-cpp                       : `(cd util-cpp && make)`
+    1. dabtypes-c                     : `(cd dabtypes-c && make)`
+    1. dabtypes-cpp                   : `(cd dabtypes-cpp && make)`
+    1. daenums-c                      : `(cd daenums-c && make)`
+    1. Pour chaque composant C ou C++ : `(cd <comp>-<lge> && make)`
+    1. Pour chaque processus C ou C++ : `(cd <dep>-<process>-<lge> && make)`
+    1. util-java                      : `(cd util-java && ant)`
+    1. dabtypes-java                  : `(cd dabtypes-java && ant)`
+    1. Pour chaque composant Java     : `(cd <comp>-java && ant)`
+    1. Pour chaque processus Java     : `(cd <dep>-<process>-java && ant)`
 
 **Pour exécuter** les projets, un environnement minimal doit suffire, aucune bibliothèque *runtime* n'est utilisée. Cependant, pour exécuter les productions pour MS-Windows et macOS, il faut les émulateurs Wine et Darling (ou les OS natifs).
 

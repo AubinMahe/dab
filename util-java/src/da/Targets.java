@@ -2,13 +2,14 @@ package da;
 
 import java.net.InetSocketAddress;
 
-public final class Targets {
+public final class Targets<T extends Enum<T>> {
 
    public final InetSocketAddress _process;
-   public final byte[]            _instances;
+   public final T[]              _instances;
 
-   public Targets( InetSocketAddress process, byte ... instances ) {
-      _process = process;
+   @SafeVarargs
+   public Targets( InetSocketAddress process, T ... instances ) {
+      _process   = process;
       _instances = instances;
    }
 }

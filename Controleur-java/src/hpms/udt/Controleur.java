@@ -2,6 +2,7 @@ package hpms.udt;
 
 import java.io.IOException;
 
+import da.enums.Instances;
 import hpms.dabtypes.Etat;
 import hpms.dabtypes.Evenement;
 
@@ -13,7 +14,7 @@ public final class Controleur extends ControleurComponent {
    private final Compte _compte = new Compte();
    private /* */ double _montantDeLatransactionEnCours = 0.0;
 
-   public Controleur( byte instanceID, da.IMainLoop mainLoop ) {
+   public Controleur( Instances instanceID, da.IMainLoop mainLoop ) {
       super( instanceID, mainLoop );
    }
 

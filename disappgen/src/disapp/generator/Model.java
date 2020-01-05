@@ -1202,7 +1202,7 @@ final class Model {
       return processes;
    }
 
-   public disapp.generator.genmodel.TypesType getGenInternalTypes() {
+   disapp.generator.genmodel.TypesType getGenInternalTypes() {
       for( final disapp.generator.genmodel.TypesType types : _generation.getTypes()) {
          if( types.getName().equals( "internal-types" )) {
             return types;
@@ -1232,5 +1232,14 @@ final class Model {
          components.add((ComponentType)instance.getComponent());
       }
       return components;
+   }
+
+   Set<InstanceType> getInstances( String deploymentName ) {
+      final Set<InstanceType> instances = new LinkedHashSet<>();
+      final DeploymentType deployment = getDeployment( deploymentName );
+      for( final ProcessType process : deployment.getProcess()) {
+         instances.addAll( process.getInstance());
+      }
+      return instances;
    }
 }
