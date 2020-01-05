@@ -10,7 +10,7 @@ public class Distributeur extends hpms.dab.DistributeurComponent {
 
    private Controller _controller;
 
-   public Distributeur( da.enums.Instances ihm1, da.IMainLoop mainLoop ) {
+   public Distributeur( da.InstanceID ihm1, da.IMainLoop mainLoop ) {
       super( ihm1, mainLoop );
       _etatDuDab.etat = Etat.MAINTENANCE;
    }

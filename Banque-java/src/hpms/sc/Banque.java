@@ -2,7 +2,7 @@ package hpms.sc;
 
 import java.io.IOException;
 
-import da.enums.Instances;
+import da.InstanceID;
 
 public final class Banque extends BanqueComponent {
 
@@ -10,7 +10,7 @@ public final class Banque extends BanqueComponent {
 
    private IRepository _repository;
 
-   public Banque( Instances instanceID, da.IMainLoop mainLoop ) {
+   public Banque( InstanceID instanceID, da.IMainLoop mainLoop ) {
       super( instanceID, mainLoop );
    }
 

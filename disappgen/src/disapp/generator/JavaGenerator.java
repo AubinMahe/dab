@@ -79,18 +79,6 @@ public class JavaGenerator extends BaseGenerator {
       write( "Interfaces.java", tmpl );
    }
 
-   private void instancesEnum( String deployment ) throws IOException {
-      final TypesType         internal  = _model.getGenInternalTypes();
-      final Set<InstanceType> instances = _model.getInstances( deployment );
-      final TypeImplType      impl      = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-      final ST                tmpl      = _group.getInstanceOf( "/instancesEnum" );
-      _genDir     = impl.getSrcDir();
-      _moduleName = impl.getModuleName();
-      tmpl.add( "package"  , _moduleName );
-      tmpl.add( "instances", instances );
-      write( "Interfaces.java", tmpl );
-   }
-
    private void eventsEnum() throws IOException {
       final TypesType           internal = _model.getGenInternalTypes();
       final TypeImplType        impl     = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
@@ -138,9 +126,8 @@ public class JavaGenerator extends BaseGenerator {
       }
    }
 
-   protected void internalTypes(String deployment) throws IOException {
+   protected void internalTypes() throws IOException {
       interfacesEnum();
-      instancesEnum( deployment );
       eventsEnum();
    }
 
@@ -353,6 +340,14 @@ public class JavaGenerator extends BaseGenerator {
       automaton               ( component );
    }
 
+   private void instancesEnum( String deployment ) throws IOException {
+      final Set<InstanceType> instances = _model.getInstances( deployment );
+      final ST                tmpl      = _group.getInstanceOf( "/instancesEnum" );
+      tmpl.add( "package"  , _moduleName );
+      tmpl.add( "instances", instances );
+      write( "Instances.java", tmpl );
+   }
+
    void factory(
       DeploymentType                           deployment,
       disapp.generator.genmodel.DeploymentType deploymentImpl,
@@ -399,5 +394,6 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "modules"       , modules );
       tmpl.add( "ids"           , ids );
       write( "ComponentFactory.java", tmpl );
+      instancesEnum( dep );
    }
 }

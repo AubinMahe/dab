@@ -2,7 +2,7 @@ package da;
 
 import java.net.SocketAddress;
 
-public class FacetMessage<I extends Enum<I>, F extends Enum<F>, E extends Enum<E>> {
+public class FacetMessage<I extends Enum<I>, F extends Enum<F>, E extends InstanceID> {
 
    public final SocketAddress _from;
    public final I             _interface;

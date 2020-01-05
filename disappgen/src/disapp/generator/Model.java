@@ -683,7 +683,7 @@ final class Model {
     * @return the size, with the header.
     */
    int getMessageSize( List<FieldType> fields ) {
-      int msgSize = 1 + 1 + 1; // INTERFACE + EVENT + instanceID
+      int msgSize = 1 + 1 + 1 + 1; // INTERFACE + EVENT + to + from
       for( final FieldType field : fields ) {
          msgSize += getFieldSize( field );
       }
@@ -696,7 +696,7 @@ final class Model {
     * @return the size, with the header.
     */
    int getMessageSize( DataType data ) {
-      int msgSize = 1 + 1 + 1; // INTERFACE + EVENT + instanceID
+      int msgSize = 1 + 1 + 1 + 1; // INTERFACE + EVENT + to + from
       msgSize += getStructSize( _structs.get( data.getType()));
       return msgSize;
    }

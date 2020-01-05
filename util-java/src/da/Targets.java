@@ -2,7 +2,7 @@ package da;
 
 import java.net.InetSocketAddress;
 
-public final class Targets<T extends Enum<T>> {
+public final class Targets<T extends InstanceID> {
 
    public final InetSocketAddress _process;
    public final T[]              _instances;

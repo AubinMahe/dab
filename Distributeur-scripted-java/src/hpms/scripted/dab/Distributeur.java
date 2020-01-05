@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.function.BooleanSupplier;
 
 import da.IMainLoop;
-import da.enums.Instances;
+import da.InstanceID;
 import hpms.dabtypes.Etat;
 
 public class Distributeur extends hpms.scripted.dab.DistributeurComponent {
@@ -43,7 +43,7 @@ public class Distributeur extends hpms.scripted.dab.DistributeurComponent {
       return predicate.getAsBoolean();
    }
 
-   public Distributeur( Instances instanceID, IMainLoop mainLoop ) {
+   public Distributeur( InstanceID instanceID, IMainLoop mainLoop ) {
       super( instanceID, mainLoop );
       _etatDuDab.etat = Etat.MAINTENANCE;
    }

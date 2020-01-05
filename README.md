@@ -99,10 +99,12 @@ Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permette
     1. dabtypes-c                     : `(cd dabtypes-c && make)`
     1. dabtypes-cpp                   : `(cd dabtypes-cpp && make)`
     1. daenums-c                      : `(cd daenums-c && make)`
+    1. daenums-cpp                    : `(cd daenums-cpp && make)`
     1. Pour chaque composant C ou C++ : `(cd <comp>-<lge> && make)`
     1. Pour chaque processus C ou C++ : `(cd <dep>-<process>-<lge> && make)`
     1. util-java                      : `(cd util-java && ant)`
     1. dabtypes-java                  : `(cd dabtypes-java && ant)`
+    1. daenums-java                   : `(cd daenums-java && ant)`
     1. Pour chaque composant Java     : `(cd <comp>-java && ant)`
     1. Pour chaque processus Java     : `(cd <dep>-<process>-java && ant)`
 
