@@ -23,6 +23,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.Stage;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import util.Log;
 
 /**
  * Les informations détenues par le Site Central sont :
@@ -146,7 +147,7 @@ public class Controller implements IRepository, IController<Banque> {
 
    @Override
    public Carte getCarte( String carteID ) {
-      System.err.printf( getClass().getName() + ".getCarte|%s\n", carteID );
+      Log.printf( "carteID = %s", carteID );
       final ObservableList<Carte> cartes = _cartes.getItems();
       for( int row = 0, count = cartes.size(); row < count; ++row ) {
          final Carte  carte = cartes.get( row );
@@ -160,7 +161,7 @@ public class Controller implements IRepository, IController<Banque> {
 
    @Override
    public Compte getCompte( String carteID ) {
-      System.err.printf( getClass().getName() + ".getCompte|carteID = %s\n", carteID );
+      Log.printf( "carteID = %s", carteID );
       final ICarte carte = getCarte( carteID );
       if( carte != null ) {
          final String                 compteID = carte.getCompte();
@@ -185,8 +186,8 @@ public class Controller implements IRepository, IController<Banque> {
    public void printStatusOf( String carteID ) {
       final Carte  carte  = getCarte( carteID );
       final Compte compte = getCompte( carteID );
-      System.err.printf( "TEST|nbEssais = %d\n", carte.getNbEssais());
-      System.err.printf( "TEST|solde    = %7.2f\n", compte.getSolde());
+      Log.printf( "[TEST] nbEssais = %d"   , carte.getNbEssais());
+      Log.printf( "[TEST] solde    = %7.2f", compte.getSolde());
       System.err.flush();
    }
 }

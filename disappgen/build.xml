@@ -35,7 +35,7 @@
 
    <target name="jar" depends="javac">
       <copy todir="build">
-         <fileset dir="src" includes="resources/*.stg" />
+         <fileset dir="src" includes="resources/**" />
       </copy>
       <jar destfile="${jar}" basedir="build" />
    </target>

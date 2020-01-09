@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -75,8 +76,9 @@ abstract class BaseGenerator {
    }
 
    protected BaseGenerator( Model model, String language, String templateName, BaseRenderer renderer ) {
+      final URL url = getClass().getResource( "/resources/" + templateName );
       _model    = model;
-      _group    = new STGroupFile( getClass().getResource( "/resources/" + templateName ), "utf-8", '<', '>' );
+      _group    = new STGroupFile( url, "utf-8", '<', '>' );
       _renderer = renderer;
       final EventOrRequestOrDataAdaptor eoroda = new EventOrRequestOrDataAdaptor();
       _group.setListener(  new DisAppErrListener());

@@ -1,0 +1,105 @@
+concat(a,b) ::= <<
+<a><b>
+>>
+
+
+
+pair( field ) ::= <<
+<     if( field.isBoolean )>bool<
+  elseif( field.isString  )>const char *<
+  elseif( field.isDouble  )>const double &<
+  elseif( field.isEnum    )><typesNamespace>::<field.userType.name><
+  elseif( field.isStruct  )>const <typesNamespace>::<field.userType.name> &<
+  else                     ><type(field)><
+  endif> <field.name>
+>>
+
+
+
+signature( fields ) ::= <<
+< if( ! fields )
+     >void<
+  else><
+     first( fields ):{field|<pair(field)>}><
+     rest ( fields ):{field|, <pair(field)>}><
+  endif>
+>>
+
+
+
+args( fields ) ::= <<
+< first( fields ):{field|<field.name>}><
+  rest ( fields ):{field|, <field.name>}>
+>>
+
+
+
+byteBufferPut( prefix, fields ) ::= <<
+<fields:{field|
+< if(     field.isBoolean )>_out.putBool( <prefix><field.name> );
+< elseif( field.isByte    )>_out.putByte( <prefix><field.name> );
+< elseif( field.isShort   )>_out.putShort( <prefix><field.name> );
+< elseif( field.isUshort  )>_out.putUShort( <prefix><field.name> );
+< elseif( field.isInt     )>_out.putInt( <prefix><field.name> );
+< elseif( field.isUint    )>_out.putUInt( <prefix><field.name> );
+< elseif( field.isLong    )>_out.putLong( <prefix><field.name> );
+< elseif( field.isUlong   )>_out.putULong( <prefix><field.name> );
+< elseif( field.isFloat   )>_out.putFloat( <prefix><field.name> );
+< elseif( field.isDouble  )>_out.putDouble( <prefix><field.name> );
+< elseif( field.isString  )>_out.putString( <prefix><field.name> );
+< elseif( field.isEnum    )>_out.putByte( static_cast\<byte>( <prefix><field.name> ));
+< elseif( field.isStruct  )><prefix><field.name>.put( _out );
+< endif>
+}>
+>>
+
+
+
+byteBufferGet( fields ) ::= <<
+<fields:{field|
+<     if( field.isBoolean )>bool <field.name> = in.getBool();
+< elseif( field.isByte    )>byte <field.name> = in.getByte();
+< elseif( field.isShort   )>short <field.name> = in.getShort();
+< elseif( field.isUshort  )>unsigned short <field.name> = in.getUShort();
+< elseif( field.isInt     )>int <field.name> = in.getInt();
+< elseif( field.isUint    )>unsigned int <field.name> = in.getUInt();
+< elseif( field.isLong    )>int64_t <field.name> = in.getLong();
+< elseif( field.isUlong   )>uint64_t <field.name> = in.getULong();
+< elseif( field.isFloat   )>float <field.name> = in.getFloat();
+< elseif( field.isDouble  )>double <field.name> = in.getDouble();
+< elseif( field.isString  )>char <field.name>[<field.length> + 1];
+in.getString( <field.name>, sizeof( <field.name> ));
+< elseif( field.isEnum    )><types.(field.userType)> <field.name> = in.getByte();
+< elseif( field.isStruct  )><types.(field.userType)> <field.name>;
+<field.name>.get( in );
+< endif>
+}>
+>>
+
+
+
+enumtype( field ) ::= <<
+<     if( field.isBoolean )>bool<
+  elseif( field.isByte    )>unsigned char<
+  elseif( field.isShort   )>short<
+  elseif( field.isUshort  )>unsigned short<
+  elseif( field.isInt     )>int<
+  elseif( field.isUint    )>unsigned<
+  elseif( field.isLong    )>int64_t<
+  elseif( field.isUlong   )>uint64_t<
+  endif>
+>>
+
+
+
+templateArgs( fields ) ::= <<
+<fields:{field|
+<   if( field.isBoolean )>bool<
+elseif( field.isString  )>const char *<
+elseif( field.isDouble  )>double<
+elseif( field.isEnum    )><typesNamespace>::<field.userType.name><
+elseif( field.isStruct  )>const <typesNamespace>::<field.userType.name> &<
+else                     ><type(field)><
+endif
+>}; separator=", ">
+>>

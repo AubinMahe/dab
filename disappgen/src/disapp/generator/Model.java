@@ -539,7 +539,7 @@ final class Model {
       for( final RequiredInterfaceUsageType ifaceUsage : requires ) {
          final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
          final String        ifaceName = iface.getName();
-         ifaces.put( ifaceName, getInterfaceID( ifaceName ));
+         ifaces.put( ifaceName, (byte)12/*getInterfaceID( ifaceName )*/);
       }
       return ifaces;
    }
@@ -837,15 +837,15 @@ final class Model {
       return interfaces;
    }
 
-   static SortedSet<String> getRequiredRequestInterfacesBy( ProcessType process ) {
-      final SortedSet<String> requests = new TreeSet<>();
+   static Set<InterfaceType> getRequiredRequestInterfacesBy( ProcessType process ) {
+      final Set<InterfaceType> requests = new LinkedHashSet<>();
       for( final InstanceType instance : process.getInstance()) {
          final ComponentType component = (ComponentType)instance.getComponent();
          for( final RequiredInterfaceUsageType req : component.getRequires()) {
             final InterfaceType iface = (InterfaceType)req.getInterface();
             for( final Object facet : iface.getEventOrRequestOrData()) {
                if( facet instanceof RequestType ) {
-                  requests.add( iface.getName());
+                  requests.add( iface );
                }
             }
          }
@@ -1020,6 +1020,50 @@ final class Model {
       }
    }
 
+   static void getEventIncludes( Map<String, String> types, List<EventType> events, SortedSet<String> includes ) {
+      for( final EventType event : events ) {
+         for( final FieldType field : event.getField()) {
+            final String type = field.getUserType();
+            if( type != null ) {
+               final String lgeType = types.get( type );
+               includes.add( lgeType.replaceAll( "::", "/" ));
+            }
+         }
+      }
+   }
+
+   static void getRequestIncludes( Map<String, String> types, List<RequestType> requests, SortedSet<String> includes ) {
+      for( final RequestType request : requests ) {
+         for( final FieldType field : request.getArguments().getField()) {
+            final String type = field.getUserType();
+            if( type != null ) {
+               final String lgeType = types.get( type );
+               includes.add( lgeType.replaceAll( "::", "/" ));
+            }
+         }
+      }
+   }
+
+   static void getResponseIncludes( Map<String, String> types, List<RequestType> requests, SortedSet<String> includes ) {
+      for( final RequestType request : requests ) {
+         final String type = request.getType();
+         if( type != null ) {
+            final String lgeType = types.get( type );
+            includes.add( lgeType.replaceAll( "::", "/" ));
+         }
+      }
+   }
+
+   static void getDataIncludes( Map<String, String> types, List<DataType> data, SortedSet<String> includes ) {
+      for( final DataType datum : data ) {
+         final String type = datum.getType();
+         if( type != null ) {
+            final String lgeType = types.get( type );
+            includes.add( lgeType.replaceAll( "::", "/" ));
+         }
+      }
+   }
+
    Map<String, String> getTypes( String language ) {
       return _typesModel2Impl.get( language );
    }
@@ -1086,13 +1130,14 @@ final class Model {
    }
 
    void getFactoryConnections(
-      FactoryType                      factory,
-      String                           deployment,
-      ProcessType                      process,
-      Set<Proxy>                       proxies,
-      Set<Proxy>                       dataPublishers,
-      Map<InstanceType, Set<DataType>> consumedData,
-      Map<ComponentType, String>       modulesOut    )
+      FactoryType                                factory,
+      String                                     deployment,
+      ProcessType                                process,
+      Set<Proxy>                                 proxies,
+      Set<disapp.generator.genmodel.ProcessType> processesImpl,
+      Set<Proxy>                                 dataPublishers,
+      Map<InstanceType, Set<DataType>>           consumedData,
+      Map<ComponentType, String>                 modulesOut    )
    {
       proxies       .clear();
       dataPublishers.clear();
@@ -1136,6 +1181,9 @@ final class Model {
             }
             final String name = ((InterfaceType)requires.getInterface()).getName();
             proxies.add( new Proxy( module, name, instance.getName(), instancesPerProcess ));
+            for( final String processName : instancesPerProcess.keySet()) {
+               processesImpl.add( getProcessImpl( deployment, processName ));
+            }
          }
          final Map<InterfaceType, List<DataType>> offData = getOfferedDataOf( component );
          if( offData != null ) {
@@ -1145,6 +1193,9 @@ final class Model {
                final Proxy dataProxy = new Proxy( module, name, instance.getName(), instancesPerProcess );
                dataPublishers.add( dataProxy );
                proxies.add( dataProxy );
+               for( final String processName : instancesPerProcess.keySet()) {
+                  processesImpl.add( getProcessImpl( deployment, processName ));
+               }
             }
          }
          final Map<InterfaceType, List<DataType>> reqData = getRequiredDataOf( component );
@@ -1181,10 +1232,16 @@ final class Model {
                      return process;
                   }
                }
+               else {
+                  final ProcessRefType process = (ProcessRefType)o;
+                  if( process.getProcess().equals( processName )) {
+                     return getProcessImpl( process.getDeployment(), processName );
+                  }
+               }
             }
          }
       }
-      throw new IllegalArgumentException( "Process '" + processName + "' not found into deployment '" + deploymentName + "'" );
+      throw new IllegalArgumentException( "Process (genmodel) '" + processName + "' not found into deployment '" + deploymentName + "'" );
    }
 
    Set<disapp.generator.genmodel.ProcessType> getProcessesImpl( String deploymentName ) {

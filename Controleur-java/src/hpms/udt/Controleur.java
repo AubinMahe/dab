@@ -5,6 +5,7 @@ import java.io.IOException;
 import da.InstanceID;
 import hpms.dabtypes.Etat;
 import hpms.dabtypes.Evenement;
+import util.Log;
 
 public final class Controleur extends ControleurComponent {
 
@@ -61,11 +62,11 @@ public final class Controleur extends ControleurComponent {
    }
 
    @Override
-   public void carteInseree( String id ) throws IOException {
-      System.err.printf( "%s.carteInseree|id = %s\n", getClass().getName(), id );
+   public void carteInseree( String carteID ) throws IOException {
+      Log.printf( "carteID = '%s'", carteID );
       _carte .invalidate();
       _compte.invalidate();
-      _siteCentral.informations( id );
+      _siteCentral.informations( carteID );
       _automaton.process( Evenement.CARTE_INSEREE );
    }
 
@@ -73,7 +74,7 @@ public final class Controleur extends ControleurComponent {
    public void informationsResponse( hpms.dabtypes.Information information ) throws IOException {
       final hpms.dabtypes.Carte  carte  = information.carte;
       final hpms.dabtypes.Compte compte = information.compte;
-      System.err.printf( "%s.informationsResponse|carte = %s, solde = %7.2f\n", getClass().getName(), carte.id, compte.solde );
+      Log.printf( "carteID = '%s', solde = %7.2f", carte.id, compte.solde );
       _carte .set( carte );
       _compte.set( compte );
       if( _carte.isValid() && _compte.isValid()) {
@@ -100,7 +101,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void codeSaisi( String code ) throws IOException {
-      System.err.printf( "%s.codeSaisi|code = %s\n", getClass().getName(), code );
+      Log.printf( "code = '%s'", code );
       if( ! _carte._isValid ) {
          _automaton.process( Evenement.CARTE_INVALIDE );
       }
@@ -125,7 +126,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void montantSaisi( double montant ) throws IOException {
-      System.err.printf( "%s.montantSaisi|montant = %7.2f\n", getClass().getName(), montant );
+      Log.printf( "montant = %7.2f", montant );
       _iHM.ejecterLaCarte();
       if( montant > _etatDuDab.soldeCaisse ) {
          _automaton.process( Evenement.SOLDE_CAISSE_INSUFFISANT );
@@ -141,7 +142,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void carteRetiree() throws IOException {
-      System.err.printf( "%s.carteRetiree\n", getClass().getName());
+      Log.printf();
       _siteCentral.retrait( _carte.getId(), _montantDeLatransactionEnCours );
       _iHM.ejecterLesBillets( _montantDeLatransactionEnCours );
       _etatDuDab.soldeCaisse -= _montantDeLatransactionEnCours;
@@ -151,13 +152,13 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void billetsRetires() {
-      System.err.printf( "%s.billetsRetires\n", getClass().getName() );
+      Log.printf();
       _automaton.process( Evenement.BILLETS_RETIRES );
    }
 
    @Override
    public void annulationDemandeeParLeClient() throws IOException {
-      System.err.printf( "%s.annulationDemandeeParLeClient\n", getClass().getName() );
+      Log.printf();
       _montantDeLatransactionEnCours = 0.0;
       _iHM.ejecterLaCarte();
       _automaton.process( Evenement.ANNULATION_CLIENT );
@@ -165,6 +166,7 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void arret() throws IOException {
+      Log.printf();
       _iHM.arret();
       _siteCentral.arret();
       _automaton.process( Evenement.TERMINATE );
@@ -178,6 +180,7 @@ public final class Controleur extends ControleurComponent {
    }
 
    private void confisquerLaCarte() {
+      Log.printf();
       try {
          _iHM.confisquerLaCarte();
          _automaton.process( Evenement.DELAI_EXPIRE );
@@ -189,21 +192,25 @@ public final class Controleur extends ControleurComponent {
 
    @Override
    public void saisieDuCodeElapsed() throws IOException {
+      Log.printf();
       confisquerLaCarte();
    }
 
    @Override
    public void saisieDuMontantElapsed() throws IOException {
+      Log.printf();
       confisquerLaCarte();
    }
 
    @Override
    public void retraitDeLaCarteElapsed() throws IOException {
+      Log.printf();
       confisquerLaCarte();
    }
 
    @Override
    public void retraitDesBilletsElapsed() throws IOException {
+      Log.printf();
       _iHM.placerLesBilletsDansLaCorbeille();
       _automaton.process( Evenement.DELAI_EXPIRE );
    }

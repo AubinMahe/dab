@@ -11,7 +11,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/antlr-runtime-3.3.jar"/>
+	<classpathentry kind="lib" path="lib/antlr-runtime-3.3.jar" sourcepath="/home/aubin/Dev/git/dab/lib/ST4-4.0.4-sources.jar"/>
 	<classpathentry kind="lib" path="lib/javax.activation-1.2.0.jar"/>
 	<classpathentry kind="lib" path="lib/javax.activation-api-1.2.0.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb-api-2.3.1.jar" sourcepath="lib/jaxb-api-2.3.1-sources.jar"/>

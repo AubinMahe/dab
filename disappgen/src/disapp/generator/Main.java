@@ -24,14 +24,15 @@ public class Main {
       }
       final JavaGenerator java = new JavaGenerator( _model );
 //      final CGenerator    c    = new CGenerator   ( _model );
-//      final CppGenerator  cpp  = new CppGenerator ( _model );
+      final CppGenerator  cpp  = new CppGenerator ( _model );
       java.internalTypes();
+      cpp .internalTypes();
       for( final ComponentType component : _model.getApplication().getComponent()) {
          for( final CompImplType implementation : _model.getCompImpls( component.getName())) {
             switch( implementation.getLanguage()) {
             case "Java": java.component( component, implementation ); break;
 //            case "C"   : c   .component( component, implementation ); break;
-//            case "C++" : cpp .component( component, implementation ); break;
+            case "C++" : cpp .component( component, implementation ); break;
             }
          }
       }
@@ -44,13 +45,13 @@ public class Main {
                switch( factory.getLanguage()) {
                case "Java": java.factory( dep, depImpl, process, processImpl, factory ); break;
 //               case "C"   : c   .factory( dep, depImpl, process, processImpl, factory ); break;
-//               case "C++" : cpp .factory( dep, depImpl, process, processImpl, factory ); break;
+               case "C++" : cpp .factory( dep, depImpl, process, processImpl, factory ); break;
                }
             }
          }
       }
 //      c  .typesMakefileSourcesList();
-//      cpp.typesMakefileSourcesList();
+      cpp.typesMakefileSourcesList();
    }
 
    private static void usage() {

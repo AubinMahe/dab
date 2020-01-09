@@ -126,7 +126,8 @@
             <xs:element type="dataType"    name="data" />
          </xs:choice>
       </xs:sequence>
-      <xs:attribute type="xs:ID" name="name" use="required" />
+      <xs:attribute type="xs:ID"              name="name" use="required" />
+      <xs:attribute type="xs:positiveInteger" name="queue-size" use="optional" default="1" />
    </xs:complexType>
 
    <xs:complexType name="offeredInterfaceUsageType">

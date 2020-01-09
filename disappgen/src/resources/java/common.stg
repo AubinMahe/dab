@@ -1,0 +1,94 @@
+concat(a,b) ::= <<
+<a><b>
+>>
+
+
+
+type( field ) ::= <<
+< if(     field.isBoolean )>boolean<
+  elseif( field.isByte    )>byte   <
+  elseif( field.isShort   )>short  <
+  elseif( field.isUshort  )>short  <
+  elseif( field.isInt     )>int    <
+  elseif( field.isUint    )>int    <
+  elseif( field.isLong    )>long   <
+  elseif( field.isUlong   )>long   <
+  elseif( field.isFloat   )>float  <
+  elseif( field.isDouble  )>double <
+  elseif( field.isString  )>String <
+  elseif( field.isEnum    )><types.(field.userType)><
+  elseif( field.isStruct  )><types.(field.userType)><
+  endif>
+>>
+
+
+
+signature( fields ) ::= <<
+<fields:{field|<trim((type(field)))> <field.name>}; separator=", ">
+>>
+
+
+
+args( fields ) ::= <<
+< if( fields )> <fields:{field|msg.getArg<i>()}; separator=","> < endif>
+>>
+
+
+
+dataGen( visibility, field ) ::= <<
+<     if( field.isBoolean )><visibility> boolean <field.name>;
+< elseif( field.isByte    )><visibility> byte <field.name>;
+< elseif( field.isShort   )><visibility> short <field.name>;
+< elseif( field.isUshort  )><visibility> ushort <field.name>;
+< elseif( field.isInt     )><visibility> int <field.name>;
+< elseif( field.isUint    )><visibility> uint <field.name>;
+< elseif( field.isLong    )><visibility> long <field.name>;
+< elseif( field.isUlong   )><visibility> ulong <field.name>;
+< elseif( field.isFloat   )><visibility> float <field.name>;
+< elseif( field.isDouble  )><visibility> double <field.name>;
+< elseif( field.isString  )><visibility> String <field.name>;
+< elseif( field.isEnum    )><visibility> <field.userType.name> _<field.name> = <field.userType.name>.values()[0];
+< elseif( field.isStruct  )><visibility> final <field.userType.name> _<field.name> = new <field.userType.name>();
+< endif>
+>>
+
+
+
+byteBufferPut( fields ) ::= <<
+<fields:{field|
+< if(     field.isBoolean )>ByteBufferHelper.putBoolean( _out, <field.name> );
+< elseif( field.isByte    )>_out.put( <field.name> );
+< elseif( field.isShort   )>_out.putShort( <field.name> );
+< elseif( field.isUshort  )>_out.putShort( <field.name> );
+< elseif( field.isInt     )>_out.putInt( <field.name> );
+< elseif( field.isUint    )>_out.putInt( <field.name> );
+< elseif( field.isLong    )>_out.putLong( <field.name> );
+< elseif( field.isUlong   )>_out.putLong( <field.name> );
+< elseif( field.isFloat   )>_out.putFloat( <field.name> );
+< elseif( field.isDouble  )>_out.putDouble( <field.name> );
+< elseif( field.isEnum    )>_out.put((byte)<field.name>.ordinal());
+< elseif( field.isString  )>ByteBufferHelper.putString( _out, <field.name> );
+< elseif( field.isStruct  )><field.name>.put( _out );
+< endif>
+}>
+>>
+
+
+
+byteBufferGet( field ) ::= <<
+<     if( field.isBoolean )>final boolean <field.name> = ByteBufferHelper.getBoolean( in );
+< elseif( field.isByte    )>final byte <field.name> = in.get();
+< elseif( field.isShort   )>final short <field.name> = in.getShort();
+< elseif( field.isUshort  )>final ushort <field.name> = in.getUShort();
+< elseif( field.isInt     )>final int <field.name> = in.getInt();
+< elseif( field.isUint    )>final uint <field.name> = in.getUInt();
+< elseif( field.isLong    )>final long <field.name> = in.getLong();
+< elseif( field.isUlong   )>final ulong <field.name> = in.getULong();
+< elseif( field.isFloat   )>final float <field.name> = in.getFloat();
+< elseif( field.isDouble  )>final double <field.name> = in.getDouble();
+< elseif( field.isString  )>final String <field.name> = ByteBufferHelper.getString( in );
+< elseif( field.isEnum    )>final <field.userType.name> <field.name> = <field.userType.name>.values()[in.get()];
+< elseif( field.isStruct  )>final <field.userType.name> <field.name> = new <field.userType.name>();
+<field.name>.get( in );
+< endif>
+>>

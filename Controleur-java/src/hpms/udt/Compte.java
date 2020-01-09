@@ -29,7 +29,6 @@ class Compte {
    }
 
    void invalidate() {
-      System.err.print( "Compte.invalidate\n" );
       _isValid = false;
    }
 

@@ -3,6 +3,7 @@ package hpms.sc;
 import java.io.IOException;
 
 import da.InstanceID;
+import util.Log;
 
 public final class Banque extends BanqueComponent {
 
@@ -20,7 +21,7 @@ public final class Banque extends BanqueComponent {
 
    @Override
    public void informations( String carteID, hpms.dabtypes.Information response ) throws IOException {
-      System.err.printf( getClass().getName() + ".getInformations|carteID = '%s'\n", carteID );
+      Log.printf( "carteID = '%s'", carteID );
       final ICarte  iCarte  = _repository.getCarte ( carteID );
       final ICompte iCompte = _repository.getCompte( carteID );
       if(( iCarte != null )&&( iCompte != null )) {
@@ -43,7 +44,7 @@ public final class Banque extends BanqueComponent {
 
    @Override
    public void incrNbEssais( String carteID ) {
-      System.err.printf( getClass().getName() + ".incrNbEssais( '%s' )\n", carteID );
+      Log.printf( "carteID = '%s'", carteID );
       final ICarte carte = _repository.getCarte( carteID );
       if( carte != null ) {
          carte.incrNbEssais();
@@ -53,7 +54,7 @@ public final class Banque extends BanqueComponent {
 
    @Override
    public void retrait( String carteID, double montant ) {
-      System.err.printf( getClass().getName() + ".retrait de " + montant + " € à partir de la carte " + carteID + "\n" );
+      Log.printf( "montant = %7.2f, carteID = '%s'", montant, carteID );
       final ICompte compte = _repository.getCompte( carteID );
       if( compte != null ) {
          compte.retrait( montant );

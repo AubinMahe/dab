@@ -308,13 +308,14 @@ public class CGenerator extends BaseGenerator {
       disapp.generator.genmodel.ProcessType    processImpl,
       FactoryType                              factory      ) throws IOException
    {
-      final String                           dep            = deployment.getName();
-      final Set<Proxy>                       proxies        = new LinkedHashSet<>();
-      final Set<Proxy>                       dataPublishers = new LinkedHashSet<>();
-      final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
-      final Map<ComponentType, String>       modules        = new LinkedHashMap<>();
-      final Map<String, String>              types          = _model.getTypes( Model.C_LANGUAGE );
-      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      final String                                     dep            = deployment.getName();
+      final Set<Proxy>                                 proxies        = new LinkedHashSet<>();
+      final Set<disapp.generator.genmodel.ProcessType> processesImpl  = new LinkedHashSet<>();
+      final Set<Proxy>                                 dataPublishers = new LinkedHashSet<>();
+      final Map<InstanceType, Set<DataType>>           consumedData   = new LinkedHashMap<>();
+      final Map<ComponentType, String>                 modules        = new LinkedHashMap<>();
+      final Map<String, String>                        types          = _model.getTypes( Model.C_LANGUAGE );
+      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
       _moduleName = factory.getModuleName();
       _genDir     = factory.getSrcDir();
       {
@@ -327,9 +328,8 @@ public class CGenerator extends BaseGenerator {
          tmpl.add( "types"       , types );
          write( "factory.h", tmpl );
       }{
-         final Map<String, Byte>                          ids            = _model.getIDs( dep );
-         final Map<InstanceType, ProcessType>             processes     = _model.getProcessByInstance( dep );
-         final Set<disapp.generator.genmodel.ProcessType> processesImpl = _model.getProcessesImpl( deployment.getName());
+         final Map<String, Byte>              ids       = _model.getIDs( dep );
+         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( dep );
          final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
          tmpl.add( "prefix"        , _moduleName );
          tmpl.add( "deployment"    , deployment );

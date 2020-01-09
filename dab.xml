@@ -43,7 +43,7 @@
 
    </types>
 
-   <interface name="IHM">
+   <interface name="IHM" queue-size="1">
       <event name="ejecterLaCarte"                     queuing-policy="queued" />
       <event name="ejecterLesBillets"                  queuing-policy="queued" >
          <field name="montant" type="double"
@@ -54,7 +54,7 @@
       <event name="arret"                              queuing-policy="immediate" />
    </interface>
 
-   <interface name="UniteDeTraitement">
+   <interface name="UniteDeTraitement" queue-size="1">
       <data name="etatDuDab" type="dabtypes.EtatDuDab" queuing-policy="activating" 
          description="Partage des données décrivant l'état du DAB"/>
       <event name="rechargerLaCaisse">
@@ -83,14 +83,14 @@
       <event name="arret"                              queuing-policy="immediate" />
    </interface>
 
-   <interface name="Maintenable">
+   <interface name="Maintenable" queue-size="1">
       <event name="maintenance">
          <field name="maintenance" type="boolean"
             description="Maintenance active (true) ou inactive (false)" />
       </event>
    </interface>
 
-   <interface name="SiteCentral">
+   <interface name="SiteCentral" queue-size="10">
       <request name="informations" type="dabtypes.Information" threading-policy="dedicated"
          description="Requête asynchrone auprès du site central qui retourne les informations de carte et de compte à partir de l'id de carte">
          <arguments>

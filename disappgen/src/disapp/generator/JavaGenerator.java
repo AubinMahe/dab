@@ -30,6 +30,7 @@ import disapp.generator.model.ProcessType;
 import disapp.generator.model.RequestType;
 import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.StructType;
+import disapp.generator.model.TimeoutType;
 
 public class JavaGenerator extends BaseGenerator {
 
@@ -363,15 +364,19 @@ public class JavaGenerator extends BaseGenerator {
       final Set<Proxy>                                 dataPublishers = new LinkedHashSet<>();
       final Map<InstanceType, Set<DataType>>           consumedData   = new LinkedHashMap<>();
       final Map<ComponentType, String>                 modules        = new LinkedHashMap<>();
-      final Set<disapp.generator.genmodel.ProcessType> processesImpl  = _model.getProcessesImpl( deployment.getName());
+      final Set<disapp.generator.genmodel.ProcessType> processesImpl  = new LinkedHashSet<>();
       final Set<InterfaceType>                         interfaces     = Model.getOfferedInterfacesBy( process );
       final Set<InterfaceType>                         data           = _model.getRequiredDataInterfacesBy( process );
-      final SortedSet<String>                          requests       = Model.getRequiredRequestInterfacesBy( process );
+      final Set<InterfaceType>                         requests       = Model.getRequiredRequestInterfacesBy( process );
       final Set<ComponentType>                         components     = Model.getComponentsOf( process );
       final TypesType                                  internal       = _model.getGenInternalTypes();
       final TypeImplType                               internalImpl   = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
       final String                                     internalPckg   = internalImpl.getModuleName();
-      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
+      final Set<TimeoutType> timers = new LinkedHashSet<>();
+      for( final ComponentType component : components ) {
+         timers.addAll( component.getTimeout());
+      }
       _moduleName = factory.getModuleName();
       _genDir     = factory.getSrcDir();
       final ST tmpl = _group.getInstanceOf( "/componentFactory" );
@@ -393,6 +398,7 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "types"         , types );
       tmpl.add( "modules"       , modules );
       tmpl.add( "ids"           , ids );
+      tmpl.add( "timers"        , timers );
       write( "ComponentFactory.java", tmpl );
       instancesEnum( dep );
    }

@@ -10,14 +10,6 @@ public class FacetMessage<I extends Enum<I>, F extends Enum<F>, E extends Instan
    public final E             _instance;
    public final E             _fromInstance; // Requester instance ID
 
-   public FacetMessage( SocketAddress from, I intrfc, F event, E instance ) {
-      _from         = from;
-      _interface    = intrfc;
-      _event        = event;
-      _instance     = instance;
-      _fromInstance = null;
-   }
-
    public FacetMessage( SocketAddress from, I intrfc, F event, E instance, E fromInstance ) {
       _from         = from;
       _interface    = intrfc;

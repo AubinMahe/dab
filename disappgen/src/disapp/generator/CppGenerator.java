@@ -2,6 +2,8 @@ package disapp.generator;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -9,15 +11,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.stringtemplate.v4.ST;
 
 import disapp.generator.genmodel.CompImplType;
 import disapp.generator.genmodel.FactoryType;
+import disapp.generator.genmodel.TypeImplType;
+import disapp.generator.genmodel.TypesType;
 import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
 import disapp.generator.model.DeploymentType;
 import disapp.generator.model.EnumerationType;
+import disapp.generator.model.EventType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
@@ -101,6 +107,143 @@ public class CppGenerator extends BaseGenerator {
       structBody  ( name );
    }
 
+   private void interfacesEnumHeader() throws IOException {
+      final Map<String, Byte> interfaces = _model.getInterfacesID();
+      final TypesType         internal   = _model.getGenInternalTypes();
+      final TypeImplType      impl       = Model.getModuleName( internal, Model.CPP_LANGUAGE );
+      final ST                tmpl       = _group.getInstanceOf( "/interfacesEnumHeader" );
+      _genDir     = impl.getSrcDir();
+      _moduleName = impl.getModuleName();
+      tmpl.add( "namespace" , _moduleName );
+      tmpl.add( "interfaces", interfaces );
+      write( "Interfaces.hpp", tmpl );
+   }
+
+   private void interfacesEnumBody() throws IOException {
+      final Map<String, Byte> interfaces = _model.getInterfacesID();
+      final TypesType         internal   = _model.getGenInternalTypes();
+      final TypeImplType      impl       = Model.getModuleName( internal, Model.CPP_LANGUAGE );
+      final ST                tmpl       = _group.getInstanceOf( "/interfacesEnumBody" );
+      _genDir     = impl.getSrcDir();
+      _moduleName = impl.getModuleName();
+      tmpl.add( "namespace" , _moduleName );
+      tmpl.add( "interfaces", interfaces );
+      write( "Interfaces.cpp", tmpl );
+   }
+
+   private void eventsEnumHeader() throws IOException {
+      final TypesType           internal = _model.getGenInternalTypes();
+      final TypeImplType        impl     = Model.getModuleName( internal, Model.CPP_LANGUAGE );
+      final Map<String, String> types    = _model.getTypes( Model.CPP_LANGUAGE );
+      _genDir     = impl.getSrcDir();
+      _moduleName = impl.getModuleName();
+      for( final InterfaceType iface : _model.getApplication().getInterface()) {
+         final String            ifaceName = iface.getName();
+         final List<EventType>   events    = _model.getEventsOf( iface );
+         final List<RequestType> requests  = _model.getRequestsOf( iface );
+         if( ! events.isEmpty() || ! requests.isEmpty()) {
+            final List<Object> facets = new ArrayList<>( events.size() + requests.size());
+            final SortedSet<String> includes = new TreeSet<>();
+            facets.addAll( events );
+            facets.addAll( requests );
+            Model.getEventIncludes( types, events, includes );
+            Model.getRequestIncludes( types, requests, includes );
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumHeader" );
+            tmpl.add( "namespace"  , _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "includes" , includes );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_EVENT );
+            tmpl.add( "facets"   , facets );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , true );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_EVENT + ".hpp", tmpl );
+         }
+         if( ! requests.isEmpty()) {
+            final SortedSet<String> includes = new TreeSet<>();
+            Model.getResponseIncludes( types, requests, includes );
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumHeader" );
+            tmpl.add( "namespace"  , _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "includes" , includes );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_REQUEST );
+            tmpl.add( "facets"   , requests );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , false );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_REQUEST + ".hpp", tmpl );
+         }
+         final List<DataType> data = _model.getDataOf( iface );
+         if( ! data.isEmpty()) {
+            final SortedSet<String> includes = new TreeSet<>();
+            Model.getDataIncludes( types, data, includes );
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumHeader" );
+            tmpl.add( "namespace"  , _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "includes" , includes );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_DATA );
+            tmpl.add( "facets"   , data );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , false );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_DATA + ".hpp", tmpl );
+         }
+      }
+   }
+
+   private void eventsEnumBody() throws IOException {
+      final TypesType           internal = _model.getGenInternalTypes();
+      final TypeImplType        impl     = Model.getModuleName( internal, Model.CPP_LANGUAGE );
+      final Map<String, String> types    = _model.getTypes( Model.CPP_LANGUAGE );
+      _genDir     = impl.getSrcDir();
+      _moduleName = impl.getModuleName();
+      for( final InterfaceType iface : _model.getApplication().getInterface()) {
+         final String            ifaceName = iface.getName();
+         final List<EventType>   events    = _model.getEventsOf( iface );
+         final List<RequestType> requests  = _model.getRequestsOf( iface );
+         final List<DataType>    data      = _model.getDataOf( iface );
+         if( ! events.isEmpty() || ! requests.isEmpty()) {
+            final List<Object> facets = new ArrayList<>( events.size() + requests.size());
+            facets.addAll( events );
+            facets.addAll( requests );
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumBody" );
+            tmpl.add( "namespace", _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_EVENT );
+            tmpl.add( "facets"   , facets );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , true );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_EVENT + ".cpp", tmpl );
+         }
+         if( ! requests.isEmpty()) {
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumBody" );
+            tmpl.add( "namespace", _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_REQUEST );
+            tmpl.add( "facets"   , requests );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , false );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_REQUEST + ".cpp", tmpl );
+         }
+         if( ! data.isEmpty()) {
+            final ST tmpl = _group.getInstanceOf( "/eventsEnumBody" );
+            tmpl.add( "namespace", _moduleName );
+            tmpl.add( "ifaceName", ifaceName );
+            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_DATA );
+            tmpl.add( "facets"   , data );
+            tmpl.add( "types"    , types );
+            tmpl.add( "isEvent"  , false );
+            write( ifaceName + Model.IFACE_CLASSIFICATION_DATA + ".cpp", tmpl );
+         }
+      }
+   }
+
+   protected void internalTypes() throws IOException {
+      interfacesEnumHeader();
+      interfacesEnumBody();
+      eventsEnumHeader();
+      eventsEnumBody();
+      generateMakefileSourcesList( _generatedFiles, _genDir, true );
+      _generatedFiles.clear();
+   }
+
    private void responsesHeader( ComponentType component ) throws IOException {
       for( final Entry<InterfaceType, List<RequestType>> e : Model.getResponses( component ).entrySet()) {
          final InterfaceType       iface     = e.getKey();
@@ -116,14 +259,14 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   private void requiredInterfaces( ComponentType component ) throws IOException {
+   private void requiredInterfacesHeader( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
          final InterfaceType       iface     = (InterfaceType)required.getInterface();
          final SortedSet<String>   usedTypes = Model.getUserTypesRequiredBy( iface );
          final int                 rawSize   = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
-         final int                 ifaceID   = _model.getInterfaceID( iface.getName());
+         final int                 ifaceID   = 12;//_model.getInterfaceID( iface.getName());
          final Map<String, String> types     = _model.getTypes( Model.CPP_LANGUAGE );
-         final ST                  tmpl      = _group.getInstanceOf( "/requiredInterface" );
+         final ST                  tmpl      = _group.getInstanceOf( "/requiredInterfaceHeader" );
          tmpl.add( "namespace", _moduleName );
          tmpl.add( "usedTypes", usedTypes );
          tmpl.add( "rawSize"  , rawSize );
@@ -134,14 +277,14 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   private void requiredImplementations( ComponentType component ) throws IOException {
+   private void requiredImplementationsBody( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
          final InterfaceType     iface      = (InterfaceType)required.getInterface();
          final String            ifaceName  = iface.getName();
          final SortedSet<String> usedTypes  = _model.getUsedTypesBy( ifaceName );
          final int               rawSize    = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
-         final int               ifaceID    = _model.getInterfaceID( ifaceName );
-         final ST                tmpl       = _group.getInstanceOf( "/requiredImplementation" );
+         final int               ifaceID    = 12;//_model.getInterfaceID( ifaceName );
+         final ST                tmpl       = _group.getInstanceOf( "/requiredImplementationBody" );
          tmpl.add( "namespace"     , _moduleName  );
          tmpl.add( "usedTypes"     , usedTypes );
          tmpl.add( "ifaceName"     , ifaceName );
@@ -153,14 +296,14 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   private void offeredInterface( ComponentType component ) throws IOException {
+   private void offeredInterfaceHeader( ComponentType component ) throws IOException {
       for( final OfferedInterfaceUsageType offered : component.getOffers()) {
          final InterfaceType       iface            = (InterfaceType)offered.getInterface();
          final String              ifaceName        = iface.getName();
          final SortedSet<String>   usedTypes        = _model.getUsedTypesBy( ifaceName );
          final List<Object>        eventsOrRequests = _model.getFacets().get( ifaceName );
          final Map<String, String> types            = _model.getTypes( Model.CPP_LANGUAGE );
-         final ST                  tmpl             = _group.getInstanceOf( "/offeredInterface" );
+         final ST                  tmpl             = _group.getInstanceOf( "/offeredInterfaceHeader" );
          tmpl.add( "namespace"       , _moduleName );
          tmpl.add( "ifaceName"       , ifaceName );
          tmpl.add( "usedTypes"       , usedTypes );
@@ -170,9 +313,9 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   private void dispatcherInterface( ComponentType component ) throws IOException {
+   private void dispatcherInterfaceHeader( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
-      final Map<String, Byte>                  interfaceIDs = null;//_model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>                  interfaceIDs = new HashMap<>();//_model.getOfferedInterfaceIDs( ifaces );
       final Map<String, Byte>                  ifacesIDs    = _model.getInterfacesID();
       final Map<String, Byte>                  required     = _model.getRequiredInterfaceIDs( component.getRequires());
       final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
@@ -181,7 +324,7 @@ public class CppGenerator extends BaseGenerator {
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
       final Map<String, List<RequestType>>     offRequests  = Model.getRequestMap( offEvents );
       final Map<String, List<RequestType>>     reqRequests  = Model.getRequestMap( reqEvents );
-      final ST                                 tmpl         = _group.getInstanceOf( "/dispatcherInterface" );
+      final ST                                 tmpl         = _group.getInstanceOf( "/dispatcherInterfaceHeader" );
       tmpl.add( "namespace"  , _moduleName );
       tmpl.add( "component"  , component );
       tmpl.add( "ifaces"     , interfaceIDs );
@@ -199,7 +342,7 @@ public class CppGenerator extends BaseGenerator {
 
    private void dispatcherImplementation( ComponentType component ) throws IOException {
       final List<OfferedInterfaceUsageType>    ifaces       = component.getOffers();
-      final Map<String, Byte>                  interfaceIDs = null;//_model.getOfferedInterfaceIDs( ifaces );
+      final Map<String, Byte>                  interfaceIDs = new HashMap<>();//_model.getOfferedInterfaceIDs( ifaces );
       final Map<String, List<Object>>          offEvents    = _model.getOfferedFacets( component );
       final Map<String, List<Object>>          reqEvents    = _model.getRequiredFacets( component );
       final Map<String, Map<String, Byte>>     eventIDs     = _model.getEventIDs();
@@ -260,7 +403,7 @@ public class CppGenerator extends BaseGenerator {
             final List<DataType> data  = compData.get( iface );
             if( data != null ) {
                final String ifaceName = iface.getName();
-               final int    ID        = _model.getInterfaceID( ifaceName );
+               final int    ID        = 42;//_model.getInterfaceID( ifaceName );
                final int    rawSize   = _model.getDataBufferOutCapacity( data );
                final ST     header    = _group.getInstanceOf( "/dataWriterHeader" );
                header.add( "namespace", _moduleName );
@@ -284,7 +427,7 @@ public class CppGenerator extends BaseGenerator {
       }
    }
 
-   private void dataReader( ComponentType component ) throws IOException {
+   private void dataReaderHeader( ComponentType component ) throws IOException {
       final Map<InterfaceType, List<DataType>> compData = _model.getRequiredDataOf( component );
       if( compData != null ) {
          for( final RequiredInterfaceUsageType required : component.getRequires()) {
@@ -292,7 +435,7 @@ public class CppGenerator extends BaseGenerator {
             final List<DataType> data  = compData.get( iface );
             if( data != null ) {
                final String ifaceName = iface.getName();
-               final ST     tmpl      = _group.getInstanceOf( "/dataReader" );
+               final ST     tmpl      = _group.getInstanceOf( "/dataReaderHeader" );
                tmpl.add( "namespace", _moduleName );
                tmpl.add( "interface", required.getInterface());
                tmpl.add( "data"     , data );
@@ -324,15 +467,15 @@ public class CppGenerator extends BaseGenerator {
       _moduleName = implementation.getModuleName();
       typesUsedBy             ( component );
       responsesHeader         ( component );
-      requiredInterfaces      ( component );
-      requiredImplementations ( component );
-      offeredInterface        ( component );
-      dispatcherInterface     ( component );
+      requiredInterfacesHeader      ( component );
+      requiredImplementationsBody ( component );
+      offeredInterfaceHeader        ( component );
+      dispatcherInterfaceHeader     ( component );
       dispatcherImplementation( component );
       componentHeader         ( component );
       componentImplementation ( component );
       dataWriter              ( component );
-      dataReader              ( component );
+      dataReaderHeader              ( component );
       automaton               ( component );
       generateMakefileSourcesList( _generatedFiles, _genDir, true );
    }
@@ -350,7 +493,8 @@ public class CppGenerator extends BaseGenerator {
       final Map<InstanceType, Set<DataType>> consumedData   = new LinkedHashMap<>();
       final Map<ComponentType, String>       modules        = new LinkedHashMap<>();
       final Map<String, String>              types          = _model.getTypes( Model.CPP_LANGUAGE );
-      _model.getFactoryConnections( factory, dep, process, proxies, dataPublishers, consumedData, modules );
+      final Set<disapp.generator.genmodel.ProcessType> processesImpl  = new LinkedHashSet<>();
+      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
       _moduleName = factory.getModuleName();
       _genDir     = factory.getSrcDir();
       {
@@ -364,9 +508,8 @@ public class CppGenerator extends BaseGenerator {
          write( "ComponentFactory.hpp", tmpl );
       }
       {
-         final Map<String, Byte>                          ids           = _model.getIDs( dep );
-         final Map<InstanceType, ProcessType>             processes     = _model.getProcessByInstance( dep );
-         final Set<disapp.generator.genmodel.ProcessType> processesImpl = _model.getProcessesImpl( deployment.getName());
+         final Map<String, Byte>              ids       = _model.getIDs( dep );
+         final Map<InstanceType, ProcessType> processes = _model.getProcessByInstance( dep );
          final ST tmpl = _group.getInstanceOf( "/componentFactoryBody" );
          tmpl.add( "namespace"     , _moduleName );
          tmpl.add( "deployment"    , deployment );
