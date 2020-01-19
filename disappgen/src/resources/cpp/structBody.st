@@ -1,5 +1,6 @@
 structBody( namespace, struct, modelName, maxLength, maxStrLength, types ) ::= <<
 #include \<<types.(modelName); format="NamespaceToPath">.hpp>
+#include \<string.h>
 
 using namespace <namespace>;
 
@@ -33,10 +34,17 @@ void <struct.name>::get( io::ByteBuffer & source ) {
    < elseif( field.isUlong   )><field.name; format="width"> = source.getULong ();
    < elseif( field.isFloat   )><field.name; format="width"> = source.getFloat ();
    < elseif( field.isDouble  )><field.name; format="width"> = source.getDouble();
-   < elseif( field.isString  )>source.getString( <
-                                  field.name; format="strWidth">, sizeof( <field.name; format="strWidth"> ));
+   < elseif( field.isString  )>source.getString( <field.name>, sizeof( <field.name> ));
    < elseif( field.isEnum    )><field.name; format="width"> = (<types.(field.userType)>)source.getByte();
    < elseif( field.isStruct  )><field.name>.get( source );
+   < endif>
+}>}
+
+void <struct.name>::set( const <struct.name> & source ) {
+<struct.field:{field|
+   < if(     field.isStruct )><field.name>.set( source.<field.name> );
+   < elseif( field.isString )>memmove( <field.name>, source.<field.name>, sizeof( <field.name> ));
+   < else                    ><field.name> = source.<field.name>;
    < endif>
 }>}
 

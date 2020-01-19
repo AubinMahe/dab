@@ -9,12 +9,12 @@ include ../common.mk
 
 ../dab-bin/isolated-ihm2-cpp: $(OBJS)
 	@mkdir -p ../dab-bin
-	g++ -o $@ $(OBJS) -L ../dab-lib -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp -lpthread
+	g++                  -o $@ $(OBJS)    -L ../dab-lib -linterfaces-cpp -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp -lpthread
 
 ../dab-bin/isolated-ihm2-cpp-win32: $(OBJSW32)
 	@mkdir -p ../dab-bin
-	i686-w64-mingw32-g++ -o $@ $(OBJSW32) -L ../dab-lib -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp -lws2_32
+	i686-w64-mingw32-g++ -o $@ $(OBJSW32) -L ../dab-lib -linterfaces-cpp -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp -lws2_32
 
 ../dab-bin/isolated-ihm2-cpp-o64: $(OBJSO64)
 	@mkdir -p ../dab-bin
-	o64-clang++ -o $@ $(OBJSO64) -L ../dab-lib -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp
+	o64-clang++          -o $@ $(OBJSO64) -L ../dab-lib -linterfaces-cpp -lDistributeur-cpp -ldabtypes-cpp -lutil-cpp -lpthread

@@ -17,6 +17,7 @@ import javax.xml.bind.JAXBElement;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STErrorListener;
 import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupDir;
 import org.stringtemplate.v4.STGroupFile;
 import org.stringtemplate.v4.misc.STMessage;
 
@@ -75,10 +76,9 @@ abstract class BaseGenerator {
       }
    }
 
-   protected BaseGenerator( Model model, String language, String templateName, BaseRenderer renderer ) {
-      final URL url = getClass().getResource( "/resources/" + templateName );
+   protected BaseGenerator( Model model, String language, URL temlates, BaseRenderer renderer ) {
       _model    = model;
-      _group    = new STGroupFile( url, "utf-8", '<', '>' );
+      _group    = new STGroupDir( temlates, "utf-8", '<', '>' );
       _renderer = renderer;
       final EventOrRequestOrDataAdaptor eoroda = new EventOrRequestOrDataAdaptor();
       _group.setListener(  new DisAppErrListener());

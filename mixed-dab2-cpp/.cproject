@@ -53,6 +53,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/interfaces-cpp/src-gen}&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/mixed-dab2-cpp/src-gen}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Controleur-cpp/src-gen}&quot;"/>
@@ -101,6 +103,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="Controleur-cpp"/>
                                     									
+                                    <listOptionValue builtIn="false" value="interfaces-cpp"/>
+                                    									
                                     <listOptionValue builtIn="false" value="dabtypes-cpp"/>
                                     									
                                     <listOptionValue builtIn="false" value="util-cpp"/>
@@ -114,6 +118,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Controleur-cpp/Debug}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Distributeur-cpp/Debug}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/interfaces-cpp/Debug}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/Debug}&quot;"/>
                                     									
@@ -199,7 +205,9 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabtypes-cpp/src-gen}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/mixed-dab2-c/src-gen}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/interfaces-cpp/src-gen}&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/mixed-dab2-cpp/src-gen}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/Controleur-cpp/src-gen}&quot;"/>
                                     									

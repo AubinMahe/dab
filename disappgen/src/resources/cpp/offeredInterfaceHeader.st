@@ -20,9 +20,9 @@ namespace <namespace> {
 <eventsOrRequests:{facet|< if( facet.isData )>< else>
       virtual void <facet.name>( <
 if( facet.isRequest )><
-         common/signature( facet.arguments.field )>, <types.(facet.type)> & <facet.name><
+         signature( facet.arguments.field )>, <types.(facet.type)> & <facet.name><
 else><
-         common/signature( facet.field )><
+         signature( facet.field )><
 endif> ) = 0;< endif>
 }>
 

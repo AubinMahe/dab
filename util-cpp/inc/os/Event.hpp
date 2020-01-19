@@ -21,7 +21,7 @@ namespace os {
       /**
        * Return true when signaled, false when a deadline has been specified and a timeout occurs
        */
-      bool wait( const timespec * deadline = 0 );
+      bool wait( const timespec * deadline = nullptr );
       void signal( void );
 
    private:

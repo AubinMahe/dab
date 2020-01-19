@@ -1,4 +1,4 @@
-requiredImplementation( package, internalPckg, iface, rawSize, hasRequest ) ::= <<
+requiredImplementation( package, intrfcPckg, iface, rawSize, hasRequest ) ::= <<
 package <package>;
 // requiredImplementation
 
@@ -33,7 +33,7 @@ else><
 endif>) throws IOException {
       for( final Targets\<InstanceID> targets : _targets ) {
          for( final InstanceID to : targets._instances ) {
-            <internalPckg>.<common/concat( iface.name, "Event" )>.<facet.name>( <
+            <intrfcPckg>.<common/concat( iface.name, "Event" )>.<facet.name>( <
 if( facet.isRequest )><
                 facet.arguments.field:{field|<field.name>}; separator=","><
 if(             facet.arguments.field )>, < endif>_from, to, _out );

@@ -5,6 +5,7 @@
 	<projects>
 		<project>dabtypes-cpp</project>
 		<project>Distributeur-cpp</project>
+		<project>interfaces-cpp</project>
 		<project>util-cpp</project>
 	</projects>
 	<buildSpec>

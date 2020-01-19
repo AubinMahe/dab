@@ -1,11 +1,12 @@
 interfacesEnum( package, interfaces ) ::= <<
 package <package>;
+// interfacesEnum
 
 import java.nio.ByteBuffer;
 
 public enum Interfaces {
 
-   LOOPBACK( 0 ),
+   TIMEOUT( 1 ),
    <interfaces:{ifaceName|<ifaceName; format="ID">( <interfaces.(ifaceName)> )}; separator=",\n">
    ;
 

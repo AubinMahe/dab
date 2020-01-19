@@ -54,17 +54,17 @@ import disapp.generator.model.RequiredInterfaceUsageType;
 import disapp.generator.model.RequiresType;
 import disapp.generator.model.ShortcutType;
 import disapp.generator.model.StructType;
+import disapp.generator.model.ThreadingPolicy;
 import disapp.generator.model.TransitionType;
 import disapp.generator.model.TypesType;
 
 final class Model {
 
-   static final String JAVA_LANGUAGE                = "Java";
-   static final String CPP_LANGUAGE                 = "C++";
-   static final String C_LANGUAGE                   = "C";
-   static final String IFACE_CLASSIFICATION_EVENT   = "Event";
-   static final String IFACE_CLASSIFICATION_REQUEST = "Request";
-   static final String IFACE_CLASSIFICATION_DATA    = "Data";
+   static final String JAVA_LANGUAGE = "Java";
+   static final String CPP_LANGUAGE  = "C++";
+   static final String C_LANGUAGE    = "C";
+
+   static final String INTERFACES_MODULE_NAME = "interfaces";
 
    private final Map<String, InterfaceType>                             _interfaces         = new LinkedHashMap<>();
    private final Map<String, EnumerationType>                           _enums              = new LinkedHashMap<>();
@@ -217,7 +217,7 @@ final class Model {
             _requiredData.put( component, allData );
          }
       }
-      byte ifaceID = 0;
+      byte ifaceID = 1;
       for( final InterfaceType iface : _application.getInterface()) {
          final List<EventType>   events    = new LinkedList<>();
          final List<RequestType> requests  = new LinkedList<>();
@@ -233,15 +233,7 @@ final class Model {
                data.add((DataType)facet );
             }
          }
-         if( ! events.isEmpty()) {
-            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_EVENT  , ++ifaceID );
-         }
-         if( ! requests.isEmpty()) {
-            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_REQUEST, ++ifaceID );
-         }
-         if( ! data.isEmpty()) {
-            _interfacesID.put( iface.getName() + IFACE_CLASSIFICATION_DATA   , ++ifaceID );
-         }
+         _interfacesID.put( iface.getName(), ++ifaceID );
          _events  .put( iface, events );
          _requests.put( iface, requests );
          _data    .put( iface, data );
@@ -539,7 +531,7 @@ final class Model {
       for( final RequiredInterfaceUsageType ifaceUsage : requires ) {
          final InterfaceType iface     = (InterfaceType)ifaceUsage.getInterface();
          final String        ifaceName = iface.getName();
-         ifaces.put( ifaceName, (byte)12/*getInterfaceID( ifaceName )*/);
+         ifaces.put( ifaceName, getInterfaceID( ifaceName ));
       }
       return ifaces;
    }
@@ -604,6 +596,17 @@ final class Model {
          final InterfaceType     iface     = (InterfaceType)offered.getInterface();
          final String            ifaceName = iface.getName();
          final SortedSet<String> used      = _usedTypes.get( ifaceName );
+         if( used != null ) {
+            usedTypes.addAll( used );
+         }
+      }
+      return usedTypes;
+   }
+
+   SortedSet<String> getUsedTypesBy( Set<String> interfaces ) {
+      final SortedSet<String> usedTypes = new TreeSet<>();
+      for( final String ifaceName : interfaces ) {
+         final SortedSet<String> used = _usedTypes.get( ifaceName );
          if( used != null ) {
             usedTypes.addAll( used );
          }
@@ -1020,46 +1023,40 @@ final class Model {
       }
    }
 
-   static void getEventIncludes( Map<String, String> types, List<EventType> events, SortedSet<String> includes ) {
-      for( final EventType event : events ) {
-         for( final FieldType field : event.getField()) {
-            final String type = field.getUserType();
+   static void getIncludes( Map<String, String> types, List<Object> facets, SortedSet<String> includes ) {
+      for( final Object facet : facets ) {
+         if( facet instanceof EventType ) {
+            final EventType event = (EventType)facet;
+            for( final FieldType field : event.getField()) {
+               final String type = field.getUserType();
+               if( type != null ) {
+                  final String lgeType = types.get( type );
+                  includes.add( lgeType.replaceAll( "::", "/" ));
+               }
+            }
+         }
+         else if( facet instanceof RequestType ) {
+            final RequestType request = (RequestType)facet;
+            for( final FieldType field : request.getArguments().getField()) {
+               final String type = field.getUserType();
+               if( type != null ) {
+                  final String lgeType = types.get( type );
+                  includes.add( lgeType.replaceAll( "::", "/" ));
+               }
+            }
+            final String type = request.getType();
             if( type != null ) {
                final String lgeType = types.get( type );
                includes.add( lgeType.replaceAll( "::", "/" ));
             }
          }
-      }
-   }
-
-   static void getRequestIncludes( Map<String, String> types, List<RequestType> requests, SortedSet<String> includes ) {
-      for( final RequestType request : requests ) {
-         for( final FieldType field : request.getArguments().getField()) {
-            final String type = field.getUserType();
+         else if( facet instanceof DataType ) {
+            final DataType datum = (DataType)facet;
+            final String   type  = datum.getType();
             if( type != null ) {
                final String lgeType = types.get( type );
                includes.add( lgeType.replaceAll( "::", "/" ));
             }
-         }
-      }
-   }
-
-   static void getResponseIncludes( Map<String, String> types, List<RequestType> requests, SortedSet<String> includes ) {
-      for( final RequestType request : requests ) {
-         final String type = request.getType();
-         if( type != null ) {
-            final String lgeType = types.get( type );
-            includes.add( lgeType.replaceAll( "::", "/" ));
-         }
-      }
-   }
-
-   static void getDataIncludes( Map<String, String> types, List<DataType> data, SortedSet<String> includes ) {
-      for( final DataType datum : data ) {
-         final String type = datum.getType();
-         if( type != null ) {
-            final String lgeType = types.get( type );
-            includes.add( lgeType.replaceAll( "::", "/" ));
          }
       }
    }
@@ -1133,6 +1130,7 @@ final class Model {
       FactoryType                                factory,
       String                                     deployment,
       ProcessType                                process,
+      Set<InterfaceType>                         queues,
       Set<Proxy>                                 proxies,
       Set<disapp.generator.genmodel.ProcessType> processesImpl,
       Set<Proxy>                                 dataPublishers,
@@ -1146,7 +1144,18 @@ final class Model {
       final Map<InstanceType, ProcessType>          processByInstance = getProcessByInstance( deployment );
       final Map<ComponentType, Map<String, String>> modules = getModules( factory.getLanguage());
       for( final InstanceType instance : process.getInstance()) {
-         final ComponentType       component = (ComponentType)instance.getComponent();
+         final ComponentType component = (ComponentType)instance.getComponent();
+         for( final OfferedInterfaceUsageType intrfc : component.getOffers()) {
+            queues.add((InterfaceType)intrfc.getInterface());
+         }
+         for( final RequiredInterfaceUsageType intrfc : component.getRequires()) {
+            final InterfaceType iface = (InterfaceType)intrfc.getInterface();
+            for( final Object facet : iface.getEventOrRequestOrData()) {
+               if( facet instanceof RequestType ) {
+                  queues.add( iface );
+               }
+            }
+         }
          final Map<String, String> names     = modules.get( component );
          String module = null;
          if( names.size() == 1 ) {
@@ -1189,10 +1198,9 @@ final class Model {
          if( offData != null ) {
             for( final InterfaceType iface : offData.keySet()) {
                final Map<String, SortedSet<String>> instancesPerProcess = getDataConsumers( deployment, iface, instance );
-               final String name = iface.getName() + (( factory.getLanguage() == Model.C_LANGUAGE ) ? "_data" : "Publisher" );
+               final String name = iface.getName();
                final Proxy dataProxy = new Proxy( module, name, instance.getName(), instancesPerProcess );
                dataPublishers.add( dataProxy );
-               proxies.add( dataProxy );
                for( final String processName : instancesPerProcess.keySet()) {
                   processesImpl.add( getProcessImpl( deployment, processName ));
                }
@@ -1200,6 +1208,7 @@ final class Model {
          }
          final Map<InterfaceType, List<DataType>> reqData = getRequiredDataOf( component );
          if( reqData != null ) {
+            queues.addAll( reqData.keySet());
             for( final List<DataType> dataList : reqData.values()) {
                Set<DataType> consumedDataModules = consumedData.get( instance );
                if( consumedDataModules == null ) {
@@ -1259,13 +1268,13 @@ final class Model {
       return processes;
    }
 
-   disapp.generator.genmodel.TypesType getGenInternalTypes() {
+   disapp.generator.genmodel.TypesType getGenInterfaceSettings() {
       for( final disapp.generator.genmodel.TypesType types : _generation.getTypes()) {
-         if( types.getName().equals( "internal-types" )) {
+         if( types.getName().equals( INTERFACES_MODULE_NAME )) {
             return types;
          }
       }
-      throw new IllegalStateException( "'internal-types' generation type not found" );
+      throw new IllegalStateException( "Mandatory '" + INTERFACES_MODULE_NAME + "' generation settings block is missing" );
    }
 
    Map<String, Set<String>> getComponentsPerInterface() {
@@ -1298,5 +1307,20 @@ final class Model {
          instances.addAll( process.getInstance());
       }
       return instances;
+   }
+
+   public Map<RequestType, Integer> getAsynchronousRequestResponseMessageSizes( List<Object> facets ) {
+      final Map<RequestType, Integer> retVal = new HashMap<>();
+      for( final Object facet : facets ) {
+         if( facet instanceof RequestType ) {
+            final RequestType request = (RequestType)facet;
+            if( ( (RequestType)facet ).getThreadingPolicy() == ThreadingPolicy.DEDICATED ) {
+               final StructType  struct  = _structs.get( request.getType());
+               final int         size    = getStructSize( struct );
+               retVal.put( request, 4 + size );
+            }
+         }
+      }
+      return retVal;
    }
 }

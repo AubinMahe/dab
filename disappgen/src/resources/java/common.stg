@@ -1,21 +1,21 @@
-concat(a,b) ::= <<
-<a><b>
->>
+group common;
+
+concat(a,b) ::= "<a><b>"
 
 
 
 type( field ) ::= <<
 < if(     field.isBoolean )>boolean<
-  elseif( field.isByte    )>byte   <
-  elseif( field.isShort   )>short  <
-  elseif( field.isUshort  )>short  <
-  elseif( field.isInt     )>int    <
-  elseif( field.isUint    )>int    <
-  elseif( field.isLong    )>long   <
-  elseif( field.isUlong   )>long   <
-  elseif( field.isFloat   )>float  <
-  elseif( field.isDouble  )>double <
-  elseif( field.isString  )>String <
+  elseif( field.isByte    )>byte<
+  elseif( field.isShort   )>short<
+  elseif( field.isUshort  )>short<
+  elseif( field.isInt     )>int<
+  elseif( field.isUint    )>int<
+  elseif( field.isLong    )>long<
+  elseif( field.isUlong   )>long<
+  elseif( field.isFloat   )>float<
+  elseif( field.isDouble  )>double<
+  elseif( field.isString  )>String<
   elseif( field.isEnum    )><types.(field.userType)><
   elseif( field.isStruct  )><types.(field.userType)><
   endif>
@@ -24,13 +24,13 @@ type( field ) ::= <<
 
 
 signature( fields ) ::= <<
-<fields:{field|<trim((type(field)))> <field.name>}; separator=", ">
+<fields:{field|<(type( field ))> <field.name>}; separator=", ">
 >>
 
 
 
 args( fields ) ::= <<
-< if( fields )> <fields:{field|msg.getArg<i>()}; separator=","> < endif>
+< if( fields )> <fields:{field|<field.name>}; separator=", "> < endif>
 >>
 
 
@@ -49,6 +49,25 @@ dataGen( visibility, field ) ::= <<
 < elseif( field.isString  )><visibility> String <field.name>;
 < elseif( field.isEnum    )><visibility> <field.userType.name> _<field.name> = <field.userType.name>.values()[0];
 < elseif( field.isStruct  )><visibility> final <field.userType.name> _<field.name> = new <field.userType.name>();
+< endif>
+>>
+
+
+
+copyMsgOnStack( field ) ::= <<
+<     if( field.isBoolean )>final boolean <field.name> = m._payload.<field.name>;
+< elseif( field.isByte    )>final byte <field.name> = m._payload.<field.name>;
+< elseif( field.isShort   )>final short <field.name> = m._payload.<field.name>;
+< elseif( field.isUshort  )>final ushort <field.name> = m._payload.<field.name>;
+< elseif( field.isInt     )>final int <field.name> = m._payload.<field.name>;
+< elseif( field.isUint    )>final uint <field.name> = m._payload.<field.name>;
+< elseif( field.isLong    )>final long <field.name> = m._payload.<field.name>;
+< elseif( field.isUlong   )>final ulong <field.name> = m._payload.<field.name>;
+< elseif( field.isFloat   )>final float <field.name> = m._payload.<field.name>;
+< elseif( field.isDouble  )>final double <field.name> = m._payload.<field.name>;
+< elseif( field.isString  )>final String <field.name> = m._payload.<field.name>;
+< elseif( field.isEnum    )>final <field.userType.name> _<field.name> = m._payload.<field.name>;
+< elseif( field.isStruct  )>final <field.userType.name> _<field.name> = m._payload.<field.name>;
 < endif>
 >>
 

@@ -1,5 +1,5 @@
 componentImplementation(
-	package, internalPckg, component, ifaces, requires, actions, offData, reqData, responses, imports, types
+	package, intrfcPckg, component, ifaces, requires, actions, offData, reqData, responses, imports, types
 ) ::= <<
 package <package>;
 // componentImplementation

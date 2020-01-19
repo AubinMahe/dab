@@ -1,5 +1,0 @@
-group CPP;
-
-import "cpp"
-
-doNothing() ::= <<>>

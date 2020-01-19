@@ -13,9 +13,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Controleur-java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/daenums-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/interfaces-java"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -3,16 +3,16 @@
    xsi:noNamespaceSchemaLocation="distributed-application-generation.xsd"
    xmlns:xi="http://www.w3.org/2001/XInclude">
 
-   <types name="internal-types">
-      <type-impl language="C"    src-dir="daenums-c/src-gen"    module-name="DAENM" />
-      <type-impl language="C++"  src-dir="daenums-cpp/src-gen"  module-name="da::enums" />
-      <type-impl language="Java" src-dir="daenums-java/src-gen" module-name="da.enums" />
-   </types>
-
    <types name="dabtypes">
       <type-impl language="C"    src-dir="dabtypes-c/src-gen"    module-name="DBT" />
       <type-impl language="C++"  src-dir="dabtypes-cpp/src-gen"  module-name="hpms::dabtypes" />
       <type-impl language="Java" src-dir="dabtypes-java/src-gen" module-name="hpms.dabtypes" />
+   </types>
+
+   <types name="interfaces">
+      <type-impl language="C"    src-dir="interfaces-c/src-gen"    module-name="INTRFC" />
+      <type-impl language="C++"  src-dir="interfaces-cpp/src-gen"  module-name="hpms::interfaces" />
+      <type-impl language="Java" src-dir="interfaces-java/src-gen" module-name="hpms.interfaces" />
    </types>
 
    <component name="Distributeur">
@@ -26,7 +26,7 @@
       <comp-impl name="controleur-c"    language="C"    src-dir="Controleur-c/src-gen"    module-name="UDT" />
       <comp-impl name="controleur-cpp"  language="C++"  src-dir="Controleur-cpp/src-gen"  module-name="hpms::udt" />
       <comp-impl name="controleur-java" language="Java" src-dir="Controleur-java/src-gen" module-name="hpms.udt" />
-   </component> 
+   </component>
 
    <component name="Banque">
       <comp-impl name="banque-c"    language="C"    src-dir="Banque-c/src-gen"    module-name="SC" />

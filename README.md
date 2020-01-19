@@ -112,13 +112,13 @@ Les déploiements à plusieurs `Distributeur` et plusieurs `Controleur` permette
 
 ## Reste à faire
 
-1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraîchies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique. **La version LATEST offre ces fonctionnalités, mais uniquement en JAVA**, C et C++ sont désactivés, le temps de les mettre à niveau.
+1. Les messages UDP entrants sont activants : dès qu'ils sont reçus, le code métier associé est invoqué : les données sont rafraîchies, les événements et requêtes exécutées. Mettre en place une file d'attente de messages puis activer les traitements uniquement pour les messages spécifiés *activant* dans le modèle fournira un modèle d'exécution plus riche. Pour une exécution cyclique par exemple, un composant n'offrira qu'une seule méthode activante `execute`, déclenchée par un réveil périodique. **La version LATEST offre ces fonctionnalités, mais uniquement en C++ et partiellement en JAVA**, C est désactivé, le temps de le mettre à niveau.
 
 1. Si on sait gérer une ou plusieurs files d'attente ou pourrait revoir le threading :
     - La version actuelle reçoit les messages, les ventile et exécute le code métier dans le même thread, ce qui n'est pas satisfaisant en cas d'attente applicative bloquante (c'est le cas pendant 3 secondes dans le composant `Banque` pour simuler le temps de recherche et de communication sur réseaux WAN sécurisés).
     - On doit envisager au moins deux threads : l'un reçoit les messages et les ventile dans la bonne file d'attente, l'autre exécute le code applicatif.
     - On pourrait modéliser le threading de façon à permettre un thread par requête, un thread par composant ou un thread par processus.
-    - **La version LATEST offre ces fonctionnalités, mais uniquement en JAVA**, C et C++ sont désactivés, le temps de les mettre à niveau.
+    - **La version LATEST offre ces fonctionnalités, mais uniquement en C++ et partiellement en JAVA**, C est désactivé, le temps de le mettre à niveau.
 
 1. Certaines intégrités référentielles gagneraient à être exprimées dans le schéma et au moyen d'un checker exécuté en aval de la génération
 

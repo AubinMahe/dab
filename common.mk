@@ -1,11 +1,11 @@
 WINVER           = 0x06010000
 WINDOWS_VERSION  = -DWIN32_WINDOWS=$(WINVER) -D_WIN32_WINNT=$(WINVER) -DWINVER=$(WINVER)
 CINC            += -I inc -I src-gen -I ../util-c/inc   -I ../dabtypes-c/src-gen
-CPPINC          += -I inc -I src-gen -I ../util-cpp/inc -I ../dabtypes-cpp/src-gen
+CPPINC          += -I inc -I src-gen -I ../util-cpp/inc -I ../dabtypes-cpp/src-gen -I ../interfaces-cpp/src-gen
 RELFLAGS         = -O3 -g0
 DBGFLAGS         = -O0 -g3
 CFLAGS           = $(CINC)   $(RELFLAGS) -fPIC -pedantic -W -Wall -Wextra -Wconversion -c -std=c11
-CPPFLAGS         = $(CPPINC) $(RELFLAGS) -fPIC -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+CPPFLAGS         = $(CPPINC) $(DBGFLAGS) -fPIC -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
 CW32FLAGS        = $(CFLAGS) $(WINDOWS_VERSION)
 CO64FLAGS        = $(CFLAGS)
 CPPW32FLAGS      = $(CPPFLAGS) $(WINDOWS_VERSION)

@@ -40,6 +40,6 @@ class Proxy implements Comparable<Proxy> {
 
    @Override
    public String toString() {
-      return _module + _iface + _from;
+      return _module + _iface;
    }
 }

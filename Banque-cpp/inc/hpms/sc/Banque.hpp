@@ -18,7 +18,7 @@ namespace hpms::sc {
       virtual void incrNbEssais( const char * carteID );
       virtual void retrait( const char * carteID, const double & montant );
       virtual void arret( void );
-      virtual void afterDispatch( bool dispatched );
+      virtual void afterDispatch( void );
 
    public:
 

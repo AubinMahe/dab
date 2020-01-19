@@ -5,6 +5,7 @@
 	<projects>
 		<project>Banque-cpp</project>
 		<project>dabtypes-cpp</project>
+		<project>interfaces-cpp</project>
 		<project>util-cpp</project>
 	</projects>
 	<buildSpec>

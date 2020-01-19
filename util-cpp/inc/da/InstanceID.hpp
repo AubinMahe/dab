@@ -1,11 +1,16 @@
 #pragma once
 
+#include <io/ByteBuffer.hpp>
+
 namespace da {
 
    class InstanceID {
    public:
 
-      InstanceID( byte value );
+      InstanceID( const char * name = nullptr, byte value = 0 ) :
+         _name ( name ),
+         _value( value )
+      {}
 
       InstanceID( const InstanceID & ) = default;
 
@@ -13,12 +18,27 @@ namespace da {
 
    public:
 
-      void put( io::ByteBuffer & target ) const;
+      void put( io::ByteBuffer & target ) const { target.putByte( _value ); }
 
-      void get( io::ByteBuffer & target );
+      void get( io::ByteBuffer & target ) { _value = target.getByte(); }
+
+      const char * toString( void ) const { return _name; }
+
+      operator byte( void ) const { return _value; }
+
+   public:
+
+      bool operator == ( const InstanceID & right ) const {
+         return _value == right._value;
+      }
+
+      bool operator != ( const InstanceID & right ) const {
+         return _value != right._value;
+      }
 
    private:
 
-      byte _value;
+      const char * _name;
+      byte         _value;
    };
 }

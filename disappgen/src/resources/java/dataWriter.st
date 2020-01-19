@@ -1,4 +1,4 @@
-dataWriter( package, internalPckg, interface, data, rawSize, types ) ::= <<
+dataWriter( package, intrfcPckg, interface, data, rawSize, types ) ::= <<
 package <package>;
 // dataWriter
 
@@ -8,7 +8,7 @@ import java.nio.channels.DatagramChannel;
 
 import da.InstanceID;
 import da.Targets;
-import <internalPckg>.<interface.name>Data;
+import <intrfcPckg>.<interface.name>Data;
 
 public class <interface.name>Publisher {
 

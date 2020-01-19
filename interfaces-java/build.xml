@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="da.enums" default="jar-component">
+<project name="hpms.interfaces" default="jar-component">
    <import file="../ant-common.xml" />
    <target name="javac-component">
       <mkdir dir="build" />

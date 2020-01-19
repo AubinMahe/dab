@@ -1,7 +1,6 @@
 package disapp.generator;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -22,7 +21,6 @@ import disapp.generator.model.ComponentType;
 import disapp.generator.model.DataType;
 import disapp.generator.model.DeploymentType;
 import disapp.generator.model.EnumerationType;
-import disapp.generator.model.EventType;
 import disapp.generator.model.InstanceType;
 import disapp.generator.model.InterfaceType;
 import disapp.generator.model.OfferedInterfaceUsageType;
@@ -35,7 +33,7 @@ import disapp.generator.model.TimeoutType;
 public class JavaGenerator extends BaseGenerator {
 
    public JavaGenerator( Model model ) {
-      super( model, Model.JAVA_LANGUAGE, "java.stg", new BaseRenderer());
+      super( model, Model.JAVA_LANGUAGE, BaseGenerator.class.getResource( "/resources/java" ), new BaseRenderer());
    }
 
    @Override
@@ -70,7 +68,7 @@ public class JavaGenerator extends BaseGenerator {
 
    private void interfacesEnum() throws IOException {
       final Map<String, Byte> interfaces = _model.getInterfacesID();
-      final TypesType         internal   = _model.getGenInternalTypes();
+      final TypesType         internal   = _model.getGenInterfaceSettings();
       final TypeImplType      impl       = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
       final ST                tmpl       = _group.getInstanceOf( "/interfacesEnum" );
       _genDir     = impl.getSrcDir();
@@ -80,56 +78,27 @@ public class JavaGenerator extends BaseGenerator {
       write( "Interfaces.java", tmpl );
    }
 
-   private void eventsEnum() throws IOException {
-      final TypesType           internal = _model.getGenInternalTypes();
+   private void interfaces() throws IOException {
+      final TypesType           internal = _model.getGenInterfaceSettings();
       final TypeImplType        impl     = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
       final Map<String, String> types    = _model.getTypes( Model.JAVA_LANGUAGE );
       _genDir     = impl.getSrcDir();
       _moduleName = impl.getModuleName();
       for( final InterfaceType iface : _model.getApplication().getInterface()) {
-         final String            ifaceName = iface.getName();
-         final List<EventType>   events    = _model.getEventsOf( iface );
-         final List<RequestType> requests  = _model.getRequestsOf( iface );
-         final List<DataType>    data      = _model.getDataOf( iface );
-         if( ! events.isEmpty() || ! requests.isEmpty()) {
-            final List<Object> facets = new ArrayList<>( events.size() + requests.size());
-            facets.addAll( events );
-            facets.addAll( requests );
-            final ST tmpl = _group.getInstanceOf( "/eventsEnum" );
-            tmpl.add( "package"  , _moduleName );
-            tmpl.add( "ifaceName", ifaceName );
-            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_EVENT );
-            tmpl.add( "facets"   , facets );
-            tmpl.add( "types"    , types );
-            tmpl.add( "isEvent"  , true );
-            write( ifaceName + Model.IFACE_CLASSIFICATION_EVENT + ".java", tmpl );
-         }
-         if( ! requests.isEmpty()) {
-            final ST tmpl = _group.getInstanceOf( "/eventsEnum" );
-            tmpl.add( "package"  , _moduleName );
-            tmpl.add( "ifaceName", ifaceName );
-            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_REQUEST );
-            tmpl.add( "facets"   , requests );
-            tmpl.add( "types"    , types );
-            tmpl.add( "isEvent"  , false );
-            write( ifaceName + Model.IFACE_CLASSIFICATION_REQUEST + ".java", tmpl );
-         }
-         if( ! data.isEmpty()) {
-            final ST tmpl = _group.getInstanceOf( "/eventsEnum" );
-            tmpl.add( "package"  , _moduleName );
-            tmpl.add( "ifaceName", ifaceName );
-            tmpl.add( "className", ifaceName + Model.IFACE_CLASSIFICATION_DATA );
-            tmpl.add( "facets"   , data );
-            tmpl.add( "types"    , types );
-            tmpl.add( "isEvent"  , false );
-            write( ifaceName + Model.IFACE_CLASSIFICATION_DATA + ".java", tmpl );
-         }
+         final String       ifaceName = iface.getName();
+         final List<Object> facets    = iface.getEventOrRequestOrData();
+         final ST tmpl = _group.getInstanceOf( "/interfaces" );
+         tmpl.add( "package"  , _moduleName );
+         tmpl.add( "iface"    , iface );
+         tmpl.add( "facets"   , facets );
+         tmpl.add( "types"    , types );
+         write( ifaceName + "Interface.java", tmpl );
       }
    }
 
    protected void internalTypes() throws IOException {
       interfacesEnum();
-      eventsEnum();
+      interfaces();
    }
 
    private void responses( ComponentType component ) throws IOException {
@@ -160,19 +129,15 @@ public class JavaGenerator extends BaseGenerator {
    private void requiredImplementations( ComponentType component ) throws IOException {
       for( final RequiredInterfaceUsageType required : component.getRequires()) {
          final InterfaceType     iface        = (InterfaceType)required.getInterface();
-//         final SortedSet<String> usedTypes    = _model.getUsedTypesBy( iface.getName());
          final int               rawSize      = _model.getBufferOutCapacity((InterfaceType)required.getInterface());
-         final TypesType         internal     = _model.getGenInternalTypes();
+         final TypesType         internal     = _model.getGenInterfaceSettings();
          final TypeImplType      internalImpl = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-         final String            internalPckg = internalImpl.getModuleName();
-//         final SortedSet<String> imports      = new TreeSet<>();
-//         _model.getImports( usedTypes, imports );
+         final String            intrfcPckg   = internalImpl.getModuleName();
          final ST tmpl = _group.getInstanceOf( "/requiredImplementation" );
-         tmpl.add( "package"     , _moduleName );
-         tmpl.add( "internalPckg", internalPckg );
-         tmpl.add( "iface"       , iface );
-         tmpl.add( "rawSize"     , rawSize );
-//         tmpl.add( "imports"     , imports );
+         tmpl.add( "package"   , _moduleName );
+         tmpl.add( "intrfcPckg", intrfcPckg );
+         tmpl.add( "iface"     , iface );
+         tmpl.add( "rawSize"   , rawSize );
          setRendererFieldsMaxWidth( iface );
          write( iface.getName() + ".java", tmpl );
       }
@@ -202,22 +167,22 @@ public class JavaGenerator extends BaseGenerator {
       final int                                respRawSize  = _model.getBufferResponseCapacity( offEvents );
       final Map<InterfaceType, List<DataType>> data         = _model.getRequiredDataOf( component );
       final Map<String, String>                types        = _model.getTypes( Model.JAVA_LANGUAGE );
-      final TypesType                          internal     = _model.getGenInternalTypes();
+      final TypesType                          internal     = _model.getGenInterfaceSettings();
       final TypeImplType                       internalImpl = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-      final String                             internalPckg = internalImpl.getModuleName();
+      final String                             intrfcPckg   = internalImpl.getModuleName();
       final int rawSize = Math.max( _model.getBufferInCapacity( component ), _model.getBufferResponseCapacity( reqEvents ));
       final ST  tmpl    = _group.getInstanceOf( "/dispatcherImplementation" );
-      tmpl.add( "package"     , _moduleName );
-      tmpl.add( "internalPckg", internalPckg );
-      tmpl.add( "component"   , component );
-      tmpl.add( "offers"      , offered );
-      tmpl.add( "events"      , offEvents );
-      tmpl.add( "rawSize"     , rawSize );
-      tmpl.add( "respRawSize" , respRawSize );
-      tmpl.add( "offRequests" , offRequests );
-      tmpl.add( "reqRequests" , reqRequests );
-      tmpl.add( "data"        , data );
-      tmpl.add( "types"       , types );
+      tmpl.add( "package"    , _moduleName );
+      tmpl.add( "intrfcPckg" , intrfcPckg );
+      tmpl.add( "component"  , component );
+      tmpl.add( "offers"     , offered );
+      tmpl.add( "events"     , offEvents );
+      tmpl.add( "rawSize"    , rawSize );
+      tmpl.add( "respRawSize", respRawSize );
+      tmpl.add( "offRequests", offRequests );
+      tmpl.add( "reqRequests", reqRequests );
+      tmpl.add( "data"       , data );
+      tmpl.add( "types"      , types );
       write( component.getName() + "Dispatcher.java", tmpl );
    }
 
@@ -230,9 +195,9 @@ public class JavaGenerator extends BaseGenerator {
       final SortedSet<String>                     imports      = new TreeSet<>();
       final Set<String>                           ifaces       = new LinkedHashSet<>();
       final Map<String, String>                   types        = _model.getTypes( Model.JAVA_LANGUAGE );
-      final TypesType                             internal     = _model.getGenInternalTypes();
+      final TypesType                             internal     = _model.getGenInterfaceSettings();
       final TypeImplType                          internalImpl = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-      final String                                internalPckg = internalImpl.getModuleName();
+      final String                                intrfcPckg   = internalImpl.getModuleName();
       for( final OfferedInterfaceUsageType oiut : component.getOffers()) {
          ifaces.add(((InterfaceType)oiut.getInterface()).getName());
       }
@@ -247,17 +212,17 @@ public class JavaGenerator extends BaseGenerator {
       _model.getImports( offData, imports );
       _model.getImports( reqData, imports );
       final ST tmpl = _group.getInstanceOf( "/componentImplementation" );
-      tmpl.add( "package"     , _moduleName );
-      tmpl.add( "internalPckg", internalPckg );
-      tmpl.add( "component"   , component );
-      tmpl.add( "ifaces"      , ifaces );
-      tmpl.add( "requires"    , requires );
-      tmpl.add( "actions"     , actions );
-      tmpl.add( "offData"     , offData );
-      tmpl.add( "reqData"     , reqData );
-      tmpl.add( "responses"   , responses );
-      tmpl.add( "imports"     , imports );
-      tmpl.add( "types"       , types );
+      tmpl.add( "package"   , _moduleName );
+      tmpl.add( "intrfcPckg", intrfcPckg );
+      tmpl.add( "component" , component );
+      tmpl.add( "ifaces"    , ifaces );
+      tmpl.add( "requires"  , requires );
+      tmpl.add( "actions"   , actions );
+      tmpl.add( "offData"   , offData );
+      tmpl.add( "reqData"   , reqData );
+      tmpl.add( "responses" , responses );
+      tmpl.add( "imports"   , imports );
+      tmpl.add( "types"     , types );
       write( component.getName() + "Component.java", tmpl );
    }
 
@@ -270,17 +235,17 @@ public class JavaGenerator extends BaseGenerator {
             if( data != null ) {
                final String              ifaceName    = iface.getName();
                final int                 rawSize      = _model.getDataBufferOutCapacity( data );
-               final TypesType           internal     = _model.getGenInternalTypes();
+               final TypesType           internal     = _model.getGenInterfaceSettings();
                final TypeImplType        internalImpl = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-               final String              internalPckg = internalImpl.getModuleName();
+               final String              intrfcPckg   = internalImpl.getModuleName();
                final Map<String, String> types        = _model.getTypes( Model.JAVA_LANGUAGE );
                final ST                  tmpl         = _group.getInstanceOf( "/dataWriter" );
-               tmpl.add( "package"     , _moduleName );
-               tmpl.add( "internalPckg", internalPckg );
-               tmpl.add( "interface"   , offered.getInterface());
-               tmpl.add( "data"        , data );
-               tmpl.add( "rawSize"     , rawSize );
-               tmpl.add( "types"       , types );
+               tmpl.add( "package"   , _moduleName );
+               tmpl.add( "intrfcPckg", intrfcPckg );
+               tmpl.add( "interface" , offered.getInterface());
+               tmpl.add( "data"      , data );
+               tmpl.add( "rawSize"   , rawSize );
+               tmpl.add( "types"     , types );
                write( ifaceName + "Publisher.java", tmpl );
             }
          }
@@ -360,6 +325,7 @@ public class JavaGenerator extends BaseGenerator {
       final Map<InstanceType, ProcessType>             processes      = _model.getProcessByInstance( dep );
       final Map<String, String>                        types          = _model.getTypes( Model.JAVA_LANGUAGE );
       final Map<String, Byte>                          ids            = _model.getIDs( dep );
+      final Set<InterfaceType>                         offered        = new LinkedHashSet<>();
       final Set<Proxy>                                 proxies        = new LinkedHashSet<>();
       final Set<Proxy>                                 dataPublishers = new LinkedHashSet<>();
       final Map<InstanceType, Set<DataType>>           consumedData   = new LinkedHashMap<>();
@@ -369,10 +335,10 @@ public class JavaGenerator extends BaseGenerator {
       final Set<InterfaceType>                         data           = _model.getRequiredDataInterfacesBy( process );
       final Set<InterfaceType>                         requests       = Model.getRequiredRequestInterfacesBy( process );
       final Set<ComponentType>                         components     = Model.getComponentsOf( process );
-      final TypesType                                  internal       = _model.getGenInternalTypes();
+      final TypesType                                  internal       = _model.getGenInterfaceSettings();
       final TypeImplType                               internalImpl   = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
-      final String                                     internalPckg   = internalImpl.getModuleName();
-      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
+      final String                                     intrfcPckg     = internalImpl.getModuleName();
+      _model.getFactoryConnections( factory, dep, process, offered, proxies, processesImpl, dataPublishers, consumedData, modules );
       final Set<TimeoutType> timers = new LinkedHashSet<>();
       for( final ComponentType component : components ) {
          timers.addAll( component.getTimeout());
@@ -381,7 +347,7 @@ public class JavaGenerator extends BaseGenerator {
       _genDir     = factory.getSrcDir();
       final ST tmpl = _group.getInstanceOf( "/componentFactory" );
       tmpl.add( "package"       , _moduleName );
-      tmpl.add( "internalPckg"  , internalPckg );
+      tmpl.add( "intrfcPckg"    , intrfcPckg );
       tmpl.add( "deployment"    , deployment );
       tmpl.add( "deploymentImpl", deploymentImpl );
       tmpl.add( "process"       , process );

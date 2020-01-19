@@ -1,5 +1,5 @@
 componentFactory(
-   package, internalPckg, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
+   package, intrfcPckg, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
    interfaces, data, requests, components, proxies, dataPublishers, consumedData, types, modules, ids, timers
 ) ::= <<
 package <package>;
@@ -18,10 +18,10 @@ import da.FacetMessagesQueue;
 import da.IMainLoop;
 import da.InstanceID;
 import da.Targets;
-import <internalPckg>.Interfaces;
-<interfaces:{iface|import <internalPckg>.<iface.name>Event;}  ; separator="\n">
-<requests  :{iface|import <internalPckg>.<iface.name>Request;}; separator="\n">
-<data      :{iface|import <internalPckg>.<iface.name>Data;}   ; separator="\n">
+import <intrfcPckg>.Interfaces;
+<interfaces:{iface|import <intrfcPckg>.<iface.name>Event;}  ; separator="\n">
+<requests  :{iface|import <intrfcPckg>.<iface.name>Request;}; separator="\n">
+<data      :{iface|import <intrfcPckg>.<iface.name>Data;}   ; separator="\n">
 import util.Log;
 
 public final class ComponentFactory extends Thread implements IMainLoop {
@@ -162,7 +162,7 @@ public final class ComponentFactory extends Thread implements IMainLoop {
             in.clear();
             final SocketAddress from = _channel.receive( in );
             in.flip();
-            if( in.remaining() >= 3 ) {
+            if( in.remaining() >= 4 ) {
                final byte       interfaceByte = in.get();
                final byte       event         = in.get();
                final byte       instanceByte  = in.get();
@@ -220,7 +220,7 @@ if( component.timeout )>
                }
             }
             else {
-               Log.printf( "Expected at least 3 bytes, %d received", in.remaining());
+               Log.printf( "Expected at least 4 bytes, %d received", in.remaining());
             }
          }
          catch( final IOException e ) {

@@ -1,5 +1,5 @@
 dispatcherImplementation(
-   package, internalPckg, component, offers, events,
+   package, intrfcPckg, component, offers, events,
    rawSize, respRawSize, offRequests, reqRequests, data, types
 ) ::= <<
 package <package>;
@@ -15,12 +15,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 import da.FacetMessage;
-import da.InstanceID;
-import <internalPckg>.Interfaces;
-<offers     :{iface    |import <internalPckg>.<iface.name>Event;}  ; separator="\n">
-<reqRequests:{ifaceName|import <internalPckg>.<ifaceName >Request;}; separator="\n">
-<data       :{iface    |import <internalPckg>.<iface.name>Data;}   ; separator="\n">
+
+import <intrfcPckg>.Interfaces;
+<offers     :{iface    |import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
+<reqRequests:{ifaceName|import <intrfcPckg>.<ifaceName >Interface;}; separator="\n">
+<data       :{iface    |import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
 < if( offRequests || component.timeout )>
+
 import io.ByteBufferHelper;< endif>
 
 
@@ -52,21 +53,24 @@ endif>DatagramChannel channel, <component.name>Component component ) {
    <data       :{iface    |<dispatcherImplData()>}        ; separator="\n\n">
    < if( component.timeout )><dispatcherImplTimeout()>< endif>
 
-   @SuppressWarnings("incomplete-switch")
-   public boolean hasDispatched( FacetMessage\<Interfaces, ?, InstanceID> message ) throws IOException {
+   @SuppressWarnings({ "incomplete-switch", "unchecked" })
+   public boolean hasDispatched( FacetMessage\<Interfaces, ?, ?> message ) throws IOException {
       util.Log.printf( "event: %s, from: %s, to: %s", message._event, message._fromInstance, message._instance );
       switch( message._interface ) {
 < if( component.timeout )
->      case LOOPBACK: return dispatch((LoopbackEvent)message._event );
+>      case TIMEOUT: return dispatchTimeout((Timeout.Facets)message._event );
 < endif><
 offers     :{iface|
-      case <(common/concat(iface.name, "Event"  )); format="ID">: return dispatch((<iface.name>Event)message._event, message );
+      case <iface.name; format="ID">:
+         return dispatch<iface.name>((FacetMessage\<Interfaces, <iface.name>Interface.Facets, ?>)message );
 }><
 data       :{iface|
-      case <(common/concat(iface.name, "Data"   )); format="ID">: return dispatch((<iface.name>Data)message._event, message );
+      case <iface.name; format="ID">:
+         return dispatch<iface.name>((FacetMessage\<Interfaces, <iface.name>Interface.Facets, ?>)message );
 }><
 reqRequests:{ifaceName|
-      case <(common/concat(ifaceName , "Request")); format="ID">: return dispatch((<ifaceName>Request)message._event, message );
+      case <ifaceName; format="ID">:
+         return dispatch<ifaceName>((FacetMessage\<Interfaces, <ifaceName>Interface.Facets, ?>)message );
 }>      }
       return false;
    }

@@ -6,9 +6,9 @@
 #   include <pthread.h>
 #endif
 
-
 namespace os {
 
+   class Condition;
    class Mutex {
    public:
 
@@ -31,5 +31,6 @@ namespace os {
    private:
       Mutex( const Mutex & ) = delete;
       Mutex & operator = ( const Mutex & ) = delete;
+   friend class Condition;
    };
 }

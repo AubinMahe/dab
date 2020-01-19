@@ -44,7 +44,7 @@ namespace hpms::udt {
        * Méthode appelée après réception et traitement d'un événement ou d'une requête.
        * L'état de l'automate à sans doute été mis à jour, il faut donc le publier.
        */
-      virtual void afterDispatch( bool dispatched );
+      virtual void afterDispatch( void );
 
    private:
 

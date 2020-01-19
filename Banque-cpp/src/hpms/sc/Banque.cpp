@@ -59,7 +59,6 @@ void Banque::arret( void ) {
    _dispatcher->terminate();
 }
 
-void Banque::afterDispatch( bool dispatched ) {
+void Banque::afterDispatch( void ) {
    _ui->refresh();
-   (void)dispatched;
 }

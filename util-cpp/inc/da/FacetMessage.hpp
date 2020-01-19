@@ -1,19 +1,31 @@
 #pragma once
 
+#include <da/InstanceID.hpp>
 #include <io/sockets.hpp>
+
+#include <type_traits>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace da {
 
-   template<class I, class F, class E>
-   struct FacetMessage {
+   template<class I>
+   struct BaseFacetMessage {
+
+      static_assert(std::is_enum<I>::value,
+         "I type parameter of FacetMessage must be a class enum : byte");
 
       sockaddr_in _from;
       I           _interface;
-      F           _event;
-      E           _instance;
-      E           _fromInstance; // Requester instance ID
+      byte        _event;
+      InstanceID  _instance;
+      InstanceID  _fromInstance; // Requester instance ID
 
-      FacetMessage( const sockaddr_in & from, I intrfc, F event, E instance, E fromInstance ) :
+   public:
+
+      BaseFacetMessage( const sockaddr_in & from, I intrfc, byte event, const InstanceID & instance, const InstanceID & fromInstance ) :
          _from        ( from ),
          _interface   ( intrfc ),
          _event       ( event ),
@@ -21,49 +33,24 @@ namespace da {
          _fromInstance( fromInstance )
       {}
 
-      template<class A>
-      const A & getArg1( const FacetMessage & msg );
-
-      template<class A, class B>
-      const B & getArg2( const FacetMessage & msg );
-
-      template<class A, class B, class C>
-      const C & getArg3( const FacetMessage & msg );
-
-      template<class A, class B, class C, class D>
-      const D & getArg4( const FacetMessage & msg );
+      BaseFacetMessage( void ) = default;
+      BaseFacetMessage( const BaseFacetMessage & right ) = default;
+      BaseFacetMessage & operator = ( const BaseFacetMessage & right ) = default;
    };
-}
 
-#include "FacetMessage4.hpp"
+   template<class I, class P>
+   struct FacetMessage : public BaseFacetMessage<I> {
 
-namespace da {
+      P _payload;
 
-   template<class I, class F, class E>
-   template<class A>
-   const A & FacetMessage<I,F,E>::getArg1( const FacetMessage & msg ) {
-      const FacetMessage1<I, F, E, A> & message = static_cast<FacetMessage1<I, F, E, A> &>( msg );
-      return message._arg1;
-   }
+   public:
 
-   template<class I, class F, class E>
-   template<class A, class B>
-   const B & FacetMessage<I,F,E>::getArg2( const FacetMessage & msg ) {
-      const FacetMessage2<I, F, E, A, B> & message = static_cast<FacetMessage2<I, F, E, A, B> &>( msg );
-      return message._arg2;
-   }
+      FacetMessage( const sockaddr_in & from, I intrfc, byte event, const InstanceID & instance, const InstanceID & fromInstance ) :
+         BaseFacetMessage<I>( from, intrfc, event, instance, fromInstance )
+      {}
 
-   template<class I, class F, class E>
-   template<class A, class B, class C>
-   const C & FacetMessage<I,F,E>::getArg3( const FacetMessage & msg ) {
-      const FacetMessage3<I, F, E, A, B, C> & message = static_cast<FacetMessage3<I, F, E, A, B, C> &>( msg );
-      return message._arg3;
-   }
-
-   template<class I, class F, class E>
-   template<class A, class B, class C, class D>
-   const D & FacetMessage<I,F,E>::getArg4( const FacetMessage & msg ) {
-      const FacetMessage4<I, F, E, A, B, C, D> & message = static_cast<FacetMessage4<I, F, E, A, B, C, D> &>( msg );
-      return message._arg4;
-   }
+      FacetMessage( void ) = default;
+      FacetMessage( const FacetMessage & right ) = default;
+      FacetMessage & operator = ( const FacetMessage & right ) = default;
+   };
 }

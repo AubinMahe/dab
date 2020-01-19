@@ -1,4 +1,4 @@
-componentHeader( namespace, component, requires, actions, offData, reqData, responses, includes, types ) ::= <<
+componentHeader( namespace, ifacesNamespace, component, requires, actions, offData, reqData, responses, includes, types ) ::= <<
 #pragma once
 // componentHeader
 
@@ -11,7 +11,7 @@ componentHeader( namespace, component, requires, actions, offData, reqData, resp
 <component.offers  :{offered |#include \<<namespace; format="NamespaceToPath">/I<offered .interface.name>.hpp>}; separator="\n">
 <component.requires:{required|#include \<<namespace; format="NamespaceToPath">/<required.interface.name >.hpp>}; separator="\n">
 <responses         :{iface   |#include \<<namespace; format="NamespaceToPath">/I<iface.name    >Responses.hpp>}; separator="\n">
-<offData           :{iface   |#include \<<namespace; format="NamespaceToPath">/<iface.name          >Data.hpp>}; separator="\n">
+<offData           :{iface   |#include \<<namespace; format="NamespaceToPath">/<iface.name          >Publisher.hpp>}; separator="\n">
 <reqData           :{iface   |#include \<<namespace; format="NamespaceToPath">/I<iface.name         >Data.hpp>}; separator="\n">
 #include \<<                              namespace; format="NamespaceToPath">/<component.name>Dispatcher.hpp>
 < if( component.automaton )>
@@ -35,8 +35,8 @@ responses       :{iface  |, public I<iface.name   >Responses}; separator=", "> {
 if( component.automaton )>,
          _automaton( *this )<
 endif><component.timeout:{to|,
-         _<to.name; format="argument">( <to.name; format="ID">_DURATION, [this](){ loopback( <
-            component.name>Dispatcher::LoopbackEvent::<to.name; format="ID"> );\})}>
+         _<to.name; format="argument">( <to.name; format="ID">_DURATION, [this](){ timeout( <
+            ifacesNamespace>::TimeoutInterface::Facets::<component.name; format="ID">_<to.name; format="ID"> );\})}>
       {}
 
    public:
@@ -65,11 +65,7 @@ endif><component.timeout:{to|,
 
       virtual void init( void ) {}
 
-      virtual void beforeDispatch( void ) {}
-
-      virtual void afterDispatch( bool dispatched ) {
-         (void)dispatched;
-      }
+      virtual void afterDispatch( void ) {}
 <requires:{iface|
 
 
@@ -82,14 +78,14 @@ endif><component.timeout:{to|,
       \}
 }>
 <offData:{iface|
-      void connect( <iface.name>Data & <iface.name; format="argument"> ) {
+      void connect( <iface.name>Publisher & <iface.name; format="argument"> ) {
          _<iface.name; format="argument">Data = &<iface.name; format="argument">;
       \}
 }>
 < if( component.timeout )>
    private:
 
-      void loopback( <component.name>Dispatcher::LoopbackEvent event );
+      void timeout( <ifacesNamespace>::TimeoutInterface::Facets event );
 
 < endif>
    protected:
@@ -101,7 +97,7 @@ endif><component.timeout:{to|,
       <types.(data.type)> _<data.name; format="argument">;     // consumed data
 }>}><offData:{iface|<offData.(iface):{data|
       <types.(data.type)> _<data.name; format="argument">;     // published data}>
-      <iface.name>Data * _<iface.name; format="argument">Data; // data publisher
+      <iface.name>Publisher * _<iface.name; format="argument">Data; // data publisher
 }><
 if( component.automaton )>      Automaton             _automaton;
 < endif><component.timeout:{to|

@@ -1,11 +1,12 @@
 SRCS =\
  src/main.cpp\
  src/exceptionsTests.cpp\
- src/timeoutTests.cpp
+ src/timeoutTests.cpp\
+ src/facetMessagesQueueTests.cpp
 
-CPPFLAGS    = -I ../inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -c -std=c++17
+CPPFLAGS    = -I ../inc -O3 -g0 -pedantic -W -Wall -Wextra -Wconversion -std=c++17
 LIB         = util-cpp
-LIBW32      = $(LIB)-mingw32
+LIBW32      = $(LIB).dll
 LIBFLAGS    = -L ../../dab-lib -l $(LIB) -lpthread -lefence
 LIBW32FLAGS = -L ../../dab-lib -l $(LIBW32) -lws2_32
 OBJS        = $(SRCS:src/%cpp=BUILD/%o)
@@ -40,7 +41,9 @@ run: tests
 
 .PHONY: run-win32
 run-win32: tests-win32
-	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32 wine ./tests-win32 --perf=false
+	WINEPATH=/usr/lib/gcc/i686-w64-mingw32/7.3-win32\
+ WINEDLLPATH=/home/aubin/Dev/git/dab/dab-lib/\
+ wine ./tests-win32 --perf=false
 
 .PHONY: perf
 perf: tests
@@ -52,14 +55,14 @@ perf-win32: tests-win32
 
 BUILD/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
-	g++ $(CPPFLAGS) -o $@ $<
+	g++ $(CPPFLAGS) -c -o $@ $<
 
 BUILD-mingw32/%.o: src/%.cpp
 	@mkdir -p $$(dirname $@)
-	i686-w64-mingw32-g++ $(CPPFLAGS) -o $@ $<
+	i686-w64-mingw32-g++ $(CPPFLAGS) -c -o $@ $<
 
 deps: $(SRCS)
-	g++ $(CPPFLAGS) -MM $(SRCS) | awk '/.*\.o:/ {print "BUILD/"$$0        ; next } {print}'  > $@
-	g++ $(CPPFLAGS) -MM $(SRCS) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0; next } {print}' >> $@
+	g++ $(CPPFLAGS) -c -MM $(SRCS) | awk '/.*\.o:/ {print "BUILD/"$$0        ; next } {print}'  > $@
+	g++ $(CPPFLAGS) -c -MM $(SRCS) | awk '/.*\.o:/ {print "BUILD-mingw32/"$$0; next } {print}' >> $@
 
 -include deps

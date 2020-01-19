@@ -30,7 +30,7 @@ import disapp.generator.model.StructType;
 public class CGenerator extends BaseGenerator {
 
    public CGenerator( Model model ) {
-      super( model, Model.C_LANGUAGE, "c.stg", new CRenderer());
+      super( model, Model.C_LANGUAGE, BaseGenerator.class.getResource( "/resources/c" ), new CRenderer());
    }
 
    private void enumHeader( String name ) throws IOException {
@@ -315,7 +315,7 @@ public class CGenerator extends BaseGenerator {
       final Map<InstanceType, Set<DataType>>           consumedData   = new LinkedHashMap<>();
       final Map<ComponentType, String>                 modules        = new LinkedHashMap<>();
       final Map<String, String>                        types          = _model.getTypes( Model.C_LANGUAGE );
-      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
+//      _model.getFactoryConnections( factory, dep, process, proxies, processesImpl, dataPublishers, consumedData, modules );
       _moduleName = factory.getModuleName();
       _genDir     = factory.getSrcDir();
       {

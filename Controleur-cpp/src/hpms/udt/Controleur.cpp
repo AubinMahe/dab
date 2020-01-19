@@ -42,7 +42,7 @@ void Controleur::anomalie( bool anomalie ) {
 }
 
 void Controleur::carteInseree( const char * id ) {
-   UTIL_LOG_ARGS( "id = %s", id );
+   UTIL_LOG_ARGS( "id = '%s'", id );
    _carte .invalidate();
    _compte.invalidate();
    _automaton.process( hpms::dabtypes::Evenement::CARTE_INSEREE );
@@ -149,11 +149,10 @@ void Controleur::arret( void ) {
  * Méthode appelée après réception et traitement d'un événement ou d'une requête.
  * L'état de l'automate à sans doute été mis à jour, il faut donc le publier.
  */
-void Controleur::afterDispatch( bool dispatched ) {
+void Controleur::afterDispatch( void ) {
    _etatDuDab.etat = _automaton.getCurrentState();
    UTIL_LOG_ARGS( "etat = %s", hpms::dabtypes::toString( _etatDuDab.etat ));
    _uniteDeTraitementData->publishEtatDuDab( _etatDuDab );
-   (void)dispatched;
 }
 
 void Controleur::confisquerLaCarte( void ) {

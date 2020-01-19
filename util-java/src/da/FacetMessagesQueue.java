@@ -2,10 +2,10 @@ package da;
 
 public class FacetMessagesQueue<I extends Enum<I>> {
 
-   private final String                           _name;
-   private final FacetMessage<I, ?, InstanceID>[] _queue;
-   private final boolean                          _discardOldWhenFull;
-   private /* */ int                              _count;
+   private final String                  _name;
+   private final FacetMessage<I, ?, ?>[] _queue;
+   private final boolean                 _discardOldWhenFull;
+   private /* */ int                     _count;
 
    @SuppressWarnings("unchecked")
    public FacetMessagesQueue( String name, int capacity, boolean discardOldWhenFull ) {
@@ -14,9 +14,9 @@ public class FacetMessagesQueue<I extends Enum<I>> {
       _discardOldWhenFull = discardOldWhenFull;
    }
 
-   public FacetMessage<I, ?, InstanceID> removeFirst() {
+   public FacetMessage<I, ?, ?> removeFirst() {
       if( _count > 0 ) {
-         final FacetMessage<I, ?, InstanceID> first = _queue[0];
+         final FacetMessage<I, ?, ?> first = _queue[0];
          System.arraycopy( _queue, 1, _queue, 0, --_count );
          util.Log.printf( "Message removed from '%s': %s, from: %s, to %s",
             _name, first._event, first._fromInstance, first._instance );
@@ -30,7 +30,7 @@ public class FacetMessagesQueue<I extends Enum<I>> {
       return _count == 0;
    }
 
-   public FacetMessage<I, ?, InstanceID> addFirst( FacetMessage<I, ?, InstanceID> message ) {
+   public FacetMessage<I, ?, ?> addFirst( FacetMessage<I, ?, ?> message ) {
       if( _count < _queue.length ) {
          System.arraycopy( _queue, 0, _queue, 1, Math.max( _count, _queue.length - 1 ));
          _queue[0] = message;
@@ -40,7 +40,7 @@ public class FacetMessagesQueue<I extends Enum<I>> {
          return null;
       }
       if( _discardOldWhenFull ) {
-         final FacetMessage<I, ?, InstanceID> old = _queue[0];
+         final FacetMessage<I, ?, ?> old = _queue[0];
          _queue[0] = message;
          ++_count;
          util.Log.printf( "Message added to '%s': %s, from: %s, to %s, message discarted: %s, from: %s, to %s",
@@ -52,7 +52,7 @@ public class FacetMessagesQueue<I extends Enum<I>> {
       return null;
    }
 
-   public FacetMessage<I, ?, InstanceID> add( FacetMessage<I, ?, InstanceID> message ) {
+   public FacetMessage<I, ?, ?> add( FacetMessage<I, ?, ?> message ) {
       if( _count < _queue.length ) {
          _queue[_count++] = message;
          util.Log.printf( "Message added to '%s': %s, from: %s, to %s",
@@ -60,7 +60,7 @@ public class FacetMessagesQueue<I extends Enum<I>> {
          return null;
       }
       if( _discardOldWhenFull ) {
-         final FacetMessage<I, ?, InstanceID> old = _queue[0];
+         final FacetMessage<I, ?, ?> old = _queue[0];
          System.arraycopy( _queue, 1, _queue, 0, _count - 1 );
          _queue[_count-1] = message;
          util.Log.printf( "Message added to '%s': %s, from: %s, to %s, message discarted: %s, from: %s, to %s",

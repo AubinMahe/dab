@@ -49,10 +49,9 @@ void Distributeur::arret( void ) {
    _dispatcher->terminate();
 }
 
-void Distributeur::afterDispatch( bool dispatched ) {
+void Distributeur::afterDispatch( void ) {
    UTIL_LOG_HERE();
-   if( _ui && dispatched ) {
+   if( _ui ) {
       _ui->refresh();
    }
-   (void)dispatched;
 }

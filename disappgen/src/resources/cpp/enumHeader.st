@@ -3,7 +3,7 @@ enumHeader( namespace, enum ) ::= <<
 
 namespace <namespace> {
 
-   enum class <enum.name> : <common/enumtype( enum )> {
+   enum class <enum.name> : <enumtype( enum )> {
       FIRST,
 
 < first(enum.literal):{literal|

@@ -57,11 +57,17 @@
                                 								
                                 <option id="gnu.cpp.compiler.option.dialect.flags.498695454" name="Other dialect flags" superClass="gnu.cpp.compiler.option.dialect.flags" useByScannerDiscovery="true" value="-std=c++17" valueType="string"/>
                                 								
-                                <option id="gnu.cpp.compiler.option.warnings.toerrors.160502098" name="Warnings as errors (-Werror)" superClass="gnu.cpp.compiler.option.warnings.toerrors" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="gnu.cpp.compiler.option.warnings.toerrors.160502098" name="Warnings as errors (-Werror)" superClass="gnu.cpp.compiler.option.warnings.toerrors" useByScannerDiscovery="false" value="false" valueType="boolean"/>
                                 								
                                 <option id="gnu.cpp.compiler.option.warnings.wconversion.2032934137" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <option id="gnu.cpp.compiler.option.warnings.pedantic.1251411816" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.cpp.compiler.option.warnings.extrawarn.1734781355" superClass="gnu.cpp.compiler.option.warnings.extrawarn" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.cpp.compiler.option.other.pic.127148336" superClass="gnu.cpp.compiler.option.other.pic" value="true" valueType="boolean"/>
+                                								
+                                <option id="gnu.cpp.compiler.option.pthread.909049883" superClass="gnu.cpp.compiler.option.pthread" value="true" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.122005890" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
                                 							

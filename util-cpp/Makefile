@@ -7,6 +7,7 @@ CPP_SRCS =\
  src/io/Selector.cpp\
  src/io/sockets.cpp\
  src/os/Event.cpp\
+ src/os/Condition.cpp\
  src/os/Mutex.cpp\
  src/os/sleep.cpp\
  src/os/Thread.cpp\

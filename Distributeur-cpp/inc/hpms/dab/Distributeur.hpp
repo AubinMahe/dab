@@ -27,7 +27,7 @@ namespace hpms::dab {
       virtual void placerLesBilletsDansLaCorbeille( void );
       virtual void arret( void );
       virtual void etatDuDabPublished( void );
-      virtual void afterDispatch( bool dispatched );
+      virtual void afterDispatch( void );
 
    private:
 

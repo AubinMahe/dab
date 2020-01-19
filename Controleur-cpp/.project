@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>dabtypes-cpp</project>
+		<project>interfaces-cpp</project>
 		<project>util-cpp</project>
 	</projects>
 	<buildSpec>

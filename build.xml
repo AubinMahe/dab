@@ -83,7 +83,7 @@
          <echo message="    -- Compilation @{language} --" />
          <antcall target="util-@{language}" />
          <antcall target="dabtypes-@{language}" />
-         <antcall target="daenums-@{language}" />
+         <antcall target="interfaces-@{language}" />
          <parallel>
             <antcall target="Banque-@{language}"       />
             <antcall target="Controleur-@{language}"   />
@@ -111,10 +111,10 @@
    <!-- C -->
    <target name="util-c"                                                                              ><make project="util-c"                      /></target>
    <target name="dabtypes-c"                  depends="util-c"                                        ><make project="dabtypes-c"                  /></target>
-   <target name="daenums-c"                   depends="dabtypes-c"                                    ><make project="daenums-c"                   /></target>
-   <target name="Banque-c"                    depends="daenums-c"                                     ><make project="Banque-c"                    /></target>
-   <target name="Controleur-c"                depends="daenums-c"                                     ><make project="Controleur-c"                /></target>
-   <target name="Distributeur-c"              depends="daenums-c"                                     ><make project="Distributeur-c"              /></target>
+   <target name="interfaces-c"                depends="dabtypes-c"                                    ><make project="interfaces-c"                   /></target>
+   <target name="Banque-c"                    depends="interfaces-c"                                  ><make project="Banque-c"                    /></target>
+   <target name="Controleur-c"                depends="interfaces-c"                                  ><make project="Controleur-c"                /></target>
+   <target name="Distributeur-c"              depends="interfaces-c"                                  ><make project="Distributeur-c"              /></target>
    <target name="isolated-sc-c"               depends="Banque-c,Controleur-c,Distributeur-c"          ><make project="isolated-sc-c"               /></target>
    <target name="isolated-ihm1-c"             depends="Banque-c,Controleur-c,Distributeur-c"          ><make project="isolated-ihm1-c"             /></target>
    <target name="isolated-ihm2-c"             depends="Banque-c,Controleur-c,Distributeur-c"          ><make project="isolated-ihm2-c"             /></target>
@@ -127,10 +127,10 @@
    <!-- C++ -->
    <target name="util-cpp"                                                                            ><make project="util-cpp"                    /></target>
    <target name="dabtypes-cpp"                depends="util-cpp"                                      ><make project="dabtypes-cpp"                /></target>
-   <target name="daenums-cpp"                 depends="dabtypes-cpp"                                  ><make project="daenums-cpp"                 /></target>
-   <target name="Banque-cpp"                  depends="daenums-cpp"                                   ><make project="Banque-cpp"                  /></target>
-   <target name="Controleur-cpp"              depends="daenums-cpp"                                   ><make project="Controleur-cpp"              /></target>
-   <target name="Distributeur-cpp"            depends="daenums-cpp"                                   ><make project="Distributeur-cpp"            /></target>
+   <target name="interfaces-cpp"              depends="dabtypes-cpp"                                  ><make project="interfaces-cpp"                 /></target>
+   <target name="Banque-cpp"                  depends="interfaces-cpp"                                ><make project="Banque-cpp"                  /></target>
+   <target name="Controleur-cpp"              depends="interfaces-cpp"                                ><make project="Controleur-cpp"              /></target>
+   <target name="Distributeur-cpp"            depends="interfaces-cpp"                                ><make project="Distributeur-cpp"            /></target>
    <target name="isolated-ihm1-cpp"           depends="Banque-cpp,Controleur-cpp,Distributeur-cpp"    ><make project="isolated-ihm1-cpp"           /></target>
    <target name="isolated-ihm2-cpp"           depends="Banque-cpp,Controleur-cpp,Distributeur-cpp"    ><make project="isolated-ihm2-cpp"           /></target>
    <target name="isolated-sc-cpp"             depends="Banque-cpp,Controleur-cpp,Distributeur-cpp"    ><make project="isolated-sc-cpp"             /></target>
@@ -142,11 +142,11 @@
    <!-- Java -->
    <target name="util-java"                                                                           ><jone project="util-java"                   /></target>
    <target name="dabtypes-java"                depends="util-java"                                    ><jone project="dabtypes-java"               /></target>
-   <target name="daenums-java"                 depends="dabtypes-java"                                ><jone project="daenums-java"                /></target>
-   <target name="Banque-java"                  depends="daenums-java"                                 ><jone project="Banque-java"                 /></target>
-   <target name="Controleur-java"              depends="daenums-java"                                 ><jone project="Controleur-java"             /></target>
-   <target name="Distributeur-java"            depends="daenums-java"                                 ><jone project="Distributeur-java"           /></target>
-   <target name="Distributeur-scripted-java"   depends="daenums-java"                                 ><jone project="Distributeur-scripted-java"  /></target>
+   <target name="interfaces-java"              depends="dabtypes-java"                                ><jone project="interfaces-java"                /></target>
+   <target name="Banque-java"                  depends="interfaces-java"                              ><jone project="Banque-java"                 /></target>
+   <target name="Controleur-java"              depends="interfaces-java"                              ><jone project="Controleur-java"             /></target>
+   <target name="Distributeur-java"            depends="interfaces-java"                              ><jone project="Distributeur-java"           /></target>
+   <target name="Distributeur-scripted-java"   depends="interfaces-java"                              ><jone project="Distributeur-scripted-java"  /></target>
    <target name="isolated-ihm1-java"           depends="Banque-java,Controleur-java,Distributeur-java"><jone project="isolated-ihm1-java"          /></target>
    <target name="isolated-ihm1-scripted-java"  depends="Banque-java,Controleur-java,Distributeur-java"><jone project="isolated-ihm1-scripted-java" /></target>
    <target name="isolated-ihm2-java"           depends="Banque-java,Controleur-java,Distributeur-java"><jone project="isolated-ihm2-java"          /></target>

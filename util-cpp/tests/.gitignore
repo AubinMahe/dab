@@ -1,2 +1,4 @@
 tests
 tests-win32
+tests-win32.exe
+/deps

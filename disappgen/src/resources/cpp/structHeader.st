@@ -21,6 +21,7 @@ endif>}>
 
       void put( io::ByteBuffer & target ) const;
       void get( io::ByteBuffer & source );
+      void set( const <struct.name> & source );
    };
 }
 
