@@ -63,10 +63,9 @@ else>
 < elseif( facet.isRequest )>
       // request
 < if( facet.threadingPolicyIsDedicated )>
-      std::function\<void( <signature( facet.arguments.field, false )>, <types.(facet.type)> &)\> async =
+      <ifacesNamespace>::<ifaceName>Interface::<facet.name>( _socket, message, _instance,
          [&]( <signature( facet.arguments.field )>, <types.(facet.type)> & <facet.name; format="argument"> ) {
-            _listener.<facet.name>(<args( facet.arguments.field )>, <facet.name; format="argument"> );\};
-      <ifacesNamespace>::<ifaceName>Interface::<facet.name>( _socket, message, _instance, async );
+            _listener.<facet.name>(<args( facet.arguments.field )>, <facet.name; format="argument"> );\});
 < else>
       <types.(facet.type)> <facet.name>;
       _listener.<facet.name>(<facet.arguments.field:{field|message._payload.<facet.name>_request.<field.name>}; separator=",">, <facet.name> );

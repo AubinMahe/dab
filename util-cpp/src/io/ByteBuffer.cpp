@@ -62,6 +62,12 @@ ByteBuffer & ByteBuffer::reset( void ) {
    return *this;
 }
 
+ByteBuffer & ByteBuffer::rewind( void ) {
+   _position = 0;
+   _mark     = _capacity + 1;
+   return *this;
+}
+
 ByteBuffer & ByteBuffer::flip( void ) {
    _limit    = _position;
    _position = 0;
@@ -116,6 +122,14 @@ ByteBuffer & ByteBuffer::putByte( byte value ) {
    }
    _bytes[_position] = value;
    _position += 1;
+   return *this;
+}
+
+ByteBuffer & ByteBuffer::putByte( size_t index, byte value ) {
+   if( index >= _limit ) {
+      throw util::Overflow( UTIL_CTXT, "index(%zu) >= limit(%zu)", index, _limit );
+   }
+   _bytes[index] = value;
    return *this;
 }
 

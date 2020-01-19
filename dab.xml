@@ -55,7 +55,7 @@
    </interface>
 
    <interface name="UniteDeTraitement" queue-size="1">
-      <data name="etatDuDab" type="dabtypes.EtatDuDab" queuing-policy="activating" 
+      <data name="etatDuDab" type="dabtypes.EtatDuDab" queuing-policy="activating" threading-policy="dedicated"
          description="Partage des données décrivant l'état du DAB"/>
       <event name="rechargerLaCaisse">
          <field name="montant" type="double"

@@ -8,6 +8,8 @@
 #  define ThreadType pthread_t
 #endif
 
+#include <functional>
+
 namespace os {
 
    typedef void * ( * thread_entry_t )( void * user_context );
@@ -22,6 +24,7 @@ namespace os {
    public:
 
       Thread( thread_entry_t entry, void * user_context );
+      Thread( std::function<void(void)> entry );
       ~Thread();
 
    public:
@@ -32,6 +35,10 @@ namespace os {
 
    private:
 
-      ThreadType _thread;
+      static void * executor( void * This );
+
+      std::function<void(void)> _function;
+      void *                    _argument;
+      ThreadType                _thread;
    };
 }

@@ -1,4 +1,4 @@
-publisherHeader( namespace, interface, data, rawSize, types ) ::= <<
+publisherHeader( namespace, iface, data, types ) ::= <<
 #pragma once
 // publisherHeader
 
@@ -10,10 +10,10 @@ publisherHeader( namespace, interface, data, rawSize, types ) ::= <<
 }>
 namespace <namespace> {
 
-   class <interface.name>Publisher {
+   class <iface.name>Publisher {
    public:
 
-      <interface.name>Publisher(
+      <iface.name>Publisher(
          io::DatagramSocket &   socket,
          const da::InstanceID & instance,
          unsigned               targetsCount,
@@ -28,9 +28,7 @@ namespace <namespace> {
       io::DatagramSocket &   _socket;
       const da::InstanceID & _instance;
       unsigned               _targetsCount;
-      io::ByteBuffer         _out;
       da::Targets *          _targets;
-      byte                   _raw[<rawSize>];
    };
 }
 

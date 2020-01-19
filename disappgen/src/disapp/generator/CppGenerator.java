@@ -346,7 +346,7 @@ public class CppGenerator extends BaseGenerator {
       write( component.getName() + "Component.cpp", tmpl );
    }
 
-   private void dataPublisher( ComponentType component ) throws IOException {
+   private void publisher( ComponentType component ) throws IOException {
       final Map<InterfaceType, List<DataType>> compData = _model.getOfferedDataOf( component );
       if( compData != null ) {
          final Map<String, String> types = _model.getTypes( Model.CPP_LANGUAGE );
@@ -354,23 +354,23 @@ public class CppGenerator extends BaseGenerator {
             final InterfaceType  iface = (InterfaceType)offered.getInterface();
             final List<DataType> data  = compData.get( iface );
             if( data != null ) {
-               final TypesType    internal  = _model.getGenInterfaceSettings();
-               final TypeImplType impl      = Model.getModuleName( internal, Model.CPP_LANGUAGE );
-               final String       ifacesNS  = impl.getModuleName();
-               final String       ifaceName = iface.getName();
-               final int          rawSize   = _model.getDataBufferOutCapacity( data );
+               final TypesType internal  = _model.getGenInterfaceSettings();
+               final String    ifaceName = iface.getName();
                final ST header = _group.getInstanceOf( "/publisherHeader" );
                header.add( "namespace", _moduleName );
-               header.add( "interface", offered.getInterface());
+               header.add( "iface"    , offered.getInterface());
                header.add( "data"     , data );
-               header.add( "rawSize"  , rawSize );
                header.add( "types"    , types );
                write( ifaceName + "Publisher.hpp", header );
+               final int          rawSize  = _model.getDataBufferOutCapacity( data );
+               final TypeImplType impl     = Model.getModuleName( internal, Model.CPP_LANGUAGE );
+               final String       ifacesNS = impl.getModuleName();
                final ST body = _group.getInstanceOf( "/publisherBody" );
                body.add( "namespace"      , _moduleName );
                body.add( "ifacesNamespace", ifacesNS );
-               body.add( "interface"      , offered.getInterface());
+               body.add( "iface"          , offered.getInterface());
                body.add( "data"           , data );
+               body.add( "rawSize"        , rawSize );
                body.add( "types"          , types );
                write( ifaceName + "Publisher.cpp", body );
             }
@@ -425,7 +425,7 @@ public class CppGenerator extends BaseGenerator {
       dispatcherBody             ( component );
       componentHeader            ( component );
       componentImplementation    ( component );
-      dataPublisher                 ( component );
+      publisher                 ( component );
       dataReaderHeader           ( component );
       automaton                  ( component );
       generateMakefileSourcesList( _generatedFiles, _genDir, true );

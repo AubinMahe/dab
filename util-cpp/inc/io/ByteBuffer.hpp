@@ -36,6 +36,8 @@ namespace io {
 
       ByteBuffer & reset( void );
 
+      ByteBuffer & rewind( void );
+
       ByteBuffer & flip( void );
 
       size_t position( void ) const;
@@ -51,6 +53,8 @@ namespace io {
       ByteBuffer & get( byte * target, size_t from, size_t to );
 
       ByteBuffer & putByte( byte value );
+
+      ByteBuffer & putByte( size_t index, byte value );
 
       byte getByte( void );
 

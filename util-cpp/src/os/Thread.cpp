@@ -36,6 +36,26 @@ Thread::Thread( thread_entry_t entry, void * user_context ) {
 #endif
 }
 
+void * Thread::executor( void * This ) {
+   Thread * t = (Thread *)This;
+   t->_function();
+   return nullptr;
+}
+
+Thread::Thread( std::function<void(void)> function ) {
+   _function = function;
+#ifdef _WIN32
+   _thread = CreateThread( 0, 0, (LPTHREAD_START_ROUTINE)Thread::executor, this, 0, 0 );
+   if( ! _thread ) {
+      throw util::Runtime( UTIL_CTXT, "CreateThread" );
+   }
+#else
+   if( pthread_create( &_thread, 0, Thread::executor, this )) {
+      throw util::Runtime( UTIL_CTXT, "pthread_create" );
+   }
+#endif
+}
+
 Thread::~Thread() {
 #ifdef _WIN32
    if( ! CloseHandle( _thread )) {
