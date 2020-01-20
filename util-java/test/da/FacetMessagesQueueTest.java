@@ -46,6 +46,11 @@ public class FacetMessagesQueueTest {
       public void put( ByteBuffer target ) {
          //
       }
+
+      @Override
+      public byte value() {
+         return (byte)ordinal();
+      }
    }
 
    @Test

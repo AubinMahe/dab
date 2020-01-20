@@ -12,6 +12,7 @@ import java.time.Duration;
 import da.IMainLoop;
 import da.InstanceID;
 < if( component.timeout )>
+import <intrfcPckg>.TimeoutInterface;
 import util.Timeout;
 < endif>
  
@@ -38,8 +39,8 @@ if( component.automaton )
 < endif><reqData:{iface|<reqData.(iface):{data|
    protected final <types.(data.type)> _<data.name; format="argument"> = new <types.(data.type)>(); // required data
 }>}><component.timeout:{to|
-   protected final Timeout _<to.name> = new Timeout( <to.name; format="ID">_DURATION, () -> loopback( <
-      component.name>Dispatcher.LoopbackEvent.<to.name; format="ID"> ));
+   protected final Timeout _<to.name> = new Timeout( <to.name; format="ID"
+        >_DURATION, () -> timeout( TimeoutInterface.Facets.<component.name; format="ID">_<to.name; format="ID"> ));
 }>
    <component.timeout:{to|protected abstract void <to.name>Elapsed() throws IOException;
 }>
@@ -53,9 +54,9 @@ if( component.automaton )
    public void init() {/* */}
 < if( component.timeout )>
  
-   private void loopback( <component.name>Dispatcher.LoopbackEvent event ) {
+   private void timeout( TimeoutInterface.Facets event ) {
       try {
-         _dispatcher.loopback( event );
+         _dispatcher.timeout( event );
       }
       catch( final Throwable t ) {
          t.printStackTrace();

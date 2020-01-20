@@ -37,7 +37,7 @@ public class <iface.name>Interface {
       }
    }
 
-   public FacetMessagesQueue\<Interfaces> _queue = new FacetMessagesQueue\<>( "<iface.name>", <iface.queueSize>, true );
+   public static FacetMessagesQueue\<Interfaces> _queue = new FacetMessagesQueue\<>( "<iface.name>", <iface.queueSize>, true );
 
 <facets:{facet|
 < if( facet.isEvent )>
@@ -94,7 +94,7 @@ public class <iface.name>Interface {
    {
       _out.clear();
       Interfaces.<iface.name; format="ID">.put( _out );
-      Facets.<facet.name; format="ID">.put( _out );
+      Facets.<facet.name; format="ID">_RESPONSE.put( _out );
       to  .put( _out );
       from.put( _out );
       <facet.name>.put( _out );
@@ -118,7 +118,7 @@ public class <iface.name>Interface {
    \}
 
 < endif>
-}>   public boolean enqueue(
+}>   public static boolean enqueue(
       SocketAddress from,
       byte          event,
       InstanceID    instance,

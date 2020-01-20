@@ -15,7 +15,7 @@
 
    <property name="jutil"                 location="../dab-lib/util.jar" />
    <property name="dabtypes"              location="../dab-lib/hpms.dabtypes.jar" />
-   <property name="internaltypes"         location="../dab-lib/da.enums.jar" />
+   <property name="interfaces"            location="../dab-lib/hpms.interfaces.jar" />
    <property name="Banque"                location="../dab-lib/Banque.jar" />
    <property name="Controleur"            location="../dab-lib/Controleur.jar" />
    <property name="Distributeur"          location="../dab-lib/Distributeur.jar" />
@@ -37,7 +37,7 @@
          includeantruntime="false">
          <classpath location="${jutil}" />
          <classpath location="${dabtypes}" />
-         <classpath location="${internaltypes}" />
+         <classpath location="${interfaces}" />
          <classpath refid="jfx" />
          <src path="src" />
          <src path="src-gen" />
@@ -60,7 +60,7 @@
          <javac
             destdir          ="build"
             includeantruntime="false"
-            classpath="${jutil}:${dabtypes}:${internaltypes}:@{components}">
+            classpath="${jutil}:${dabtypes}:${interfaces}:@{components}">
             <classpath refid="jfx" />
             <src path="src" />
             <src path="src-gen" />
@@ -76,7 +76,7 @@
             <manifest>
                <attribute name="Main-Class" value="@{main-class}" />
                <attribute name="Class-Path"
-                  value="${jutil} ${dabtypes} ${internaltypes} @{components}" />
+                  value="${jutil} ${dabtypes} ${interfaces} @{components}" />
                <attribute name="Implementation-Title"   value="${ant.project.name}" />
                <attribute name="Implementation-Version" value="1.0.0" />
                <attribute name="Implementation-Vendor"  value="HPMS" />

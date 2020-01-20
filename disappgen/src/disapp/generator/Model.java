@@ -55,6 +55,7 @@ import disapp.generator.model.RequiresType;
 import disapp.generator.model.ShortcutType;
 import disapp.generator.model.StructType;
 import disapp.generator.model.ThreadingPolicy;
+import disapp.generator.model.TimeoutType;
 import disapp.generator.model.TransitionType;
 import disapp.generator.model.TypesType;
 
@@ -1322,5 +1323,15 @@ final class Model {
          }
       }
       return retVal;
+   }
+
+   public Set<String> getTimeouts() {
+      final Set<String> timeouts = new LinkedHashSet<>();
+      for( final ComponentType component : _application.getComponent()) {
+         for( final TimeoutType timeout : component.getTimeout()) {
+            timeouts.add( BaseRenderer.toID( component.getName() + '_' + timeout.getName()));
+         }
+      }
+      return timeouts;
    }
 }

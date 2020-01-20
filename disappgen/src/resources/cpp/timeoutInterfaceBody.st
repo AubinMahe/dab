@@ -19,6 +19,7 @@ const char * TimeoutInterface::toString( byte event ) {
 }
 
 void TimeoutInterface::update( Facets facet, const da::InstanceID & instance, io::ByteBuffer & target ) {
+   target.clear();
    target.putByte((byte)<namespace>::Interfaces::TIMEOUT );
    target.putByte((byte)facet );
    instance.put( target );

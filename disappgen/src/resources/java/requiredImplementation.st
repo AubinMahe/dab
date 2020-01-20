@@ -33,7 +33,7 @@ else><
 endif>) throws IOException {
       for( final Targets\<InstanceID> targets : _targets ) {
          for( final InstanceID to : targets._instances ) {
-            <intrfcPckg>.<common/concat( iface.name, "Event" )>.<facet.name>( <
+            <intrfcPckg>.<iface.name>Interface.<facet.name>( <
 if( facet.isRequest )><
                 facet.arguments.field:{field|<field.name>}; separator=","><
 if(             facet.arguments.field )>, < endif>_from, to, _out );

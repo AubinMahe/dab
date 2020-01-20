@@ -8,7 +8,7 @@ import java.nio.channels.DatagramChannel;
 
 import da.InstanceID;
 import da.Targets;
-import <intrfcPckg>.<interface.name>Data;
+import <intrfcPckg>.<interface.name>Interface;
 
 public class <interface.name>Publisher {
 
@@ -26,10 +26,12 @@ public class <interface.name>Publisher {
 
 <data:{dataType|
    public void publish<dataType.name; format="cap">( <types.(dataType.type)> data ) throws IOException {
+      <interface.name>Interface.<dataType.name>( data, _from, _from, _out );
+      final int size = _out.remaining();
       for( final Targets\<InstanceID> targets : _targets ) {
          for( final InstanceID to : targets._instances ) {
-            <interface.name>Data.<dataType.name>( data, _from, to, _out );
-            final int size = _out.remaining();
+            _out.rewind();
+            _out.put( 2, to.value());
             _channel.send( _out, targets._process );
             util.Log.printf( "%d byte(s) sent from instance %s to instance %s @ %s", size, _from, to, targets._process );
          \}

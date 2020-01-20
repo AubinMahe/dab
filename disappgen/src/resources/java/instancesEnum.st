@@ -1,6 +1,6 @@
 instancesEnum( package, instances ) ::= <<
 package <package>;
-
+// instancesEnum
 import java.nio.ByteBuffer;
 
 enum Instances implements da.InstanceID {
@@ -26,6 +26,11 @@ enum Instances implements da.InstanceID {
    @Override
    public void put( ByteBuffer target ) {
       target.put( _value );
+   }
+
+   @Override
+   public byte value() {
+      return _value;
    }
 }
 

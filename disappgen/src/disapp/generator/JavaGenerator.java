@@ -88,11 +88,18 @@ public class JavaGenerator extends BaseGenerator {
          final String       ifaceName = iface.getName();
          final List<Object> facets    = iface.getEventOrRequestOrData();
          final ST tmpl = _group.getInstanceOf( "/interfaces" );
-         tmpl.add( "package"  , _moduleName );
-         tmpl.add( "iface"    , iface );
-         tmpl.add( "facets"   , facets );
-         tmpl.add( "types"    , types );
+         tmpl.add( "package", _moduleName );
+         tmpl.add( "iface"  , iface );
+         tmpl.add( "facets" , facets );
+         tmpl.add( "types"  , types );
          write( ifaceName + "Interface.java", tmpl );
+      }
+      final Set<String> timeouts = _model.getTimeouts();
+      if( ! timeouts.isEmpty()) {
+         final ST tmpl = _group.getInstanceOf( "/timeoutInterface" );
+         tmpl.add( "package" , _moduleName );
+         tmpl.add( "timeouts", timeouts );
+         write( "TimeoutInterface.java", tmpl );
       }
    }
 
@@ -334,15 +341,19 @@ public class JavaGenerator extends BaseGenerator {
       final Set<InterfaceType>                         interfaces     = Model.getOfferedInterfacesBy( process );
       final Set<InterfaceType>                         data           = _model.getRequiredDataInterfacesBy( process );
       final Set<InterfaceType>                         requests       = Model.getRequiredRequestInterfacesBy( process );
+      final Set<InterfaceType>                         allInterfaces  = new LinkedHashSet<>();
       final Set<ComponentType>                         components     = Model.getComponentsOf( process );
       final TypesType                                  internal       = _model.getGenInterfaceSettings();
       final TypeImplType                               internalImpl   = Model.getModuleName( internal, Model.JAVA_LANGUAGE );
       final String                                     intrfcPckg     = internalImpl.getModuleName();
       _model.getFactoryConnections( factory, dep, process, offered, proxies, processesImpl, dataPublishers, consumedData, modules );
-      final Set<TimeoutType> timers = new LinkedHashSet<>();
+      final Set<TimeoutType> timeouts = new LinkedHashSet<>();
       for( final ComponentType component : components ) {
-         timers.addAll( component.getTimeout());
+         timeouts.addAll( component.getTimeout());
       }
+      allInterfaces.addAll( interfaces );
+      allInterfaces.addAll( data );
+      allInterfaces.addAll( requests );
       _moduleName = factory.getModuleName();
       _genDir     = factory.getSrcDir();
       final ST tmpl = _group.getInstanceOf( "/componentFactory" );
@@ -364,7 +375,8 @@ public class JavaGenerator extends BaseGenerator {
       tmpl.add( "types"         , types );
       tmpl.add( "modules"       , modules );
       tmpl.add( "ids"           , ids );
-      tmpl.add( "timers"        , timers );
+      tmpl.add( "timeouts"      , timeouts );
+      tmpl.add( "allInterfaces" , allInterfaces );
       write( "ComponentFactory.java", tmpl );
       instancesEnum( dep );
    }

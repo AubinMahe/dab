@@ -1,6 +1,7 @@
 componentFactory(
    package, intrfcPckg, deployment, deploymentImpl, process, processImpl, processes, processesImpl,
-   interfaces, data, requests, components, proxies, dataPublishers, consumedData, types, modules, ids, timers
+   interfaces, data, requests, components, proxies, dataPublishers, consumedData, types, modules,
+   ids, timeouts, allInterfaces
 ) ::= <<
 package <package>;
 // componentFactory
@@ -19,9 +20,11 @@ import da.IMainLoop;
 import da.InstanceID;
 import da.Targets;
 import <intrfcPckg>.Interfaces;
-<interfaces:{iface|import <intrfcPckg>.<iface.name>Event;}  ; separator="\n">
-<requests  :{iface|import <intrfcPckg>.<iface.name>Request;}; separator="\n">
-<data      :{iface|import <intrfcPckg>.<iface.name>Data;}   ; separator="\n">
+<interfaces:{iface|import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
+<requests  :{iface|import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
+<data      :{iface|import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
+< if( timeouts )>import <intrfcPckg>.TimeoutInterface;
+< endif>
 import util.Log;
 
 public final class ComponentFactory extends Thread implements IMainLoop {
@@ -29,29 +32,17 @@ public final class ComponentFactory extends Thread implements IMainLoop {
    private final DatagramChannel _channel;
    private /* */ boolean         _running;
    //-- queues --
-< if( timers )>
-   private final FacetMessagesQueue\<Interfaces>   _loopback = new FacetMessagesQueue\<>( "Loopback", < length( timers )>, false );
-< endif>
-<interfaces:{iface|
-   private final FacetMessagesQueue\<Interfaces>   _<iface.name; format="argument">Event = new FacetMessagesQueue\<>( "<
-      iface.name>Event", <iface.queueSize>, false );
-}><data:{iface|
-   private final FacetMessagesQueue\<Interfaces>   _<iface.name; format="argument">Data = new FacetMessagesQueue\<>( "<
-      iface.name>Data", 1, true );
-}><requests:{iface|
-   private final FacetMessagesQueue\<Interfaces>   _<iface.name; format="argument">Request = new FacetMessagesQueue\<>( "<
-      iface.name>Request", 1, true );
-}>   @SuppressWarnings("unchecked")
+   @SuppressWarnings("unchecked")
    private final FacetMessagesQueue\<Interfaces>[] _queues = new FacetMessagesQueue[] {
-< if( timers )>
-      _loopback,
+< if( timeouts )>
+      TimeoutInterface._queue,
 < endif>
 <interfaces:{iface|
-      _<iface.name; format="argument">Event,
+      <iface.name>Interface._queue,
 }><data:{iface|
-      _<iface.name; format="argument">Data,
+      <iface.name>Interface._queue,
 }><requests:{iface|
-      _<iface.name; format="argument">Request,
+      <iface.name>Interface._queue,
 }>   };
    //-- instances init --
 <process.instance:{instance|
@@ -99,12 +90,11 @@ public final class ComponentFactory extends Thread implements IMainLoop {
       return _<instance.name; format="argument">;
    \}
 
-}>   @SuppressWarnings("incomplete-switch")
-   private void execute() {
+}>   private void execute() {
       _running = true;
       while( _running ) {
          try {
-            FacetMessage\<Interfaces, ?, InstanceID> message = null;
+            FacetMessage\<Interfaces, ?, ?> message = null;
             synchronized( _queues ) {
                boolean isEmpty = true;
                for( final FacetMessagesQueue\<Interfaces> queue : _queues ) {
@@ -153,7 +143,6 @@ public final class ComponentFactory extends Thread implements IMainLoop {
       }
    }
 
-   @SuppressWarnings("incomplete-switch")
    @Override
    public final void run() {
       final ByteBuffer in = ByteBuffer.allocate( 64*1024 );
@@ -177,29 +166,16 @@ public final class ComponentFactory extends Thread implements IMainLoop {
                         boolean activate = false;
                         synchronized( _queues ) {
                            switch( intrfc ) {
-< if( timers )>
-                           case LOOPBACK:
+< if( timeouts )>
+                           case TIMEOUT:
 <components:{component|<
 if( component.timeout )>
-                              activate = <modules.(component)>.<
-                                 component.name>Dispatcher.LoopbackEvent.enqueue(
-                                    from, event, instance, _loopback );
+                              activate = TimeoutInterface.enqueue( from, event, instance );
 < endif>}>                              break;
 < endif>
-<interfaces:{iface|
-                           case <(common/concat(iface.name, "Event")); format="ID">:// offered interface
-                              activate = <iface.name>Event.enqueue(
-                                 from, event, instance, fromInstance, in, _<iface.name; format="argument">Event );
-                              break;
-}><data:{iface|
-                           case <(common/concat(iface.name, "Data" )); format="ID">:// consumed data
-                              activate = <iface.name>Data.enqueue(
-                                 from, event, instance, fromInstance, in, _<iface.name; format="argument">Data );
-                              break;
-}><requests:{iface|
-                           case <(common/concat(iface.name, "Request" )); format="ID">:// responses (Request)
-                              activate = <iface.name>Request.enqueue(
-                                 from, event, instance, fromInstance, in, _<iface.name; format="argument">Request );
+<allInterfaces:{iface|
+                           case <iface.name; format="ID">:
+                              activate = <iface.name>Interface.enqueue( from, event, instance, fromInstance, in );
                               break;
 }>                           }
                         }

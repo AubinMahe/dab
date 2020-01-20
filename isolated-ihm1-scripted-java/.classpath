@@ -11,9 +11,9 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Distributeur-scripted-java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/daenums-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dabtypes-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Distributeur-scripted-java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/interfaces-java"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

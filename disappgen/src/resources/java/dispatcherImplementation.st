@@ -6,9 +6,6 @@ package <package>;
 // dispatcherImplementation
 
 import java.io.IOException;
-< if( component.timeout )>
-import java.net.SocketAddress;
-< endif>
 < if( offRequests || component.timeout )>
 import java.nio.ByteBuffer;
 < endif>
@@ -20,6 +17,8 @@ import <intrfcPckg>.Interfaces;
 <offers     :{iface    |import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
 <reqRequests:{ifaceName|import <intrfcPckg>.<ifaceName >Interface;}; separator="\n">
 <data       :{iface    |import <intrfcPckg>.<iface.name>Interface;}; separator="\n">
+< if( component.timeout )>
+import <intrfcPckg>.TimeoutInterface;< endif>
 < if( offRequests || component.timeout )>
 
 import io.ByteBufferHelper;< endif>
@@ -58,7 +57,8 @@ endif>DatagramChannel channel, <component.name>Component component ) {
       util.Log.printf( "event: %s, from: %s, to: %s", message._event, message._fromInstance, message._instance );
       switch( message._interface ) {
 < if( component.timeout )
->      case TIMEOUT: return dispatchTimeout((Timeout.Facets)message._event );
+>      case TIMEOUT:
+         return dispatchTimeout((TimeoutInterface.Facets)message._event );
 < endif><
 offers     :{iface|
       case <iface.name; format="ID">:

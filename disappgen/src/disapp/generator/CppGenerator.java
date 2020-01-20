@@ -147,12 +147,7 @@ public class CppGenerator extends BaseGenerator {
          tmpl.add( "types"    , types );
          write( iface.getName() + "Interface.hpp", tmpl );
       }
-      final Set<String> timeouts = new LinkedHashSet<>();
-      for( final ComponentType component : _model.getApplication().getComponent()) {
-         for( final TimeoutType timeout : component.getTimeout()) {
-            timeouts.add( BaseRenderer.toID( component.getName() + '_' + timeout.getName()));
-         }
-      }
+      final Set<String> timeouts = _model.getTimeouts();
       if( ! timeouts.isEmpty()) {
          final ST tmpl = _group.getInstanceOf( "/timeoutInterfaceHeader" );
          tmpl.add( "namespace", _moduleName );
