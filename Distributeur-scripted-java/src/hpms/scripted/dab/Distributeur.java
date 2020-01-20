@@ -97,7 +97,7 @@ public class Distributeur extends hpms.scripted.dab.DistributeurComponent {
       double solde = 0.0;
       String line;
       while(( line = _scLog.readLine()) != null ) {
-         int index = line.indexOf( "[TEST] solde" );
+         int index = line.indexOf( "TEST|solde" );
          if( index > -1 ) {
             index = line.indexOf( "=", index );
             final String amount = line.substring( index + 1 ).strip().replaceAll( ",", "." );
